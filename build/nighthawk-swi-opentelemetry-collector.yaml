@@ -1,0 +1,22 @@
+dist:
+  name: nighthawk-swi-opentelemetry-collector
+  description: "SolarWinds distribution for OpenTelemetry"
+  otelcol_version: "0.45.0"
+  version: "0.1.0"
+exporters:
+  - import: go.opentelemetry.io/collector/exporter/otlpexporter
+    gomod: go.opentelemetry.io/collector v0.45.0
+
+receivers:
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.45.0"
+
+processors:
+  - import: go.opentelemetry.io/collector/processor/batchprocessor
+    gomod: go.opentelemetry.io/collector v0.45.0
+  - import: go.opentelemetry.io/collector/processor/memorylimiterprocessor
+    gomod: go.opentelemetry.io/collector v0.45.0
+
+extensions:
+  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.45.0"
+  - import: go.opentelemetry.io/collector/extension/ballastextension
+    gomod: go.opentelemetry.io/collector v0.45.0
