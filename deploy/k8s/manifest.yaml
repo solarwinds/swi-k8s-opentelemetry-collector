@@ -1,0 +1,151 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: swi-opentelemetry-collector
+  labels:
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: swi-opentelemetry-collector
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swi-opentelemetry-collector
+  labels:
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: swi-opentelemetry-collector
+data:
+  relay: |
+    exporters:
+      logging:
+        loglevel: debug
+      otlp:
+        endpoint: otel-collector.st-nighthawk.solarwinds.cloud:443
+        tls:
+          insecure_skip_verify: true
+        headers:
+          "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    extensions:
+      health_check: {}
+      memory_ballast:
+        size_mib: "204"
+    processors:
+      batch:
+        send_batch_size: 8192
+        send_batch_max_size: 8192
+        timeout: 1s
+      memory_limiter:
+        check_interval: 5s
+        limit_mib: 409
+        spike_limit_mib: 128
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: prometheus
+              scrape_interval: 60s
+              metrics_path: '/federate'
+              params:
+                'match[]':
+    #             - '{__name__=~".+"}'
+                  - '{job="kubernetes-service-endpoints"}'
+              static_configs:
+                - targets:
+                  - ${PROMETHEUS_URL}
+            - job_name: opentelemetry-collector
+              scrape_interval: 10s
+              static_configs:
+              - targets:
+                - ${MY_POD_IP}:8888
+    service:
+      extensions:
+      - health_check
+      - memory_ballast
+      pipelines:
+        metrics:
+          exporters:
+          - logging
+          - otlp
+          processors:
+          - memory_limiter
+          - batch
+          receivers:
+          - prometheus
+      telemetry:
+        logs:
+          level: "debug"
+        metrics:
+          address: 0.0.0.0:8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swi-opentelemetry-collector
+  labels:
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: swi-opentelemetry-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opentelemetry-collector
+      app.kubernetes.io/instance: swi-opentelemetry-collector
+      component: standalone-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opentelemetry-collector
+        app.kubernetes.io/instance: swi-opentelemetry-collector
+        component: standalone-collector
+    spec:
+      serviceAccountName: swi-opentelemetry-collector
+      securityContext:
+        {}
+      containers:
+        - name: opentelemetry-collector
+          command:
+            - /otelcol-contrib
+            - --config=/conf/relay.yaml
+          securityContext:
+            {}
+          image: "otel/opentelemetry-collector-contrib:0.43.0"
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: solarwinds-api-token
+                key: SOLARWINDS_API_TOKEN
+                optional: true
+          - name: PROMETHEUS_URL
+            value: "monitoring-prometheus-server.monitoring.svc.cluster.local:80"
+          - name: OTEL_ENVOY_ADDRESS
+            value: "timeseries-mock-service.o11y-applications-stable.svc.cluster.local:9082"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+            limits:
+              cpu: 256m
+              memory: 512Mi
+          volumeMounts:
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+      volumes:
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: swi-opentelemetry-collector
+            items:
+              - key: relay
+                path: relay.yaml
+
