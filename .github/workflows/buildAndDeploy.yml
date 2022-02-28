@@ -13,8 +13,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     env:
-      ECR_REPO: 377069709311.dkr.ecr.us-east-1.amazonaws.com
-      ECR_IMAGE: common/nighthawk_swi_opentelemetry_collector
+      IMAGE_NAME: nighthawk_swi_opentelemetry_collector
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -23,40 +22,10 @@ jobs:
         id: generate-tag
         run: echo "::set-output name=value::v${{ github.run_number }}-$(git rev-parse --short HEAD)"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        if: github.ref == 'refs/heads/main'
-        with:
-          aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
-          role-duration-seconds: 3600
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        if: github.ref == 'refs/heads/main'
-        with:
-          registries: ${{ secrets.EKS_REGISTRY }}
-
-      - name: Docker login
-        if: github.ref == 'refs/heads/main'
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
-
       - name: Build
-        run: docker build -t nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} -f build/docker/Dockerfile .
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ steps.generate-tag.outputs.value }} -f build/docker/Dockerfile .
 
       - name: Tag images
         run: |
-          docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
-          docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
-
-      # TODO: Uncomment when ECR repository is ready
-      # - name: Push as specific
-      #   if: github.ref == 'refs/heads/main'
-      #   run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
-
-      # - name: Push as latest
-      #   if: github.ref == 'refs/heads/main'
-      #   run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
+          docker tag ${{ env.IMAGE_NAME }}:${{ steps.generate-tag.outputs.value }} ${{ env.IMAGE_NAME }}:${{ steps.generate-tag.outputs.value }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ steps.generate-tag.outputs.value }} ${{ env.IMAGE_NAME }}:latest
