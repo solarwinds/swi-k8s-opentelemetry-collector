@@ -17,12 +17,11 @@ metadata:
 data:
   relay: |
     exporters:
-      logging:
-        loglevel: debug
       otlp:
-        endpoint: otel-collector.st-nighthawk.solarwinds.cloud:443
+        endpoint: ${OTEL_ENVOY_ADDRESS}
         tls:
           insecure_skip_verify: true
+          insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
         headers:
           "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
     extensions:
@@ -43,7 +42,7 @@ data:
         config:
           scrape_configs:
             - job_name: prometheus
-              scrape_interval: 60s
+              scrape_interval: ${SCRAPE_INTERVAL}
               metrics_path: '/federate'
               params:
                 'match[]':
@@ -53,7 +52,7 @@ data:
                 - targets:
                   - ${PROMETHEUS_URL}
             - job_name: opentelemetry-collector
-              scrape_interval: 10s
+              scrape_interval: ${SCRAPE_INTERVAL}
               static_configs:
               - targets:
                 - ${MY_POD_IP}:8888
@@ -64,7 +63,6 @@ data:
       pipelines:
         metrics:
           exporters:
-          - logging
           - otlp
           processors:
           - memory_limiter
@@ -123,9 +121,13 @@ spec:
                 key: SOLARWINDS_API_TOKEN
                 optional: true
           - name: PROMETHEUS_URL
-            value: "monitoring-prometheus-server.monitoring.svc.cluster.local:80"
+            value: "prometheus-server.monitoring.svc.cluster.local:80"
           - name: OTEL_ENVOY_ADDRESS
-            value: "timeseries-mock-service.o11y-applications-stable.svc.cluster.local:9082"
+            value: "otel-collector.st-nighthawk.solarwinds.cloud:443"
+          - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
+            value: "false"
+          - name: SCRAPE_INTERVAL
+            value: "60s"
           livenessProbe:
             httpGet:
               path: /

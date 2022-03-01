@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swi-opentelemetry-collector
+spec:
+  template:
+    spec:
+      containers:
+        - name: opentelemetry-collector
+          image: nighthawk-swi-opentelemetry-collector
+          command:
+            - /nighthawk-swi-opentelemetry-collector
+            - --config=/conf/relay.yaml
+          env:
+          - name: SOLARWINDS_API_TOKEN
+            $patch: delete
+          - name: PROMETHEUS_URL
+            value: "monitoring-prometheus-server.monitoring.svc.cluster.local:80"
+          - name: OTEL_ENVOY_ADDRESS
+            value: "timeseries-mock-service:9082"
+          - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
+            value: "true"
+          - name: SCRAPE_INTERVAL
+            value: "15s"

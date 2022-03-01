@@ -19,38 +19,73 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Deploy skaffold
+        uses: ./.github/actions/deploy-skaffold
+
       - name: Generate docker image tag
         id: generate-tag
         run: echo "::set-output name=value::v${{ github.run_number }}-$(git rev-parse --short HEAD)"
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        if: github.ref == 'refs/heads/main'
-        with:
-          aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
-          role-duration-seconds: 3600
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        if: github.ref == 'refs/heads/main'
-        with:
-          registries: ${{ secrets.EKS_REGISTRY }}
-
-      - name: Docker login
-        if: github.ref == 'refs/heads/main'
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
-
       - name: Build
-        run: docker build -t nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} -f build/docker/Dockerfile .
+        run: skaffold build --file-output=/tmp/tags.json --tag ${{ steps.generate-tag.outputs.value }}
+
+      - name: Deploy kubernetes
+        uses: ./.github/actions/deploy-kubernetes
+
+      - name: Deploy services using Skaffold
+        run: skaffold run --skip-tests=true
+
+      - name: Tail Otel mock for 60 seconds
+        run: |
+          mkdir -p OtelLogs
+          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/metrics.log &
+          sleep 60
+      
+      - name: Destroy environment
+        run: skaffold delete
+
+      - name: Evaluate functionality
+        run: |
+          if grep -q kubernetes-service-endpoints "OtelLogs/metrics.log"; then
+            echo "Expected metrics found"
+          else
+            echo "Metrics are missing"
+            exit 1
+          fi
+
+      - name: Capture Otel logs
+        uses: actions/upload-artifact@v2
+        if: always() && hashFiles('OtelLogs') != '' # test existance of some report in `OtelLogs` folder
+        with:
+          name: OtelLogs
+          path: OtelLogs/
+          retention-days: 30
 
       - name: Tag images
         run: |
           docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
           docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
+
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   if: github.ref == 'refs/heads/main'
+      #   with:
+      #     aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
+      #     role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
+      #     role-duration-seconds: 3600
+
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
+      #   if: github.ref == 'refs/heads/main'
+      #   with:
+      #     registries: ${{ secrets.EKS_REGISTRY }}
+
+      # - name: Docker login
+      #   if: github.ref == 'refs/heads/main'
+      #   run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
 
       # TODO: Uncomment when ECR repository is ready
       # - name: Push as specific

@@ -1,0 +1,39 @@
+apiVersion: skaffold/v2beta22
+kind: Config
+metadata:
+  name: nighthawk-im-k8s-monitor
+build:
+  local:
+    push: false
+  artifacts:
+    - image: nighthawk-swi-opentelemetry-collector
+      docker:
+        dockerfile: build/docker/Dockerfile
+deploy:
+  helm:
+    releases:
+      - name: monitoring
+        remoteChart: prometheus
+        imageStrategy:
+          fqn: {}
+        namespace: monitoring
+        createNamespace: true
+        repo: https://prometheus-community.github.io/helm-charts
+  kustomize:
+    buildArgs:
+    - "--load-restrictor LoadRestrictionsNone"
+    paths:
+    - tests/deploy/base
+  kubeContext: docker-desktop
+profiles:
+- name: ci
+  activation:
+  - env: CI=true
+  build:
+    local:
+      push: false
+      useBuildkit: true
+      concurrency: 0
+  deploy:
+    # `default` is k3s default context name
+    kubeContext: default
