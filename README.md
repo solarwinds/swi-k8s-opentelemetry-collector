@@ -27,3 +27,23 @@ kubectl create secret generic solarwinds-api-token -n <CHOSEN NAMESPACE> --from-
 ```
 kubectl apply -f deploy/k8s/manifest.yaml
 ```
+
+## Development
+
+### Prerequisites
+
+* [Skaffold](https://skaffold.dev) at least [v1.31.0](https://github.com/GoogleContainerTools/skaffold/releases/tag/v1.31.0)
+    * On windows, do not install it using choco due to [this issue](https://github.com/GoogleContainerTools/skaffold/issues/4058)
+* [Kustomize](https://kustomize.io): `choco install kustomize`
+* [Helm](https://helm.sh): `choco install kubernetes-helm`
+* [Docker desktop](https://www.docker.com/products/docker-desktop) with Kubernetes enabled
+
+### Deployment
+To run local environment run: `skaffold dev` command. 
+
+That will:
+* build customized Otel Collector image
+* deploy Prometheus
+* deploy OtelEndpoint mock (to see that customized Otel Collector is sending metrics correctly)
+* deploy customized Otel Collector
+

@@ -1,0 +1,32 @@
+name: 'Deploy kubernetes locally'
+description: 'Deployes k3s and all kubernetes tools'
+inputs:
+  ssh-key:
+    description: 'ssh key'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Start k8s locally
+      uses: jupyterhub/action-k3s-helm@v1
+      with:
+        traefik-enabled: false
+        docker-enabled: true
+        metrics-enabled: true
+
+    - name: Print cluster info
+      run: |
+        kubectl get sc
+        kubectl cluster-info dump --output=yaml
+      shell: bash
+
+    - name: Setup Kustomize
+      uses: imranismail/setup-kustomize@v1
+
+    - name: Setup kubetail
+      run: |
+        curl -Lo kubetail https://raw.githubusercontent.com/johanhaleby/kubetail/master/kubetail && sudo install kubetail /usr/local/bin/
+      shell: bash
+
+
+
