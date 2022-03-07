@@ -28,14 +28,20 @@ data:
       memory_ballast:
         size_mib: "204"
     processors:
-      batch:
-        send_batch_size: 8192
-        send_batch_max_size: 8192
-        timeout: 1s
       memory_limiter:
         check_interval: 5s
         limit_mib: 409
         spike_limit_mib: 128
+      metricstransform:
+        transforms:
+          - include: ^(.*)$$
+            match_type: regexp
+            action: update
+            new_name: k8s.$${1}
+      batch:
+        send_batch_size: 8192
+        send_batch_max_size: 8192
+        timeout: 1s
     receivers:
       prometheus:
         config:
@@ -45,8 +51,22 @@ data:
               metrics_path: '/federate'
               params:
                 'match[]':
-    #             - '{__name__=~".+"}'
-                  - '{job="kubernetes-service-endpoints"}'
+                  - 'container_cpu_usage_seconds_total'
+                  - 'container_spec_cpu_quota'
+                  - 'container_spec_cpu_period'
+                  - 'container_memory_working_set_bytes'
+                  - 'container_spec_memory_limit_bytes'
+                  - 'kube_node_info'
+                  - 'kube_node_created'
+                  - 'kube_node_status_capacity'
+                  - 'kube_pod_created'
+                  - 'kube_pod_info'
+                  - 'kube_pod_start_time'
+                  - 'kube_pod_completion_time'
+                  - 'kube_pod_status_phase'
+                  - 'kube_pod_start_time'
+                  - 'kube_resourcequota'
+                  - '{__name__=~"kube_pod_container_.*"}'
               static_configs:
                 - targets:
                   - ${PROMETHEUS_URL}
@@ -59,6 +79,7 @@ data:
           exporters:
           - otlp
           processors:
+          - metricstransform
           - memory_limiter
           - batch
           receivers:
