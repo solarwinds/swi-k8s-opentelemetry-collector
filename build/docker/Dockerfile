@@ -11,7 +11,7 @@ RUN CGO_ENABLED=0 /go/bin/builder --config ./nighthawk-swi-opentelemetry-collect
 
 FROM alpine@sha256:e7d88de73db3d3fd9b2d63aa7f447a10fd0220b7cbf39803c803f2af9ba256b3
 
-COPY --from=builder /src/nighthawk-swi-opentelemetry-collector /nighthawk-swi-opentelemetry-collector
+COPY --from=builder /src/nighthawk-swi-opentelemetry-collector /swi-otelcol
 
-ENTRYPOINT ["/nighthawk-swi-opentelemetry-collector"]
+ENTRYPOINT ["/swi-otelcol"]
 
