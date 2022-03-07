@@ -9,8 +9,15 @@ RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.45.0
 WORKDIR /src
 RUN CGO_ENABLED=0 /go/bin/builder --config ./nighthawk-swi-opentelemetry-collector.yaml --output-path ./
 
-FROM alpine@sha256:e7d88de73db3d3fd9b2d63aa7f447a10fd0220b7cbf39803c803f2af9ba256b3
+FROM alpine:latest as prep
+RUN apk --update add ca-certificates
 
+FROM scratch
+
+ARG USER_UID=10001
+USER ${USER_UID}
+
+COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /src/nighthawk-swi-opentelemetry-collector /swi-otelcol
 
 ENTRYPOINT ["/swi-otelcol"]
