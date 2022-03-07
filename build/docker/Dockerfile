@@ -18,7 +18,7 @@ ARG USER_UID=10001
 USER ${USER_UID}
 
 COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /src/nighthawk-swi-opentelemetry-collector /nighthawk-swi-opentelemetry-collector
+COPY --from=builder /src/nighthawk-swi-opentelemetry-collector /swi-otelcol
 
-ENTRYPOINT ["/nighthawk-swi-opentelemetry-collector"]
+ENTRYPOINT ["/swi-otelcol"]
 
