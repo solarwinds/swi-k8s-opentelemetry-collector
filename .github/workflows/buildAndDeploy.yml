@@ -55,7 +55,7 @@ jobs:
 
       - name: Capture Otel logs
         uses: actions/upload-artifact@v2
-        if: always() && hashFiles('OtelLogs') != '' # test existance of some report in `OtelLogs` folder
+        if: failure() && hashFiles('OtelLogs') != '' # test existance of some report in `OtelLogs` folder
         with:
           name: OtelLogs
           path: OtelLogs/
