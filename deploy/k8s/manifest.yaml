@@ -27,6 +27,7 @@ data:
       health_check: {}
       memory_ballast:
         size_mib: "204"
+
     processors:
       memory_limiter:
         check_interval: 5s
@@ -38,6 +39,167 @@ data:
             match_type: regexp
             action: update
             new_name: k8s.$${1}
+          - include: k8s.kube_namespace_status_phase
+            action: update
+            operations:
+              - action: update_label
+                label: phase
+                new_label: swi.k8s.namespace.status
+          - include: k8s.kube_pod_status_phase
+            action: update
+            operations:
+              - action: update_label
+                label: phase
+                new_label: swi.k8s.pod.status
+      groupbyattrs:
+        keys:
+          - node
+          - exported_node
+          - kubelet_version
+          - provider_id
+          - os_image
+          - exported_namespace
+          - pod
+          - uid
+          - pod_ip
+          - host_ip
+          - created_by_kind
+          - created_by_name
+          - host_network
+          - priority_class
+          - container_id
+          - container
+          - image
+          - image_id
+          - swi.k8s.pod.status
+          - swi.k8s.namespace.status
+      resource:
+        attributes:
+        # Remove useless attributes
+        - key: service.name
+          action: delete
+
+        - key: host.name
+          action: delete
+
+        - key: port
+          action: delete
+
+        - key: scheme
+          action: delete
+
+        # Node
+        - key: k8s.node.name
+          from_attribute: node
+          action: insert
+        - key: node
+          action: delete
+
+        - key: k8s.node.name
+          from_attribute: exported_node
+          action: upsert
+        - key: exported_node
+          action: delete
+
+        - key: swi.k8s.node.version
+          from_attribute: kubelet_version
+          action: insert
+        - key: kubelet_version
+          action: delete
+
+        - key: swi.k8s.node.provider.id
+          from_attribute: provider_id
+          action: insert
+        - key: provider_id
+          action: delete
+
+        - key: swi.k8s.node.os.image
+          from_attribute: os_image
+          action: insert
+        - key: os_image
+          action: delete
+
+        # Namespace
+        - key: k8s.namespace.name
+          from_attribute: exported_namespace
+          action: insert
+        - key: exported_namespace
+          action: delete
+
+        # Pod
+        - key: k8s.pod.name
+          from_attribute: pod
+          action: insert
+        - key: pod
+          action: delete
+
+        - key: k8s.pod.uid
+          from_attribute: uid
+          action: insert
+        - key: uid
+          action: delete
+
+        - key: swi.k8s.pod.ip
+          from_attribute: pod_ip
+          action: insert
+        - key: pod_ip
+          action: delete
+
+        - key: swi.k8s.pod.host.ip
+          from_attribute: host_ip
+          action: insert
+        - key: host_ip
+          action: delete
+
+        - key: swi.k8s.pod.createdby.kind
+          from_attribute: created_by_kind
+          action: insert
+        - key: created_by_kind
+          action: delete
+
+        - key: swi.k8s.pod.createdby.name
+          from_attribute: created_by_name
+          action: insert
+        - key: created_by_name
+          action: delete
+
+        - key: swi.k8s.pod.host.network
+          from_attribute: host_network
+          action: insert
+        - key: host_network
+          action: delete
+
+        - key: swi.k8s.pod.priority_class
+          from_attribute: priority_class
+          action: insert
+        - key: priority_class
+          action: delete
+        
+        # Container
+        - key: k8s.container.id
+          from_attribute: container_id
+          action: insert
+        - key: container_id
+          action: delete
+
+        - key: k8s.container.name
+          from_attribute: container
+          action: insert
+        - key: container
+          action: delete
+
+        - key: k8s.container.image.id
+          from_attribute: image_id
+          action: insert
+        - key: image_id
+          action: delete
+
+        - key: k8s.container.image.name
+          from_attribute: image
+          action: insert
+        - key: image
+          action: delete
+
       batch:
         send_batch_size: 8192
         send_batch_max_size: 8192
@@ -80,6 +242,8 @@ data:
           - otlp
           processors:
           - metricstransform
+          - groupbyattrs
+          - resource
           - memory_limiter
           - batch
           receivers:
