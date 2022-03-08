@@ -38,6 +38,20 @@ data:
             match_type: regexp
             action: update
             new_name: k8s.$${1}
+          - include: ^(.*)$$
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: cluster_name
+                new_value: ${CLUSTER_NAME}
+          - include: ^(.*)$$
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: cluster_uid
+                new_value: ${CLUSTER_UID}
       batch:
         send_batch_size: 8192
         send_batch_max_size: 8192
@@ -112,37 +126,39 @@ spec:
         component: standalone-collector
     spec:
       serviceAccountName: swi-opentelemetry-collector
-      securityContext:
-        {}
+      securityContext: {}
       containers:
         - name: opentelemetry-collector
           command:
             - /otelcol-contrib
             - --config=/conf/relay.yaml
-          securityContext:
-            {}
+          securityContext: {}
           image: "otel/opentelemetry-collector-contrib:0.43.0"
           imagePullPolicy: IfNotPresent
           env:
-          - name: MY_POD_IP
-            valueFrom:
-              fieldRef:
-                apiVersion: v1
-                fieldPath: status.podIP
-          - name: SOLARWINDS_API_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: solarwinds-api-token
-                key: SOLARWINDS_API_TOKEN
-                optional: true
-          - name: PROMETHEUS_URL
-            value: "prometheus-server.monitoring.svc.cluster.local:80"
-          - name: OTEL_ENVOY_ADDRESS
-            value: "otel-collector.st-nighthawk.solarwinds.cloud:443"
-          - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
-            value: "false"
-          - name: SCRAPE_INTERVAL
-            value: "60s"
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+            - name: PROMETHEUS_URL
+              value: "prometheus-server.monitoring.svc.cluster.local:80"
+            - name: OTEL_ENVOY_ADDRESS
+              value: "otel-collector.st-nighthawk.solarwinds.cloud:443"
+            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
+              value: "false"
+            - name: SCRAPE_INTERVAL
+              value: "60s"
+            - name: CLUSTER_NAME
+              value: "cluster name"
+            - name: CLUSTER_UID
+              value: "cluster-uid-123456789"
           livenessProbe:
             httpGet:
               path: /
@@ -165,4 +181,3 @@ spec:
             items:
               - key: relay
                 path: relay.yaml
-
