@@ -39,13 +39,6 @@ data:
             match_type: regexp
             action: update
             new_name: k8s.$${1}
-            operations:
-              - action: add_label
-                new_label: cluster_name
-                new_value: ${CLUSTER_NAME}
-              - action: add_label
-                new_label: cluster_uid
-                new_value: ${CLUSTER_UID}
           - include: k8s.kube_namespace_status_phase
             action: update
             operations:
@@ -94,6 +87,15 @@ data:
 
         - key: scheme
           action: delete
+
+        # Cluster
+        - key: swi.k8s.cluster.uid
+          value: ${CLUSTER_UID}
+          action: insert
+
+        - key: swi.k8s.cluster.name
+          value: ${CLUSTER_NAME}
+          action: insert
 
         # Node
         - key: k8s.node.name
