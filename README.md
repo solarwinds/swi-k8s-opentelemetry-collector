@@ -26,7 +26,13 @@ kubectl create secret generic solarwinds-api-token -n <CHOSEN NAMESPACE> --from-
 ```
 
 3. Adjust Prometheus instance(s) in the manifest (look for `PROMETHEUS_URL` in the manifest or in case of multiple instances adjust OtelCollector configuration in `receivers` -> `prometheus` -> `config` -> `scrape_configs` -> `job_name: prometheus` -> `static_configs` -> `targets`)
-4. Deploy the manifest
+4. Set current active namespace to namespace from step 1
+
+```
+kubectl config set-context --current --namespace=<insert-namespace-name-here>
+```
+
+5. Deploy the manifest
 
 ```
 kubectl apply -f deploy/k8s/manifest.yaml
