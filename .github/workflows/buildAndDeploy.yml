@@ -7,14 +7,21 @@ on:
   pull_request:
     branches: [master]
 
+  release:
+    types: [published]
+
   workflow_dispatch:
 
+env:
+  ECR_REPO: 377069709311.dkr.ecr.us-east-1.amazonaws.com
+  ECR_IMAGE: solarwinds/nighthawk-im-k8s-monitor
+  DOCKERHUB_IMAGE: solarwinds/swi-opentelemetry-collector
+
 jobs:
-  build-and-test:
+  build_and_test:
     runs-on: ubuntu-latest
-    env:
-      ECR_REPO: 377069709311.dkr.ecr.us-east-1.amazonaws.com
-      ECR_IMAGE: common/nighthawk_swi_opentelemetry_collector
+    outputs:
+      ecr_image_tag: ${{ steps.generate-tag.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -62,36 +69,82 @@ jobs:
           retention-days: 30
 
       - name: Tag images
+        if: github.ref == 'refs/heads/master'
         run: |
           docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
           docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
+  
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
+          role-duration-seconds: 3600
 
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   if: github.ref == 'refs/heads/main'
-      #   with:
-      #     aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: us-east-1
-      #     role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
-      #     role-duration-seconds: 3600
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          registries: ${{ secrets.EKS_REGISTRY }}
+      
+      - name: Docker login
+        if: github.ref == 'refs/heads/master'
+        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
 
-      # - name: Login to Amazon ECR
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v1
-      #   if: github.ref == 'refs/heads/main'
-      #   with:
-      #     registries: ${{ secrets.EKS_REGISTRY }}
+      - name: Push as specific
+        if: github.ref == 'refs/heads/master'
+        run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
 
-      # - name: Docker login
-      #   if: github.ref == 'refs/heads/main'
-      #   run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
+      - name: Push as latest
+        if: github.ref == 'refs/heads/master'
+        run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
 
-      # TODO: Uncomment when ECR repository is ready
-      # - name: Push as specific
-      #   if: github.ref == 'refs/heads/main'
-      #   run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
+  deploy_dockerhub:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    name: Deploy to docker hub
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment:
+      name: production
+      url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
+          role-duration-seconds: 3600
 
-      # - name: Push as latest
-      #   if: github.ref == 'refs/heads/main'
-      #   run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registries: ${{ secrets.EKS_REGISTRY }}
+
+      - name: Docker login to ECR
+        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Get image tag
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+
+      - name: Tag images
+        run: |
+          docker pull ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ needs.build_and_test.outputs.ecr_image_tag }}
+          docker tag ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ needs.build_and_test.outputs.ecr_image_tag }} ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}
+          docker tag ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ needs.build_and_test.outputs.ecr_image_tag }} ${{ env.DOCKERHUB_IMAGE }}:latest
+
+      - name: Docker login
+        run: echo "$DOCKER_HUB_CI_PASSWORD" | docker login -u "$DOCKER_HUB_CI_USER" --password-stdin
+
+      - name: Push as specific
+        run: docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}
+
+      - name: Push as latest
+        run: docker push ${{ env.DOCKERHUB_IMAGE }}:latest

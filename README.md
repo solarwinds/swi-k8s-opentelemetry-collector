@@ -56,3 +56,13 @@ That will:
 Possible issues:
 
 - if you get error like `Error: INSTALLATION FAILED: failed to download https://github.com/prometheus-community/helm-charts...`, you need to update helm repo: `helm repo update`
+
+## Publishing
+customized Otel Collector image is getting published to https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector 
+
+Steps to publish new version:
+* Create GitHub release selecting the Tag/branch you want to release with description of changes
+  * use tag in semver format, it is the tag which Docker hub image will have publicly
+  * publish release
+* GitHub action will be triggered that will build the release and wait for publish approval
+* after CODEOWNERS approve it, it will be published to Dockerhub public repository
