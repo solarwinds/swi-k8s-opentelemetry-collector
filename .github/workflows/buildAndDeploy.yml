@@ -69,14 +69,14 @@ jobs:
           retention-days: 30
 
       - name: Tag images
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
         run: |
           docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
           docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
   
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
         with:
           aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
@@ -87,16 +87,16 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
         with:
           registries: ${{ secrets.EKS_REGISTRY }}
       
       - name: Docker login
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
         run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
 
       - name: Push as specific
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
         run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
 
       - name: Push as latest
