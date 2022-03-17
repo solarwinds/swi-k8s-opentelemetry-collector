@@ -44,13 +44,13 @@ data:
             operations:
               - action: update_label
                 label: phase
-                new_label: swi.k8s.namespace.status
+                new_label: sw.k8s.namespace.status
           - include: k8s.kube_pod_status_phase
             action: update
             operations:
               - action: update_label
                 label: phase
-                new_label: swi.k8s.pod.status
+                new_label: sw.k8s.pod.status
       groupbyattrs:
         keys:
           - node
@@ -71,8 +71,8 @@ data:
           - container
           - image
           - image_id
-          - swi.k8s.pod.status
-          - swi.k8s.namespace.status
+          - sw.k8s.pod.status
+          - sw.k8s.namespace.status
       resource:
         attributes:
         # Remove useless attributes
@@ -89,11 +89,11 @@ data:
           action: delete
 
         # Cluster
-        - key: swi.k8s.cluster.uid
+        - key: sw.k8s.cluster.uid
           value: ${CLUSTER_UID}
           action: insert
 
-        - key: swi.k8s.cluster.name
+        - key: sw.k8s.cluster.name
           value: ${CLUSTER_NAME}
           action: insert
 
@@ -110,19 +110,19 @@ data:
         - key: exported_node
           action: delete
 
-        - key: swi.k8s.node.version
+        - key: sw.k8s.node.version
           from_attribute: kubelet_version
           action: insert
         - key: kubelet_version
           action: delete
 
-        - key: swi.k8s.node.provider.id
+        - key: sw.k8s.node.provider.id
           from_attribute: provider_id
           action: insert
         - key: provider_id
           action: delete
 
-        - key: swi.k8s.node.os.image
+        - key: sw.k8s.node.os.image
           from_attribute: os_image
           action: insert
         - key: os_image
@@ -148,37 +148,37 @@ data:
         - key: uid
           action: delete
 
-        - key: swi.k8s.pod.ip
+        - key: sw.k8s.pod.ip
           from_attribute: pod_ip
           action: insert
         - key: pod_ip
           action: delete
 
-        - key: swi.k8s.pod.host.ip
+        - key: sw.k8s.pod.host.ip
           from_attribute: host_ip
           action: insert
         - key: host_ip
           action: delete
 
-        - key: swi.k8s.pod.createdby.kind
+        - key: sw.k8s.pod.createdby.kind
           from_attribute: created_by_kind
           action: insert
         - key: created_by_kind
           action: delete
 
-        - key: swi.k8s.pod.createdby.name
+        - key: sw.k8s.pod.createdby.name
           from_attribute: created_by_name
           action: insert
         - key: created_by_name
           action: delete
 
-        - key: swi.k8s.pod.host.network
+        - key: sw.k8s.pod.host.network
           from_attribute: host_network
           action: insert
         - key: host_network
           action: delete
 
-        - key: swi.k8s.pod.priority_class
+        - key: sw.k8s.pod.priority_class
           from_attribute: priority_class
           action: insert
         - key: priority_class
