@@ -141,6 +141,9 @@ jobs:
           docker tag ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ needs.build_and_test.outputs.ecr_image_tag }} ${{ env.DOCKERHUB_IMAGE }}:latest
 
       - name: Docker login
+        env:
+          DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
+          DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
         run: echo "$DOCKER_HUB_CI_PASSWORD" | docker login -u "$DOCKER_HUB_CI_USER" --password-stdin
 
       - name: Push as specific
