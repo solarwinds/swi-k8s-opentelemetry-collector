@@ -93,7 +93,7 @@ data:
           value: ${CLUSTER_UID}
           action: insert
 
-        - key: sw.k8s.cluster.name
+        - key: k8s.cluster.name
           value: ${CLUSTER_NAME}
           action: insert
 
@@ -289,7 +289,7 @@ spec:
       containers:
         - name: opentelemetry-collector
           command:
-            - /otelcol-contrib
+            - /swi-otelcol
             - --config=/conf/relay.yaml
           securityContext: {}
           image: "solarwinds/swi-opentelemetry-collector:latest"
@@ -309,7 +309,7 @@ spec:
             - name: PROMETHEUS_URL
               value: "prometheus-server.monitoring.svc.cluster.local:80"
             - name: OTEL_ENVOY_ADDRESS
-              value: "otel-collector.st-nighthawk.solarwinds.cloud:443"
+              value: "otel-collector.dc-01.st-ssp.solarwinds.com:443"
             - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
               value: "false"
             - name: SCRAPE_INTERVAL
