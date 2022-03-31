@@ -21,20 +21,20 @@ Components that are being deployed:
 1. First decide to which namespace you want to deploy the manifest. It is recommended to deploy them to the same namespace where you Prometheus instance is deployed.
 2. Store API Token to kubernetes secret called `solarwinds-api-token` (Get the token from `Settings` -> `API Tokens` -> `Create API Token` and select `Ingestion` Type)
 
-```bash
+```shell
 kubectl create secret generic solarwinds-api-token -n <CHOSEN NAMESPACE> --from-literal=SOLARWINDS_API_TOKEN=<REPLACE WITH TOKEN>
 ```
 
 3. Adjust Prometheus instance(s) in the manifest (look for `PROMETHEUS_URL` in the manifest or in case of multiple instances adjust OtelCollector configuration in `receivers` -> `prometheus` -> `config` -> `scrape_configs` -> `job_name: prometheus` -> `static_configs` -> `targets`)
 4. Set current active namespace to namespace from step 1
 
-```
+```shell
 kubectl config set-context --current --namespace=<insert-namespace-name-here>
 ```
 
 5. Deploy the manifest
 
-```
+```shell
 kubectl apply -f deploy/k8s/manifest.yaml
 ```
 
@@ -62,6 +62,18 @@ That will:
 Possible issues:
 
 - if you get error like `Error: INSTALLATION FAILED: failed to download https://github.com/prometheus-community/helm-charts...`, you need to update helm repo: `helm repo update`
+- if you get error like
+
+  ```text
+  ...Unable to get an update from the "stable" chart repository (https://kubernetes-charts.storage.googleapis.com/):
+          failed to fetch https://kubernetes-charts.storage.googleapis.com/index.yaml : 403 Forbidden
+  ```
+
+  you need to update path to a helm repository:
+
+  ```shell
+  helm repo add "stable" "https://charts.helm.sh/stable" --force-update
+  ```
 
 ## Publishing
 customized Otel Collector image is getting published to https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector 
