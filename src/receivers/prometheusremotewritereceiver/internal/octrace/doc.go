@@ -12,5 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package opencensusreceiver receives OpenCensus traces.
-package prometheusremotewritereceiver // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver"
+// Package octrace is the logic for receiving OpenCensus trace protobuf defined spans from
+// already instrumented applications and then passing them onto a TracesReceiverSink instance.
+package octrace // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver/internal/octrace"

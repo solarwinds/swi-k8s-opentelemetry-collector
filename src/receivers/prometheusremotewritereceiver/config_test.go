@@ -21,11 +21,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configgrpc"
-	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/config/confignet"
 	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/service/servicetest"
@@ -42,186 +40,116 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	assert.Equal(t, len(cfg.Receivers), 12)
+	assert.Equal(t, len(cfg.Receivers), 7)
 
-	assert.Equal(t, cfg.Receivers[config.NewComponentID(typeStr)], factory.CreateDefaultConfig())
+	r0 := cfg.Receivers[config.NewComponentID(typeStr)]
+	assert.Equal(t, r0, factory.CreateDefaultConfig())
 
-	defaultOnlyGRPC := factory.CreateDefaultConfig().(*Config)
-	defaultOnlyGRPC.SetIDName("only_grpc")
-	defaultOnlyGRPC.HTTP = nil
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "only_grpc")], defaultOnlyGRPC)
-
-	defaultOnlyHTTP := factory.CreateDefaultConfig().(*Config)
-	defaultOnlyHTTP.SetIDName("only_http")
-	defaultOnlyHTTP.GRPC = nil
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "only_http")], defaultOnlyHTTP)
-
-	defaultOnlyHTTPNull := factory.CreateDefaultConfig().(*Config)
-	defaultOnlyHTTPNull.SetIDName("only_http_null")
-	defaultOnlyHTTPNull.GRPC = nil
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "only_http_null")], defaultOnlyHTTPNull)
-
-	defaultOnlyHTTPEmptyMap := factory.CreateDefaultConfig().(*Config)
-	defaultOnlyHTTPEmptyMap.SetIDName("only_http_empty_map")
-	defaultOnlyHTTPEmptyMap.GRPC = nil
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "only_http_empty_map")], defaultOnlyHTTPEmptyMap)
-
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "customname")],
+	r1 := cfg.Receivers[config.NewComponentIDWithName(typeStr, "customname")].(*Config)
+	assert.Equal(t, r1,
 		&Config{
 			ReceiverSettings: config.NewReceiverSettings(config.NewComponentIDWithName(typeStr, "customname")),
-			Protocols: Protocols{
-				GRPC: &configgrpc.GRPCServerSettings{
-					NetAddr: confignet.NetAddr{
-						Endpoint:  "localhost:9090",
-						Transport: "tcp",
-					},
-					ReadBufferSize: 512 * 1024,
+			GRPCServerSettings: configgrpc.GRPCServerSettings{
+				NetAddr: confignet.NetAddr{
+					Endpoint:  "0.0.0.0:9090",
+					Transport: "tcp",
 				},
+				ReadBufferSize: 512 * 1024,
 			},
 		})
 
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "keepalive")],
+	r2 := cfg.Receivers[config.NewComponentIDWithName(typeStr, "keepalive")].(*Config)
+	assert.Equal(t, r2,
 		&Config{
 			ReceiverSettings: config.NewReceiverSettings(config.NewComponentIDWithName(typeStr, "keepalive")),
-			Protocols: Protocols{
-				GRPC: &configgrpc.GRPCServerSettings{
-					NetAddr: confignet.NetAddr{
-						Endpoint:  "0.0.0.0:4317",
-						Transport: "tcp",
+			GRPCServerSettings: configgrpc.GRPCServerSettings{
+				NetAddr: confignet.NetAddr{
+					Endpoint:  "0.0.0.0:55678",
+					Transport: "tcp",
+				},
+				ReadBufferSize: 512 * 1024,
+				Keepalive: &configgrpc.KeepaliveServerConfig{
+					ServerParameters: &configgrpc.KeepaliveServerParameters{
+						MaxConnectionIdle:     11 * time.Second,
+						MaxConnectionAge:      12 * time.Second,
+						MaxConnectionAgeGrace: 13 * time.Second,
+						Time:                  30 * time.Second,
+						Timeout:               5 * time.Second,
 					},
-					ReadBufferSize: 512 * 1024,
-					Keepalive: &configgrpc.KeepaliveServerConfig{
-						ServerParameters: &configgrpc.KeepaliveServerParameters{
-							MaxConnectionIdle:     11 * time.Second,
-							MaxConnectionAge:      12 * time.Second,
-							MaxConnectionAgeGrace: 13 * time.Second,
-							Time:                  30 * time.Second,
-							Timeout:               5 * time.Second,
-						},
-						EnforcementPolicy: &configgrpc.KeepaliveEnforcementPolicy{
-							MinTime:             10 * time.Second,
-							PermitWithoutStream: true,
-						},
+					EnforcementPolicy: &configgrpc.KeepaliveEnforcementPolicy{
+						MinTime:             10 * time.Second,
+						PermitWithoutStream: true,
 					},
 				},
 			},
 		})
 
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "msg-size-conc-connect-max-idle")],
+	r3 := cfg.Receivers[config.NewComponentIDWithName(typeStr, "msg-size-conc-connect-max-idle")].(*Config)
+	assert.Equal(t, r3,
 		&Config{
 			ReceiverSettings: config.NewReceiverSettings(config.NewComponentIDWithName(typeStr, "msg-size-conc-connect-max-idle")),
-			Protocols: Protocols{
-				GRPC: &configgrpc.GRPCServerSettings{
-					NetAddr: confignet.NetAddr{
-						Endpoint:  "0.0.0.0:4317",
-						Transport: "tcp",
-					},
-					MaxRecvMsgSizeMiB:    32,
-					MaxConcurrentStreams: 16,
-					ReadBufferSize:       1024,
-					WriteBufferSize:      1024,
-					Keepalive: &configgrpc.KeepaliveServerConfig{
-						ServerParameters: &configgrpc.KeepaliveServerParameters{
-							MaxConnectionIdle: 10 * time.Second,
-						},
+			GRPCServerSettings: configgrpc.GRPCServerSettings{
+				NetAddr: confignet.NetAddr{
+					Endpoint:  "0.0.0.0:55678",
+					Transport: "tcp",
+				},
+				MaxRecvMsgSizeMiB:    32,
+				MaxConcurrentStreams: 16,
+				ReadBufferSize:       1024,
+				WriteBufferSize:      1024,
+				Keepalive: &configgrpc.KeepaliveServerConfig{
+					ServerParameters: &configgrpc.KeepaliveServerParameters{
+						MaxConnectionIdle: 10 * time.Second,
 					},
 				},
 			},
 		})
 
-	// NOTE: Once the config loader checks for the files existence, this test may fail and require
+	// TODO(ccaraman): Once the config loader checks for the files existence, this test may fail and require
 	// 	use of fake cert/key for test purposes.
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "tlscredentials")],
+	r4 := cfg.Receivers[config.NewComponentIDWithName(typeStr, "tlscredentials")].(*Config)
+	assert.Equal(t, r4,
 		&Config{
 			ReceiverSettings: config.NewReceiverSettings(config.NewComponentIDWithName(typeStr, "tlscredentials")),
-			Protocols: Protocols{
-				GRPC: &configgrpc.GRPCServerSettings{
-					NetAddr: confignet.NetAddr{
-						Endpoint:  "0.0.0.0:4317",
-						Transport: "tcp",
-					},
-					TLSSetting: &configtls.TLSServerSetting{
-						TLSSetting: configtls.TLSSetting{
-							CertFile: "test.crt",
-							KeyFile:  "test.key",
-						},
-					},
-					ReadBufferSize: 512 * 1024,
+			GRPCServerSettings: configgrpc.GRPCServerSettings{
+				NetAddr: confignet.NetAddr{
+					Endpoint:  "0.0.0.0:55678",
+					Transport: "tcp",
 				},
-				HTTP: &confighttp.HTTPServerSettings{
-					Endpoint: "0.0.0.0:4318",
-					TLSSetting: &configtls.TLSServerSetting{
-						TLSSetting: configtls.TLSSetting{
-							CertFile: "test.crt",
-							KeyFile:  "test.key",
-						},
+				ReadBufferSize: 512 * 1024,
+				TLSSetting: &configtls.TLSServerSetting{
+					TLSSetting: configtls.TLSSetting{
+						CertFile: "test.crt",
+						KeyFile:  "test.key",
 					},
 				},
 			},
 		})
 
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "cors")],
+	r5 := cfg.Receivers[config.NewComponentIDWithName(typeStr, "cors")].(*Config)
+	assert.Equal(t, r5,
 		&Config{
 			ReceiverSettings: config.NewReceiverSettings(config.NewComponentIDWithName(typeStr, "cors")),
-			Protocols: Protocols{
-				HTTP: &confighttp.HTTPServerSettings{
-					Endpoint: "0.0.0.0:4318",
-					CORS: &confighttp.CORSSettings{
-						AllowedOrigins: []string{"https://*.test.com", "https://test.com"},
-						MaxAge:         7200,
-					},
+			GRPCServerSettings: configgrpc.GRPCServerSettings{
+				NetAddr: confignet.NetAddr{
+					Endpoint:  "0.0.0.0:55678",
+					Transport: "tcp",
 				},
+				ReadBufferSize: 512 * 1024,
 			},
+			CorsOrigins: []string{"https://*.test.com", "https://test.com"},
 		})
 
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "corsheader")],
-		&Config{
-			ReceiverSettings: config.NewReceiverSettings(config.NewComponentIDWithName(typeStr, "corsheader")),
-			Protocols: Protocols{
-				HTTP: &confighttp.HTTPServerSettings{
-					Endpoint: "0.0.0.0:4318",
-					CORS: &confighttp.CORSSettings{
-						AllowedOrigins: []string{"https://*.test.com", "https://test.com"},
-						AllowedHeaders: []string{"ExampleHeader"},
-					},
-				},
-			},
-		})
-
-	assert.Equal(t, cfg.Receivers[config.NewComponentIDWithName(typeStr, "uds")],
+	r6 := cfg.Receivers[config.NewComponentIDWithName(typeStr, "uds")].(*Config)
+	assert.Equal(t, r6,
 		&Config{
 			ReceiverSettings: config.NewReceiverSettings(config.NewComponentIDWithName(typeStr, "uds")),
-			Protocols: Protocols{
-				GRPC: &configgrpc.GRPCServerSettings{
-					NetAddr: confignet.NetAddr{
-						Endpoint:  "/tmp/grpc_otlp.sock",
-						Transport: "unix",
-					},
-					ReadBufferSize: 512 * 1024,
+			GRPCServerSettings: configgrpc.GRPCServerSettings{
+				NetAddr: confignet.NetAddr{
+					Endpoint:  "/tmp/opencensus.sock",
+					Transport: "unix",
 				},
-				HTTP: &confighttp.HTTPServerSettings{
-					Endpoint: "/tmp/http_otlp.sock",
-					// Transport: "unix",
-				},
+				ReadBufferSize: 512 * 1024,
 			},
 		})
-}
-
-func TestFailedLoadConfig(t *testing.T) {
-	factories, err := componenttest.NopFactories()
-	assert.NoError(t, err)
-
-	factory := NewFactory()
-	factories.Receivers[typeStr] = factory
-	_, err = servicetest.LoadConfigAndValidate(filepath.Join("testdata", "typo_default_proto_config.yaml"), factories)
-	assert.EqualError(t, err, "error reading receivers configuration for \"otlp\": 1 error(s) decoding:\n\n* 'protocols' has invalid keys: htttp")
-
-	_, err = servicetest.LoadConfigAndValidate(filepath.Join("testdata", "bad_proto_config.yaml"), factories)
-	assert.EqualError(t, err, "error reading receivers configuration for \"otlp\": 1 error(s) decoding:\n\n* 'protocols' has invalid keys: thrift")
-
-	_, err = servicetest.LoadConfigAndValidate(filepath.Join("testdata", "bad_no_proto_config.yaml"), factories)
-	assert.EqualError(t, err, "receiver \"otlp\" has invalid configuration: must specify at least one protocol when using the OTLP receiver")
-
-	_, err = servicetest.LoadConfigAndValidate(filepath.Join("testdata", "bad_empty_config.yaml"), factories)
-	assert.EqualError(t, err, "error reading receivers configuration for \"otlp\": empty config for OTLP receiver")
 }

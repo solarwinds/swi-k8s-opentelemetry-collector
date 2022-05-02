@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package prometheusremotewritereceiver
+package prometheusremotewritereceiver // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver"
 
 import (
 	"context"
@@ -20,104 +20,81 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configgrpc"
-	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/config/confignet"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/internal/sharedcomponent"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/sharedcomponent"
 )
 
-const (
-	typeStr = "otlp"
+const typeStr = "opencensus"
 
-	defaultGRPCEndpoint = "0.0.0.0:4317"
-	defaultHTTPEndpoint = "0.0.0.0:4318"
-)
-
-// NewFactory creates a new OTLP receiver factory.
+// NewFactory creates a new OpenCensus receiver factory.
 func NewFactory() component.ReceiverFactory {
 	return component.NewReceiverFactory(
 		typeStr,
 		createDefaultConfig,
 		component.WithTracesReceiver(createTracesReceiver),
-		component.WithMetricsReceiver(createMetricsReceiver),
-		component.WithLogsReceiver(createLogReceiver))
+		component.WithMetricsReceiver(createMetricsReceiver))
 }
 
-// createDefaultConfig creates the default configuration for receiver.
 func createDefaultConfig() config.Receiver {
 	return &Config{
 		ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
-		Protocols: Protocols{
-			GRPC: &configgrpc.GRPCServerSettings{
-				NetAddr: confignet.NetAddr{
-					Endpoint:  defaultGRPCEndpoint,
-					Transport: "tcp",
-				},
-				// We almost write 0 bytes, so no need to tune WriteBufferSize.
-				ReadBufferSize: 512 * 1024,
+		GRPCServerSettings: configgrpc.GRPCServerSettings{
+			NetAddr: confignet.NetAddr{
+				Endpoint:  "0.0.0.0:55678",
+				Transport: "tcp",
 			},
-			HTTP: &confighttp.HTTPServerSettings{
-				Endpoint: defaultHTTPEndpoint,
-			},
+			// We almost write 0 bytes, so no need to tune WriteBufferSize.
+			ReadBufferSize: 512 * 1024,
 		},
 	}
 }
 
-// CreateTracesReceiver creates a  trace receiver based on provided config.
 func createTracesReceiver(
 	_ context.Context,
 	set component.ReceiverCreateSettings,
 	cfg config.Receiver,
 	nextConsumer consumer.Traces,
 ) (component.TracesReceiver, error) {
+	var err error
 	r := receivers.GetOrAdd(cfg, func() component.Component {
-		return newOtlpReceiver(cfg.(*Config), set)
+		rCfg := cfg.(*Config)
+		var recv *ocReceiver
+		recv, err = newOpenCensusReceiver(rCfg.ID(), rCfg.NetAddr.Transport, rCfg.NetAddr.Endpoint, nil, nil, set, rCfg.buildOptions()...)
+		return recv
 	})
-
-	if err := r.Unwrap().(*otlpReceiver).registerTraceConsumer(nextConsumer); err != nil {
+	if err != nil {
 		return nil, err
 	}
+	r.Unwrap().(*ocReceiver).traceConsumer = nextConsumer
+
 	return r, nil
 }
 
-// CreateMetricsReceiver creates a metrics receiver based on provided config.
 func createMetricsReceiver(
 	_ context.Context,
 	set component.ReceiverCreateSettings,
 	cfg config.Receiver,
-	consumer consumer.Metrics,
+	nextConsumer consumer.Metrics,
 ) (component.MetricsReceiver, error) {
+	var err error
 	r := receivers.GetOrAdd(cfg, func() component.Component {
-		return newOtlpReceiver(cfg.(*Config), set)
+		rCfg := cfg.(*Config)
+		var recv *ocReceiver
+		recv, err = newOpenCensusReceiver(rCfg.ID(), rCfg.NetAddr.Transport, rCfg.NetAddr.Endpoint, nil, nil, set, rCfg.buildOptions()...)
+		return recv
 	})
-
-	if err := r.Unwrap().(*otlpReceiver).registerMetricsConsumer(consumer); err != nil {
+	if err != nil {
 		return nil, err
 	}
+	r.Unwrap().(*ocReceiver).metricsConsumer = nextConsumer
+
 	return r, nil
 }
 
-// CreateLogReceiver creates a log receiver based on provided config.
-func createLogReceiver(
-	_ context.Context,
-	set component.ReceiverCreateSettings,
-	cfg config.Receiver,
-	consumer consumer.Logs,
-) (component.LogsReceiver, error) {
-	r := receivers.GetOrAdd(cfg, func() component.Component {
-		return newOtlpReceiver(cfg.(*Config), set)
-	})
-
-	if err := r.Unwrap().(*otlpReceiver).registerLogsConsumer(consumer); err != nil {
-		return nil, err
-	}
-	return r, nil
-}
-
-// This is the map of already created OTLP receivers for particular configurations.
+// This is the map of already created OpenCensus receivers for particular configurations.
 // We maintain this map because the Factory is asked trace and metric receivers separately
 // when it gets CreateTracesReceiver() and CreateMetricsReceiver() but they must not
-// create separate objects, they must use one otlpReceiver object per configuration.
-// When the receiver is shutdown it should be removed from this map so the same configuration
-// can be recreated successfully.
+// create separate objects, they must use one ocReceiver object per configuration.
 var receivers = sharedcomponent.NewSharedComponents()

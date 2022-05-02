@@ -12,5 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package opencensusreceiver receives OpenCensus traces.
-package prometheusremotewritereceiver // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver"
+// Package ocmetrics is the logic for receiving OpenCensus metrics proto from
+// already instrumented applications and then passing them onto a metricsink instance.
+package ocmetrics // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver/internal/ocmetrics"
