@@ -17,7 +17,6 @@ package prometheusremotewritereceiver // import "github.com/open-telemetry/opent
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -28,8 +27,6 @@ import (
 
 	"go.opentelemetry.io/collector/config/confighttp"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/snappy"
 	promremote "github.com/prometheus/prometheus/storage/remote"
 )
 
@@ -64,10 +61,9 @@ func newMetricsReceiver(ctx context.Context,
 		settings: params,
 	}
 
-	/*
-		if cfg.HTTP != nil {
-			r.httpMux = http.NewServeMux()
-		}*/
+	if config.HTTP != nil {
+		r.httpMux = http.NewServeMux()
+	}
 
 	return r, nil
 
@@ -170,23 +166,29 @@ func (r *prometheusRemoteWriteReceiver) Shutdown(ctx context.Context) error {
 }
 
 func (r *prometheusRemoteWriteReceiver) registerMetricsConsumer(mc consumer.Metrics) error {
+	r.settings.Logger.Info("Trying to register handler")
 	if mc == nil {
 		return componenterror.ErrNilNextConsumer
 	}
 
 	//r.metricsReceiver = metrics.New(r.cfg.ID(), mc, r.settings)
 	if r.httpMux != nil {
+		r.settings.Logger.Info("Registering handler")
 		r.httpMux.HandleFunc("/receive", func(resp http.ResponseWriter, req *http.Request) {
+			r.settings.Logger.Info("Received request")
+			promreq, err := promremote.DecodeWriteRequest(req.Body)
 			//ctx := context.WithValue(context.Background(), "request", r)
 
-			compressed, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				fmt.Println(err)
-				resp.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			/*
+				compressed, err := ioutil.ReadAll(req.Body)
+				if err != nil {
+					fmt.Println(err)
+					resp.WriteHeader(http.StatusInternalServerError)
+					return
+				}
 
-			data, err := processRequestData(compressed)
+				data, err := processRequestData(compressed)
+			*/
 			if err != nil {
 				fmt.Println(err)
 				resp.WriteHeader(http.StatusBadRequest)
@@ -195,7 +197,7 @@ func (r *prometheusRemoteWriteReceiver) registerMetricsConsumer(mc consumer.Metr
 
 			//convertedData := adapter.PromDataToAppOpticsMeasurements(&data)
 			//msg := fmt.Sprintf("measurements received - %d", len(convertedData))
-			fmt.Println(data)
+			fmt.Println(promreq)
 
 			/*md := req.Metrics()
 			dataPointCount := md.DataPointCount()
@@ -226,7 +228,28 @@ func (r *prometheusRemoteWriteReceiver) registerMetricsConsumer(mc consumer.Metr
 	return nil
 }
 
-func processRequestData(reqBytes []byte) (promremote.WriteRequest, error) {
+/*
+func protoToSamples(req *prompb.WriteRequest) model.Samples {
+	var samples model.Samples
+	for _, ts := range req.Timeseries {
+		metric := make(model.Metric, len(ts.Labels))
+		for _, l := range ts.Labels {
+			metric[model.LabelName(l.Name)] = model.LabelValue(l.Value)
+		}
+
+		for _, s := range ts.Samples {
+			samples = append(samples, &model.Sample{
+				Metric:    metric,
+				Value:     model.SampleValue(s.Value),
+				Timestamp: model.Time(s.Timestamp),
+			})
+		}
+	}
+	return samples
+}*/
+
+/*
+func processRequestData(reqBytes []byte) (promb.WriteRequest, error) {
 	var req promremote.WriteRequest
 	reqBuf, err := snappy.Decode(nil, reqBytes)
 	if err != nil {
@@ -238,7 +261,7 @@ func processRequestData(reqBytes []byte) (promremote.WriteRequest, error) {
 	}
 	return req, nil
 }
-
+*/
 /*
 func promDataToOtelMetrics(req *promremote.WriteRequest) (promremote.WriteRequest, error) {
 	var req promremote.WriteRequest

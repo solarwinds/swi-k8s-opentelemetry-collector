@@ -4,7 +4,7 @@ FROM ${GOLANG_IMAGE} as builder
 
 COPY /build/nighthawk-swi-opentelemetry-collector.yaml /src/nighthawk-swi-opentelemetry-collector.yaml
 
-RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.45.0
+RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.50.0
 
 WORKDIR /src
 COPY ["./src/", "./src/"]

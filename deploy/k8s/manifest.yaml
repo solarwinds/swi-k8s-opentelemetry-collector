@@ -8,6 +8,20 @@ metadata:
     app.kubernetes.io/instance: swi-opentelemetry-collector
 ---
 apiVersion: v1
+kind: Service
+metadata:
+  name: swi-opentelemetry-collector
+  labels:
+    app: swi-opentelemetry-collector
+spec:
+  selector:
+    app: swi-opentelemetry-collector
+  ports:
+    - protocol: TCP
+      port: 4318
+      targetPort: 4318
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: swi-opentelemetry-collector
