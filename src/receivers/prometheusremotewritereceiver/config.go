@@ -23,7 +23,6 @@ import (
 
 const (
 	// Protocol values.
-	protoGRPC          = "grpc"
 	protoHTTP          = "http"
 	protocolsFieldName = "protocols"
 )

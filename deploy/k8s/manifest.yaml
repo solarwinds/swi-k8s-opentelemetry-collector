@@ -15,11 +15,16 @@ metadata:
     app: swi-opentelemetry-collector
 spec:
   selector:
-    app: swi-opentelemetry-collector
+    app.kubernetes.io/name: swi-opentelemetry-collector
   ports:
     - protocol: TCP
       port: 4318
       targetPort: 4318
+      name: http1
+    - protocol: TCP
+      port: 4599
+      targetPort: 4599
+      name: http2
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -241,7 +246,7 @@ data:
       prometheusremotewrite:
         protocols:
           http:
-            endpoint: "localhost:4318"
+            endpoint: "0.0.0.0:4318"
       prometheus:
         config:
           scrape_configs:
@@ -302,19 +307,19 @@ kind: Deployment
 metadata:
   name: swi-opentelemetry-collector
   labels:
-    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/name: swi-opentelemetry-collector
     app.kubernetes.io/instance: swi-opentelemetry-collector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: opentelemetry-collector
+      app.kubernetes.io/name: swi-opentelemetry-collector
       app.kubernetes.io/instance: swi-opentelemetry-collector
       component: standalone-collector
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: opentelemetry-collector
+        app.kubernetes.io/name: swi-opentelemetry-collector
         app.kubernetes.io/instance: swi-opentelemetry-collector
         component: standalone-collector
     spec:
@@ -364,6 +369,13 @@ spec:
             limits:
               cpu: 256m
               memory: 512Mi
+          ports:
+            - name: http1
+              containerPort: 4318
+              protocol: TCP
+            - name: http2
+              containerPort: 4599
+              protocol: TCP
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap

@@ -17,6 +17,7 @@ package prometheusremotewritereceiver // import "github.com/open-telemetry/opent
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -27,6 +28,7 @@ import (
 
 	"go.opentelemetry.io/collector/config/confighttp"
 
+	"github.com/go-chi/chi"
 	promremote "github.com/prometheus/prometheus/storage/remote"
 )
 
@@ -128,7 +130,39 @@ func (r *prometheusRemoteWriteReceiver) startHTTPServer(cfg *confighttp.HTTPServ
 			host.ReportFatalError(errHTTP)
 		}
 	}()
+
+	go func() {
+		r.settings.Logger.Info("Starting HTTP server on endpoint :4599")
+		rchi := chi.NewRouter()
+
+		rchi.Post("/receive", r.receiveHandler())
+
+		http.ListenAndServe(":4599", rchi)
+	}()
+
 	return nil
+}
+
+func (r *prometheusRemoteWriteReceiver) receiveHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		r.settings.Logger.Info("Received message !!!")
+		_, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		/*
+			data, err := processRequestData(compressed)
+			if err != nil {
+				log.Error(err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}*/
+
+		// We do not want to propagate errors upstream yet
+		w.WriteHeader(http.StatusAccepted)
+	}
 }
 
 func (r *prometheusRemoteWriteReceiver) startProtocolServers(host component.Host) error {
@@ -229,7 +263,12 @@ func (r *prometheusRemoteWriteReceiver) registerMetricsConsumer(mc consumer.Metr
 }
 
 /*
-func protoToSamples(req *prompb.WriteRequest) model.Samples {
+func protoToSamples(req *prompb.WriteRequest) pmetric.Metrics {
+	md := pmetric.NewMetrics()
+	rm := md.ResourceMetrics().AppendEmpty()
+	ilm := md.ResourceMetrics().AppendEmpty().InstrumentationLibrary().AppendEmpty()
+	ilm.InstrumentationLibrary().SetName("otelcol/memcached")
+
 	var samples model.Samples
 	for _, ts := range req.Timeseries {
 		metric := make(model.Metric, len(ts.Labels))
