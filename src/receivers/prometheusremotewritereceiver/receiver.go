@@ -17,18 +17,19 @@ package prometheusremotewritereceiver // import "github.com/open-telemetry/opent
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenterror"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 
 	"go.opentelemetry.io/collector/config/confighttp"
 
-	"github.com/go-chi/chi"
+	"github.com/prometheus/prometheus/prompb"
 	promremote "github.com/prometheus/prometheus/storage/remote"
 )
 
@@ -38,8 +39,6 @@ const (
 )
 
 var (
-	//jsEncoder     = &jsonEncoder{}
-	//jsonMarshaler = &jsonpb.Marshaler{}
 	fallbackMsg = []byte(`{"code": 13, "message": "failed to marshal error message"}`)
 )
 
@@ -76,45 +75,6 @@ func (r *prometheusRemoteWriteReceiver) Start(_ context.Context, host component.
 	return r.startProtocolServers(host)
 }
 
-/*
-// processMetrics implements the ProcessMetricsFunc type.
-func (mgp *prometheusRemoteWriteReceiver) processMetrics(_ context.Context, md pdata.Metrics) (pdata.Metrics, error) {
-	resourceMetricsSlice := md.ResourceMetrics()
-
-	for i := 0; i < resourceMetricsSlice.Len(); i++ {
-		rm := resourceMetricsSlice.At(i)
-		nameToMetricMap := getNameToMetricMap(rm)
-		fmt.Println("Processing metric")
-
-		for _, rule := range mgp.rules {
-			operand2 := float64(0)
-			_, ok := nameToMetricMap[rule.metric1]
-			if !ok {
-				fmt.Println("Missing first metric", zap.String("metric_name", rule.metric1))
-				continue
-			}
-
-			if rule.ruleType == string(calculate) {
-				metric2, ok := nameToMetricMap[rule.metric2]
-				if !ok {
-					fmt.Println("Missing second metric", zap.String("metric_name", rule.metric2))
-					continue
-				}
-				operand2 = getMetricValue(metric2)
-				if operand2 <= 0 {
-					continue
-				}
-
-			} else if rule.ruleType == string(scale) {
-				operand2 = rule.scaleBy
-			}
-			generateMetrics(rm, operand2, rule, mgp.logger)
-		}
-	}
-	return md, nil
-}
-*/
-
 func (r *prometheusRemoteWriteReceiver) startHTTPServer(cfg *confighttp.HTTPServerSettings, host component.Host) error {
 	r.settings.Logger.Info("Starting HTTP server on endpoint " + cfg.Endpoint)
 	var hln net.Listener
@@ -131,38 +91,7 @@ func (r *prometheusRemoteWriteReceiver) startHTTPServer(cfg *confighttp.HTTPServ
 		}
 	}()
 
-	go func() {
-		r.settings.Logger.Info("Starting HTTP server on endpoint :4599")
-		rchi := chi.NewRouter()
-
-		rchi.Post("/receive", r.receiveHandler())
-
-		http.ListenAndServe(":4599", rchi)
-	}()
-
 	return nil
-}
-
-func (r *prometheusRemoteWriteReceiver) receiveHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		r.settings.Logger.Info("Received message !!!")
-		_, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		/*
-			data, err := processRequestData(compressed)
-			if err != nil {
-				log.Error(err)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}*/
-
-		// We do not want to propagate errors upstream yet
-		w.WriteHeader(http.StatusAccepted)
-	}
 }
 
 func (r *prometheusRemoteWriteReceiver) startProtocolServers(host component.Host) error {
@@ -205,150 +134,50 @@ func (r *prometheusRemoteWriteReceiver) registerMetricsConsumer(mc consumer.Metr
 		return componenterror.ErrNilNextConsumer
 	}
 
-	//r.metricsReceiver = metrics.New(r.cfg.ID(), mc, r.settings)
 	if r.httpMux != nil {
 		r.settings.Logger.Info("Registering handler")
 		r.httpMux.HandleFunc("/receive", func(resp http.ResponseWriter, req *http.Request) {
 			r.settings.Logger.Info("Received request")
 			promreq, err := promremote.DecodeWriteRequest(req.Body)
-			//ctx := context.WithValue(context.Background(), "request", r)
+			ctx := context.WithValue(context.Background(), "request", r)
 
-			/*
-				compressed, err := ioutil.ReadAll(req.Body)
-				if err != nil {
-					fmt.Println(err)
-					resp.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-
-				data, err := processRequestData(compressed)
-			*/
 			if err != nil {
 				fmt.Println(err)
 				resp.WriteHeader(http.StatusBadRequest)
 				return
 			}
 
-			//convertedData := adapter.PromDataToAppOpticsMeasurements(&data)
-			//msg := fmt.Sprintf("measurements received - %d", len(convertedData))
-			fmt.Println(promreq)
+			md := r.promMetricsToOtelMetrics(promreq)
+			err = mc.ConsumeMetrics(ctx, md)
+			if err != nil {
+				fmt.Println(err)
+				resp.WriteHeader(http.StatusBadRequest)
+				return
+			}
 
-			/*md := req.Metrics()
-			dataPointCount := md.DataPointCount()
-			if dataPointCount == 0 {
-				return pmetricotlp.NewResponse(), nil
-			}*/
-
-			//err := mc.ConsumeMetrics(ctx, md)
-
-			/*emptyMap := make(map[string]string)
-
-			batch := appoptics.NewMeasurementsBatch(convertedData, &emptyMap)
-			if len(batch.Measurements) == 0 {
-				fmt.Println("Skipping payload with zero measurements")
-			} else {
-				resp, err := aoClient.MeasurementsService().Create(batch)
-				if err != nil {
-					fmt.Println("Error submitting metrics to Appoptics", err)
-				}
-				if resp != nil && resp.StatusCode != http.StatusAccepted {
-					fmt.Println(resp.StatusCode)
-				}
-			}*/
-			// We do not want to propagate errors upstream yet
 			resp.WriteHeader(http.StatusAccepted)
 		})
 	}
 	return nil
 }
 
-/*
-func protoToSamples(req *prompb.WriteRequest) pmetric.Metrics {
+func (r *prometheusRemoteWriteReceiver) promMetricsToOtelMetrics(req *prompb.WriteRequest) pmetric.Metrics {
 	md := pmetric.NewMetrics()
-	rm := md.ResourceMetrics().AppendEmpty()
-	ilm := md.ResourceMetrics().AppendEmpty().InstrumentationLibrary().AppendEmpty()
-	ilm.InstrumentationLibrary().SetName("otelcol/memcached")
-
-	var samples model.Samples
+	/*
+		TODO - construct Otel metric here
+	*/
+	for _, metadata := range req.Metadata {
+		r.settings.Logger.Info("Name: " + metadata.MetricFamilyName + ", Type: " + metadata.Type.String() + ", Unit: " + metadata.Unit)
+	}
 	for _, ts := range req.Timeseries {
-		metric := make(model.Metric, len(ts.Labels))
+
 		for _, l := range ts.Labels {
-			metric[model.LabelName(l.Name)] = model.LabelValue(l.Value)
+			r.settings.Logger.Info("Label: " + l.Name + ", Value: " + l.Value)
 		}
 
 		for _, s := range ts.Samples {
-			samples = append(samples, &model.Sample{
-				Metric:    metric,
-				Value:     model.SampleValue(s.Value),
-				Timestamp: model.Time(s.Timestamp),
-			})
+			r.settings.Logger.Info("Sample: Timestamp: " + strconv.FormatInt(s.Timestamp, 10) + ", Value: " + fmt.Sprintf("%f", s.Value))
 		}
 	}
-	return samples
-}*/
-
-/*
-func processRequestData(reqBytes []byte) (promb.WriteRequest, error) {
-	var req promremote.WriteRequest
-	reqBuf, err := snappy.Decode(nil, reqBytes)
-	if err != nil {
-		return req, err
-	}
-
-	if err := proto.Unmarshal(reqBuf, &req); err != nil {
-		return req, err
-	}
-	return req, nil
+	return md
 }
-*/
-/*
-func promDataToOtelMetrics(req *promremote.WriteRequest) (promremote.WriteRequest, error) {
-	var req promremote.WriteRequest
-	reqBuf, err := snappy.Decode(nil, reqBytes)
-	if err != nil {
-		return req, err
-	}
-
-	if err := proto.Unmarshal(reqBuf, &req); err != nil {
-		return req, err
-	}
-	return req, nil
-}*/
-
-/*
-// errorHandler encodes the HTTP error message inside a rpc.Status message as required
-// by the OTLP protocol.
-func errorHandler(w http.ResponseWriter, r *http.Request, errMsg string, statusCode int) {
-	s := errorMsgToStatus(errMsg, statusCode)
-	contentType := r.Header.Get("Content-Type")
-	switch contentType {
-	case jsonContentType:
-		writeStatusResponse(w, jsEncoder, statusCode, s.Proto())
-		return
-	}
-	writeResponse(w, fallbackContentType, http.StatusInternalServerError, fallbackMsg)
-}*/
-/*
-func errorMsgToStatus(errMsg string, statusCode int) *status.Status {
-	if statusCode == http.StatusBadRequest {
-		return status.New(codes.InvalidArgument, errMsg)
-	}
-	return status.New(codes.Unknown, errMsg)
-}
-
-func writeResponse(w http.ResponseWriter, contentType string, statusCode int, msg []byte) {
-	w.Header().Set("Content-Type", contentType)
-	w.WriteHeader(statusCode)
-	// Nothing we can do with the error if we cannot write to the response.
-	_, _ = w.Write(msg)
-}
-
-func writeStatusResponse(w http.ResponseWriter, encoder encoder, statusCode int, rsp *spb.Status) {
-	msg, err := encoder.marshalStatus(rsp)
-	if err != nil {
-		writeResponse(w, fallbackContentType, http.StatusInternalServerError, fallbackMsg)
-		return
-	}
-
-	writeResponse(w, encoder.contentType(), statusCode, msg)
-}*/

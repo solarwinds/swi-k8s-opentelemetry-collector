@@ -68,23 +68,3 @@ func createMetricsReceiver(
 	}
 	return r, nil
 }
-
-/*
-// buildInternalConfig constructs the internal metric generation rules
-func buildInternalConfig(config *Config) []internalRule {
-	internalRules := make([]internalRule, len(config.Rules))
-
-	for i, rule := range config.Rules {
-		customRule := internalRule{
-			name:      rule.Name,
-			unit:      rule.Unit,
-			ruleType:  string(rule.Type),
-			metric1:   rule.Metric1,
-			metric2:   rule.Metric2,
-			operation: string(rule.Operation),
-			scaleBy:   rule.ScaleBy,
-		}
-		internalRules[i] = customRule
-	}
-	return internalRules
-}*/

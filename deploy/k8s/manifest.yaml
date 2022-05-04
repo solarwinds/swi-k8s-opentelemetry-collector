@@ -21,10 +21,6 @@ spec:
       port: 4318
       targetPort: 4318
       name: http1
-    - protocol: TCP
-      port: 4599
-      targetPort: 4599
-      name: http2
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -370,11 +366,8 @@ spec:
               cpu: 256m
               memory: 512Mi
           ports:
-            - name: http1
+            - name: http
               containerPort: 4318
-              protocol: TCP
-            - name: http2
-              containerPort: 4599
               protocol: TCP
           volumeMounts:
             - mountPath: /conf
