@@ -4,8 +4,86 @@ kind: ServiceAccount
 metadata:
   name: swi-opentelemetry-collector
   labels:
-    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/name: swi-opentelemetry-collector
     app.kubernetes.io/instance: swi-opentelemetry-collector
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: swi-opentelemetry-collector
+  labels:
+    app: swi-opentelemetry-collector
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  - namespaces
+  - namespaces/status
+  - nodes
+  - nodes/spec
+  - pods
+  - pods/status
+  - replicationcontrollers
+  - replicationcontrollers/status
+  - resourcequotas
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+    - autoscaling
+  resources:
+    - horizontalpodautoscalers
+  verbs:
+    - get
+    - list
+    - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: swi-opentelemetry-collector
+  labels:
+    app: swi-opentelemetry-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: swi-opentelemetry-collector
+subjects:
+- kind: ServiceAccount
+  name: swi-opentelemetry-collector
 ---
 apiVersion: apps/v1
 kind: Deployment
