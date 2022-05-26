@@ -15,6 +15,10 @@ processors:
     check_interval: 5s
     limit_mib: 409
     spike_limit_mib: 128
+  prometheustypeconvert:
+    transforms:
+      - include: container_cpu_usage_seconds_total
+        convert_type: sum
   metricstransform:
     transforms:
       - include: ^(.*)$$
@@ -33,6 +37,25 @@ processors:
           - action: update_label
             label: phase
             new_label: sw.k8s.pod.status
+      - include: k8s.container_cpu_usage_seconds_total
+        action: insert
+        new_name: k8s.container_cpu_usage_seconds_rate
+      - include: k8s.kube_node_status_capacity
+        experimental_match_labels: { "resource": "cpu" }
+        action: insert
+        new_name: k8s.kube_node_status_capacity_cpu
+      - include: k8s.kube_node_status_capacity
+        experimental_match_labels: { "resource": "memory" }
+        action: insert
+        new_name: k8s.kube_node_status_capacity_memory
+  cumulativetodelta:
+      include:
+          metrics:
+              - k8s.container_cpu_usage_seconds_rate
+          match_type: strict
+  deltatorate:
+      metrics:
+          - k8s.container_cpu_usage_seconds_rate
   groupbyattrs:
     keys:
       - node
@@ -248,7 +271,10 @@ service:
       exporters:
       - otlp
       processors:
+      - prometheustypeconvert
       - metricstransform
+      - cumulativetodelta
+      - deltatorate
       - groupbyattrs
       - resource
       - memory_limiter
@@ -267,6 +293,6 @@ service:
       - k8s_events
   telemetry:
     logs:
-      level: "debug"
+      level: "info"
     metrics:
       address: 0.0.0.0:8888
