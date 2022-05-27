@@ -1,0 +1,21 @@
+receivers:
+  nop:
+
+processors:
+  prometheustypeconvert:
+    transforms:
+      - include: name
+
+exporters:
+  nop:
+
+service:
+  pipelines:
+    traces:
+      receivers: [nop]
+      processors: [prometheustypeconvert]
+      exporters: [nop]
+    metrics:
+      receivers: [nop]
+      processors: [prometheustypeconvert]
+      exporters: [nop]
