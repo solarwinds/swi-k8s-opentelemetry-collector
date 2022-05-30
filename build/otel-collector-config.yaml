@@ -19,7 +19,7 @@ processors:
     transforms:
       - include: container_cpu_usage_seconds_total
         convert_type: sum
-  metricstransform:
+  metricstransform/1:
     transforms:
       - include: ^(.*)$$
         match_type: regexp
@@ -48,6 +48,20 @@ processors:
         experimental_match_labels: { "resource": "memory" }
         action: insert
         new_name: k8s.kube_node_status_capacity_memory
+      - include: k8s.kube_pod_info
+        action: insert
+        new_name: k8s.kube_pod_info_cluster_aggregated
+        operations:
+          - action: aggregate_labels
+            label_set: [ ]
+            aggregation_type: sum
+      - include: k8s.kube_node_info
+        action: insert
+        new_name: k8s.kube_node_info_cluster_aggregated
+        operations:
+          - action: aggregate_labels
+            label_set: [ ]
+            aggregation_type: sum
   cumulativetodelta:
       include:
           metrics:
@@ -56,9 +70,20 @@ processors:
   deltatorate:
       metrics:
           - k8s.container_cpu_usage_seconds_rate
-  groupbyattrs:
+  groupbyattrs/1:
     keys:
       - node
+  metricstransform/2:
+    transforms:
+      - include: k8s.kube_pod_info
+        action: insert
+        new_name: k8s.kube_pod_info_node_aggregated
+        operations:
+          - action: aggregate_labels
+            label_set: [ ]
+            aggregation_type: sum
+  groupbyattrs/2:
+    keys:
       - exported_node
       - kubelet_version
       - provider_id
@@ -272,10 +297,12 @@ service:
       - otlp
       processors:
       - prometheustypeconvert
-      - metricstransform
+      - metricstransform/1
       - cumulativetodelta
       - deltatorate
-      - groupbyattrs
+      - groupbyattrs/1
+      - metricstransform/2
+      - groupbyattrs/2
       - resource
       - memory_limiter
       - batch
