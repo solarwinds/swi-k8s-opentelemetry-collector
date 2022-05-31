@@ -63,6 +63,7 @@ processors:
       - kubelet_version
       - provider_id
       - os_image
+      - namespace
       - exported_namespace
       - pod
       - uid
@@ -144,8 +145,14 @@ processors:
 
     # Namespace
     - key: k8s.namespace.name
-      from_attribute: exported_namespace
+      from_attribute: namespace
       action: insert
+    - key: namespace
+      action: delete
+
+    - key: k8s.namespace.name
+      from_attribute: exported_namespace
+      action: upsert
     - key: exported_namespace
       action: delete
 
