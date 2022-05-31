@@ -19,7 +19,8 @@ processors:
     transforms:
       - include: container_cpu_usage_seconds_total
         convert_type: sum
-  metricstransform/1:
+  # Transformations done on all metrics before any grouping
+  metricstransform/preprocessing:
     transforms:
       - include: ^(.*)$$
         match_type: regexp
@@ -40,6 +41,10 @@ processors:
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
         new_name: k8s.container_cpu_usage_seconds_rate
+      - include: k8s.container_cpu_usage_seconds_total
+        action: insert
+        experimental_match_labels: { "id": "/" }
+        new_name: k8s.node_cpu_usage_seconds_rate
       - include: k8s.kube_node_status_capacity
         experimental_match_labels: { "resource": "cpu" }
         action: insert
@@ -62,18 +67,65 @@ processors:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
+      - include: k8s.kube_node_status_capacity_cpu
+        action: insert
+        new_name: k8s.kube_cluster_capacity_cpu
+        operations:
+          - action: aggregate_labels
+            label_set: [ ]
+            aggregation_type: sum
+      - include: k8s.kube_node_status_capacity_memory
+        action: insert
+        new_name: k8s.kube_cluster_capacity_memory
+        operations:
+          - action: aggregate_labels
+            label_set: [ ]
+            aggregation_type: sum
+      - include: k8s.container_memory_working_set_bytes
+        action: insert
+        new_name: k8s.kube_cluster_memory_working_set_bytes_aggregated
+        operations:
+          - action: aggregate_labels
+            label_set: [ ]
+            aggregation_type: sum
   cumulativetodelta:
       include:
           metrics:
               - k8s.container_cpu_usage_seconds_rate
+              - k8s.node_cpu_usage_seconds_rate
           match_type: strict
   deltatorate:
       metrics:
           - k8s.container_cpu_usage_seconds_rate
-  groupbyattrs/1:
+          - k8s.node_cpu_usage_seconds_rate
+  metricstransform/aggregate_rate:
+    transforms:
+      - include: k8s.node_cpu_usage_seconds_rate
+        action: insert
+        new_name: k8s.kube_cluster_cpu_usage_seconds_rate_aggregated
+        operations:
+          - action: aggregate_labels
+            label_set: [ ]
+            aggregation_type: sum
+  experimental_metricsgeneration:
+    rules:
+      - name: k8s.kube_cluster_memory_utilization
+        unit: Percent
+        type: calculate
+        metric1: k8s.kube_cluster_memory_working_set_bytes_aggregated
+        metric2: k8s.kube_cluster_capacity_memory
+        operation: percent
+      - name: k8s.kube_cluster_cpu_utilization
+        unit: Percent
+        type: calculate
+        metric1: k8s.kube_cluster_cpu_usage_seconds_rate_aggregated
+        metric2: k8s.kube_cluster_capacity_cpu
+        operation: percent
+  groupbyattrs/node:
     keys:
       - node
-  metricstransform/2:
+  # Transformations done after grouping per node
+  metricstransform/aggregate_node_level:
     transforms:
       - include: k8s.kube_pod_info
         action: insert
@@ -82,7 +134,7 @@ processors:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
-  groupbyattrs/2:
+  groupbyattrs/all:
     keys:
       - exported_node
       - kubelet_version
@@ -266,6 +318,7 @@ receivers:
         - job_name: prometheus
           scrape_interval: ${SCRAPE_INTERVAL}
           metrics_path: '/federate'
+          honor_timestamps: false
           params:
             'match[]':
               - 'container_cpu_usage_seconds_total'
@@ -297,12 +350,14 @@ service:
       - otlp
       processors:
       - prometheustypeconvert
-      - metricstransform/1
+      - metricstransform/preprocessing
       - cumulativetodelta
       - deltatorate
-      - groupbyattrs/1
-      - metricstransform/2
-      - groupbyattrs/2
+      - metricstransform/aggregate_rate
+      - experimental_metricsgeneration
+      - groupbyattrs/node
+      - metricstransform/aggregate_node_level
+      - groupbyattrs/all
       - resource
       - memory_limiter
       - batch
