@@ -107,11 +107,6 @@ processors:
     - key: k8s.node.name
       from_attribute: node
       action: insert
-
-    - key: host.id
-      from_attribute: k8s.node.name
-      action: insert
-    
     - key: node
       action: delete
 
@@ -120,6 +115,10 @@ processors:
       action: upsert
     - key: exported_node
       action: delete
+
+    - key: host.id
+      from_attribute: k8s.node.name
+      action: insert
 
     - key: sw.k8s.node.version
       from_attribute: kubelet_version
