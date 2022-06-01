@@ -19,13 +19,16 @@ processors:
     transforms:
       - include: container_cpu_usage_seconds_total
         convert_type: sum
+  metricstransform/rename:
+    transforms:
+      # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes 
+      - include: ^(kube_|container_)(.*)$$
+        match_type: regexp
+        action: update
+        new_name: k8s.$${2}
   # Transformations done on all metrics before any grouping
   metricstransform/preprocessing:
     transforms:
-      - include: ^(.*)$$
-        match_type: regexp
-        action: update
-        new_name: k8s.$${1}
       - include: k8s.kube_namespace_status_phase
         action: update
         operations:
@@ -40,50 +43,50 @@ processors:
             new_label: sw.k8s.pod.status
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
-        new_name: k8s.container_cpu_usage_seconds_rate
+        new_name: k8s.container.cpu.usage.seconds.rate
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
         experimental_match_labels: { "id": "/" }
-        new_name: k8s.node_cpu_usage_seconds_rate
+        new_name: k8s.node.cpu.usage.seconds.rate
       - include: k8s.kube_node_status_capacity
         experimental_match_labels: { "resource": "cpu" }
         action: insert
-        new_name: k8s.kube_node_status_capacity_cpu
+        new_name: k8s.node.cpu.capacity
       - include: k8s.kube_node_status_capacity
         experimental_match_labels: { "resource": "memory" }
         action: insert
-        new_name: k8s.kube_node_status_capacity_memory
+        new_name: k8s.node.memory.capacity
       - include: k8s.kube_pod_info
         action: insert
-        new_name: k8s.kube_pod_info_cluster_aggregated
+        new_name: k8s.cluster.pods
         operations:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
       - include: k8s.kube_node_info
         action: insert
-        new_name: k8s.kube_node_info_cluster_aggregated
+        new_name: k8s.cluster.nodes
         operations:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
       - include: k8s.kube_node_status_capacity_cpu
         action: insert
-        new_name: k8s.kube_cluster_capacity_cpu
+        new_name: k8s.cluster.cpu.capacity
         operations:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
       - include: k8s.kube_node_status_capacity_memory
         action: insert
-        new_name: k8s.kube_cluster_capacity_memory
+        new_name: k8s.cluster.memory.capacity
         operations:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
       - include: k8s.container_memory_working_set_bytes
         action: insert
-        new_name: k8s.kube_cluster_memory_working_set_bytes_aggregated
+        new_name: k8s.cluster.memory.working_set
         operations:
           - action: aggregate_labels
             label_set: [ ]
@@ -91,35 +94,35 @@ processors:
   cumulativetodelta:
       include:
           metrics:
-              - k8s.container_cpu_usage_seconds_rate
-              - k8s.node_cpu_usage_seconds_rate
+              - k8s.container.cpu.usage.seconds.rate
+              - k8s.node.cpu.usage.seconds.rate
           match_type: strict
   deltatorate:
       metrics:
-          - k8s.container_cpu_usage_seconds_rate
-          - k8s.node_cpu_usage_seconds_rate
+          - k8s.container.cpu.usage.seconds.rate
+          - k8s.node.cpu.usage.seconds.rate
   metricstransform/aggregate_rate:
     transforms:
-      - include: k8s.node_cpu_usage_seconds_rate
+      - include: k8s.node.cpu.usage.seconds.rate
         action: insert
-        new_name: k8s.kube_cluster_cpu_usage_seconds_rate_aggregated
+        new_name: k8s.cluster.cpu.usage.seconds.rate
         operations:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
   experimental_metricsgeneration:
     rules:
-      - name: k8s.kube_cluster_memory_utilization
+      - name: k8s.cluster.memory.utilization
         unit: Percent
         type: calculate
-        metric1: k8s.kube_cluster_memory_working_set_bytes_aggregated
-        metric2: k8s.kube_cluster_capacity_memory
+        metric1: k8s.cluster.memory.working_set
+        metric2: k8s.cluster.memory.capacity
         operation: percent
-      - name: k8s.kube_cluster_cpu_utilization
+      - name: k8s.cluster.cpu.utilization
         unit: Percent
         type: calculate
-        metric1: k8s.kube_cluster_cpu_usage_seconds_rate_aggregated
-        metric2: k8s.kube_cluster_capacity_cpu
+        metric1: k8s.cluster.cpu.usage.seconds.rate
+        metric2: k8s.cluster.cpu.capacity
         operation: percent
   groupbyattrs/node:
     keys:
@@ -350,6 +353,7 @@ service:
       - otlp
       processors:
       - prometheustypeconvert
+      - metricstransform/rename
       - metricstransform/preprocessing
       - cumulativetodelta
       - deltatorate
