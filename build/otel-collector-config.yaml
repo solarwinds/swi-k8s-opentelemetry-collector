@@ -21,7 +21,7 @@ processors:
         convert_type: sum
   metricstransform/rename:
     transforms:
-      # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes 
+      # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
       - include: ^(kube_|container_)(.*)$$
         match_type: regexp
         action: update
@@ -56,51 +56,71 @@ processors:
         experimental_match_labels: { "resource": "memory" }
         action: insert
         new_name: k8s.node.memory.capacity
+      - include: k8s.kube_node_status_condition
+        experimental_match_labels: { "condition": "Ready", "status": "true" }
+        action: insert
+        new_name: k8s.node.status.condition.ready
+      - include: k8s.kube_node_status_condition
+        experimental_match_labels: { "condition": "NetworkUnavailable", "status": "true" }
+        action: insert
+        new_name: k8s.node.status.condition.networkunavailable
+      - include: k8s.kube_node_status_condition
+        experimental_match_labels: { "condition": "PIDPressure", "status": "true" }
+        action: insert
+        new_name: k8s.node.status.condition.pidpressure
+      - include: k8s.kube_node_status_condition
+        experimental_match_labels: { "condition": "MemoryPressure", "status": "true" }
+        action: insert
+        new_name: k8s.node.status.condition.memorypressure
+      - include: k8s.kube_node_status_condition
+        experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
+        action: insert
+        new_name: k8s.node.status.condition.diskpressure
       - include: k8s.kube_pod_info
         action: insert
         new_name: k8s.cluster.pods
         operations:
           - action: aggregate_labels
-            label_set: [ ]
+            label_set: []
             aggregation_type: sum
       - include: k8s.kube_node_info
         action: insert
         new_name: k8s.cluster.nodes
         operations:
           - action: aggregate_labels
-            label_set: [ ]
+            label_set: []
             aggregation_type: sum
       - include: k8s.node.cpu.capacity
         action: insert
         new_name: k8s.cluster.cpu.capacity
         operations:
           - action: aggregate_labels
-            label_set: [ ]
+            label_set: []
             aggregation_type: sum
       - include: k8s.node.memory.capacity
         action: insert
         new_name: k8s.cluster.memory.capacity
         operations:
           - action: aggregate_labels
-            label_set: [ ]
+            label_set: []
             aggregation_type: sum
       - include: k8s.container_memory_working_set_bytes
         action: insert
         new_name: k8s.cluster.memory.working_set
         operations:
           - action: aggregate_labels
-            label_set: [ ]
+            label_set: []
             aggregation_type: sum
   cumulativetodelta:
-      include:
-          metrics:
-              - k8s.container.cpu.usage.seconds.rate
-              - k8s.node.cpu.usage.seconds.rate
-          match_type: strict
-  deltatorate:
+    include:
       metrics:
-          - k8s.container.cpu.usage.seconds.rate
-          - k8s.node.cpu.usage.seconds.rate
+        - k8s.container.cpu.usage.seconds.rate
+        - k8s.node.cpu.usage.seconds.rate
+      match_type: strict
+  deltatorate:
+    metrics:
+      - k8s.container.cpu.usage.seconds.rate
+      - k8s.node.cpu.usage.seconds.rate
   metricstransform/aggregate_rate:
     transforms:
       - include: k8s.node.cpu.usage.seconds.rate
@@ -108,7 +128,7 @@ processors:
         new_name: k8s.cluster.cpu.usage.seconds.rate
         operations:
           - action: aggregate_labels
-            label_set: [ ]
+            label_set: []
             aggregation_type: sum
   experimental_metricsgeneration:
     rules:
@@ -135,7 +155,7 @@ processors:
         new_name: k8s.node.pods
         operations:
           - action: aggregate_labels
-            label_set: [ ]
+            label_set: []
             aggregation_type: sum
   groupbyattrs/all:
     keys:
@@ -160,148 +180,148 @@ processors:
       - sw.k8s.namespace.status
   resource:
     attributes:
-    # Remove useless attributes
-    - key: service.name
-      action: delete
+      # Remove useless attributes
+      - key: service.name
+        action: delete
 
-    - key: host.name
-      action: delete
+      - key: host.name
+        action: delete
 
-    - key: port
-      action: delete
+      - key: port
+        action: delete
 
-    - key: scheme
-      action: delete
+      - key: scheme
+        action: delete
 
-    # Cluster
-    - key: sw.k8s.cluster.uid
-      value: ${CLUSTER_UID}
-      action: insert
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
 
-    - key: k8s.cluster.name
-      value: ${CLUSTER_NAME}
-      action: insert
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
 
-    # Node
-    - key: k8s.node.name
-      from_attribute: node
-      action: insert
+      # Node
+      - key: k8s.node.name
+        from_attribute: node
+        action: insert
 
-    - key: host.id
-      from_attribute: k8s.node.name
-      action: insert
-    
-    - key: node
-      action: delete
+      - key: host.id
+        from_attribute: k8s.node.name
+        action: insert
 
-    - key: k8s.node.name
-      from_attribute: exported_node
-      action: upsert
-    - key: exported_node
-      action: delete
+      - key: node
+        action: delete
 
-    - key: sw.k8s.node.version
-      from_attribute: kubelet_version
-      action: insert
-    - key: kubelet_version
-      action: delete
+      - key: k8s.node.name
+        from_attribute: exported_node
+        action: upsert
+      - key: exported_node
+        action: delete
 
-    - key: sw.k8s.node.provider.id
-      from_attribute: provider_id
-      action: insert
-    - key: provider_id
-      action: delete
+      - key: sw.k8s.node.version
+        from_attribute: kubelet_version
+        action: insert
+      - key: kubelet_version
+        action: delete
 
-    - key: sw.k8s.node.os.image
-      from_attribute: os_image
-      action: insert
-    - key: os_image
-      action: delete
+      - key: sw.k8s.node.provider.id
+        from_attribute: provider_id
+        action: insert
+      - key: provider_id
+        action: delete
 
-    - key: host.id
-      from_attribute: k8s.node.name
-      action: insert
+      - key: sw.k8s.node.os.image
+        from_attribute: os_image
+        action: insert
+      - key: os_image
+        action: delete
 
-    # Namespace
-    - key: k8s.namespace.name
-      from_attribute: exported_namespace
-      action: insert
-    - key: exported_namespace
-      action: delete
+      - key: host.id
+        from_attribute: k8s.node.name
+        action: insert
 
-    # Pod
-    - key: k8s.pod.name
-      from_attribute: pod
-      action: insert
-    - key: pod
-      action: delete
+      # Namespace
+      - key: k8s.namespace.name
+        from_attribute: exported_namespace
+        action: insert
+      - key: exported_namespace
+        action: delete
 
-    - key: k8s.pod.uid
-      from_attribute: uid
-      action: insert
-    - key: uid
-      action: delete
+      # Pod
+      - key: k8s.pod.name
+        from_attribute: pod
+        action: insert
+      - key: pod
+        action: delete
 
-    - key: sw.k8s.pod.ip
-      from_attribute: pod_ip
-      action: insert
-    - key: pod_ip
-      action: delete
+      - key: k8s.pod.uid
+        from_attribute: uid
+        action: insert
+      - key: uid
+        action: delete
 
-    - key: sw.k8s.pod.host.ip
-      from_attribute: host_ip
-      action: insert
-    - key: host_ip
-      action: delete
+      - key: sw.k8s.pod.ip
+        from_attribute: pod_ip
+        action: insert
+      - key: pod_ip
+        action: delete
 
-    - key: sw.k8s.pod.createdby.kind
-      from_attribute: created_by_kind
-      action: insert
-    - key: created_by_kind
-      action: delete
+      - key: sw.k8s.pod.host.ip
+        from_attribute: host_ip
+        action: insert
+      - key: host_ip
+        action: delete
 
-    - key: sw.k8s.pod.createdby.name
-      from_attribute: created_by_name
-      action: insert
-    - key: created_by_name
-      action: delete
+      - key: sw.k8s.pod.createdby.kind
+        from_attribute: created_by_kind
+        action: insert
+      - key: created_by_kind
+        action: delete
 
-    - key: sw.k8s.pod.host.network
-      from_attribute: host_network
-      action: insert
-    - key: host_network
-      action: delete
+      - key: sw.k8s.pod.createdby.name
+        from_attribute: created_by_name
+        action: insert
+      - key: created_by_name
+        action: delete
 
-    - key: sw.k8s.pod.priority_class
-      from_attribute: priority_class
-      action: insert
-    - key: priority_class
-      action: delete
-    
-    # Container
-    - key: k8s.container.id
-      from_attribute: container_id
-      action: insert
-    - key: container_id
-      action: delete
+      - key: sw.k8s.pod.host.network
+        from_attribute: host_network
+        action: insert
+      - key: host_network
+        action: delete
 
-    - key: k8s.container.name
-      from_attribute: container
-      action: insert
-    - key: container
-      action: delete
+      - key: sw.k8s.pod.priority_class
+        from_attribute: priority_class
+        action: insert
+      - key: priority_class
+        action: delete
 
-    - key: k8s.container.image.id
-      from_attribute: image_id
-      action: insert
-    - key: image_id
-      action: delete
+      # Container
+      - key: k8s.container.id
+        from_attribute: container_id
+        action: insert
+      - key: container_id
+        action: delete
 
-    - key: k8s.container.image.name
-      from_attribute: image
-      action: insert
-    - key: image
-      action: delete
+      - key: k8s.container.name
+        from_attribute: container
+        action: insert
+      - key: container
+        action: delete
+
+      - key: k8s.container.image.id
+        from_attribute: image_id
+        action: insert
+      - key: image_id
+        action: delete
+
+      - key: k8s.container.image.name
+        from_attribute: image
+        action: insert
+      - key: image
+        action: delete
 
   attributes:
     actions:
@@ -320,63 +340,64 @@ receivers:
       scrape_configs:
         - job_name: prometheus
           scrape_interval: ${SCRAPE_INTERVAL}
-          metrics_path: '/federate'
+          metrics_path: "/federate"
           honor_timestamps: false
           params:
-            'match[]':
-              - 'container_cpu_usage_seconds_total'
-              - 'container_spec_cpu_quota'
-              - 'container_spec_cpu_period'
-              - 'container_memory_working_set_bytes'
-              - 'container_spec_memory_limit_bytes'
-              - 'kube_node_info'
-              - 'kube_node_created'
-              - 'kube_node_status_capacity'
-              - 'kube_pod_created'
-              - 'kube_pod_info'
-              - 'kube_pod_start_time'
-              - 'kube_pod_completion_time'
-              - 'kube_pod_status_phase'
-              - 'kube_pod_start_time'
-              - 'kube_resourcequota'
+            "match[]":
+              - "container_cpu_usage_seconds_total"
+              - "container_spec_cpu_quota"
+              - "container_spec_cpu_period"
+              - "container_memory_working_set_bytes"
+              - "container_spec_memory_limit_bytes"
+              - "kube_node_info"
+              - "kube_node_created"
+              - "kube_node_status_capacity"
+              - "kube_node_status_condition"
+              - "kube_pod_created"
+              - "kube_pod_info"
+              - "kube_pod_start_time"
+              - "kube_pod_completion_time"
+              - "kube_pod_status_phase"
+              - "kube_pod_start_time"
+              - "kube_resourcequota"
               - '{__name__=~"kube_pod_container_.*"}'
           static_configs:
             - targets:
-              - ${PROMETHEUS_URL}
+                - ${PROMETHEUS_URL}
 service:
   extensions:
-  - health_check
-  - memory_ballast
+    - health_check
+    - memory_ballast
   pipelines:
     metrics:
       exporters:
-      - otlp
+        - otlp
       processors:
-      - prometheustypeconvert
-      - metricstransform/rename
-      - metricstransform/preprocessing
-      - cumulativetodelta
-      - deltatorate
-      - metricstransform/aggregate_rate
-      - experimental_metricsgeneration
-      - groupbyattrs/node
-      - metricstransform/aggregate_node_level
-      - groupbyattrs/all
-      - resource
-      - memory_limiter
-      - batch
+        - prometheustypeconvert
+        - metricstransform/rename
+        - metricstransform/preprocessing
+        - cumulativetodelta
+        - deltatorate
+        - metricstransform/aggregate_rate
+        - experimental_metricsgeneration
+        - groupbyattrs/node
+        - metricstransform/aggregate_node_level
+        - groupbyattrs/all
+        - resource
+        - memory_limiter
+        - batch
       receivers:
-      - prometheus
+        - prometheus
     logs:
       exporters:
-      - otlp
+        - otlp
       processors:
-      - resource
-      - attributes
-      - memory_limiter
-      - batch
+        - resource
+        - attributes
+        - memory_limiter
+        - batch
       receivers:
-      - k8s_events
+        - k8s_events
   telemetry:
     logs:
       level: "info"
