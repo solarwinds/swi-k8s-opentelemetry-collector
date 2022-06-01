@@ -25,7 +25,7 @@ processors:
       - include: ^(kube_|container_)(.*)$$
         match_type: regexp
         action: update
-        new_name: k8s.$${2}
+        new_name: k8s.$${1}$${2}
   # Transformations done on all metrics before any grouping
   metricstransform/preprocessing:
     transforms:
@@ -70,14 +70,14 @@ processors:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
-      - include: k8s.kube_node_status_capacity_cpu
+      - include: k8s.node.cpu.capacity
         action: insert
         new_name: k8s.cluster.cpu.capacity
         operations:
           - action: aggregate_labels
             label_set: [ ]
             aggregation_type: sum
-      - include: k8s.kube_node_status_capacity_memory
+      - include: k8s.node.memory.capacity
         action: insert
         new_name: k8s.cluster.memory.capacity
         operations:
@@ -132,7 +132,7 @@ processors:
     transforms:
       - include: k8s.kube_pod_info
         action: insert
-        new_name: k8s.kube_pod_info_node_aggregated
+        new_name: k8s.node.pods
         operations:
           - action: aggregate_labels
             label_set: [ ]
