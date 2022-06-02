@@ -206,11 +206,6 @@ processors:
       - key: k8s.node.name
         from_attribute: node
         action: insert
-
-      - key: host.id
-        from_attribute: k8s.node.name
-        action: insert
-
       - key: node
         action: delete
 
@@ -219,6 +214,10 @@ processors:
         action: upsert
       - key: exported_node
         action: delete
+
+      - key: host.id
+        from_attribute: k8s.node.name
+        action: insert
 
       - key: sw.k8s.node.version
         from_attribute: kubelet_version
@@ -238,14 +237,16 @@ processors:
       - key: os_image
         action: delete
 
-      - key: host.id
-        from_attribute: k8s.node.name
-        action: insert
-
       # Namespace
       - key: k8s.namespace.name
-        from_attribute: exported_namespace
+        from_attribute: namespace
         action: insert
+      - key: namespace
+        action: delete
+
+      - key: k8s.namespace.name
+        from_attribute: exported_namespace
+        action: upsert
       - key: exported_namespace
         action: delete
 
