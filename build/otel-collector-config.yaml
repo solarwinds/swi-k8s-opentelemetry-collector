@@ -159,11 +159,13 @@ processors:
             aggregation_type: sum
   groupbyattrs/all:
     keys:
+      - kubernetes_io_hostname
       - exported_node
       - kubelet_version
       - provider_id
       - os_image
       - exported_namespace
+      - namespace
       - pod
       - uid
       - pod_ip
@@ -204,8 +206,14 @@ processors:
 
       # Node
       - key: k8s.node.name
-        from_attribute: node
+        from_attribute: kubernetes_io_hostname
         action: insert
+      - key: kubernetes_io_hostname
+        action: delete
+
+      - key: k8s.node.name
+        from_attribute: node
+        action: upsert
       - key: node
         action: delete
 
