@@ -48,18 +48,26 @@ processors:
         action: insert
         experimental_match_labels: { "id": "/" }
         new_name: k8s.node.cpu.usage.seconds.rate
-      - include: k8s.kube_node_status_capacity
-        experimental_match_labels: { "resource": "cpu" }
-        action: insert
-        new_name: k8s.node.cpu.capacity
       - include: k8s.container_memory_working_set_bytes
         action: insert
         experimental_match_labels: { "id": "/" }
         new_name: k8s.node.memory.working_set
       - include: k8s.kube_node_status_capacity
+        experimental_match_labels: { "resource": "cpu" }
+        action: insert
+        new_name: k8s.node.cpu.capacity
+      - include: k8s.kube_node_status_allocatable
+        experimental_match_labels: { "resource": "cpu" }
+        action: insert
+        new_name: k8s.node.cpu.allocatable
+      - include: k8s.kube_node_status_capacity
         experimental_match_labels: { "resource": "memory" }
         action: insert
         new_name: k8s.node.memory.capacity
+      - include: k8s.kube_node_status_allocatable
+        experimental_match_labels: { "resource": "memory" }
+        action: insert
+        new_name: k8s.node.memory.allocatable
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "Ready", "status": "true" }
         action: insert
@@ -101,9 +109,23 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
+      - include: k8s.node.cpu.allocatable
+        action: insert
+        new_name: k8s.cluster.cpu.allocatable
+        operations:
+          - action: aggregate_labels
+            label_set: []
+            aggregation_type: sum
       - include: k8s.node.memory.capacity
         action: insert
         new_name: k8s.cluster.memory.capacity
+        operations:
+          - action: aggregate_labels
+            label_set: []
+            aggregation_type: sum
+      - include: k8s.node.memory.allocatable
+        action: insert
+        new_name: k8s.cluster.memory.allocatable
         operations:
           - action: aggregate_labels
             label_set: []
@@ -140,13 +162,13 @@ processors:
         unit: Percent
         type: calculate
         metric1: k8s.cluster.memory.working_set
-        metric2: k8s.cluster.memory.capacity
+        metric2: k8s.cluster.memory.allocatable
         operation: percent
       - name: k8s.cluster.cpu.utilization
         unit: Percent
         type: calculate
         metric1: k8s.cluster.cpu.usage.seconds.rate
-        metric2: k8s.cluster.cpu.capacity
+        metric2: k8s.cluster.cpu.allocatable
         operation: percent
   groupbyattrs/node:
     keys:
