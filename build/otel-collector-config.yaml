@@ -51,6 +51,10 @@ processors:
         action: insert
         experimental_match_labels: { "id": "/" }
         new_name: k8s.node.cpu.usage.seconds.rate
+      - include: k8s.container_memory_working_set_bytes
+        action: insert
+        experimental_match_labels: { "id": "/" }
+        new_name: k8s.node.memory.working_set
       - include: k8s.kube_node_status_capacity
         experimental_match_labels: { "resource": "cpu" }
         action: insert
@@ -129,7 +133,7 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
-      - include: k8s.container_memory_working_set_bytes
+      - include: k8s.node.memory.working_set
         action: insert
         new_name: k8s.cluster.memory.working_set
         operations:
