@@ -41,6 +41,9 @@ processors:
           - action: update_label
             label: phase
             new_label: sw.k8s.pod.status
+      - include: k8s.kube_pod_container_status_restarts_total
+        action: insert
+        new_name: k8s.kube.pod.container.status.restarts.total
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
         new_name: k8s.container.cpu.usage.seconds.rate
@@ -395,6 +398,7 @@ receivers:
               - "kube_pod_status_phase"
               - "kube_pod_start_time"
               - "kube_resourcequota"
+              - "kube_pod_container_status_restarts_total"
               - '{__name__=~"kube_pod_container_.*"}'
           static_configs:
             - targets:
