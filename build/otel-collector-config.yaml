@@ -361,12 +361,6 @@ processors:
       - key: image
         action: delete
 
-  attributes:
-    actions:
-      - key: sw.namespace
-        action: insert
-        value: k8s_monitor
-
   batch:
     send_batch_size: 8192
     send_batch_max_size: 8192
@@ -433,7 +427,6 @@ service:
         - otlp
       processors:
         - resource
-        - attributes
         - memory_limiter
         - batch
       receivers:
