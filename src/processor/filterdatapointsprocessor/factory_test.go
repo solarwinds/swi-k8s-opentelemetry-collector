@@ -1,18 +1,4 @@
-// Copyright 2020, OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package metricstransformprocessor
+package filterdatapointsprocessor
 
 import (
 	"context"
@@ -32,7 +18,7 @@ import (
 func TestType(t *testing.T) {
 	factory := NewFactory()
 	pType := factory.Type()
-	assert.Equal(t, pType, config.Type("metricstransform"))
+	assert.Equal(t, pType, config.Type("filterdatapoints"))
 }
 
 func TestCreateDefaultConfig(t *testing.T) {
@@ -60,11 +46,6 @@ func TestCreateProcessors(t *testing.T) {
 			errorMessage: fmt.Sprintf("missing required field %q while %q is %v", NewNameFieldName, ActionFieldName, Insert),
 		},
 		{
-			configName:   "config_invalid_group.yaml",
-			succeed:      false,
-			errorMessage: fmt.Sprintf("missing required field %q while %q is %v", GroupResourceLabelsFieldName, ActionFieldName, Group),
-		},
-		{
 			configName:   "config_invalid_action.yaml",
 			succeed:      false,
 			errorMessage: fmt.Sprintf("%q must be in %q", ActionFieldName, actions),
@@ -90,34 +71,14 @@ func TestCreateProcessors(t *testing.T) {
 			errorMessage: fmt.Sprintf("operation %v: missing required field %q while %q is %v", 1, LabelFieldName, ActionFieldName, UpdateLabel),
 		},
 		{
-			configName:   "config_invalid_scale.yaml",
-			succeed:      false,
-			errorMessage: fmt.Sprintf("operation %v: missing required field %q while %q is %v", 1, ScaleFieldName, ActionFieldName, ScaleValue),
-		},
-		{
 			configName:   "config_invalid_regexp.yaml",
 			succeed:      false,
 			errorMessage: fmt.Sprintf("%q, error parsing regexp: missing closing ]: `[\\da`", IncludeFieldName),
 		},
 		{
-			configName:   "config_invalid_aggregationtype.yaml",
-			succeed:      false,
-			errorMessage: fmt.Sprintf("%q must be in %q", AggregationTypeFieldName, aggregationTypes),
-		},
-		{
 			configName:   "config_invalid_operation_action.yaml",
 			succeed:      false,
 			errorMessage: fmt.Sprintf("operation %v: %q must be in %q", 1, ActionFieldName, operationActions),
-		},
-		{
-			configName:   "config_invalid_operation_aggregationtype.yaml",
-			succeed:      false,
-			errorMessage: fmt.Sprintf("operation %v: %q must be in %q", 1, AggregationTypeFieldName, aggregationTypes),
-		},
-		{
-			configName:   "config_invalid_submatchcase.yaml",
-			succeed:      false,
-			errorMessage: fmt.Sprintf("%q must be in %q", SubmatchCaseFieldName, submatchCases),
 		},
 	}
 
@@ -221,18 +182,6 @@ func TestCreateProcessorsFilledData(t *testing.T) {
 						},
 					},
 				},
-				{
-					Action:          AggregateLabels,
-					LabelSet:        []string{"label1", "label2"},
-					AggregationType: Sum,
-				},
-				{
-					Action:           AggregateLabelValues,
-					Label:            "label",
-					AggregatedValues: []string{"value1", "value2"},
-					NewValue:         "new-value",
-					AggregationType:  Sum,
-				},
 			},
 		},
 	}
@@ -264,30 +213,6 @@ func TestCreateProcessorsFilledData(t *testing.T) {
 					},
 					valueActionsMapping: map[string]string{"value": "new/value v0.0.1"},
 				},
-				{
-					configOperation: Operation{
-						Action:          AggregateLabels,
-						LabelSet:        []string{"label1", "label2"},
-						AggregationType: Sum,
-					},
-					labelSetMap: map[string]bool{
-						"label1": true,
-						"label2": true,
-					},
-				},
-				{
-					configOperation: Operation{
-						Action:           AggregateLabelValues,
-						Label:            "label",
-						AggregatedValues: []string{"value1", "value2"},
-						NewValue:         "new-value",
-						AggregationType:  Sum,
-					},
-					aggregatedValuesSet: map[string]bool{
-						"value1": true,
-						"value2": true,
-					},
-				},
 			},
 		},
 	}
@@ -305,7 +230,6 @@ func TestCreateProcessorsFilledData(t *testing.T) {
 			assert.Equal(t, expOp.configOperation, mtpOp.configOperation)
 			assert.True(t, reflect.DeepEqual(mtpOp.valueActionsMapping, expOp.valueActionsMapping))
 			assert.True(t, reflect.DeepEqual(mtpOp.labelSetMap, expOp.labelSetMap))
-			assert.True(t, reflect.DeepEqual(mtpOp.aggregatedValuesSet, expOp.aggregatedValuesSet))
 		}
 	}
 }

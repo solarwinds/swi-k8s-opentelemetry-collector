@@ -27,6 +27,27 @@ processors:
         action: update
         new_name: k8s.$${1}$${2}
   # Transformations done on all metrics before any grouping
+  filterdatapoints:
+    transforms:
+      - include: k8s.kube_node_status_condition
+        experimental_match_labels: { "condition": "Ready" }
+        action: insert
+        new_name: k8s.kube_node_status_ready
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 1
+          - action: update_label
+            label: status
+            value_actions:
+              - value: "true"
+                new_value: "Ready"
+              - value: "false"
+                new_value: "NotReady"
+              - value: unknown
+                new_value: Unknown
+          - action: update_label
+            label: status
+            new_label: sw.k8s.node.ready.status
   metricstransform/preprocessing:
     transforms:
       - include: k8s.kube_namespace_status_phase
@@ -74,7 +95,7 @@ processors:
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "Ready", "status": "true" }
         action: insert
-        new_name: k8s.node.status.condition.ready
+        new_name: k8s.node.status.condition.ready     
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "NetworkUnavailable", "status": "true" }
         action: insert
@@ -416,6 +437,7 @@ service:
         - prometheustypeconvert
         - metricstransform/rename
         - metricstransform/preprocessing
+        - filterdatapoints
         - cumulativetodelta
         - deltatorate
         - metricstransform/aggregate_rate

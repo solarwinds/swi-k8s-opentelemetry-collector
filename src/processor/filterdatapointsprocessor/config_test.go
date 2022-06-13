@@ -1,18 +1,4 @@
-// Copyright 2020, OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package metricstransformprocessor
+package filterdatapointsprocessor
 
 import (
 	"path/filepath"
@@ -93,35 +79,6 @@ func TestLoadingFullConfig(t *testing.T) {
 					},
 					{
 						MetricIncludeFilter: FilterConfig{
-							Include:   "name2",
-							MatchType: "",
-						},
-						Action: "update",
-						Operations: []Operation{
-							{
-								Action:   "update_label",
-								Label:    "label",
-								NewLabel: "new_label_key",
-								ValueActions: []ValueAction{
-									{Value: "label1", NewValue: "new_label1"},
-								},
-							},
-							{
-								Action:          "aggregate_labels",
-								LabelSet:        []string{"new_label1", "label2"},
-								AggregationType: "sum",
-							},
-							{
-								Action:           "aggregate_label_values",
-								Label:            "new_label1",
-								AggregationType:  "sum",
-								AggregatedValues: []string{"value1", "value2"},
-								NewValue:         "new_value",
-							},
-						},
-					},
-					{
-						MetricIncludeFilter: FilterConfig{
 							Include:   "name3",
 							MatchType: "strict",
 						},
@@ -136,20 +93,17 @@ func TestLoadingFullConfig(t *testing.T) {
 					},
 					{
 						MetricIncludeFilter: FilterConfig{
-							Include:   "^regexp (?P<my_label>.*)$",
-							MatchType: "regexp",
-						},
-						Action:       "combine",
-						NewName:      "combined_metric_name",
-						SubmatchCase: "lower",
-					},
-					{
-						MetricIncludeFilter: FilterConfig{
-							Include:   "name2",
+							Include:   "name4",
 							MatchType: "strict",
 						},
-						Action:              "group",
-						GroupResourceLabels: map[string]string{"metric_group": "2"},
+						Action:  "insert",
+						NewName: "new_name_copy_3",
+						Operations: []Operation{
+							{
+								Action:         "filter_datapoints",
+								DataPointValue: 1,
+							},
+						},
 					},
 				},
 			},

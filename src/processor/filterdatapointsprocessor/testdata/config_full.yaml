@@ -2,13 +2,13 @@ receivers:
   nop:
 
 processors:
-  metricstransform:
+  filterdatapoints:
     transforms:
       - include: name
         action: update
         new_name: new_name
 
-  metricstransform/multiple:
+  filterdatapoints/multiple:
     transforms:
       - include: name1
         match_type: strict
@@ -30,25 +30,7 @@ processors:
         new_name: new_name_copy_2
         match_type: regexp
         experimental_match_labels: {"my_label": ".*label"}
-
-      - include: name2
-        action: update
-        operations:
-          - action: update_label
-            label: label
-            new_label: new_label_key
-            value_actions:
-              - value: label1
-                new_value: new_label1
-          - action: aggregate_labels
-            label_set: [new_label1, label2]
-            aggregation_type: sum
-          - action: aggregate_label_values
-            label: new_label1
-            aggregated_values: [value1, value2]
-            new_value: new_value
-            aggregation_type: sum
-
+     
       - include: name3
         match_type: strict
         action: update
@@ -56,17 +38,14 @@ processors:
           - action: delete_label_value
             label: my_label
             label_value: delete_me
-
-      - include: ^regexp (?P<my_label>.*)$
-        match_type: regexp
-        action: combine
-        new_name: combined_metric_name
-        submatch_case: lower
-
-      - include: name2
+      
+      - include: name4
+        action: insert
         match_type: strict
-        action: group
-        group_resource_labels: {"metric_group": "2"}
+        new_name: new_name_copy_3
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 1
 
 exporters:
   nop:
@@ -75,9 +54,9 @@ service:
   pipelines:
     traces:
       receivers: [nop]
-      processors: [metricstransform]
+      processors: [filterdatapoints]
       exporters: [nop]
     metrics:
       receivers: [nop]
-      processors: [metricstransform]
+      processors: [filterdatapoints]
       exporters: [nop]

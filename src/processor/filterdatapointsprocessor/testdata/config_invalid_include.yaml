@@ -2,7 +2,7 @@ receivers:
     nop:
 
 processors:
-    metricstransform:
+    filterdatapoints:
         transforms:
             - action: update
 
@@ -13,9 +13,9 @@ service:
     pipelines:
         traces:
             receivers: [nop]
-            processors: [metricstransform]
+            processors: [filterdatapoints]
             exporters: [nop]
         metrics:
             receivers: [nop]
-            processors: [metricstransform]
+            processors: [filterdatapoints]
             exporters: [nop]

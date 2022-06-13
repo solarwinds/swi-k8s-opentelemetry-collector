@@ -1,18 +1,4 @@
-// Copyright 2020 OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package metricstransformprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor"
+package filterdatapointsprocessor
 
 import (
 	"context"
@@ -28,7 +14,7 @@ import (
 
 const (
 	// The value of "type" key in configuration.
-	typeStr = "metricstransform"
+	typeStr = "filterdatapoints"
 )
 
 var consumerCapabilities = consumer.Capabilities{MutatesData: true}
@@ -62,7 +48,7 @@ func createMetricsProcessor(
 	if err != nil {
 		return nil, err
 	}
-	metricsProcessor := newMetricsTransformProcessor(params.Logger, hCfg)
+	metricsProcessor := newFilterDataPointsProcessor(params.Logger, hCfg)
 
 	return processorhelper.NewMetricsProcessor(
 		cfg,
@@ -102,18 +88,6 @@ func validateConfiguration(config *Config) error {
 			return fmt.Errorf("missing required field %q while %q is %v", NewNameFieldName, ActionFieldName, Insert)
 		}
 
-		if transform.Action == Group && transform.GroupResourceLabels == nil {
-			return fmt.Errorf("missing required field %q while %q is %v", GroupResourceLabelsFieldName, ActionFieldName, Group)
-		}
-
-		if transform.AggregationType != "" && !transform.AggregationType.isValid() {
-			return fmt.Errorf("%q must be in %q", AggregationTypeFieldName, aggregationTypes)
-		}
-
-		if transform.SubmatchCase != "" && !transform.SubmatchCase.isValid() {
-			return fmt.Errorf("%q must be in %q", SubmatchCaseFieldName, submatchCases)
-		}
-
 		for i, op := range transform.Operations {
 			if !op.Action.isValid() {
 				return fmt.Errorf("operation %v: %q must be in %q", i+1, ActionFieldName, operationActions)
@@ -128,12 +102,8 @@ func validateConfiguration(config *Config) error {
 			if op.Action == AddLabel && op.NewValue == "" {
 				return fmt.Errorf("operation %v: missing required field %q while %q is %v", i+1, NewValueFieldName, ActionFieldName, AddLabel)
 			}
-			if op.Action == ScaleValue && op.Scale == 0 {
-				return fmt.Errorf("operation %v: missing required field %q while %q is %v", i+1, ScaleFieldName, ActionFieldName, ScaleValue)
-			}
-
-			if op.AggregationType != "" && !op.AggregationType.isValid() {
-				return fmt.Errorf("operation %v: %q must be in %q", i+1, AggregationTypeFieldName, aggregationTypes)
+			if op.Action == FilterDataPoints && op.DataPointValue == 0 {
+				return fmt.Errorf("operation %v: missing required field %q while %q is %v", i+1, DataPointsFieldName, ActionFieldName, FilterDataPoints)
 			}
 		}
 	}
@@ -163,8 +133,6 @@ func buildHelperConfig(config *Config, version string) ([]internalTransform, err
 			MetricIncludeFilter: filter,
 			Action:              t.Action,
 			NewName:             t.NewName,
-			GroupResourceLabels: t.GroupResourceLabels,
-			AggregationType:     t.AggregationType,
 			Operations:          make([]internalOperation, len(t.Operations)),
 		}
 
@@ -177,11 +145,7 @@ func buildHelperConfig(config *Config, version string) ([]internalTransform, err
 			if len(op.ValueActions) > 0 {
 				mtpOp.valueActionsMapping = createLabelValueMapping(op.ValueActions, version)
 			}
-			if op.Action == AggregateLabels {
-				mtpOp.labelSetMap = sliceToSet(op.LabelSet)
-			} else if op.Action == AggregateLabelValues {
-				mtpOp.aggregatedValuesSet = sliceToSet(op.AggregatedValues)
-			}
+
 			helperT.Operations[j] = mtpOp
 		}
 		helperDataTransforms[i] = helperT
@@ -216,16 +180,6 @@ func createLabelValueMapping(valueActions []ValueAction, version string) map[str
 		mapping[valueActions[i].Value] = valueActions[i].NewValue
 	}
 	return mapping
-}
-
-// sliceToSet converts slice of strings to set of strings
-// Returns the set of strings
-func sliceToSet(slice []string) map[string]bool {
-	set := make(map[string]bool, len(slice))
-	for _, s := range slice {
-		set[s] = true
-	}
-	return set
 }
 
 func getMatcherMap(strMap map[string]string, ctor func(string) (StringMatcher, error)) (map[string]StringMatcher, error) {
