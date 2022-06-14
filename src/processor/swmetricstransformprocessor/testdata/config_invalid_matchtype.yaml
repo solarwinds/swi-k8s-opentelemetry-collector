@@ -2,7 +2,7 @@ receivers:
     nop:
 
 processors:
-    filterdatapoints:
+    swmetricstransform:
         transforms:
             - include: metric_name
               match_type: invalid
@@ -15,9 +15,9 @@ service:
     pipelines:
         traces:
             receivers: [nop]
-            processors: [filterdatapoints]
+            processors: [swmetricstransform]
             exporters: [nop]
         metrics:
             receivers: [nop]
-            processors: [filterdatapoints]
+            processors: [swmetricstransform]
             exporters: [nop]

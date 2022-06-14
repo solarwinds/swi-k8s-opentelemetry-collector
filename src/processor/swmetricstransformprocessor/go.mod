@@ -1,4 +1,4 @@
-module github.com/solarwinds/nighthawk-im-k8s-monitor/processor/filterdatapointsprocessor
+module github.com/solarwinds/nighthawk-im-k8s-monitor/processor/swmetricstransformprocessor
 
 go 1.17
 

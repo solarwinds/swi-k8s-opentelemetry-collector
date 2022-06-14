@@ -27,7 +27,7 @@ processors:
         action: update
         new_name: k8s.$${1}$${2}
   # Transformations done on all metrics before any grouping
-  filterdatapoints:
+  swmetricstransform:
     transforms:
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "Ready" }
@@ -438,7 +438,7 @@ service:
         - prometheustypeconvert
         - metricstransform/rename
         - metricstransform/preprocessing
-        - filterdatapoints
+        - swmetricstransform
         - cumulativetodelta
         - deltatorate
         - metricstransform/aggregate_rate

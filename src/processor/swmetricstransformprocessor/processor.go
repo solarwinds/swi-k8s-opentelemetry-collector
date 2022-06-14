@@ -1,4 +1,24 @@
-package filterdatapointsprocessor
+// Copyright 2020 OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricstransformprocessor
+// Changes customizing the original processor:
+//	- removal of actions: toggle_scalar_data_type, experimental_scale_value, aggregate_labels, aggregate_label_values
+//	- add custom action "filter_datapoints"
+//	- rename types and functions to match the processor name
+
+package swmetricstransformprocessor
 
 import (
 	"context"
@@ -14,7 +34,7 @@ import (
 	internaldata "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/opencensus"
 )
 
-type filterDataPointsProcessor struct {
+type swMetricsTransformProcessor struct {
 	transforms []internalTransform
 	logger     *zap.Logger
 }
@@ -179,15 +199,15 @@ func (mnm metricNameMapping) remove(name string, metrics ...*metricspb.Metric) {
 	}
 }
 
-func newFilterDataPointsProcessor(logger *zap.Logger, internalTransforms []internalTransform) *filterDataPointsProcessor {
-	return &filterDataPointsProcessor{
+func newSwMetricsTransformProcessor(logger *zap.Logger, internalTransforms []internalTransform) *swMetricsTransformProcessor {
+	return &swMetricsTransformProcessor{
 		transforms: internalTransforms,
 		logger:     logger,
 	}
 }
 
 // processMetrics implements the ProcessMetricsFunc type.
-func (mtp *filterDataPointsProcessor) processMetrics(_ context.Context, md pmetric.Metrics) (pmetric.Metrics, error) {
+func (mtp *swMetricsTransformProcessor) processMetrics(_ context.Context, md pmetric.Metrics) (pmetric.Metrics, error) {
 	rms := md.ResourceMetrics()
 	groupedMds := make([]*agentmetricspb.ExportMetricsServiceRequest, 0)
 
@@ -230,7 +250,7 @@ func (mtp *filterDataPointsProcessor) processMetrics(_ context.Context, md pmetr
 }
 
 // update updates the metric content based on operations indicated in transform.
-func (mtp *filterDataPointsProcessor) update(match *match, transform internalTransform) {
+func (mtp *swMetricsTransformProcessor) update(match *match, transform internalTransform) {
 	if transform.NewName != "" {
 		if match.pattern == nil {
 			match.metric.MetricDescriptor.Name = transform.NewName

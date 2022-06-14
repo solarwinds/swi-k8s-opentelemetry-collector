@@ -2,12 +2,10 @@ receivers:
     nop:
 
 processors:
-    filterdatapoints:
+    swmetricstransform:
         transforms:
           - include: old_name
-            action: update
-            operations:
-                - action: invalid
+            action: invalid # invalid action type
 
 exporters:
     nop:
@@ -16,9 +14,9 @@ service:
     pipelines:
         traces:
             receivers: [nop]
-            processors: [filterdatapoints]
+            processors: [swmetricstransform]
             exporters: [nop]
         metrics:
             receivers: [nop]
-            processors: [filterdatapoints]
+            processors: [swmetricstransform]
             exporters: [nop]

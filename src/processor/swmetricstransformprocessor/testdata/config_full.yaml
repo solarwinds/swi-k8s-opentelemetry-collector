@@ -2,13 +2,13 @@ receivers:
   nop:
 
 processors:
-  filterdatapoints:
+  swmetricstransform:
     transforms:
       - include: name
         action: update
         new_name: new_name
 
-  filterdatapoints/multiple:
+  swmetricstransform/multiple:
     transforms:
       - include: name1
         match_type: strict
@@ -54,9 +54,9 @@ service:
   pipelines:
     traces:
       receivers: [nop]
-      processors: [filterdatapoints]
+      processors: [swmetricstransform]
       exporters: [nop]
     metrics:
       receivers: [nop]
-      processors: [filterdatapoints]
+      processors: [swmetricstransform]
       exporters: [nop]

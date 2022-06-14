@@ -2,11 +2,12 @@ receivers:
     nop:
 
 processors:
-    filterdatapoints:
+    swmetricstransform:
         transforms:
-            - include: old[\da
-              match_type: regexp
-              action: update
+          - include: old_name
+            action: combine
+            new_name: new_name
+            submatch_case: invalid
 
 exporters:
     nop:
@@ -15,9 +16,9 @@ service:
     pipelines:
         traces:
             receivers: [nop]
-            processors: [filterdatapoints]
+            processors: [swmetricstransform]
             exporters: [nop]
         metrics:
             receivers: [nop]
-            processors: [filterdatapoints]
+            processors: [swmetricstransform]
             exporters: [nop]
