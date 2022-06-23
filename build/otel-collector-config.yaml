@@ -19,6 +19,10 @@ processors:
     transforms:
       - include: container_cpu_usage_seconds_total
         convert_type: sum
+      - include: container_cpu_cfs_throttled_periods_total
+        convert_type: sum
+      - include: container_cpu_cfs_periods_total
+        convert_type: sum
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
@@ -65,9 +69,83 @@ processors:
       - include: k8s.kube_pod_container_status_restarts_total
         action: insert
         new_name: k8s.kube.pod.container.status.restarts.total
+
+      # Container metrics
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
         new_name: k8s.container.cpu.usage.seconds.rate
+      - include: k8s.container_cpu_cfs_throttled_periods_total
+        action: insert
+        match_type: regexp
+        # take datapoints with non-empty container label
+        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.container.cpu.cfs.throttled.periods.rate
+      - include: k8s.container_cpu_cfs_periods_total
+        action: insert
+        match_type: regexp
+        # take datapoints with non-empty container label
+        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.container.cpu.cfs.throttled.total.rate
+      - include: k8s.container_memory_working_set_bytes
+        action: insert
+        match_type: regexp
+        # take datapoints with non-empty container label
+        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.container.memory.working_set
+      - include: k8s.container_spec_cpu_quota
+        action: insert
+        match_type: regexp
+        # take datapoints with non-empty container label
+        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.container.spec.cpu.quota
+      - include: k8s.container_spec_cpu_period
+        action: insert
+        match_type: regexp
+        # take datapoints with non-empty container label
+        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.container.spec.cpu.period
+      - include: k8s.kube_pod_container_resource_requests
+        experimental_match_labels: { "resource": "memory" }
+        action: insert
+        new_name: k8s.container.spec.memory.requests
+      - include: k8s.kube_pod_container_resource_requests
+        experimental_match_labels: { "resource": "cpu" }
+        action: insert
+        new_name: k8s.container.spec.cpu.requests
+      - include: k8s.container_spec_memory_limit_bytes
+        action: insert
+        match_type: regexp
+        # take datapoints with non-empty container label
+        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.container.spec.memory.limit
+
+      # Pod resource metrics
+      - include: k8s.container_cpu_usage_seconds_total
+        action: insert
+        match_type: regexp
+        # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
+        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.pod.cpu.usage.seconds.rate
+      - include: k8s.container_memory_working_set_bytes
+        action: insert
+        match_type: regexp
+        # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
+        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.pod.memory.working_set
+      - include: k8s.container_spec_cpu_quota
+        action: insert
+        match_type: regexp
+        # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
+        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.pod.spec.cpu.quota
+      - include: k8s.container_spec_cpu_period
+        action: insert
+        match_type: regexp
+        # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
+        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        new_name: k8s.pod.spec.cpu.period
+
+      # Node metrics
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
         experimental_match_labels: { "id": "/" }
@@ -95,7 +173,7 @@ processors:
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "Ready", "status": "true" }
         action: insert
-        new_name: k8s.node.status.condition.ready     
+        new_name: k8s.node.status.condition.ready 
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "NetworkUnavailable", "status": "true" }
         action: insert
@@ -112,6 +190,8 @@ processors:
         experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
         action: insert
         new_name: k8s.node.status.condition.diskpressure
+
+      # Cluster metrics
       - include: k8s.kube_pod_info
         action: insert
         new_name: k8s.cluster.pods
@@ -166,11 +246,17 @@ processors:
       metrics:
         - k8s.container.cpu.usage.seconds.rate
         - k8s.node.cpu.usage.seconds.rate
+        - k8s.pod.cpu.usage.seconds.rate
+        - k8s.container.cpu.cfs.throttled.periods.rate
+        - k8s.container.cpu.cfs.throttled.total.rate
       match_type: strict
   deltatorate:
     metrics:
       - k8s.container.cpu.usage.seconds.rate
       - k8s.node.cpu.usage.seconds.rate
+      - k8s.pod.cpu.usage.seconds.rate
+      - k8s.container.cpu.cfs.throttled.periods.rate
+      - k8s.container.cpu.cfs.throttled.total.rate
   metricstransform/aggregate_rate:
     transforms:
       - include: k8s.node.cpu.usage.seconds.rate
@@ -180,7 +266,7 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
-  experimental_metricsgeneration:
+  experimental_metricsgeneration/cluster:
     rules:
       - name: k8s.cluster.memory.utilization
         unit: Percent
@@ -207,6 +293,20 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
+  groupbyattrs/pod:
+    keys:
+      - namespace
+      - pod
+  # Transformations done after grouping per pod
+  metricstransform/aggregate_pod_level:
+    transforms:
+      - include: k8s.kube_pod_container_info
+        action: insert
+        new_name: k8s.pod.containers
+        operations:
+          - action: aggregate_labels
+            label_set: []
+            aggregation_type: sum
   groupbyattrs/all:
     keys:
       - kubernetes_io_hostname
@@ -215,8 +315,6 @@ processors:
       - provider_id
       - os_image
       - exported_namespace
-      - namespace
-      - pod
       - uid
       - pod_ip
       - host_ip
@@ -403,6 +501,8 @@ receivers:
               - "container_spec_cpu_period"
               - "container_memory_working_set_bytes"
               - "container_spec_memory_limit_bytes"
+              - "container_cpu_cfs_throttled_periods_total"
+              - "container_cpu_cfs_periods_total"
               - "kube_node_info"
               - "kube_node_created"
               - "kube_node_status_capacity"
@@ -416,6 +516,7 @@ receivers:
               - "kube_resourcequota"
               - "kube_pod_container_status_restarts_total"
               - "kube_node_status_allocatable"
+              - "kube_pod_container_resource_requests"
               - '{__name__=~"kube_pod_container_.*"}'
           static_configs:
             - targets:
@@ -436,9 +537,11 @@ service:
         - cumulativetodelta
         - deltatorate
         - metricstransform/aggregate_rate
-        - experimental_metricsgeneration
+        - experimental_metricsgeneration/cluster
         - groupbyattrs/node
         - metricstransform/aggregate_node_level
+        - groupbyattrs/pod
+        - metricstransform/aggregate_pod_level
         - groupbyattrs/all
         - resource
         - memory_limiter
