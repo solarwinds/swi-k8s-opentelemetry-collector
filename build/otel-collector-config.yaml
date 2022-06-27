@@ -190,6 +190,13 @@ processors:
         experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
         action: insert
         new_name: k8s.node.status.condition.diskpressure
+        # Add dummy `host.id` so that we can update it (and only for this metric) later in Resource Attributes processor
+      - include: k8s.kube_node_info
+        action: update
+        operations:
+          - action: add_label
+            new_label: host.id
+            new_value: _
 
       # Cluster metrics
       - include: k8s.kube_pod_info
@@ -329,6 +336,7 @@ processors:
       - sw.k8s.pod.status
       - sw.k8s.namespace.status
       - sw.k8s.node.status
+      - host.id
   resource:
     attributes:
       # Remove useless attributes
@@ -343,6 +351,11 @@ processors:
 
       - key: scheme
         action: delete
+
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: "1.0"
+        action: insert
 
       # Cluster
       - key: sw.k8s.cluster.uid
@@ -374,7 +387,17 @@ processors:
 
       - key: host.id
         from_attribute: k8s.node.name
-        action: insert
+        action: update
+
+      - key: provider_id
+        pattern: ^aws.*/(?P<awsInstanceId>[^/]+)$
+        action: extract
+
+      - key: host.id
+        from_attribute: awsInstanceId
+        action: update
+      - key: awsInstanceId
+        action: delete
 
       - key: sw.k8s.node.version
         from_attribute: kubelet_version
