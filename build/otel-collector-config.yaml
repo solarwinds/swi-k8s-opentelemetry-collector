@@ -52,6 +52,14 @@ processors:
           - action: update_label
             label: status
             new_label: sw.k8s.node.status
+      - include: k8s.kube_pod_status_phase
+        action: update
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 1
+          - action: update_label
+            label: phase
+            new_label: sw.k8s.pod.status
   metricstransform/preprocessing:
     transforms:
       - include: k8s.kube_namespace_status_phase
@@ -60,12 +68,6 @@ processors:
           - action: update_label
             label: phase
             new_label: sw.k8s.namespace.status
-      - include: k8s.kube_pod_status_phase
-        action: update
-        operations:
-          - action: update_label
-            label: phase
-            new_label: sw.k8s.pod.status
       - include: k8s.kube_pod_container_status_restarts_total
         action: insert
         new_name: k8s.kube.pod.container.status.restarts.total
