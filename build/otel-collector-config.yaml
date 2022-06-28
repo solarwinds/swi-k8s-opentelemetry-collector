@@ -124,25 +124,25 @@ processors:
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
-        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
         new_name: k8s.pod.cpu.usage.seconds.rate
       - include: k8s.container_memory_working_set_bytes
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
-        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
         new_name: k8s.pod.memory.working_set
       - include: k8s.container_spec_cpu_quota
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
-        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
         new_name: k8s.pod.spec.cpu.quota
       - include: k8s.container_spec_cpu_period
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
-        experimental_match_labels: { "image": "", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
         new_name: k8s.pod.spec.cpu.period
 
       # Node metrics
