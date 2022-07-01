@@ -42,17 +42,12 @@ jobs:
       - name: Deploy services using Skaffold
         run: skaffold run --skip-tests=true
 
-      - name: Tail Otel mock metrics for 60 seconds
+      - name: Tail Otel mock metrics,events,logs for 60 seconds
         run: |
           mkdir -p OtelLogs
           kubetail timeseries-mock-service --namespace monitoring > OtelLogs/metrics.log &
-          sleep 60
-
-      - name: Tail Otel mock events for 60 seconds
-        run: |
-          kubectl delete pods -l component=node-exporter -n monitoring
-          mkdir -p OtelLogs
           kubetail timeseries-mock-service --namespace monitoring > OtelLogs/events.log &
+          kubetail timeseries-logs-mock-service --namespace monitoring > OtelLogs/logs.log &
           sleep 60
 
       - name: Destroy environment
@@ -73,6 +68,15 @@ jobs:
             echo "Expected events found"
           else
             echo "Events are missing"
+            exit 1
+          fi
+
+      - name: Evaluate logs collection functionality
+        run: |
+          if grep -q "#logs" "OtelLogs/logs.log"; then
+            echo "Some logs found"
+          else
+            echo "Logs are missing"
             exit 1
           fi
 
