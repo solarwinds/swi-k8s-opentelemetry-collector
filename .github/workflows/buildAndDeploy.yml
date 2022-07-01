@@ -55,8 +55,17 @@ jobs:
           kubetail timeseries-mock-service --namespace monitoring > OtelLogs/events.log &
           sleep 60
 
+      - name: Tail Otel mock logs for 60 seconds
+        run: |
+          mkdir -p OtelLogs
+          kubetail timeseries-logs-mock-service --namespace monitoring > OtelLogs/logs.log &
+          sleep 60
+
+      # Delete resources and wait some time for its termination
       - name: Destroy environment
-        run: skaffold delete
+        run: | 
+          skaffold delete
+          sleep 20
 
       - name: Evaluate metrics collection functionality
         run: |
@@ -73,6 +82,15 @@ jobs:
             echo "Expected events found"
           else
             echo "Events are missing"
+            exit 1
+          fi
+
+      - name: Evaluate logs collection functionality
+        run: |
+          if grep -q "#logs" "OtelLogs/logs.log"; then
+            echo "Some logs found"
+          else
+            echo "Logs are missing"
             exit 1
           fi
 

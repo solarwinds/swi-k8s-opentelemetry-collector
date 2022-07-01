@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: swi-opentelemetry-collector-logs
+spec:
+  template:
+    spec:
+      containers:
+        - name: swi-opentelemetry-collector
+          image: nighthawk-swi-opentelemetry-collector
+          imagePullPolicy: Never
+          env:
+            - name: SOLARWINDS_API_TOKEN
+              $patch: delete
+            - name: OTEL_ENVOY_ADDRESS
+              value: "timeseries-logs-mock-service:9082"
+            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
+              value: "true"
+            - name: CLUSTER_NAME
+              value: "cluster name"
+            - name: CLUSTER_UID
+              value: "cluster-uid-123456789"

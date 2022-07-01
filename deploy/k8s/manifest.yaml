@@ -146,3 +146,90 @@ spec:
             limits:
               cpu: 256m
               memory: 512Mi
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: swi-opentelemetry-collector-logs
+spec:
+  selector:
+    matchLabels:
+      k8s-app: swi-opentelemetry-collector-logs
+  template:
+    metadata:
+      labels:
+        k8s-app: swi-opentelemetry-collector-logs
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        ## In order to reliably read logs from mounted node logging paths, we need to run as root
+        fsGroup: 0
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: swi-opentelemetry-collector
+          image: "solarwinds/swi-opentelemetry-collector:latest"
+          imagePullPolicy: Always
+          command:
+            - /swi-otelcol
+            - --config=/opt/log-config.yaml
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+            - name: OTEL_ENVOY_ADDRESS
+              value: "<OTEL_ENVOY_ADDRESS>"
+            - name: CLUSTER_NAME
+              value: "<CLUSTER_NAME>"
+            - name: CLUSTER_UID
+              value: "<CLUSTER_UID>"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+            requests:
+              cpu: 100m
+              memory: 32Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /var/log/pods
+              name: varlogpods
+              readOnly: true
+            - mountPath: /var/log/containers
+              name: varlogcontainers
+              readOnly: true
+            - mountPath: /var/lib/docker/containers
+              name: varlibdockercontainers
+              readOnly: true
+      volumes:
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
