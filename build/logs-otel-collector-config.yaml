@@ -9,6 +9,16 @@ extensions:
   health_check: {}
 
 processors:
+  # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
+  filter:
+    logs:
+      include:
+          match_type: regexp
+          record_attributes:
+              # allow only system namespaces (kube-system, kube-public)
+              - key: k8s.namespace.name
+                value: ^kube-.*$
+
   groupbyattrs/all:
     keys:
       - k8s.container.name
@@ -157,6 +167,7 @@ service:
       exporters:
         - otlp
       processors:
+        - filter
         - groupbyattrs/all
         - resource
         - batch
