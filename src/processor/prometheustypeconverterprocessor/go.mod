@@ -1,4 +1,4 @@
-module github.com/solarwinds/nighthawk-im-k8s-monitor/processor/prometheustypeconverterprocessor
+module github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/prometheustypeconverterprocessor
 
 go 1.17
 

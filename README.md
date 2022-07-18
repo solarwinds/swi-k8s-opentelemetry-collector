@@ -1,42 +1,31 @@
-# nighthawk-im-k8s-monitor
+# swi-k8s-opentelemetry-collector
 
-Assets to monitor kubernetes infrastructure
+Assets to monitor kubernetes infrastructure in SolarWinds Observability
 
 ## Table of contents
 
 - [About](#about)
 - [Installation](#installation)
+- [Development](#development)
 
 ## About
 
-This repository contains Kubernetes manifest files to collect metrics provided by existing Prometheus server, and export those metrics to SolarWinds OaaS infrastructure.
+This repository contains:
+* Kubernetes manifest files to collect metrics provided by existing Prometheus server, events and logs and export it to SolarWinds OaaS infrastructure.
+* Dockerfile for images published to Docker hub that is deployed as part of Kubernetes monitoring
+* All related sources that are built into that:
+  * Custom OpenTelemetry collector processors  
+  * OpenTelemetry collector configuration
+
 Components that are being deployed:
 
 - Service account - identity of deployed pods
 - Deployment - customized OpenTelemetry Collector deployment, configured to poll Prometheus instance(s)
 - ConfigMap - configuration of OpenTelemetry Collector
+- DaemonSet - customized OpenTelemetry Collector deployment, configured to poll container logs
 
 ## Installation
-
-1. First decide to which namespace you want to deploy the manifest. It is recommended to deploy them to the same namespace where you Prometheus instance is deployed.
-2. Store API Token to kubernetes secret called `solarwinds-api-token` (Get the token from `Settings` -> `API Tokens` -> `Create API Token` and select `Ingestion` Type)
-
-```shell
-kubectl create secret generic solarwinds-api-token -n <CHOSEN NAMESPACE> --from-literal=SOLARWINDS_API_TOKEN=<REPLACE WITH TOKEN>
-```
-
-3. Adjust Prometheus instance(s) in the manifest (look for `PROMETHEUS_URL` in the manifest or in case of multiple instances adjust OtelCollector configuration in `receivers` -> `prometheus` -> `config` -> `scrape_configs` -> `job_name: prometheus` -> `static_configs` -> `targets`)
-4. Set current active namespace to namespace from step 1
-
-```shell
-kubectl config set-context --current --namespace=<insert-namespace-name-here>
-```
-
-5. Deploy the manifest
-
-```shell
-kubectl apply -f deploy/k8s/manifest.yaml
-```
+Walk through Add Kubernetes wizard in SolarWinds Observability
 
 ## Development
 

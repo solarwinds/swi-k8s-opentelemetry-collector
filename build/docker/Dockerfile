@@ -2,13 +2,13 @@ ARG GOLANG_IMAGE=docker.io/library/golang:1.17.1-alpine@sha256:13919fb9091f6667c
 
 FROM ${GOLANG_IMAGE} as builder
 
-COPY /build/nighthawk-swi-opentelemetry-collector.yaml /src/nighthawk-swi-opentelemetry-collector.yaml
+COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
 
 RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.51.0
 
 WORKDIR /src
 COPY ["./src/", "./src/"]
-RUN CGO_ENABLED=0 /go/bin/builder --config ./nighthawk-swi-opentelemetry-collector.yaml --output-path ./
+RUN CGO_ENABLED=0 /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
 
 FROM alpine:latest as prep
 RUN apk --update add ca-certificates
@@ -19,7 +19,7 @@ ARG USER_UID=10001
 USER ${USER_UID}
 
 COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /src/nighthawk-swi-opentelemetry-collector /swi-otelcol
+COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
 
 ENV SCRAPE_INTERVAL="60s"
 ENV OTEL_ENVOY_ADDRESS_TLS_INSECURE="false"
