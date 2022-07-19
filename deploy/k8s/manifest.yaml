@@ -7,6 +7,786 @@ metadata:
     app.kubernetes.io/name: swi-opentelemetry-collector
     app.kubernetes.io/instance: swi-opentelemetry-collector
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swi-opentelemetry-collector
+  labels:
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: swi-opentelemetry-collector
+data:
+  metrics.config: |
+    exporters:
+      otlp:
+        endpoint: ${OTEL_ENVOY_ADDRESS}
+        tls:
+          insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+        headers:
+          "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    extensions:
+      health_check: {}
+      memory_ballast:
+        size_mib: "204"
+
+    processors:
+      memory_limiter:
+        check_interval: 5s
+        limit_mib: 409
+        spike_limit_mib: 128
+      prometheustypeconvert:
+        transforms:
+          - include: container_cpu_usage_seconds_total
+            convert_type: sum
+          - include: container_cpu_cfs_throttled_periods_total
+            convert_type: sum
+          - include: container_cpu_cfs_periods_total
+            convert_type: sum
+      metricstransform/rename:
+        transforms:
+          # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
+          - include: ^(kube_|container_)(.*)$$
+            match_type: regexp
+            action: update
+            new_name: k8s.$${1}$${2}
+      # Transformations done on all metrics before any grouping
+      swmetricstransform:
+        transforms:
+          - include: k8s.kube_node_status_condition
+            experimental_match_labels: { "condition": "Ready" }
+            action: insert
+            new_name: k8s.kube_node_status_ready
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+              - action: update_label
+                label: status
+                value_actions:
+                  - value: "true"
+                    new_value: "Ready"
+                  - value: "false"
+                    new_value: "NotReady"
+                  - value: unknown
+                    new_value: Unknown
+              - action: update_label
+                label: status
+                new_label: sw.k8s.node.status
+          - include: k8s.kube_pod_status_phase
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+              - action: update_label
+                label: phase
+                new_label: sw.k8s.pod.status
+      metricstransform/preprocessing:
+        transforms:
+          - include: k8s.kube_namespace_status_phase
+            action: update
+            operations:
+              - action: update_label
+                label: phase
+                new_label: sw.k8s.namespace.status
+          - include: k8s.kube_pod_container_status_restarts_total
+            action: insert
+            new_name: k8s.kube.pod.container.status.restarts.total
+
+          # Container metrics
+          - include: k8s.container_cpu_usage_seconds_total
+            action: insert
+            new_name: k8s.container.cpu.usage.seconds.rate
+          - include: k8s.container_cpu_cfs_throttled_periods_total
+            action: insert
+            match_type: regexp
+            # take datapoints with non-empty container label
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.container.cpu.cfs.throttled.periods.rate
+          - include: k8s.container_cpu_cfs_periods_total
+            action: insert
+            match_type: regexp
+            # take datapoints with non-empty container label
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.container.cpu.cfs.throttled.total.rate
+          - include: k8s.container_memory_working_set_bytes
+            action: insert
+            match_type: regexp
+            # take datapoints with non-empty container label
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.container.memory.working_set
+          - include: k8s.container_spec_cpu_quota
+            action: insert
+            match_type: regexp
+            # take datapoints with non-empty container label
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.container.spec.cpu.quota
+          - include: k8s.container_spec_cpu_period
+            action: insert
+            match_type: regexp
+            # take datapoints with non-empty container label
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.container.spec.cpu.period
+          - include: k8s.kube_pod_container_resource_requests
+            experimental_match_labels: { "resource": "memory" }
+            action: insert
+            new_name: k8s.container.spec.memory.requests
+          - include: k8s.kube_pod_container_resource_requests
+            experimental_match_labels: { "resource": "cpu" }
+            action: insert
+            new_name: k8s.container.spec.cpu.requests
+          - include: k8s.container_spec_memory_limit_bytes
+            action: insert
+            match_type: regexp
+            # take datapoints with non-empty container label
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.container.spec.memory.limit
+
+          # Pod resource metrics
+          - include: k8s.container_cpu_usage_seconds_total
+            action: insert
+            match_type: regexp
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
+            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.cpu.usage.seconds.rate
+          - include: k8s.container_memory_working_set_bytes
+            action: insert
+            match_type: regexp
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
+            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.memory.working_set
+          - include: k8s.container_spec_cpu_quota
+            action: insert
+            match_type: regexp
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
+            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.spec.cpu.quota
+          - include: k8s.container_spec_cpu_period
+            action: insert
+            match_type: regexp
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
+            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.spec.cpu.period
+
+          # Node metrics
+          - include: k8s.container_cpu_usage_seconds_total
+            action: insert
+            experimental_match_labels: { "id": "/" }
+            new_name: k8s.node.cpu.usage.seconds.rate
+          - include: k8s.container_memory_working_set_bytes
+            action: insert
+            experimental_match_labels: { "id": "/" }
+            new_name: k8s.node.memory.working_set
+          - include: k8s.kube_node_status_capacity
+            experimental_match_labels: { "resource": "cpu" }
+            action: insert
+            new_name: k8s.node.cpu.capacity
+          - include: k8s.kube_node_status_allocatable
+            experimental_match_labels: { "resource": "cpu" }
+            action: insert
+            new_name: k8s.node.cpu.allocatable
+          - include: k8s.kube_node_status_capacity
+            experimental_match_labels: { "resource": "memory" }
+            action: insert
+            new_name: k8s.node.memory.capacity
+          - include: k8s.kube_node_status_allocatable
+            experimental_match_labels: { "resource": "memory" }
+            action: insert
+            new_name: k8s.node.memory.allocatable
+          - include: k8s.kube_node_status_condition
+            experimental_match_labels: { "condition": "Ready", "status": "true" }
+            action: insert
+            new_name: k8s.node.status.condition.ready 
+          - include: k8s.kube_node_status_condition
+            experimental_match_labels: { "condition": "NetworkUnavailable", "status": "true" }
+            action: insert
+            new_name: k8s.node.status.condition.networkunavailable
+          - include: k8s.kube_node_status_condition
+            experimental_match_labels: { "condition": "PIDPressure", "status": "true" }
+            action: insert
+            new_name: k8s.node.status.condition.pidpressure
+          - include: k8s.kube_node_status_condition
+            experimental_match_labels: { "condition": "MemoryPressure", "status": "true" }
+            action: insert
+            new_name: k8s.node.status.condition.memorypressure
+          - include: k8s.kube_node_status_condition
+            experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
+            action: insert
+            new_name: k8s.node.status.condition.diskpressure
+            # Add dummy `host.id` so that we can update it (and only for this metric) later in Resource Attributes processor
+          - include: k8s.kube_node_info
+            action: update
+            operations:
+              - action: add_label
+                new_label: host.id
+                new_value: _
+
+          # Cluster metrics
+          - include: k8s.kube_pod_info
+            action: insert
+            new_name: k8s.cluster.pods
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+          - include: k8s.kube_node_info
+            action: insert
+            new_name: k8s.cluster.nodes
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+          - include: k8s.node.cpu.capacity
+            action: insert
+            new_name: k8s.cluster.cpu.capacity
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+          - include: k8s.node.cpu.allocatable
+            action: insert
+            new_name: k8s.cluster.cpu.allocatable
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+          - include: k8s.node.memory.capacity
+            action: insert
+            new_name: k8s.cluster.memory.capacity
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+          - include: k8s.node.memory.allocatable
+            action: insert
+            new_name: k8s.cluster.memory.allocatable
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+          - include: k8s.node.memory.working_set
+            action: insert
+            new_name: k8s.cluster.memory.working_set
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+      cumulativetodelta:
+        include:
+          metrics:
+            - k8s.container.cpu.usage.seconds.rate
+            - k8s.node.cpu.usage.seconds.rate
+            - k8s.pod.cpu.usage.seconds.rate
+            - k8s.container.cpu.cfs.throttled.periods.rate
+            - k8s.container.cpu.cfs.throttled.total.rate
+          match_type: strict
+      deltatorate:
+        metrics:
+          - k8s.container.cpu.usage.seconds.rate
+          - k8s.node.cpu.usage.seconds.rate
+          - k8s.pod.cpu.usage.seconds.rate
+          - k8s.container.cpu.cfs.throttled.periods.rate
+          - k8s.container.cpu.cfs.throttled.total.rate
+      metricstransform/aggregate_rate:
+        transforms:
+          - include: k8s.node.cpu.usage.seconds.rate
+            action: insert
+            new_name: k8s.cluster.cpu.usage.seconds.rate
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+      experimental_metricsgeneration/cluster:
+        rules:
+          - name: k8s.cluster.memory.utilization
+            unit: Percent
+            type: calculate
+            metric1: k8s.cluster.memory.working_set
+            metric2: k8s.cluster.memory.allocatable
+            operation: percent
+          - name: k8s.cluster.cpu.utilization
+            unit: Percent
+            type: calculate
+            metric1: k8s.cluster.cpu.usage.seconds.rate
+            metric2: k8s.cluster.cpu.allocatable
+            operation: percent
+      groupbyattrs/node:
+        keys:
+          - node
+      # Transformations done after grouping per node
+      metricstransform/aggregate_node_level:
+        transforms:
+          - include: k8s.kube_pod_info
+            action: insert
+            new_name: k8s.node.pods
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+      groupbyattrs/pod:
+        keys:
+          - namespace
+          - pod
+      # Transformations done after grouping per pod
+      metricstransform/aggregate_pod_level:
+        transforms:
+          - include: k8s.kube_pod_container_info
+            action: insert
+            new_name: k8s.pod.containers
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+      groupbyattrs/all:
+        keys:
+          - kubernetes_io_hostname
+          - exported_node
+          - kubelet_version
+          - provider_id
+          - os_image
+          - exported_namespace
+          - uid
+          - pod_ip
+          - host_ip
+          - created_by_kind
+          - created_by_name
+          - host_network
+          - priority_class
+          - container_id
+          - container
+          - image
+          - image_id
+          - sw.k8s.pod.status
+          - sw.k8s.namespace.status
+          - sw.k8s.node.status
+          - host.id
+      resource:
+        attributes:
+          # Remove useless attributes
+          - key: service.name
+            action: delete
+
+          - key: host.name
+            action: delete
+
+          - key: port
+            action: delete
+
+          - key: scheme
+            action: delete
+
+          # Collector and Manifest version
+          - key: sw.k8s.agent.manifest.version
+            value: "1.0"
+            action: insert
+
+          # Cluster
+          - key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+            action: insert
+
+          - key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+            action: insert
+
+          # Node
+          - key: k8s.node.name
+            from_attribute: kubernetes_io_hostname
+            action: insert
+          - key: kubernetes_io_hostname
+            action: delete
+
+          - key: k8s.node.name
+            from_attribute: node
+            action: upsert
+          - key: node
+            action: delete
+
+          - key: k8s.node.name
+            from_attribute: exported_node
+            action: upsert
+          - key: exported_node
+            action: delete
+
+          - key: host.id
+            from_attribute: k8s.node.name
+            action: update
+
+          - key: provider_id
+            pattern: ^aws.*/(?P<awsInstanceId>[^/]+)$
+            action: extract
+
+          - key: host.id
+            from_attribute: awsInstanceId
+            action: update
+          - key: awsInstanceId
+            action: delete
+
+          - key: sw.k8s.node.version
+            from_attribute: kubelet_version
+            action: insert
+          - key: kubelet_version
+            action: delete
+
+          - key: sw.k8s.node.provider.id
+            from_attribute: provider_id
+            action: insert
+          - key: provider_id
+            action: delete
+
+          - key: sw.k8s.node.os.image
+            from_attribute: os_image
+            action: insert
+          - key: os_image
+            action: delete
+
+          # Namespace
+          - key: k8s.namespace.name
+            from_attribute: namespace
+            action: insert
+          - key: namespace
+            action: delete
+
+          - key: k8s.namespace.name
+            from_attribute: exported_namespace
+            action: upsert
+          - key: exported_namespace
+            action: delete
+
+          # Pod
+          - key: k8s.pod.name
+            from_attribute: pod
+            action: insert
+          - key: pod
+            action: delete
+
+          - key: k8s.pod.uid
+            from_attribute: uid
+            action: insert
+          - key: uid
+            action: delete
+
+          - key: sw.k8s.pod.ip
+            from_attribute: pod_ip
+            action: insert
+          - key: pod_ip
+            action: delete
+
+          - key: sw.k8s.pod.host.ip
+            from_attribute: host_ip
+            action: insert
+          - key: host_ip
+            action: delete
+
+          - key: sw.k8s.pod.createdby.kind
+            from_attribute: created_by_kind
+            action: insert
+          - key: created_by_kind
+            action: delete
+
+          - key: sw.k8s.pod.createdby.name
+            from_attribute: created_by_name
+            action: insert
+          - key: created_by_name
+            action: delete
+
+          - key: sw.k8s.pod.host.network
+            from_attribute: host_network
+            action: insert
+          - key: host_network
+            action: delete
+
+          - key: sw.k8s.pod.priority_class
+            from_attribute: priority_class
+            action: insert
+          - key: priority_class
+            action: delete
+
+          # Container
+          - key: k8s.container.id
+            from_attribute: container_id
+            action: insert
+          - key: container_id
+            action: delete
+
+          - key: k8s.container.name
+            from_attribute: container
+            action: insert
+          - key: container
+            action: delete
+
+          - key: k8s.container.image.id
+            from_attribute: image_id
+            action: insert
+          - key: image_id
+            action: delete
+
+          - key: k8s.container.image.name
+            from_attribute: image
+            action: insert
+          - key: image
+            action: delete
+
+      batch:
+        send_batch_size: 8192
+        send_batch_max_size: 8192
+        timeout: 1s
+    receivers:
+      k8s_events:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: prometheus
+              scrape_interval: ${SCRAPE_INTERVAL}
+              metrics_path: "/federate"
+              honor_timestamps: false
+              params:
+                "match[]":
+                  - "container_cpu_usage_seconds_total"
+                  - "container_spec_cpu_quota"
+                  - "container_spec_cpu_period"
+                  - "container_memory_working_set_bytes"
+                  - "container_spec_memory_limit_bytes"
+                  - "container_cpu_cfs_throttled_periods_total"
+                  - "container_cpu_cfs_periods_total"
+                  - "kube_node_info"
+                  - "kube_node_created"
+                  - "kube_node_status_capacity"
+                  - "kube_node_status_condition"
+                  - "kube_pod_created"
+                  - "kube_pod_info"
+                  - "kube_pod_start_time"
+                  - "kube_pod_completion_time"
+                  - "kube_pod_status_phase"
+                  - "kube_pod_start_time"
+                  - "kube_resourcequota"
+                  - "kube_pod_container_status_restarts_total"
+                  - "kube_node_status_allocatable"
+                  - "kube_pod_container_resource_requests"
+                  - '{__name__=~"kube_pod_container_.*"}'
+              static_configs:
+                - targets:
+                    - ${PROMETHEUS_URL}
+    service:
+      extensions:
+        - health_check
+        - memory_ballast
+      pipelines:
+        metrics:
+          exporters:
+            - otlp
+          processors:
+            - prometheustypeconvert
+            - metricstransform/rename
+            - metricstransform/preprocessing
+            - swmetricstransform
+            - cumulativetodelta
+            - deltatorate
+            - metricstransform/aggregate_rate
+            - experimental_metricsgeneration/cluster
+            - groupbyattrs/node
+            - metricstransform/aggregate_node_level
+            - groupbyattrs/pod
+            - metricstransform/aggregate_pod_level
+            - groupbyattrs/all
+            - resource
+            - memory_limiter
+            - batch
+          receivers:
+            - prometheus
+        logs:
+          exporters:
+            - otlp
+          processors:
+            - resource
+            - memory_limiter
+            - batch
+          receivers:
+            - k8s_events
+      telemetry:
+        logs:
+          level: "info"
+        metrics:
+          address: 0.0.0.0:8888
+
+  logs.config: |
+    exporters:
+      otlp:
+        endpoint: ${OTEL_ENVOY_ADDRESS}
+        tls:
+          insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+        headers:
+          "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    extensions:
+      health_check: {}
+
+    processors:
+      # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
+      filter:
+        logs:
+          include:
+              match_type: regexp
+              record_attributes:
+                  # allow only system namespaces (kube-system, kube-public)
+                  - key: k8s.namespace.name
+                    value: ^kube-.*$
+
+      groupbyattrs/all:
+        keys:
+          - k8s.container.name
+          - k8s.namespace.name
+          - k8s.pod.name
+          - k8s.pod.uid
+      
+      resource:
+        attributes:
+
+          # Collector and Manifest version
+          - key: sw.k8s.agent.manifest.version
+            value: "1.0"
+            action: insert
+
+          # Cluster
+          - key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+            action: insert
+
+          - key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+            action: insert
+
+          # Node
+          - key: k8s.node.name
+            value: ${NODE_NAME}
+            action: insert
+
+      batch:
+        send_batch_size: 8192
+        send_batch_max_size: 8192
+        timeout: 1s
+    receivers:
+      filelog:
+        include: [ /var/log/pods/*/*/*.log ]
+        # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
+        exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
+        start_at: beginning
+        include_file_path: true
+        include_file_name: false
+        operators:
+          # Find out which format is used by kubernetes
+          - type: router
+            id: get-format
+            routes:
+              - output: parser-docker
+                expr: 'body matches "^\\{"'
+              - output: parser-crio
+                expr: 'body matches "^[^ Z]+ "'
+              - output: parser-containerd
+                expr: 'body matches "^[^ Z]+Z"'
+          # Parse CRI-O format
+          - type: regex_parser
+            id: parser-crio
+            regex: '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$'
+            output: merge-cri-lines
+            parse_to: body
+            timestamp:
+              parse_from: body.time
+              layout_type: gotime
+              layout: '2006-01-02T15:04:05.000000000-07:00'
+          # Parse CRI-Containerd format
+          - type: regex_parser
+            id: parser-containerd
+            regex: '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$'
+            output: merge-cri-lines
+            parse_to: body
+            timestamp:
+              parse_from: body.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          # Parse Docker format
+          - type: json_parser
+            id: parser-docker
+            parse_to: body
+            output: merge-docker-lines
+            timestamp:
+              parse_from: body.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+
+          # Merge log lines split by Docker logging driver.
+          - type: recombine
+            id: merge-docker-lines
+            source_identifier: attributes["log.file.path"]
+            output: merge-multiline-logs
+            combine_field: body.log
+            combine_with: ""
+            is_last_entry: body.log matches "\n$"
+
+          # Merge log lines split by CRI logging drivers.
+          - type: recombine
+            id: merge-cri-lines
+            source_identifier: attributes["log.file.path"]
+            output: merge-multiline-logs
+            combine_field: body.log
+            combine_with: ""
+            is_last_entry: body.logtag == "F"
+            overwrite_with: newest
+
+          # Merges incoming log records into multiline logs.
+          - type: recombine
+            id: merge-multiline-logs
+            output: extract-metadata-from-filepath
+            source_identifier: attributes["log.file.path"]
+            combine_field: body.log
+            combine_with: ""
+            is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
+
+          # Extract metadata from file path
+          - type: regex_parser
+            id: extract-metadata-from-filepath
+            regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$'
+            parse_from: attributes["log.file.path"]
+
+          # Rename attributes
+          - type: move
+            id: move-attributes
+            from: body.stream
+            to: attributes["stream"]
+          - type: move
+            from: attributes.container_name
+            to: attributes["k8s.container.name"]
+          - type: move
+            from: attributes.namespace
+            to: attributes["k8s.namespace.name"]
+          - type: move
+            from: attributes.pod_name
+            to: attributes["k8s.pod.name"]
+          - type: move
+            from: attributes.run_id
+            to: attributes["run_id"]
+          - type: move
+            from: attributes.uid
+            to: attributes["k8s.pod.uid"]
+          - type: remove
+            field: attributes["log.file.path"]
+          - type: move
+            from: body.log
+            to: body
+    service:
+      extensions:
+        - health_check
+      pipelines:
+        logs:
+          exporters:
+            - otlp
+          processors:
+            - filter
+            - groupbyattrs/all
+            - resource
+            - batch
+          receivers:
+            - filelog
+      telemetry:
+        logs:
+          level: "info"
+        metrics:
+          address: 0.0.0.0:8888
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -111,6 +891,9 @@ spec:
       securityContext: {}
       containers:
         - name: opentelemetry-collector
+          command:
+            - /swi-otelcol
+            - --config=/conf/relay.yaml
           securityContext: {}
           image: "solarwinds/swi-opentelemetry-collector:latest"
           imagePullPolicy: Always
@@ -130,10 +913,14 @@ spec:
               value: "<PROMETHEUS_URL>"
             - name: OTEL_ENVOY_ADDRESS
               value: "<OTEL_ENVOY_ADDRESS>"
+            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
+              value: "false"
             - name: CLUSTER_NAME
               value: "<CLUSTER_NAME>"
             - name: CLUSTER_UID
               value: "<CLUSTER_UID>"
+            - name: SCRAPE_INTERVAL
+              value: "60s"
           livenessProbe:
             httpGet:
               path: /
@@ -146,6 +933,17 @@ spec:
             limits:
               cpu: 256m
               memory: 512Mi
+          volumeMounts:
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+              readOnly: true
+      volumes:
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: swi-opentelemetry-collector
+            items:
+              - key: metrics.config
+                path: relay.yaml
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -172,7 +970,7 @@ spec:
           imagePullPolicy: Always
           command:
             - /swi-otelcol
-            - --config=/opt/log-config.yaml
+            - --config=/conf/relay.yaml
           env:
             - name: POD_NAME
               valueFrom:
@@ -194,6 +992,8 @@ spec:
                   optional: true
             - name: OTEL_ENVOY_ADDRESS
               value: "<OTEL_ENVOY_ADDRESS>"
+            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
+              value: "false"
             - name: CLUSTER_NAME
               value: "<CLUSTER_NAME>"
             - name: CLUSTER_UID
@@ -223,6 +1023,9 @@ spec:
             - mountPath: /var/lib/docker/containers
               name: varlibdockercontainers
               readOnly: true
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+              readOnly: true
       volumes:
         - name: varlogpods
           hostPath:
@@ -233,3 +1036,9 @@ spec:
         - name: varlibdockercontainers
           hostPath:
             path: /var/lib/docker/containers
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: swi-opentelemetry-collector
+            items:
+              - key: logs.config
+                path: relay.yaml
