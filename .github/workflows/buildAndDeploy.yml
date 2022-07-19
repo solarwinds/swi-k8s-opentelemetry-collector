@@ -105,8 +105,8 @@ jobs:
       - name: Tag images
         if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
         run: |
-          docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
-          docker tag nighthawk-swi-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
+          docker tag swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
+          docker tag swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
   
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1

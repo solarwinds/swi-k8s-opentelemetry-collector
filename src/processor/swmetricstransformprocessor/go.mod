@@ -1,4 +1,4 @@
-module github.com/solarwinds/nighthawk-im-k8s-monitor/processor/swmetricstransformprocessor
+module github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor
 
 go 1.17
 
