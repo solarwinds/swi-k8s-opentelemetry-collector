@@ -21,9 +21,6 @@ USER ${USER_UID}
 COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /src/nighthawk-swi-opentelemetry-collector /swi-otelcol
 
-ENV SCRAPE_INTERVAL="60s"
-ENV OTEL_ENVOY_ADDRESS_TLS_INSECURE="false"
-
 ENTRYPOINT ["/swi-otelcol"]
 CMD ["--config=/opt/default-config.yaml"]
 
