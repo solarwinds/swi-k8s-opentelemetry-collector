@@ -407,17 +407,7 @@ data:
 
           - key: host.id
             from_attribute: k8s.node.name
-            action: update
-
-          - key: provider_id
-            pattern: ^aws.*/(?P<awsInstanceId>[^/]+)$
-            action: extract
-
-          - key: host.id
-            from_attribute: awsInstanceId
-            action: update
-          - key: awsInstanceId
-            action: delete
+            action: insert
 
           - key: sw.k8s.node.version
             from_attribute: kubelet_version
@@ -523,6 +513,11 @@ data:
             action: insert
           - key: image
             action: delete
+      
+      resourcedetection:
+        detectors: [eks, ec2, aks, azure]
+        timeout: 2s
+        override: true
 
       batch:
         send_batch_size: 8192
@@ -587,6 +582,7 @@ data:
             - metricstransform/aggregate_pod_level
             - groupbyattrs/all
             - resource
+            - resourcedetection
             - memory_limiter
             - batch
           receivers:
