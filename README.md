@@ -27,6 +27,88 @@ Components that are being deployed:
 ## Installation
 Walk through Add Kubernetes wizard in SolarWinds Observability
 
+## Customization
+The [manifest](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/blob/master/deploy/k8s/manifest.yaml) that you are about to deploy to your cluster using the Add Kubernetes wizard contains [OpenTelemetry configuration](https://opentelemetry.io/docs/collector/configuration/) which defines the metrics and logs to be monitored. It allows you to customize the list of metrics and logs to be monitored, as well as their preprocessing.
+
+**WARNING: Custom modifications to OpenTelemetry collector configurations can lead to unexpected Kubernetes agent behavior, data loss, and subsequent entity ingestion failures on the Solarwinds Observability platform side.**
+
+### Metrics
+
+The metrics collection and processing configuration is included in the manifest as a ConfigMap under the `metrics.config` key.
+
+In order to reduce the size of the collected data, the swi-k8s-opentelemetry-collector whitelists only selected metrics that are key for successful entity ingestion on the Solarwinds Observability side. The list of observed metrics can be easily modified by simply adding or removing the desired metrics from the list located in the `scrape_configs` section of the collector configuration.
+
+Default metrics monitored by swi-k8s-opentelemetry-collector:
+- container_cpu_usage_seconds_total
+- container_spec_cpu_quota
+- container_spec_cpu_period
+- container_memory_working_set_bytes
+- container_spec_memory_limit_bytes
+- container_cpu_cfs_throttled_periods_total
+- container_cpu_cfs_periods_total
+- kube_node_info
+- kube_node_created
+- kube_node_status_capacity
+- kube_node_status_condition
+- kube_pod_created
+- kube_pod_info
+- kube_pod_start_time
+- kube_pod_completion_time
+- kube_pod_status_phase
+- kube_pod_start_time
+- kube_resourcequota
+- kube_pod_container_status_restarts_total
+- kube_node_status_allocatable
+- kube_pod_container_resource_requests
+- '{\_\_name\_\_=~"kube_pod_container_.*"}'
+
+Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform. 
+
+Processors included in the collector:
+  - [batch](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor)
+  - [cumulativetodelta](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/cumulativetodeltaprocessor)
+  - [deltatorate](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/deltatorateprocessor)
+  - [experimental_metricsgeneration](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricsgenerationprocessor)
+  - [groupbyattrs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/groupbyattrsprocessor)
+  - [memory_limiter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor)
+  - [metricstransform](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricstransformprocessor)
+  - [prometheustypeconvert](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/prometheustypeconverterprocessor)
+  - [resource](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourceprocessor)
+  - [swmetricstransform](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/swmetricstransformprocessor)
+
+### Logs
+
+The logs collection and processing configuration is included in the manifest as a ConfigMap under the `logs.config` key.
+
+To reduce the overall size of the data created during log collection, the collector whitelists container logs only on `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. Otherwise, the size of the collected data would lead to infrastructure overload. This behavior can be modified in the `filter` section of the log collection configuration.
+
+To collect all logs remove the `filter` section
+```diff
+processors:
+  # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
+- filter:
+-   logs:
+-     include:
+-         match_type: regexp
+-         record_attributes:
+-             # allow only system namespaces (kube-system, kube-public)
+-             - key: k8s.namespace.name
+-               value: ^kube-.*$
+```
+
+To collect logs for a specific namespace, change the filter value with the name of the namespace to be monitored
+```diff
+filter:
+  logs:
+    include:
+        match_type: regexp
+        record_attributes:
+            # allow only system namespaces (kube-system, kube-public)
+            - key: k8s.namespace.name
+-              value: ^kube-.*$
++              value: <NAMESPACE_NAME>
+```
+
 ## Development
 
 ### Prerequisites
