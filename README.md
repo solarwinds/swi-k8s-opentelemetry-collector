@@ -11,7 +11,7 @@ Assets to monitor kubernetes infrastructure in SolarWinds Observability
 ## About
 
 This repository contains:
-* Kubernetes manifest files to collect metrics provided by existing Prometheus server, events and logs and export it to SolarWinds OaaS infrastructure.
+* Kubernetes manifest files to collect metrics provided by existing Prometheus server, events and logs and export it to SolarWinds Observability infrastructure.
 * Dockerfile for images published to Docker hub that is deployed as part of Kubernetes monitoring
 * All related sources that are built into that:
   * Custom OpenTelemetry collector processors  
