@@ -210,6 +210,26 @@ data:
             experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
             action: insert
             new_name: k8s.node.status.condition.diskpressure
+          - include: k8s.kube_pod_status_phase
+            experimental_match_labels: { "condition": "Running" }
+            action: insert
+            new_name: k8s.kube.pod.status.phase.running
+          - include: k8s.kube_pod_status_phase
+            experimental_match_labels: { "condition": "Failed" }
+            action: insert
+            new_name: k8s.kube.pod.status.phase.failed
+          - include: k8s.kube_pod_status_phase
+            experimental_match_labels: { "condition": "Pending" }
+            action: insert
+            new_name: k8s.kube.pod.status.phase.pending
+          - include: k8s.kube_pod_status_phase
+            experimental_match_labels: { "condition": "Succeeded" }
+            action: insert
+            new_name: k8s.kube.pod.status.phase.succeeded
+          - include: k8s.kube_pod_status_phase
+            experimental_match_labels: { "condition": "Unknown" }
+            action: insert
+            new_name: k8s.kube.pod.status.phase.unknown
             # Add dummy `host.id` so that we can update it (and only for this metric) later in Resource Attributes processor
           - include: k8s.kube_node_info
             action: update
