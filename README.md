@@ -27,6 +27,12 @@ Components that are being deployed:
 ## Installation
 Walk through Add Kubernetes wizard in SolarWinds Observability
 
+## Limitations
+* Supported kubernetes version: 1.18 and higher.
+  * Local kubernetes deployments (e.q. Minikube) are not supported (although most of the functionality may be working).
+* Supported kube-state-metrics: 1.5.0 and higher.
+* Supported architectures: Linux x86-64 (`amd64`).
+
 ## Customization
 The [manifest](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/blob/master/deploy/k8s/manifest.yaml) that you are about to deploy to your cluster using the Add Kubernetes wizard contains [OpenTelemetry configuration](https://opentelemetry.io/docs/collector/configuration/) which defines the metrics and logs to be monitored. It allows you to customize the list of metrics and logs to be monitored, as well as their preprocessing.
 
