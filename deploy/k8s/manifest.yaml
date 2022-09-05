@@ -49,7 +49,7 @@ data:
             action: update
             new_name: k8s.$${1}$${2}
       # Transformations done on all metrics before any grouping
-      swmetricstransform:
+      swmetricstransform/preprocessing:
         transforms:
           - include: k8s.kube_node_status_condition
             experimental_match_labels: { "condition": "Ready" }
@@ -70,6 +70,18 @@ data:
               - action: update_label
                 label: status
                 new_label: sw.k8s.node.status
+          - include: k8s.kube_pod_container_status_ready
+            action: insert
+            new_name: k8s.kube_pod_container_status_ready_true_temp
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+          - include: k8s.kube_pod_container_status_ready
+            action: insert
+            new_name: k8s.kube_pod_container_status_ready_false_temp
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
           - include: k8s.kube_pod_status_phase
             action: update
             operations:
@@ -164,6 +176,33 @@ data:
             # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
             experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.spec.cpu.period
+          - include: k8s.kube_pod_container_status_waiting
+            action: insert
+            new_name: k8s.kube_pod_container_status_waiting_only_temp
+          - include: k8s.kube_pod_container_status_running
+            action: insert
+            new_name: k8s.kube_pod_container_status_running_only_temp
+          - include: k8s.kube_pod_container_status_terminated
+            action: insert
+            new_name: k8s.kube_pod_container_status_terminated_only_temp
+          - include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
+            match_type: regexp
+            action: combine
+            new_name: k8s.container.status
+            submatch_case: lower
+            operations:
+              - action: update_label
+                label: status
+                new_label: sw.k8s.container.status
+          - include: ^k8s.kube_pod_container_status_ready_(?P<ready>[^_]*)_temp$
+            match_type: regexp
+            action: combine
+            new_name: k8s.container.ready
+            submatch_case: lower
+            operations:
+              - action: update_label
+                label: ready
+                new_label: sw.k8s.container.ready
 
           # Node metrics
           - include: k8s.container_cpu_usage_seconds_total
@@ -268,6 +307,13 @@ data:
               - action: aggregate_labels
                 label_set: []
                 aggregation_type: sum
+      swmetricstransform/postprocessing:
+        transforms:
+          - include: k8s.container.status
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
       cumulativetodelta:
         include:
           metrics:
@@ -576,8 +622,9 @@ data:
           processors:
             - prometheustypeconvert
             - metricstransform/rename
+            - swmetricstransform/preprocessing
             - metricstransform/preprocessing
-            - swmetricstransform
+            - swmetricstransform/postprocessing
             - cumulativetodelta
             - deltatorate
             - metricstransform/aggregate_rate
