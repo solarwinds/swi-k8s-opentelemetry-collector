@@ -775,7 +775,7 @@ var (
 		},
 		// filter datapoints
 		{
-			name: "filter_datapoints",
+			name: "filter_datapoints_include",
 			transforms: []internalTransform{
 				{
 					MetricIncludeFilter: internalFilterStrict{include: "metric"},
@@ -783,8 +783,9 @@ var (
 					Operations: []internalOperation{
 						{
 							configOperation: Operation{
-								Action:         FilterDataPoints,
-								DataPointValue: 1,
+								Action:               FilterDataPoints,
+								DataPointValue:       1,
+								DataPointValueAction: Include,
 							},
 						},
 					},
@@ -804,6 +805,40 @@ var (
 					setDataType(metricspb.MetricDescriptor_GAUGE_INT64).
 					addTimeseries(1, []string{"label1value1", "label2value"}).
 					addInt64Point(0, 1, 2).
+					build(),
+			},
+		},
+		{
+			name: "filter_datapoints_exclude",
+			transforms: []internalTransform{
+				{
+					MetricIncludeFilter: internalFilterStrict{include: "metric"},
+					Action:              Update,
+					Operations: []internalOperation{
+						{
+							configOperation: Operation{
+								Action:               FilterDataPoints,
+								DataPointValue:       1,
+								DataPointValueAction: Exclude,
+							},
+						},
+					},
+				},
+			},
+			in: []*metricspb.Metric{
+				metricBuilder().setName("metric").setLabels([]string{"label1", "label2"}).
+					setDataType(metricspb.MetricDescriptor_GAUGE_INT64).
+					addTimeseries(1, []string{"label1value1", "label2value"}).
+					addInt64Point(0, 1, 2).
+					addTimeseries(1, []string{"label1value2", "label2value"}).
+					addInt64Point(1, 0, 2).
+					build(),
+			},
+			out: []*metricspb.Metric{
+				metricBuilder().setName("metric").setLabels([]string{"label1", "label2"}).
+					setDataType(metricspb.MetricDescriptor_GAUGE_INT64).
+					addTimeseries(1, []string{"label1value2", "label2value"}).
+					addInt64Point(0, 0, 2).
 					build(),
 			},
 		},

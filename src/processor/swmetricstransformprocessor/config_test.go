@@ -120,8 +120,24 @@ func TestLoadingFullConfig(t *testing.T) {
 						NewName: "new_name_copy_3",
 						Operations: []Operation{
 							{
-								Action:         "filter_datapoints",
-								DataPointValue: 1,
+								Action:               "filter_datapoints",
+								DataPointValue:       1,
+								DataPointValueAction: Include,
+							},
+						},
+					},
+					{
+						MetricIncludeFilter: FilterConfig{
+							Include:   "name5",
+							MatchType: "strict",
+						},
+						Action:  "insert",
+						NewName: "new_name_copy_4",
+						Operations: []Operation{
+							{
+								Action:               "filter_datapoints",
+								DataPointValue:       1,
+								DataPointValueAction: Exclude,
 							},
 						},
 					},
