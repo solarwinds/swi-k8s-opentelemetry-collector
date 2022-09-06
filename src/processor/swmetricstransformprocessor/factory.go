@@ -122,9 +122,6 @@ func validateConfiguration(config *Config) error {
 			if op.Action == AddLabel && op.NewValue == "" {
 				return fmt.Errorf("operation %v: missing required field %q while %q is %v", i+1, NewValueFieldName, ActionFieldName, AddLabel)
 			}
-			if op.Action == FilterDataPoints && op.DataPointValue == 0 {
-				return fmt.Errorf("operation %v: missing required field %q while %q is %v", i+1, DataPointsFieldName, ActionFieldName, FilterDataPoints)
-			}
 			if op.Action == FilterDataPoints && !op.DataPointValueAction.isValid() {
 				return fmt.Errorf("operation %v: %q must be in %q", i+1, DataValueActionFieldName, dataPointActions)
 			}
