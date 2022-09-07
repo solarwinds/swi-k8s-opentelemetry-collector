@@ -112,6 +112,12 @@ data:
               - action: filter_datapoints
                 datapoint_value: 0
                 datapoint_value_action: exclude
+          - include: k8s.kube_pod_created
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
+                datapoint_value_action: exclude
       metricstransform/preprocessing:
         transforms:
           - include: k8s.kube_namespace_status_phase
