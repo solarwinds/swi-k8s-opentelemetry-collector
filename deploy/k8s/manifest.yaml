@@ -59,7 +59,6 @@ data:
               - action: filter_datapoints
                 datapoint_value: 1
                 datapoint_value_action: include
-                value_action: include
               - action: update_label
                 label: status
                 value_actions:
@@ -78,12 +77,14 @@ data:
             operations:
               - action: filter_datapoints
                 datapoint_value: 1
+                datapoint_value_action: include
           - include: k8s.kube_pod_container_status_ready
             action: insert
             new_name: k8s.kube_pod_container_status_ready_false_temp
             operations:
               - action: filter_datapoints
                 datapoint_value: 0
+                datapoint_value_action: include
           - include: k8s.kube_pod_status_phase
             action: update
             operations:
@@ -94,6 +95,18 @@ data:
                 label: phase
                 new_label: sw.k8s.pod.status
           - include: k8s.kube_pod_start_time
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
+                datapoint_value_action: exclude
+          - include: k8s.kube_pod_completion_time
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
+                datapoint_value_action: exclude
+          - include: k8s.kube_node_created
             action: update
             operations:
               - action: filter_datapoints
@@ -258,26 +271,6 @@ data:
             experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
             action: insert
             new_name: k8s.node.status.condition.diskpressure
-          - include: k8s.kube_pod_status_phase
-            experimental_match_labels: { "condition": "Running" }
-            action: insert
-            new_name: k8s.kube.pod.status.phase.running
-          - include: k8s.kube_pod_status_phase
-            experimental_match_labels: { "condition": "Failed" }
-            action: insert
-            new_name: k8s.kube.pod.status.phase.failed
-          - include: k8s.kube_pod_status_phase
-            experimental_match_labels: { "condition": "Pending" }
-            action: insert
-            new_name: k8s.kube.pod.status.phase.pending
-          - include: k8s.kube_pod_status_phase
-            experimental_match_labels: { "condition": "Succeeded" }
-            action: insert
-            new_name: k8s.kube.pod.status.phase.succeeded
-          - include: k8s.kube_pod_status_phase
-            experimental_match_labels: { "condition": "Unknown" }
-            action: insert
-            new_name: k8s.kube.pod.status.phase.unknown
             # Add dummy `host.id` so that we can update it (and only for this metric) later in Resource Attributes processor
           - include: k8s.kube_node_info
             action: update
@@ -343,6 +336,7 @@ data:
             operations:
               - action: filter_datapoints
                 datapoint_value: 1
+                datapoint_value_action: include
       cumulativetodelta:
         include:
           metrics:
@@ -627,13 +621,13 @@ data:
                   - "kube_node_status_condition"
                   - "kube_pod_created"
                   - "kube_pod_info"
-                  - "kube_pod_start_time"
                   - "kube_pod_completion_time"
                   - "kube_pod_status_phase"
                   - "kube_pod_start_time"
                   - "kube_resourcequota"
                   - "kube_pod_container_status_restarts_total"
                   - "kube_node_status_allocatable"
+                  - "kube_node_spec_unschedulable"
                   - "kube_pod_container_resource_requests"
                   - '{__name__=~"kube_pod_container_.*"}'
               static_configs:
