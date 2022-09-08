@@ -54,6 +54,9 @@ const (
 
 	// DataPointsFieldName is the mapstructure field name for Datapoint field
 	DataPointsFieldName = "datapoint_value"
+
+	// DataValueActionFieldName is the mapstructure field name for Datapoint field
+	DataValueActionFieldName = "datapoint_value_action"
 )
 
 // Config defines configuration for Resource processor.
@@ -129,8 +132,11 @@ type Operation struct {
 	// LabelValue identifies the exact label value to operate on
 	LabelValue string `mapstructure:"label_value"`
 
-	// DataPointValue identifies data point values ​​that should be included in the output
+	// DataPointValue identifies data point values ​​that should be included/excluded in the output
 	DataPointValue float64 `mapstructure:"datapoint_value"`
+
+	// DataPointValueAction is a list of actions for data point values.
+	DataPointValueAction DataPointValueAction `mapstructure:"datapoint_value_action"`
 }
 
 // ValueAction renames label values.
@@ -140,6 +146,29 @@ type ValueAction struct {
 
 	// NewValue specifies the label value to rename to.
 	NewValue string `mapstructure:"new_value"`
+}
+
+// DataPointValueAction is the enum to capture the type of action to perform on a data point.
+type DataPointValueAction string
+
+const (
+	// Include datapoints that match the provided value
+	Include DataPointValueAction = "include"
+
+	// Exclude datapoints that match the provided value
+	Exclude DataPointValueAction = "exclude"
+)
+
+var dataPointActions = []DataPointValueAction{Include, Exclude}
+
+func (da DataPointValueAction) isValid() bool {
+	for _, datapointAction := range dataPointActions {
+		if da == datapointAction {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ConfigAction is the enum to capture the type of action to perform on a metric.

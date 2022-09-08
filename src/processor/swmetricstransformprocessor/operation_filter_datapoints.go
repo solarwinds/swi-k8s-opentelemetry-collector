@@ -24,17 +24,18 @@ import metricspb "github.com/census-instrumentation/opencensus-proto/gen-go/metr
 
 // filterDataPoints filters data points according to the provided data point value
 func (mtp *swMetricsTransformProcessor) filterDataPoints(metric *metricspb.Metric, op internalOperation) {
+	action := op.configOperation.DataPointValueAction
 	for _, ts := range metric.Timeseries {
 		n := 0
 		for _, dp := range ts.Points {
 			switch metric.MetricDescriptor.Type {
 			case metricspb.MetricDescriptor_GAUGE_INT64, metricspb.MetricDescriptor_CUMULATIVE_INT64:
-				if float64(dp.GetInt64Value()) == op.configOperation.DataPointValue {
+				if includeDataPoint(float64(dp.GetInt64Value()), op.configOperation.DataPointValue, action) {
 					ts.Points[n] = dp
 					n++
 				}
 			case metricspb.MetricDescriptor_GAUGE_DOUBLE, metricspb.MetricDescriptor_CUMULATIVE_DOUBLE:
-				if dp.GetDoubleValue() == op.configOperation.DataPointValue {
+				if includeDataPoint(dp.GetDoubleValue(), op.configOperation.DataPointValue, action) {
 					ts.Points[n] = dp
 					n++
 				}
@@ -42,4 +43,15 @@ func (mtp *swMetricsTransformProcessor) filterDataPoints(metric *metricspb.Metri
 		}
 		ts.Points = ts.Points[:n]
 	}
+}
+
+func includeDataPoint(dataPointValue float64, filterValue float64, action DataPointValueAction) bool {
+	switch action {
+	case Include:
+		return dataPointValue == filterValue
+	case Exclude:
+		return dataPointValue != filterValue
+	}
+
+	return true
 }
