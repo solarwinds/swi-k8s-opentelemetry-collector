@@ -13,15 +13,13 @@ on:
   workflow_dispatch:
 
 env:
-  ECR_REPO: 377069709311.dkr.ecr.us-east-1.amazonaws.com
-  ECR_IMAGE: solarwinds/nighthawk-im-k8s-monitor
   DOCKERHUB_IMAGE: solarwinds/swi-opentelemetry-collector
 
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
     outputs:
-      ecr_image_tag: ${{ steps.generate-tag.outputs.value }}
+      image_tag: ${{ steps.generate-tag.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -40,7 +38,7 @@ jobs:
         uses: ./.github/actions/deploy-kubernetes
 
       - name: Deploy services using Skaffold
-        run: skaffold run --skip-tests=true
+        run: skaffold deploy --build-artifacts=/tmp/tags.json
 
       - name: Tail Otel mock metrics for 60 seconds
         run: |
@@ -102,40 +100,17 @@ jobs:
           path: OtelLogs/
           retention-days: 30
 
-      - name: Tag images
-        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
+      - name: Save image
+        if: github.event_name == 'release' && github.event.action == 'published'
         run: |
-          docker tag swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
-          docker tag swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }} ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
-  
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
+          docker save --output swi-k8s-opentelemetry-collector.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}
+
+      - uses: actions/upload-artifact@v3
+        if: github.event_name == 'release' && github.event.action == 'published'
         with:
-          aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
-          role-duration-seconds: 3600
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
-        with:
-          registries: ${{ secrets.EKS_REGISTRY }}
-      
-      - name: Docker login
-        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
-
-      - name: Push as specific
-        if: github.ref == 'refs/heads/master' || (github.event_name == 'release' && github.event.action == 'published')
-        run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ steps.generate-tag.outputs.value }}
-
-      - name: Push as latest
-        if: github.ref == 'refs/heads/master'
-        run: docker push ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:latest
+          name: image
+          path: swi-k8s-opentelemetry-collector.tar
+          retention-days: 2
 
   deploy_dockerhub:
     runs-on: ubuntu-latest
@@ -146,33 +121,22 @@ jobs:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - uses: actions/download-artifact@v3
         with:
-          aws-access-key-id: ${{ secrets.COMMON_ENVS_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.COMMON_ENVS_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::377069709311:role/common-envs-ecr-assume-role
-          role-duration-seconds: 3600
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          registries: ${{ secrets.EKS_REGISTRY }}
-
-      - name: Docker login to ECR
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 377069709311.dkr.ecr.us-east-1.amazonaws.com
-
+          name: image
+      
       - name: Get image tag
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
 
+      - name: Load image
+        run: |
+          docker load --input swi-k8s-opentelemetry-collector.tar
+
       - name: Tag images
         run: |
-          docker pull ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ needs.build_and_test.outputs.ecr_image_tag }}
-          docker tag ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ needs.build_and_test.outputs.ecr_image_tag }} ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}
-          docker tag ${{ env.ECR_REPO }}/${{ env.ECR_IMAGE }}:${{ needs.build_and_test.outputs.ecr_image_tag }} ${{ env.DOCKERHUB_IMAGE }}:latest
+          docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test.outputs.image_tag }} ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}
+          docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test.outputs.image_tag }} ${{ env.DOCKERHUB_IMAGE }}:latest
 
       - name: Docker login
         env:
