@@ -335,6 +335,41 @@ data:
               - action: aggregate_labels
                 label_set: []
                 aggregation_type: sum
+          - include: k8s.node.status.condition.ready
+            action: insert
+            new_name: k8s.cluster.status.condition.ready.avg
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: mean
+          - include: k8s.node.status.condition.networkunavailable
+            action: insert
+            new_name: k8s.cluster.status.condition.networkunavailable.avg
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: mean
+          - include: k8s.node.status.condition.pidpressure
+            action: insert
+            new_name: k8s.cluster.status.condition.pidpressure.avg
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: mean
+          - include: k8s.node.status.condition.memorypressure
+            action: insert
+            new_name: k8s.cluster.status.condition.memorypressure.avg
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: mean
+          - include: k8s.node.status.condition.diskpressure
+            action: insert
+            new_name: k8s.cluster.status.condition.diskpressure.avg
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: mean
       swmetricstransform/postprocessing:
         transforms:
           - include: k8s.container.status
