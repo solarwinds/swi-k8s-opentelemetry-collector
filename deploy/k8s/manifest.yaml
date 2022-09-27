@@ -41,6 +41,8 @@ data:
             convert_type: sum
           - include: container_cpu_cfs_periods_total
             convert_type: sum
+          - include: apiserver_request_total
+            convert_type: sum
       metricstransform/rename:
         transforms:
           # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
@@ -311,6 +313,13 @@ data:
               - action: aggregate_labels
                 label_set: []
                 aggregation_type: sum
+          - include: k8s.node.status.condition.ready
+            action: insert
+            new_name: k8s.cluster.nodes.ready.avg
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: mean
           - include: k8s.container.spec.memory.requests
             action: insert
             new_name: k8s.cluster.spec.memory.requests
@@ -367,6 +376,28 @@ data:
               - action: aggregate_labels
                 label_set: []
                 aggregation_type: sum
+
+          # Prometheus metrics
+          - include: apiserver_request_total
+            action: insert
+            match_type: regexp
+            # Alternative to (?!5\d\d|429) - Go regex does not support negative lookahead
+            experimental_match_labels: { "code": '^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$' }
+            new_name: apiserver_request_not_failed_temp
+          - include: apiserver_request_not_failed_temp
+            action: update
+            new_name: apiserver_request_not_failed_temp
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
+          - include: apiserver_request_total
+            action: insert
+            new_name: apiserver_request_total_temp
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: sum
       swmetricstransform/postprocessing:
         transforms:
           - include: k8s.container.status
@@ -383,6 +414,8 @@ data:
             - k8s.pod.cpu.usage.seconds.rate
             - k8s.container.cpu.cfs.throttled.periods.rate
             - k8s.container.cpu.cfs.throttled.total.rate
+            - apiserver_request_not_failed_temp
+            - apiserver_request_total_temp
           match_type: strict
       deltatorate:
         metrics:
@@ -413,6 +446,12 @@ data:
             type: calculate
             metric1: k8s.cluster.cpu.usage.seconds.rate
             metric2: k8s.cluster.cpu.allocatable
+            operation: percent
+          - name: k8s.apiserver.request.successrate
+            unit: Percent
+            type: calculate
+            metric1: apiserver_request_not_failed_temp
+            metric2: apiserver_request_total_temp
             operation: percent
       groupbyattrs/node:
         keys:
@@ -464,6 +503,13 @@ data:
           - sw.k8s.namespace.status
           - sw.k8s.node.status
           - host.id
+      filter:
+        metrics:
+          exclude:
+            match_type: regexp
+            metric_names:
+              - .*_temp
+              - apiserver_request_total
       resource:
         attributes:
           # Remove useless attributes
@@ -668,6 +714,7 @@ data:
                   - "kube_node_spec_unschedulable"
                   - "kube_pod_container_resource_requests"
                   - '{__name__=~"kube_pod_container_.*"}'
+                  - "apiserver_request_total"
               static_configs:
                 - targets:
                     - ${PROMETHEUS_URL}
@@ -694,6 +741,7 @@ data:
             - groupbyattrs/pod
             - metricstransform/aggregate_pod_level
             - groupbyattrs/all
+            - filter
             - resource
             - memory_limiter
             - batch
