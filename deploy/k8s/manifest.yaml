@@ -313,6 +313,13 @@ data:
               - action: aggregate_labels
                 label_set: []
                 aggregation_type: sum
+          - include: k8s.node.status.condition.ready
+            action: insert
+            new_name: k8s.cluster.nodes.ready.avg
+            operations:
+              - action: aggregate_labels
+                label_set: []
+                aggregation_type: mean
           - include: k8s.container.spec.memory.requests
             action: insert
             new_name: k8s.cluster.spec.memory.requests
