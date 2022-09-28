@@ -283,13 +283,6 @@ data:
             experimental_match_labels: { "sw.k8s.pod.status": "Running" }
             action: insert
             new_name: k8s.pod.status.phase.running
-            # Add dummy `host.id` so that we can update it (and only for this metric) later in Resource Attributes processor
-          - include: k8s.kube_node_info
-            action: update
-            operations:
-              - action: add_label
-                new_label: host.id
-                new_value: _
 
           # Cluster metrics
           - include: k8s.kube_pod_info
@@ -502,7 +495,6 @@ data:
           - sw.k8s.pod.status
           - sw.k8s.namespace.status
           - sw.k8s.node.status
-          - host.id
       filter:
         metrics:
           exclude:
@@ -556,20 +548,6 @@ data:
             from_attribute: exported_node
             action: upsert
           - key: exported_node
-            action: delete
-
-          - key: host.id
-            from_attribute: k8s.node.name
-            action: update
-
-          - key: provider_id
-            pattern: ^aws.*/(?P<awsInstanceId>[^/]+)$
-            action: extract
-
-          - key: host.id
-            from_attribute: awsInstanceId
-            action: update
-          - key: awsInstanceId
             action: delete
 
           - key: sw.k8s.node.version
