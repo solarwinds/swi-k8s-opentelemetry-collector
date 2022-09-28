@@ -120,6 +120,30 @@ data:
               - action: filter_datapoints
                 datapoint_value: 0
                 datapoint_value_action: exclude
+          - include: k8s.kube_deployment_created
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
+                datapoint_value_action: exclude
+          - include: k8s.kube_daemonset_created
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
+                datapoint_value_action: exclude
+          - include: k8s.kube_namespace_created
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
+                datapoint_value_action: exclude
+          - include: k8s.kube_statefulset_created
+            action: update
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 0
+                datapoint_value_action: exclude
       metricstransform/preprocessing:
         transforms:
           - include: k8s.kube_namespace_status_phase
@@ -699,6 +723,9 @@ data:
                   - "container_spec_memory_limit_bytes"
                   - "container_cpu_cfs_throttled_periods_total"
                   - "container_cpu_cfs_periods_total"
+                  - "kube_deployment_created"
+                  - "kube_daemonset_created"
+                  - "kube_namespace_created"
                   - "kube_node_info"
                   - "kube_node_created"
                   - "kube_node_status_capacity"
@@ -714,6 +741,7 @@ data:
                   - "kube_node_spec_unschedulable"
                   - "kube_pod_container_resource_requests"
                   - '{__name__=~"kube_pod_container_.*"}'
+                  - "kube_statefulset_created"
                   - "apiserver_request_total"
               static_configs:
                 - targets:
