@@ -519,6 +519,10 @@ data:
           - sw.k8s.pod.status
           - sw.k8s.namespace.status
           - sw.k8s.node.status
+          - daemonset
+          - statefulset
+          - deployment
+          - replicaset
       filter:
         metrics:
           exclude:
@@ -679,6 +683,33 @@ data:
           - key: image
             action: delete
 
+          # ReplicaSet
+          - key: k8s.replicaset.name
+            from_attribute: replicaset
+            action: insert
+          - key: replicaset
+            action: delete
+
+          # Deployment
+          - key: k8s.deployment.name
+            from_attribute: deployment
+            action: insert
+          - key: deployment
+            action: delete
+          
+          # StatefulSet
+          - key: k8s.statefulset.name
+            from_attribute: statefulset
+            action: insert
+          - key: statefulset
+            action: delete
+
+          # DaemonSet
+          - key: k8s.daemonset.name
+            from_attribute: daemonset
+            action: insert
+          - key: daemonset
+            action: delete
       batch:
         send_batch_size: 8192
         send_batch_max_size: 8192
@@ -710,16 +741,42 @@ data:
                   - "kube_node_status_condition"
                   - "kube_pod_created"
                   - "kube_pod_info"
+                  - "kube_pod_owner"
                   - "kube_pod_completion_time"
                   - "kube_pod_status_phase"
+                  - "kube_pod_status_ready"
                   - "kube_pod_start_time"
+                  - '{__name__=~"kube_pod_container_.*"}'
+                  - "kube_namespace_status_phase"
+                  - "kube_deployment_labels"
+                  - "kube_deployment_spec_replicas"
+                  - "kube_deployment_spec_paused"
+                  - "kube_deployment_status_replicas"
+                  - "kube_deployment_status_replicas_ready"
+                  - "kube_deployment_status_replicas_available"
+                  - "kube_deployment_status_replicas_updated"
+                  - "kube_deployment_status_replicas_unavailable"
+                  - "kube_deployment_status_condition"
+                  - "kube_replicaset_owner"
+                  - "kube_replicaset_created"
+                  - "kube_statefulset_labels"
+                  - "kube_statefulset_replicas"
+                  - "kube_statefulset_status_replicas_ready"
+                  - "kube_statefulset_status_replicas_current"
+                  - "kube_statefulset_status_replicas_updated"
+                  - "kube_statefulset_created"
+                  - "kube_daemonset_labels"
+                  - "kube_daemonset_status_current_number_scheduled"
+                  - "kube_daemonset_status_desired_number_scheduled"
+                  - "kube_daemonset_status_updated_number_scheduled"
+                  - "kube_daemonset_status_number_available"
+                  - "kube_daemonset_status_number_misscheduled"
+                  - "kube_daemonset_status_number_ready"
+                  - "kube_daemonset_status_number_unavailable"
                   - "kube_resourcequota"
-                  - "kube_pod_container_status_restarts_total"
                   - "kube_node_status_allocatable"
                   - "kube_node_spec_unschedulable"
-                  - "kube_pod_container_resource_requests"
-                  - '{__name__=~"kube_pod_container_.*"}'
-                  - "kube_statefulset_created"
+
                   - "apiserver_request_total"
               static_configs:
                 - targets:
