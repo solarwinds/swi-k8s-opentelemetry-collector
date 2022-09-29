@@ -257,6 +257,38 @@ data:
               - action: update_label
                 label: ready
                 new_label: sw.k8s.container.ready
+          - include: k8s.kube_pod_owner
+            experimental_match_labels: { "owner_kind": "DaemonSet", "owner_is_controller": "true" }
+            action: insert
+            new_name: k8s.kube.pod.owner.daemonset
+            operations:
+              - action: update_label
+                label: owner_name
+                new_label: daemonset
+          - include: k8s.kube_pod_owner
+            experimental_match_labels: { "owner_kind": "ReplicaSet", "owner_is_controller": "true" }
+            action: insert
+            new_name: k8s.kube.pod.owner.replicaset
+            operations:
+              - action: update_label
+                label: owner_name
+                new_label: replicaset
+          - include: k8s.kube_pod_owner
+            experimental_match_labels: { "owner_kind": "StatefulSet", "owner_is_controller": "true" }
+            action: insert
+            new_name: k8s.kube.pod.owner.statefulset
+            operations:
+              - action: update_label
+                label: owner_name
+                new_label: statefulset
+          - include: k8s.kube_replicaset_owner
+            experimental_match_labels: { "owner_kind": "Deployment", "owner_is_controller": "true" }
+            action: insert
+            new_name: k8s.kube.replicaset.owner.deployment
+            operations:
+              - action: update_label
+                label: owner_name
+                new_label: deployment
 
           # Node metrics
           - include: k8s.container_cpu_usage_seconds_total
