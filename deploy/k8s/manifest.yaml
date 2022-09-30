@@ -105,6 +105,22 @@ data:
               - action: update_label
                 label: status
                 new_label: sw.k8s.deployment.condition.progressing
+          - include: k8s.kube_deployment_status_condition
+            experimental_match_labels: { "condition": "ReplicaFailure" }
+            action: insert
+            new_name: k8s.deployment.condition.replicafailure
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+                datapoint_value_action: include
+              - action: update_label
+                label: status
+                value_actions:
+                  - value: unknown
+                    new_value: "false"
+              - action: update_label
+                label: status
+                new_label: sw.k8s.deployment.condition.replicafailure
           - include: k8s.kube_pod_container_status_ready
             action: insert
             new_name: k8s.kube_pod_container_status_ready_true_temp
