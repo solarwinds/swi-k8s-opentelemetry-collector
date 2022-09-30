@@ -73,6 +73,39 @@ data:
               - action: update_label
                 label: status
                 new_label: sw.k8s.node.status
+          - include: k8s.kube_deployment_status_condition
+            experimental_match_labels: { "condition": "Available" }
+            action: insert
+            new_name: k8s.deployment.condition.available
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+                datapoint_value_action: include
+              - action: update_label
+                label: status
+                new_label: sw.k8s.deployment.condition.available
+          - include: k8s.kube_deployment_status_condition
+            experimental_match_labels: { "condition": "Progressing" }
+            action: insert
+            new_name: k8s.deployment.condition.progressing
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+                datapoint_value_action: include
+              - action: update_label
+                label: status
+                new_label: sw.k8s.deployment.condition.progressing
+          - include: k8s.kube_deployment_status_condition
+            experimental_match_labels: { "condition": "ReplicaFailure" }
+            action: insert
+            new_name: k8s.deployment.condition.replicafailure
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+                datapoint_value_action: include
+              - action: update_label
+                label: status
+                new_label: sw.k8s.deployment.condition.replicafailure
           - include: k8s.kube_pod_container_status_ready
             action: insert
             new_name: k8s.kube_pod_container_status_ready_true_temp
@@ -808,7 +841,6 @@ data:
                   - "kube_resourcequota"
                   - "kube_node_status_allocatable"
                   - "kube_node_spec_unschedulable"
-
                   - "apiserver_request_total"
               static_configs:
                 - targets:
