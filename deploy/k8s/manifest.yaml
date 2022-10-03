@@ -106,6 +106,13 @@ data:
               - action: update_label
                 label: status
                 new_label: sw.k8s.deployment.condition.replicafailure
+          - include: k8s.kube_pod_status_reason
+            action: update
+            new_name: k8s.pod.status.reason
+            operations:
+              - action: filter_datapoints
+                datapoint_value: 1
+                datapoint_value_action: include
           - include: k8s.kube_pod_container_status_ready
             action: insert
             new_name: k8s.kube_pod_container_status_ready_true_temp
@@ -810,6 +817,7 @@ data:
                   - "kube_pod_completion_time"
                   - "kube_pod_status_phase"
                   - "kube_pod_status_ready"
+                  - "kube_pod_status_reason"
                   - "kube_pod_start_time"
                   - '{__name__=~"kube_pod_container_.*"}'
                   - "kube_namespace_status_phase"
