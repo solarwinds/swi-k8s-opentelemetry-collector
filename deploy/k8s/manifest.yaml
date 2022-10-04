@@ -113,20 +113,6 @@ data:
               - action: filter_datapoints
                 datapoint_value: 1
                 datapoint_value_action: include
-          - include: k8s.kube_pod_container_status_ready
-            action: insert
-            new_name: k8s.kube_pod_container_status_ready_true_temp
-            operations:
-              - action: filter_datapoints
-                datapoint_value: 1
-                datapoint_value_action: include
-          - include: k8s.kube_pod_container_status_ready
-            action: insert
-            new_name: k8s.kube_pod_container_status_ready_false_temp
-            operations:
-              - action: filter_datapoints
-                datapoint_value: 0
-                datapoint_value_action: include
           - include: k8s.kube_pod_status_phase
             action: update
             operations:
@@ -288,15 +274,6 @@ data:
               - action: update_label
                 label: status
                 new_label: sw.k8s.container.status
-          - include: ^k8s.kube_pod_container_status_ready_(?P<ready>[^_]*)_temp$
-            match_type: regexp
-            action: combine
-            new_name: k8s.container.ready
-            submatch_case: lower
-            operations:
-              - action: update_label
-                label: ready
-                new_label: sw.k8s.container.ready
           - include: k8s.kube_pod_owner
             experimental_match_labels: { "owner_kind": "DaemonSet", "owner_is_controller": "true" }
             action: insert
@@ -602,7 +579,7 @@ data:
             metric_names:
               - .*_temp
               - apiserver_request_total
-      resource:
+      resource/metrics:
         attributes:
           # Remove useless attributes
           - key: service.name
@@ -782,6 +759,25 @@ data:
             action: insert
           - key: daemonset
             action: delete
+      resource/events:
+        attributes:
+          # Collector and Manifest version
+          - key: sw.k8s.agent.manifest.version
+            value: "1.0"
+            action: insert
+
+          # Cluster
+          - key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+            action: insert
+
+          - key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+            action: insert
+
+          - key: sw.k8s.log.type
+            value: event
+            action: insert
       batch:
         send_batch_size: 8192
         send_batch_max_size: 8192
@@ -877,7 +873,7 @@ data:
             - metricstransform/aggregate_pod_level
             - groupbyattrs/all
             - filter
-            - resource
+            - resource/metrics
             - memory_limiter
             - batch
           receivers:
@@ -886,7 +882,7 @@ data:
           exporters:
             - otlp
           processors:
-            - resource
+            - resource/events
             - memory_limiter
             - batch
           receivers:
@@ -926,8 +922,38 @@ data:
           - k8s.pod.name
           - k8s.pod.uid
       
-      resource:
+      resource/container:
         attributes:
+
+          - key: sw.k8s.log.type
+            value: container
+            action: insert
+
+          # Collector and Manifest version
+          - key: sw.k8s.agent.manifest.version
+            value: "1.0"
+            action: insert
+
+          # Cluster
+          - key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+            action: insert
+
+          - key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+            action: insert
+
+          # Node
+          - key: k8s.node.name
+            value: ${NODE_NAME}
+            action: insert
+      
+      resource/journal:
+        attributes:
+
+          - key: sw.k8s.log.type
+            value: journal
+            action: insert
 
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
@@ -1074,7 +1100,7 @@ data:
           processors:
             - filter
             - groupbyattrs/all
-            - resource
+            - resource/container
             - batch
           receivers:
             - filelog
@@ -1083,7 +1109,7 @@ data:
             - otlp
           processors:
             - groupbyattrs/all
-            - resource
+            - resource/journal
             - batch
           receivers:
             - journald
@@ -1100,62 +1126,62 @@ metadata:
   labels:
     app: swi-opentelemetry-collector
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - events
-  - namespaces
-  - namespaces/status
-  - nodes
-  - nodes/spec
-  - pods
-  - pods/status
-  - replicationcontrollers
-  - replicationcontrollers/status
-  - resourcequotas
-  - services
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - daemonsets
-  - deployments
-  - replicasets
-  - statefulsets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - daemonsets
-  - deployments
-  - replicasets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - batch
-  resources:
-  - jobs
-  - cronjobs
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-    - autoscaling
-  resources:
-    - horizontalpodautoscalers
-  verbs:
-    - get
-    - list
-    - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+      - namespaces
+      - namespaces/status
+      - nodes
+      - nodes/spec
+      - pods
+      - pods/status
+      - replicationcontrollers
+      - replicationcontrollers/status
+      - resourcequotas
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1168,9 +1194,9 @@ roleRef:
   kind: ClusterRole
   name: swi-opentelemetry-collector
 subjects:
-- kind: ServiceAccount
-  name: swi-opentelemetry-collector
-  namespace: <NAMESPACE>
+  - kind: ServiceAccount
+    name: swi-opentelemetry-collector
+    namespace: <NAMESPACE>
 ---
 apiVersion: apps/v1
 kind: Deployment
