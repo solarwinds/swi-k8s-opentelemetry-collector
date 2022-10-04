@@ -106,20 +106,6 @@ data:
               - action: update_label
                 label: status
                 new_label: sw.k8s.deployment.condition.replicafailure
-          - include: k8s.kube_pod_container_status_ready
-            action: insert
-            new_name: k8s.kube_pod_container_status_ready_true_temp
-            operations:
-              - action: filter_datapoints
-                datapoint_value: 1
-                datapoint_value_action: include
-          - include: k8s.kube_pod_container_status_ready
-            action: insert
-            new_name: k8s.kube_pod_container_status_ready_false_temp
-            operations:
-              - action: filter_datapoints
-                datapoint_value: 0
-                datapoint_value_action: include
           - include: k8s.kube_pod_status_phase
             action: update
             operations:
