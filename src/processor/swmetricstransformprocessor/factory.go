@@ -35,6 +35,8 @@ import (
 const (
 	// The value of "type" key in configuration.
 	typeStr = "swmetricstransform"
+	// The stability level of the processor.
+	stability = component.StabilityLevelBeta
 )
 
 var consumerCapabilities = consumer.Capabilities{MutatesData: true}
@@ -44,7 +46,7 @@ func NewFactory() component.ProcessorFactory {
 	return component.NewProcessorFactory(
 		typeStr,
 		createDefaultConfig,
-		component.WithMetricsProcessor(createMetricsProcessor))
+		component.WithMetricsProcessor(createMetricsProcessor, stability))
 }
 
 func createDefaultConfig() config.Processor {
@@ -71,6 +73,8 @@ func createMetricsProcessor(
 	metricsProcessor := newSwMetricsTransformProcessor(params.Logger, hCfg)
 
 	return processorhelper.NewMetricsProcessor(
+		ctx,
+		params,
 		cfg,
 		nextConsumer,
 		metricsProcessor.processMetrics,
@@ -180,13 +184,13 @@ func createFilter(filterConfig FilterConfig) (internalFilter, error) {
 		if err != nil {
 			return nil, err
 		}
-		return internalFilterStrict{include: filterConfig.Include, matchLabels: matchers}, nil
+		return internalFilterStrict{include: filterConfig.Include, attrMatchers: matchers}, nil
 	case RegexpMatchType:
 		matchers, err := getMatcherMap(filterConfig.MatchLabels, func(str string) (StringMatcher, error) { return regexp.Compile(str) })
 		if err != nil {
 			return nil, err
 		}
-		return internalFilterRegexp{include: regexp.MustCompile(filterConfig.Include), matchLabels: matchers}, nil
+		return internalFilterRegexp{include: regexp.MustCompile(filterConfig.Include), attrMatchers: matchers}, nil
 	}
 
 	return nil, fmt.Errorf("invalid match type: %v", filterConfig.MatchType)

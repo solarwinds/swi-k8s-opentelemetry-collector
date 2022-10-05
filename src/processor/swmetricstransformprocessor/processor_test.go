@@ -28,6 +28,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/processor/processorhelper"
@@ -45,6 +46,8 @@ func TestSwMetricsTransformProcessor(t *testing.T) {
 			p := newSwMetricsTransformProcessor(zap.NewExample(), test.transforms)
 
 			mtp, err := processorhelper.NewMetricsProcessor(
+				context.Background(),
+				componenttest.NewNopProcessorCreateSettings(),
 				&Config{
 					ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 				},
@@ -95,11 +98,11 @@ func BenchmarkSwMetricsTransformProcessorRenameMetrics(b *testing.B) {
 		in[i] = metricBuilder().setName("metric1").build()
 	}
 	p := newSwMetricsTransformProcessor(nil, transforms)
-	mtp, _ := processorhelper.NewMetricsProcessor(&Config{}, consumertest.NewNop(), p.processMetrics)
+	mtp, _ := processorhelper.NewMetricsProcessor(context.Background(), componenttest.NewNopProcessorCreateSettings(), &Config{}, consumertest.NewNop(), p.processMetrics)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		mtp.ConsumeMetrics(context.Background(), internaldata.OCToMetrics(nil, nil, in))
+		assert.NoError(b, mtp.ConsumeMetrics(context.Background(), internaldata.OCToMetrics(nil, nil, in)))
 	}
 }

@@ -20,32 +20,31 @@
 
 package swmetricstransformprocessor
 
-import metricspb "github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1"
+import (
+	"go.opentelemetry.io/collector/pdata/pmetric"
+)
 
 // filterDataPoints filters data points according to the provided data point value
-func (mtp *swMetricsTransformProcessor) filterDataPoints(metric *metricspb.Metric, op internalOperation) {
-	action := op.configOperation.DataPointValueAction
-	for _, ts := range metric.Timeseries {
-		n := 0
-		for _, dp := range ts.Points {
-			switch metric.MetricDescriptor.Type {
-			case metricspb.MetricDescriptor_GAUGE_INT64, metricspb.MetricDescriptor_CUMULATIVE_INT64:
-				if includeDataPoint(float64(dp.GetInt64Value()), op.configOperation.DataPointValue, action) {
-					ts.Points[n] = dp
-					n++
-				}
-			case metricspb.MetricDescriptor_GAUGE_DOUBLE, metricspb.MetricDescriptor_CUMULATIVE_DOUBLE:
-				if includeDataPoint(dp.GetDoubleValue(), op.configOperation.DataPointValue, action) {
-					ts.Points[n] = dp
-					n++
-				}
+func filterDataPoints(metric pmetric.Metric, mtpOp internalOperation) {
+	action := mtpOp.configOperation.DataPointValueAction
+	
+	switch metric.Type() {
+	case pmetric.MetricTypeGauge:
+		metric.Gauge().DataPoints().RemoveIf(func(dp pmetric.NumberDataPoint) bool {
+			switch dp.ValueType() {
+
+			case pmetric.NumberDataPointValueTypeInt:
+				return !includeDataPoint(float64(dp.IntValue()), mtpOp.configOperation.DataPointValue, action)
+			case pmetric.NumberDataPointValueTypeDouble:
+				return !includeDataPoint(dp.DoubleValue(), mtpOp.configOperation.DataPointValue, action)
 			}
-		}
-		ts.Points = ts.Points[:n]
+			
+			return false
+		})
 	}
 }
 
-func includeDataPoint(dataPointValue float64, filterValue float64, action DataPointValueAction) bool {
+func includeDataPoint(dataPointValue float64, filterValue float64, action DataPointValueAction) bool {	
 	switch action {
 	case Include:
 		return dataPointValue == filterValue
