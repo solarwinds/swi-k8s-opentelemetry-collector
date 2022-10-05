@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/processor/processorhelper"
@@ -38,6 +39,8 @@ func TestPrometheusTypeConverterProcessor(t *testing.T) {
 			p := newPrometheusTypeConverterProcessor(zap.NewExample(), test.transforms)
 
 			mtp, err := processorhelper.NewMetricsProcessor(
+				context.Background(),
+				componenttest.NewNopProcessorCreateSettings(),
 				&Config{
 					ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 				},

@@ -1,10 +1,10 @@
-ARG GOLANG_IMAGE=docker.io/library/golang:1.17.1-alpine@sha256:13919fb9091f6667cb375d5fdf016ecd6d3a5d5995603000d422b04583de4ef9
+ARG GOLANG_IMAGE=docker.io/library/golang:1.19.1-alpine@sha256:ca4f0513119dfbdc65ae7b76b69688f0723ed00d9ecf9de68abbf6ed01ef11bf
 
 FROM ${GOLANG_IMAGE} as builder
 
 COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
 
-RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.51.0
+RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.61.0
 
 WORKDIR /src
 COPY ["./src/", "./src/"]
