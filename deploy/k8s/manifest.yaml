@@ -43,6 +43,73 @@ data:
             convert_type: sum
           - include: apiserver_request_total
             convert_type: sum
+      # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source 
+      #   where kube-state-metric is deployed on
+      attributes/remove_node:
+        include:
+          match_type: regexp
+          metric_names:
+            - kube_.*
+        exclude:
+          match_type: regexp
+          metric_names:
+            - kube_node_.*
+            - kube_pod_info
+        actions:
+          - key: node
+            action: delete
+          - key: exported_node
+            action: delete
+      attributes/remove_pod:
+        include:
+          match_type: regexp
+          metric_names:
+            - kube_.*
+        exclude:
+          match_type: regexp
+          metric_names:
+            - kube_pod_.*
+        actions:
+          - key: pod
+            action: delete
+      attributes/remove_container:
+        include:
+          match_type: regexp
+          metric_names:
+            - kube_.*
+        exclude:
+          match_type: regexp
+          metric_names:
+            - kube_pod_container_.*
+        actions:
+          - key: container
+            action: delete
+      attributes/remove_service:
+        include:
+          match_type: regexp
+          metric_names:
+            - kube_.*
+        exclude:
+          match_type: regexp
+          metric_names:
+            - kube_service_.*
+        actions:
+          - key: service
+            action: delete
+      attributes/remove_other:
+        include:
+          match_type: regexp
+          metric_names:
+            - kube_.*
+        actions:
+          - key: job
+            action: delete
+          - key: instance
+            action: delete
+          - key: exported_job
+            action: delete
+          - key: exported_instance
+            action: delete
       metricstransform/rename:
         transforms:
           # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
@@ -851,6 +918,11 @@ data:
             - otlp
           processors:
             - prometheustypeconvert
+            - attributes/remove_node
+            - attributes/remove_pod
+            - attributes/remove_container
+            - attributes/remove_service
+            - attributes/remove_other
             - metricstransform/rename
             - swmetricstransform/preprocessing
             - metricstransform/preprocessing
