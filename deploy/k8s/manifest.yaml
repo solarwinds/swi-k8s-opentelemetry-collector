@@ -26,13 +26,13 @@ data:
     extensions:
       health_check: {}
       memory_ballast:
-        size_mib: "204"
+        size_in_percentage: 35
 
     processors:
       memory_limiter:
         check_interval: 5s
-        limit_mib: 409
-        spike_limit_mib: 128
+        limit_percentage: 90
+        spike_limit_percentage: 30
       prometheustypeconvert:
         transforms:
           - include: container_cpu_usage_seconds_total
@@ -848,8 +848,8 @@ data:
             value: event
             action: insert
       batch:
-        send_batch_size: 8192
-        send_batch_max_size: 8192
+        send_batch_size: 4096
+        send_batch_max_size: 4096
         timeout: 1s
     receivers:
       k8s_events:
@@ -1337,8 +1337,7 @@ spec:
               port: 13133
           resources:
             limits:
-              cpu: 256m
-              memory: 512Mi
+              memory: 4Gi
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
