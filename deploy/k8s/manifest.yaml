@@ -375,18 +375,24 @@ data:
               - action: update_label
                 label: owner_name
                 new_label: deployment
-          - include: k8s.container_fs_reads_total
+          - include: k8s.container_fs_(reads|writes)_total
             action: insert
             match_type: regexp
             # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
             experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.pod.fs.reads.rate
-          - include: k8s.container_fs_writes_total
+            new_name: k8s.pod.fs.iops.rate
+          - include: k8s.container_fs_(reads|writes)_bytes_total
             action: insert
             match_type: regexp
             # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
             experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.pod.fs.writes.rate
+            new_name: k8s.pod.fs.throughput.rate
+          - include: k8s.container_fs_usage_bytes
+            action: insert
+            match_type: regexp
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
+            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.fs.usage.rate
           # Node metrics
           - include: k8s.container_cpu_usage_seconds_total
             action: insert
@@ -558,8 +564,9 @@ data:
             - k8s.container.cpu.usage.seconds.rate
             - k8s.node.cpu.usage.seconds.rate
             - k8s.pod.cpu.usage.seconds.rate
-            - k8s.pod.fs.reads.rate
-            - k8s.pod.fs.writes.rate
+            - k8s.pod.fs.iops.rate
+            - k8s.pod.fs.throughput.rate
+            - k8s.pod.fs.usage.rate
             - k8s.container.cpu.cfs.throttled.periods.rate
             - k8s.container.cpu.cfs.throttled.total.rate
             - apiserver_request_not_failed_temp
@@ -570,8 +577,9 @@ data:
           - k8s.container.cpu.usage.seconds.rate
           - k8s.node.cpu.usage.seconds.rate
           - k8s.pod.cpu.usage.seconds.rate
-          - k8s.pod.fs.reads.rate
-          - k8s.pod.fs.writes.rate
+          - k8s.pod.fs.iops.rate
+          - k8s.pod.fs.throughput.rate
+          - k8s.pod.fs.usage.rate
           - k8s.container.cpu.cfs.throttled.periods.rate
           - k8s.container.cpu.cfs.throttled.total.rate
       metricstransform/aggregate_rate:
