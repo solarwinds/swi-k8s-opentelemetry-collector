@@ -30,7 +30,7 @@ data:
 
     processors:
       memory_limiter:
-        check_interval: 5s
+        check_interval: 1s
         limit_mib: 3686
         spike_limit_mib: 1228
       prometheustypeconvert:
@@ -927,6 +927,7 @@ data:
           exporters:
             - otlp
           processors:
+            - memory_limiter
             - prometheustypeconvert
             - attributes/remove_node
             - attributes/remove_pod
@@ -948,7 +949,6 @@ data:
             - groupbyattrs/all
             - filter
             - resource/metrics
-            - memory_limiter
             - batch
           receivers:
             - prometheus
@@ -956,8 +956,8 @@ data:
           exporters:
             - otlp
           processors:
-            - resource/events
             - memory_limiter
+            - resource/events
             - batch
           receivers:
             - k8s_events
@@ -977,8 +977,15 @@ data:
           "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
     extensions:
       health_check: {}
+      memory_ballast:
+        size_mib: 341
 
     processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 921
+        spike_limit_mib: 307
+
       # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
       filter:
         logs:
@@ -1167,11 +1174,13 @@ data:
     service:
       extensions:
         - health_check
+        - memory_ballast
       pipelines:
         logs:
           exporters:
             - otlp
           processors:
+            - memory_limiter
             - filter
             - groupbyattrs/all
             - resource/container
@@ -1182,6 +1191,7 @@ data:
           exporters:
             - otlp
           processors:
+            - memory_limiter
             - groupbyattrs/all
             - resource/journal
             - batch
