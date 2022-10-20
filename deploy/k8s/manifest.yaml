@@ -10,6 +10,25 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: swi-opentelemetry-collector-env
+data:
+  CLUSTER_NAME: "<CLUSTER_NAME>"
+  CLUSTER_UID: "<CLUSTER_UID>"
+  OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
+  OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
+  MANIFEST_VERSION: "1.1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swi-opentelemetry-collector-standalone-env
+data:
+  PROMETHEUS_URL: "<PROMETHEUS_URL>"
+  SCRAPE_INTERVAL: 60s
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: swi-opentelemetry-collector
   labels:
     app.kubernetes.io/name: opentelemetry-collector
@@ -665,7 +684,7 @@ data:
 
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -832,7 +851,7 @@ data:
         attributes:
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -1005,7 +1024,7 @@ data:
 
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -1031,7 +1050,7 @@ data:
 
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -1315,18 +1334,11 @@ spec:
                   name: solarwinds-api-token
                   key: SOLARWINDS_API_TOKEN
                   optional: true
-            - name: PROMETHEUS_URL
-              value: "<PROMETHEUS_URL>"
-            - name: OTEL_ENVOY_ADDRESS
-              value: "<OTEL_ENVOY_ADDRESS>"
-            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
-              value: "false"
-            - name: CLUSTER_NAME
-              value: "<CLUSTER_NAME>"
-            - name: CLUSTER_UID
-              value: "<CLUSTER_UID>"
-            - name: SCRAPE_INTERVAL
-              value: "60s"
+          envFrom:
+            - configMapRef:
+                name: swi-opentelemetry-collector-env
+            - configMapRef:
+                name: swi-opentelemetry-collector-standalone-env
           livenessProbe:
             httpGet:
               path: /
@@ -1395,14 +1407,9 @@ spec:
                   name: solarwinds-api-token
                   key: SOLARWINDS_API_TOKEN
                   optional: true
-            - name: OTEL_ENVOY_ADDRESS
-              value: "<OTEL_ENVOY_ADDRESS>"
-            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
-              value: "false"
-            - name: CLUSTER_NAME
-              value: "<CLUSTER_NAME>"
-            - name: CLUSTER_UID
-              value: "<CLUSTER_UID>"
+          envFrom:
+            - configMapRef:
+                name: swi-opentelemetry-collector-env
           livenessProbe:
             httpGet:
               path: /
