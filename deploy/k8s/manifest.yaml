@@ -43,7 +43,15 @@ data:
             convert_type: sum
           - include: apiserver_request_total
             convert_type: sum
-      # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source 
+          - include: container_fs_reads_total
+            convert_type: sum
+          - include: container_fs_writes_total
+            convert_type: sum
+          - include: container_fs_reads_bytes_total
+            convert_type: sum
+          - include: container_fs_writes_bytes_total
+            convert_type: sum
+      # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
       #   where kube-state-metric is deployed on
       attributes/remove_node:
         include:
@@ -375,24 +383,36 @@ data:
               - action: update_label
                 label: owner_name
                 new_label: deployment
-          - include: k8s.container_fs_(reads|writes)_total
+          - include: k8s.container_fs_reads_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system read ops
             experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.pod.fs.iops
-          - include: k8s.container_fs_(reads|writes)_bytes_total
+            new_name: k8s.pod.fs.reads.rate
+          - include: k8s.container_fs_writes_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system write ops
             experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.pod.fs.throughput
+            new_name: k8s.pod.fs.writes.rate
+          - include: k8s.container_fs_reads_bytes_total
+            action: insert
+            match_type: regexp
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system read bytes
+            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.fs.reads.bytes.rate
+          - include: k8s.container_fs_writes_bytes_total
+            action: insert
+            match_type: regexp
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system written bytes
+            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.fs.writes.bytes.rate
           - include: k8s.container_fs_usage_bytes
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
-            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.pod.fs.usage
+            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system usage in bytes
+            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            new_name: k8s.pod.fs.usage.bytes
           # Node metrics
           - include: k8s.container_cpu_usage_seconds_total
             action: insert
@@ -421,7 +441,7 @@ data:
           - include: k8s.kube_node_status_condition
             experimental_match_labels: { "condition": "Ready", "status": "true" }
             action: insert
-            new_name: k8s.node.status.condition.ready 
+            new_name: k8s.node.status.condition.ready
           - include: k8s.kube_node_status_condition
             experimental_match_labels: { "condition": "NetworkUnavailable", "status": "true" }
             action: insert
@@ -568,6 +588,10 @@ data:
             - k8s.container.cpu.cfs.throttled.total.rate
             - apiserver_request_not_failed_temp
             - apiserver_request_total_temp
+            - k8s.pod.fs.reads.rate
+            - k8s.pod.fs.writes.rate
+            - k8s.pod.fs.reads.bytes.rate
+            - k8s.pod.fs.writes.bytes.rate
           match_type: strict
       deltatorate:
         metrics:
@@ -576,6 +600,10 @@ data:
           - k8s.pod.cpu.usage.seconds.rate
           - k8s.container.cpu.cfs.throttled.periods.rate
           - k8s.container.cpu.cfs.throttled.total.rate
+          - k8s.pod.fs.reads.rate
+          - k8s.pod.fs.writes.rate
+          - k8s.pod.fs.reads.bytes.rate
+          - k8s.pod.fs.writes.bytes.rate
       metricstransform/aggregate_rate:
         transforms:
           - include: k8s.node.cpu.usage.seconds.rate
@@ -831,7 +859,7 @@ data:
             action: insert
           - key: deployment
             action: delete
-          
+
           # StatefulSet
           - key: k8s.statefulset.name
             from_attribute: statefulset
@@ -1017,7 +1045,7 @@ data:
           - k8s.namespace.name
           - k8s.pod.name
           - k8s.pod.uid
-      
+
       resource/container:
         attributes:
 
@@ -1043,7 +1071,7 @@ data:
           - key: k8s.node.name
             value: ${NODE_NAME}
             action: insert
-      
+
       resource/journal:
         attributes:
 
