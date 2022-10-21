@@ -320,6 +320,13 @@ data:
             new_name: k8s.container.spec.memory.limit
 
           # Pod resource metrics
+          - include: k8s.kube_pod_container_status_running
+            action: insert
+            new_name: k8s.pod.containers.running
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
           - include: k8s.container.spec.cpu.requests
             action: insert
             new_name: k8s.pod.spec.cpu.requests
