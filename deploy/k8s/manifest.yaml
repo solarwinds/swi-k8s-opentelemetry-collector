@@ -43,6 +43,18 @@ data:
             convert_type: sum
           - include: apiserver_request_total
             convert_type: sum
+          - include: container_network_receive_bytes_total
+            convert_type: sum
+          - include: container_network_transmit_bytes_total
+            convert_type: sum
+          - include: container_network_receive_packets_total
+            convert_type: sum
+          - include: container_network_transmit_packets_total
+            convert_type: sum
+          - include: container_network_receive_packets_dropped_total
+            convert_type: sum
+          - include: container_network_transmit_packets_dropped_total
+            convert_type: sum
       # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source 
       #   where kube-state-metric is deployed on
       attributes/remove_node:
@@ -328,38 +340,38 @@ data:
           - include: k8s.container_network_receive_bytes_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's received bytes
-            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            # non-empty `pod` and `namespace` are datapoints of Pod's received bytes
+            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.network.bytes_received
           - include: k8s.container_network_transmit_bytes_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's transmitted bytes
-            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            # non-empty `pod` and `namespace` are datapoints of Pod's transmitted bytes
+            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.network.bytes_transmitted
           - include: k8s.container_network_receive_packets_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's packets received
-            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            # non-empty `pod` and `namespace` are datapoints of Pod's packets received
+            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.network.packets_received
           - include: k8s.container_network_transmit_packets_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's packets transmitted
-            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            # non-empty `pod` and `namespace` are datapoints of Pod's packets transmitted
+            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.network.packets_transmitted
           - include: k8s.container_network_receive_packets_dropped_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's received packets dropped
-            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            # non-empty `pod` and `namespace` are datapoints of Pod's received packets dropped
+            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.network.receive_packets_dropped
           - include: k8s.container_network_transmit_packets_dropped_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's transmitted packets dropped
-            experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            # non-empty `pod` and `namespace` are datapoints of Pod's transmitted packets dropped
+            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.network.transmit_packets_dropped
           - include: k8s.kube_pod_container_status_waiting
             action: insert
