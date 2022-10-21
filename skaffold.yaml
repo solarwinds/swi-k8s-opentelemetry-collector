@@ -26,6 +26,15 @@ deploy:
     - tests/deploy/base
   kubeContext: docker-desktop
 profiles:
+- name: builder-only
+  build:
+    local:
+      push: false
+    artifacts:
+      - image: swi-k8s-opentelemetry-collector-builder
+        docker:
+          dockerfile: build/docker/Dockerfile
+          target: builder
 - name: ci
   activation:
   - env: CI=true
