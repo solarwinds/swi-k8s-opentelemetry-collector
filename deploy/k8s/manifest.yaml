@@ -386,31 +386,34 @@ data:
           - include: k8s.container_fs_reads_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system read ops
+            # non-empty container, datapoints of Pod's file system read ops
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.fs.reads.rate
           - include: k8s.container_fs_writes_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system write ops
+            # non-empty container, datapoints of Pod's file system write ops
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.fs.writes.rate
           - include: k8s.container_fs_reads_bytes_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system read bytes
+            # non-empty container, datapoints of Pod's file system read bytes
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.fs.reads.bytes.rate
           - include: k8s.container_fs_writes_bytes_total
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system written bytes
+            # non-empty container, datapoints of Pod's file system written bytes
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             new_name: k8s.pod.fs.writes.bytes.rate
           - include: k8s.container_fs_usage_bytes
             action: insert
             match_type: regexp
-            # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's file system usage in bytes
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
             new_name: k8s.pod.fs.usage.bytes
           # Node metrics
           - include: k8s.container_cpu_usage_seconds_total
