@@ -339,39 +339,45 @@ data:
             new_name: k8s.pod.spec.cpu.period
           - include: k8s.container_network_receive_bytes_total
             action: insert
-            match_type: regexp
-            # non-empty `pod` and `namespace` are datapoints of Pod's received bytes
-            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
             new_name: k8s.pod.network.bytes_received
           - include: k8s.container_network_transmit_bytes_total
             action: insert
-            match_type: regexp
-            # non-empty `pod` and `namespace` are datapoints of Pod's transmitted bytes
-            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
             new_name: k8s.pod.network.bytes_transmitted
           - include: k8s.container_network_receive_packets_total
             action: insert
-            match_type: regexp
-            # non-empty `pod` and `namespace` are datapoints of Pod's packets received
-            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
             new_name: k8s.pod.network.packets_received
           - include: k8s.container_network_transmit_packets_total
             action: insert
-            match_type: regexp
-            # non-empty `pod` and `namespace` are datapoints of Pod's packets transmitted
-            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
             new_name: k8s.pod.network.packets_transmitted
           - include: k8s.container_network_receive_packets_dropped_total
             action: insert
-            match_type: regexp
-            # non-empty `pod` and `namespace` are datapoints of Pod's received packets dropped
-            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
             new_name: k8s.pod.network.receive_packets_dropped
           - include: k8s.container_network_transmit_packets_dropped_total
             action: insert
-            match_type: regexp
-            # non-empty `pod` and `namespace` are datapoints of Pod's transmitted packets dropped
-            experimental_match_labels: { "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
             new_name: k8s.pod.network.transmit_packets_dropped
           - include: k8s.kube_pod_container_status_waiting
             action: insert
@@ -473,6 +479,85 @@ data:
             experimental_match_labels: { "sw.k8s.pod.status": "Running" }
             action: insert
             new_name: k8s.pod.status.phase.running
+          - include: k8s.container_network_receive_bytes_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.network.bytes_received
+          - include: k8s.container_network_transmit_bytes_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.network.bytes_transmitted
+          - include: k8s.container_network_receive_packets_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.network.packets_received
+          - include: k8s.container_network_transmit_packets_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.network.packets_transmitted
+          - include: k8s.container_network_receive_packets_dropped_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.network.receive_packets_dropped
+          - include: k8s.container_network_transmit_packets_dropped_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.network.transmit_packets_dropped
+          - include: k8s.container_fs_reads_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.fs.reads.rate
+          - include: k8s.container_fs_writes_total
+            action: insert
+            match_type: regexp
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.fs.writes.rate
+          - include: k8s.container_fs_reads_bytes_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.fs.reads.bytes.rate
+          - include: k8s.container_fs_writes_bytes_total
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.fs.writes.bytes.rate
+          - include: k8s.container_fs_usage_bytes
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [node, namespace]
+                aggregation_type: sum
+            new_name: k8s.node.fs.usage.bytes
+
 
           # Cluster metrics
           - include: k8s.kube_pod_info
@@ -599,6 +684,16 @@ data:
             - k8s.container.cpu.cfs.throttled.total.rate
             - apiserver_request_not_failed_temp
             - apiserver_request_total_temp
+            - k8s.pod.network.bytes_received
+            - k8s.pod.network.bytes_transmitted
+            - k8s.pod.network.packets_received
+            - k8s.pod.network.packets_transmitted
+            - k8s.pod.network.receive_packets_dropped
+            - k8s.pod.network.transmit_packets_dropped
+            - k8s.node.fs.reads.rate
+            - k8s.node.fs.writes.rate
+            - k8s.node.fs.reads.bytes.rate
+            - k8s.node.fs.writes.bytes.rate
           match_type: strict
       deltatorate:
         metrics:
@@ -607,6 +702,16 @@ data:
           - k8s.pod.cpu.usage.seconds.rate
           - k8s.container.cpu.cfs.throttled.periods.rate
           - k8s.container.cpu.cfs.throttled.total.rate
+          - k8s.pod.network.bytes_received
+          - k8s.pod.network.bytes_transmitted
+          - k8s.pod.network.packets_received
+          - k8s.pod.network.packets_transmitted
+          - k8s.pod.network.receive_packets_dropped
+          - k8s.pod.network.transmit_packets_dropped
+          - k8s.node.fs.reads.rate
+          - k8s.node.fs.writes.rate
+          - k8s.node.fs.reads.bytes.rate
+          - k8s.node.fs.writes.bytes.rate
       metricstransform/aggregate_rate:
         transforms:
           - include: k8s.node.cpu.usage.seconds.rate
