@@ -1,0 +1,60 @@
+version: 2.1
+
+orbs:
+  mend: solarwinds/mend@1.5.0
+
+commands:
+  full_checkout:
+    steps:
+      - add_ssh_keys
+      - checkout
+      - run:
+          name: Checkout submodules
+          command: git submodule update --init --force --depth=1 --recursive
+  
+jobs:
+  build:
+    machine:
+      image: ubuntu-2004:2022.04.2
+      docker_layer_caching: true
+    steps:
+      - full_checkout
+      - run:
+          name: Setup skaffold
+          command: |
+            curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/v1.39.2/skaffold-linux-amd64 && sudo install skaffold /usr/local/bin/
+      - run:
+          name: Build
+          command: |
+            skaffold build -p=builder-only --tag ${CIRCLE_SHA1}
+      - run:
+          name: Get installed packages
+          command: |
+            docker create --name builder swi-k8s-opentelemetry-collector-builder:${CIRCLE_SHA1}
+            docker cp builder:/go/pkg/mod go-packages
+      - persist_to_workspace:
+          root: .
+          paths:
+            - go-packages
+
+workflows:
+  version: 2
+  main-build:
+    when: 
+      matches: { pattern: '^\d\.\d\.\d$', value: << pipeline.git.tag >> }
+    jobs:
+      - build:
+          context:
+            - common-build-creds
+      - mend/scan:
+          scan-path: go-packages
+          context:
+              - SWO_MEND
+              - AWS_CIRCLE_CI
+              - common-build-creds
+          executor:
+              name: mend/default
+              tag: openjdk8
+          product: ik8s
+          requires:
+            - build

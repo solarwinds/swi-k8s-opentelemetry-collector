@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swi-opentelemetry-collector-env
+data:
+  CLUSTER_NAME: "cluster name"
+  CLUSTER_UID: "cluster-uid-123456789"
+  OTEL_ENVOY_ADDRESS: "timeseries-mock-service:9082"
+  OTEL_ENVOY_ADDRESS_TLS_INSECURE: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swi-opentelemetry-collector-standalone-env
+data:
+  PROMETHEUS_URL: "monitoring-prometheus-server.monitoring.svc.cluster.local:80"
+  SCRAPE_INTERVAL: "15s"
