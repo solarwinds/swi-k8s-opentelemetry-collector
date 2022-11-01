@@ -674,6 +674,7 @@ data:
           - kubernetes_io_hostname
           - exported_node
           - kubelet_version
+          - container_runtime_version
           - provider_id
           - os_image
           - exported_namespace
@@ -754,6 +755,12 @@ data:
             from_attribute: kubelet_version
             action: insert
           - key: kubelet_version
+            action: delete
+
+          - key: sw.k8s.node.container.runtime.version
+            from_attribute: container_runtime_version
+            action: insert
+          - key: container_runtime_version
             action: delete
 
           - key: sw.k8s.node.provider.id
