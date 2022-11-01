@@ -10,6 +10,25 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: swi-opentelemetry-collector-env
+data:
+  CLUSTER_NAME: "<CLUSTER_NAME>"
+  CLUSTER_UID: "<CLUSTER_UID>"
+  OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
+  OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
+  MANIFEST_VERSION: "1.2"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swi-opentelemetry-collector-standalone-env
+data:
+  PROMETHEUS_URL: "<PROMETHEUS_URL>"
+  SCRAPE_INTERVAL: 60s
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: swi-opentelemetry-collector
   labels:
     app.kubernetes.io/name: opentelemetry-collector
@@ -30,7 +49,7 @@ data:
 
     processors:
       memory_limiter:
-        check_interval: 5s
+        check_interval: 1s
         limit_mib: 3686
         spike_limit_mib: 1228
       prometheustypeconvert:
@@ -313,6 +332,34 @@ data:
             new_name: k8s.container.spec.memory.limit
 
           # Pod resource metrics
+          - include: k8s.kube_pod_container_status_running
+            action: insert
+            new_name: k8s.pod.containers.running
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+          - include: k8s.container.spec.cpu.requests
+            action: insert
+            new_name: k8s.pod.spec.cpu.requests
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+          - include: k8s.container.spec.memory.limit
+            action: insert
+            new_name: k8s.pod.spec.memory.limit
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+          - include: k8s.container.spec.memory.requests
+            action: insert
+            new_name: k8s.pod.spec.memory.requests
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
           - include: k8s.container_cpu_usage_seconds_total
             action: insert
             match_type: regexp
@@ -741,6 +788,13 @@ data:
             metric1: apiserver_request_not_failed_temp
             metric2: apiserver_request_total_temp
             operation: percent
+      experimental_metricsgeneration/pod:
+        rules:
+          - name: k8s.pod.spec.cpu.limit
+            type: calculate
+            metric1: k8s.pod.spec.cpu.quota
+            metric2: k8s.pod.spec.cpu.period
+            operation: divide
       groupbyattrs/node:
         keys:
           - node
@@ -773,6 +827,7 @@ data:
           - kubernetes_io_hostname
           - exported_node
           - kubelet_version
+          - container_runtime_version
           - provider_id
           - os_image
           - exported_namespace
@@ -818,7 +873,7 @@ data:
 
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -853,6 +908,12 @@ data:
             from_attribute: kubelet_version
             action: insert
           - key: kubelet_version
+            action: delete
+
+          - key: sw.k8s.node.container.runtime.version
+            from_attribute: container_runtime_version
+            action: insert
+          - key: container_runtime_version
             action: delete
 
           - key: sw.k8s.node.provider.id
@@ -985,7 +1046,7 @@ data:
         attributes:
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -1086,6 +1147,7 @@ data:
           exporters:
             - otlp
           processors:
+            - memory_limiter
             - prometheustypeconvert
             - attributes/remove_node
             - attributes/remove_pod
@@ -1100,6 +1162,7 @@ data:
             - deltatorate
             - metricstransform/aggregate_rate
             - experimental_metricsgeneration/cluster
+            - experimental_metricsgeneration/pod
             - groupbyattrs/node
             - metricstransform/aggregate_node_level
             - groupbyattrs/pod
@@ -1107,7 +1170,6 @@ data:
             - groupbyattrs/all
             - filter
             - resource/metrics
-            - memory_limiter
             - batch
           receivers:
             - prometheus
@@ -1115,8 +1177,8 @@ data:
           exporters:
             - otlp
           processors:
-            - resource/events
             - memory_limiter
+            - resource/events
             - batch
           receivers:
             - k8s_events
@@ -1136,8 +1198,15 @@ data:
           "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
     extensions:
       health_check: {}
+      memory_ballast:
+        size_mib: 341
 
     processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 921
+        spike_limit_mib: 307
+
       # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
       filter:
         logs:
@@ -1164,7 +1233,7 @@ data:
 
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -1190,7 +1259,7 @@ data:
 
           # Collector and Manifest version
           - key: sw.k8s.agent.manifest.version
-            value: "1.0"
+            value: ${MANIFEST_VERSION}
             action: insert
 
           # Cluster
@@ -1326,11 +1395,13 @@ data:
     service:
       extensions:
         - health_check
+        - memory_ballast
       pipelines:
         logs:
           exporters:
             - otlp
           processors:
+            - memory_limiter
             - filter
             - groupbyattrs/all
             - resource/container
@@ -1341,6 +1412,7 @@ data:
           exporters:
             - otlp
           processors:
+            - memory_limiter
             - groupbyattrs/all
             - resource/journal
             - batch
@@ -1474,18 +1546,11 @@ spec:
                   name: solarwinds-api-token
                   key: SOLARWINDS_API_TOKEN
                   optional: true
-            - name: PROMETHEUS_URL
-              value: "<PROMETHEUS_URL>"
-            - name: OTEL_ENVOY_ADDRESS
-              value: "<OTEL_ENVOY_ADDRESS>"
-            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
-              value: "false"
-            - name: CLUSTER_NAME
-              value: "<CLUSTER_NAME>"
-            - name: CLUSTER_UID
-              value: "<CLUSTER_UID>"
-            - name: SCRAPE_INTERVAL
-              value: "60s"
+          envFrom:
+            - configMapRef:
+                name: swi-opentelemetry-collector-env
+            - configMapRef:
+                name: swi-opentelemetry-collector-standalone-env
           livenessProbe:
             httpGet:
               path: /
@@ -1554,14 +1619,9 @@ spec:
                   name: solarwinds-api-token
                   key: SOLARWINDS_API_TOKEN
                   optional: true
-            - name: OTEL_ENVOY_ADDRESS
-              value: "<OTEL_ENVOY_ADDRESS>"
-            - name: OTEL_ENVOY_ADDRESS_TLS_INSECURE
-              value: "false"
-            - name: CLUSTER_NAME
-              value: "<CLUSTER_NAME>"
-            - name: CLUSTER_UID
-              value: "<CLUSTER_UID>"
+          envFrom:
+            - configMapRef:
+                name: swi-opentelemetry-collector-env
           livenessProbe:
             httpGet:
               path: /
