@@ -36,6 +36,13 @@ jobs:
           root: .
           paths:
             - go-packages
+  noop:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - run:
+          command: |
+            echo "do nothing"
 
 workflows:
   version: 2
@@ -58,3 +65,7 @@ workflows:
           product: ik8s
           requires:
             - build
+  noop:
+    jobs:
+      - noop:
+          context: common-build-creds
