@@ -1,7 +1,8 @@
 version: 2.1
 
 orbs:
-  mend: solarwinds/mend@1.5.0
+  mend: solarwinds/mend@1
+  helm: circleci/helm@2.0.1
 
 commands:
   full_checkout:
@@ -23,6 +24,7 @@ jobs:
           name: Setup skaffold
           command: |
             curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/v1.39.2/skaffold-linux-amd64 && sudo install skaffold /usr/local/bin/
+      - helm/install-helm-client
       - run:
           name: Build
           command: |
@@ -31,28 +33,24 @@ jobs:
           name: Get installed packages
           command: |
             docker create --name builder swi-k8s-opentelemetry-collector-builder:${CIRCLE_SHA1}
-            docker cp builder:/go/pkg/mod go-packages
+            docker cp builder:/src/vendor go-packages
       - persist_to_workspace:
           root: .
           paths:
             - go-packages
-  noop:
-    docker:
-      - image: circleci/python:3.6
-    steps:
-      - run:
-          command: |
-            echo "do nothing"
 
 workflows:
   version: 2
   main-build:
-    when: 
-      matches: { pattern: '^\d\.\d\.\d$', value: << pipeline.git.tag >> }
     jobs:
       - build:
           context:
             - common-build-creds
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
       - mend/scan:
           scan-path: go-packages
           context:
@@ -65,7 +63,8 @@ workflows:
           product: ik8s
           requires:
             - build
-  noop:
-    jobs:
-      - noop:
-          context: common-build-creds
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
