@@ -538,6 +538,9 @@ data:
             new_name: k8s.pod.fs.writes.bytes.rate
           - include: k8s.container_fs_usage_bytes
             action: insert
+            match_type: regexp
+            # non-empty container, datapoints of Pod's file system usage bytes
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
                 label_set: [pod, namespace]
