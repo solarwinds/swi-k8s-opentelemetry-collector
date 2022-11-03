@@ -82,7 +82,7 @@ data:
             convert_type: sum
           - include: container_network_transmit_packets_dropped_total
             convert_type: sum
-      # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source 
+      # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
       #   where kube-state-metric is deployed on
       attributes/remove_node:
         include:
@@ -496,7 +496,53 @@ data:
               - action: update_label
                 label: owner_name
                 new_label: deployment
-
+          - include: k8s.container_fs_reads_total
+            action: insert
+            match_type: regexp
+            # non-empty container, datapoints of Pod's file system read ops
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+            new_name: k8s.pod.fs.reads.rate
+          - include: k8s.container_fs_writes_total
+            action: insert
+            match_type: regexp
+            # non-empty container, datapoints of Pod's file system write ops
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+            new_name: k8s.pod.fs.writes.rate
+          - include: k8s.container_fs_reads_bytes_total
+            action: insert
+            match_type: regexp
+            # non-empty container, datapoints of Pod's file system read bytes
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+            new_name: k8s.pod.fs.reads.bytes.rate
+          - include: k8s.container_fs_writes_bytes_total
+            action: insert
+            match_type: regexp
+            # non-empty container, datapoints of Pod's file system written bytes
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+            new_name: k8s.pod.fs.writes.bytes.rate
+          - include: k8s.container_fs_usage_bytes
+            action: insert
+            operations:
+              - action: aggregate_labels
+                label_set: [pod, namespace]
+                aggregation_type: sum
+            new_name: k8s.pod.fs.usage.bytes
           # Node metrics
           - include: k8s.container_cpu_usage_seconds_total
             action: insert
@@ -525,7 +571,7 @@ data:
           - include: k8s.kube_node_status_condition
             experimental_match_labels: { "condition": "Ready", "status": "true" }
             action: insert
-            new_name: k8s.node.status.condition.ready 
+            new_name: k8s.node.status.condition.ready
           - include: k8s.kube_node_status_condition
             experimental_match_labels: { "condition": "NetworkUnavailable", "status": "true" }
             action: insert
@@ -772,10 +818,10 @@ data:
             - k8s.container.cpu.cfs.throttled.total.rate
             - apiserver_request_not_failed_temp
             - apiserver_request_total_temp
-            - k8s.pod.network.bytes_received
-            - k8s.pod.network.bytes_transmitted
-            - k8s.pod.network.packets_received
-            - k8s.pod.network.packets_transmitted
+            - k8s.pod.fs.reads.rate
+            - k8s.pod.fs.writes.rate
+            - k8s.pod.fs.reads.bytes.rate
+            - k8s.pod.fs.writes.bytes.rate
             - k8s.pod.network.receive_packets_dropped
             - k8s.pod.network.transmit_packets_dropped
             - k8s.node.fs.reads.rate
@@ -790,6 +836,10 @@ data:
           - k8s.pod.cpu.usage.seconds.rate
           - k8s.container.cpu.cfs.throttled.periods.rate
           - k8s.container.cpu.cfs.throttled.total.rate
+          - k8s.pod.fs.reads.rate
+          - k8s.pod.fs.writes.rate
+          - k8s.pod.fs.reads.bytes.rate
+          - k8s.pod.fs.writes.bytes.rate
           - k8s.pod.network.bytes_received
           - k8s.pod.network.bytes_transmitted
           - k8s.pod.network.packets_received
@@ -1069,7 +1119,7 @@ data:
             action: insert
           - key: deployment
             action: delete
-          
+
           # StatefulSet
           - key: k8s.statefulset.name
             from_attribute: statefulset
@@ -1269,7 +1319,7 @@ data:
           - k8s.namespace.name
           - k8s.pod.name
           - k8s.pod.uid
-      
+
       resource/container:
         attributes:
 
@@ -1295,7 +1345,7 @@ data:
           - key: k8s.node.name
             value: ${NODE_NAME}
             action: insert
-      
+
       resource/journal:
         attributes:
 
