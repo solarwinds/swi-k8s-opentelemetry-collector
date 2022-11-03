@@ -421,6 +421,8 @@ data:
             new_name: k8s.pod.network.packets_received
           - include: k8s.container_network_transmit_packets_total
             action: insert
+            match_type: regexp
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
                 label_set: [pod, namespace]
@@ -428,6 +430,8 @@ data:
             new_name: k8s.pod.network.packets_transmitted
           - include: k8s.container_network_receive_packets_dropped_total
             action: insert
+            match_type: regexp
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
                 label_set: [pod, namespace]
@@ -435,6 +439,8 @@ data:
             new_name: k8s.pod.network.receive_packets_dropped
           - include: k8s.container_network_transmit_packets_dropped_total
             action: insert
+            match_type: regexp
+            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
                 label_set: [pod, namespace]
