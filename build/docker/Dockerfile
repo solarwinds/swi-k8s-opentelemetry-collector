@@ -10,6 +10,10 @@ WORKDIR /src
 COPY ["./src/", "./src/"]
 RUN CGO_ENABLED=0 /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
 
+# create vendor folder (for mend scanning)
+ARG CREATE_VENDOR_DIR
+RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else go mod vendor ; fi
+
 FROM alpine:latest as prep
 RUN apk --update add ca-certificates
 
