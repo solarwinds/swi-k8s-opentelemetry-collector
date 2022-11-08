@@ -16,7 +16,7 @@ data:
   CLUSTER_UID: "<CLUSTER_UID>"
   OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
-  MANIFEST_VERSION: "1.2"
+  MANIFEST_VERSION: "1.3"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -286,44 +286,8 @@ data:
               - action: update_label
                 label: phase
                 new_label: sw.k8s.namespace.status
-          - include: k8s.kube_pod_container_status_restarts_total
-            action: insert
-            new_name: k8s.kube.pod.container.status.restarts.total
 
           # Container metrics
-          - include: k8s.container_cpu_usage_seconds_total
-            action: insert
-            new_name: k8s.container.cpu.usage.seconds.rate
-          - include: k8s.container_cpu_cfs_throttled_periods_total
-            action: insert
-            match_type: regexp
-            # take datapoints with non-empty container label
-            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.container.cpu.cfs.throttled.periods.rate
-          - include: k8s.container_cpu_cfs_periods_total
-            action: insert
-            match_type: regexp
-            # take datapoints with non-empty container label
-            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.container.cpu.cfs.throttled.total.rate
-          - include: k8s.container_memory_working_set_bytes
-            action: insert
-            match_type: regexp
-            # take datapoints with non-empty container label
-            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.container.memory.working_set
-          - include: k8s.container_spec_cpu_quota
-            action: insert
-            match_type: regexp
-            # take datapoints with non-empty container label
-            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.container.spec.cpu.quota
-          - include: k8s.container_spec_cpu_period
-            action: insert
-            match_type: regexp
-            # take datapoints with non-empty container label
-            experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.container.spec.cpu.period
           - include: k8s.kube_pod_container_resource_requests
             experimental_match_labels: { "resource": "memory" }
             action: insert
@@ -337,7 +301,7 @@ data:
             match_type: regexp
             # take datapoints with non-empty container label
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.container.spec.memory.limit
+            new_name: k8s.container.spec.memory.limit_temp
 
           # Pod resource metrics
           - include: k8s.kube_pod_container_status_running
@@ -354,7 +318,7 @@ data:
               - action: aggregate_labels
                 label_set: [pod, namespace]
                 aggregation_type: sum
-          - include: k8s.container.spec.memory.limit
+          - include: k8s.container.spec.memory.limit_temp
             action: insert
             new_name: k8s.pod.spec.memory.limit
             operations:
@@ -385,13 +349,13 @@ data:
             match_type: regexp
             # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU quota
             experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.pod.spec.cpu.quota
+            new_name: k8s.pod.spec.cpu.quota_temp
           - include: k8s.container_spec_cpu_period
             action: insert
             match_type: regexp
             # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU period
             experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
-            new_name: k8s.pod.spec.cpu.period
+            new_name: k8s.pod.spec.cpu.period_temp
           - include: k8s.container_network_receive_bytes_total
             action: insert
             match_type: regexp
@@ -591,7 +555,7 @@ data:
           - include: k8s.kube_pod_status_phase
             experimental_match_labels: { "sw.k8s.pod.status": "Running" }
             action: insert
-            new_name: k8s.pod.status.phase.running
+            new_name: k8s.pod.status.phase.running_temp
           - include: k8s.container_network_receive_bytes_total
             action: insert
             match_type: regexp
@@ -687,7 +651,7 @@ data:
               - action: aggregate_labels
                 label_set: []
                 aggregation_type: sum
-          - include: k8s.pod.status.phase.running
+          - include: k8s.pod.status.phase.running_temp
             action: insert
             new_name: k8s.cluster.pods.running
             operations:
@@ -724,7 +688,7 @@ data:
                 aggregation_type: sum
           - include: k8s.node.memory.working_set
             action: insert
-            new_name: k8s.cluster.memory.working_set
+            new_name: k8s.cluster.memory.working_set_temp
             operations:
               - action: aggregate_labels
                 label_set: []
@@ -762,11 +726,8 @@ data:
       cumulativetodelta:
         include:
           metrics:
-            - k8s.container.cpu.usage.seconds.rate
             - k8s.node.cpu.usage.seconds.rate
             - k8s.pod.cpu.usage.seconds.rate
-            - k8s.container.cpu.cfs.throttled.periods.rate
-            - k8s.container.cpu.cfs.throttled.total.rate
             - apiserver_request_not_failed_temp
             - apiserver_request_total_temp
             - k8s.pod.fs.reads.rate
@@ -786,11 +747,8 @@ data:
           match_type: strict
       deltatorate:
         metrics:
-          - k8s.container.cpu.usage.seconds.rate
           - k8s.node.cpu.usage.seconds.rate
           - k8s.pod.cpu.usage.seconds.rate
-          - k8s.container.cpu.cfs.throttled.periods.rate
-          - k8s.container.cpu.cfs.throttled.total.rate
           - k8s.pod.fs.reads.rate
           - k8s.pod.fs.writes.rate
           - k8s.pod.fs.reads.bytes.rate
@@ -809,7 +767,7 @@ data:
         transforms:
           - include: k8s.node.cpu.usage.seconds.rate
             action: insert
-            new_name: k8s.cluster.cpu.usage.seconds.rate
+            new_name: k8s.cluster.cpu.usage.seconds.rate_temp
             operations:
               - action: aggregate_labels
                 label_set: []
@@ -819,13 +777,13 @@ data:
           - name: k8s.cluster.memory.utilization
             unit: Percent
             type: calculate
-            metric1: k8s.cluster.memory.working_set
+            metric1: k8s.cluster.memory.working_set_temp
             metric2: k8s.cluster.memory.allocatable
             operation: percent
           - name: k8s.cluster.cpu.utilization
             unit: Percent
             type: calculate
-            metric1: k8s.cluster.cpu.usage.seconds.rate
+            metric1: k8s.cluster.cpu.usage.seconds.rate_temp
             metric2: k8s.cluster.cpu.allocatable
             operation: percent
           - name: k8s.apiserver.request.successrate
@@ -838,8 +796,8 @@ data:
         rules:
           - name: k8s.pod.spec.cpu.limit
             type: calculate
-            metric1: k8s.pod.spec.cpu.quota
-            metric2: k8s.pod.spec.cpu.period
+            metric1: k8s.pod.spec.cpu.quota_temp
+            metric2: k8s.pod.spec.cpu.period_temp
             operation: divide
       groupbyattrs/node:
         keys:
