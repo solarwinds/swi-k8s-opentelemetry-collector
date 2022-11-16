@@ -607,28 +607,28 @@ data:
               - action: aggregate_labels
                 label_set: [node]
                 aggregation_type: sum
-            new_name: k8s.node.fs.reads.rate
+            new_name: k8s.node.fs.reads.rate_temp
           - include: k8s.pod.fs.writes.rate
             action: insert
             operations:
               - action: aggregate_labels
                 label_set: [node]
                 aggregation_type: sum
-            new_name: k8s.node.fs.writes.rate
+            new_name: k8s.node.fs.writes.rate_temp
           - include: k8s.pod.fs.reads.bytes.rate
             action: insert
             operations:
               - action: aggregate_labels
                 label_set: [node]
                 aggregation_type: sum
-            new_name: k8s.node.fs.reads.bytes.rate
+            new_name: k8s.node.fs.reads.bytes.rate_temp
           - include: k8s.pod.fs.writes.bytes.rate
             action: insert
             operations:
               - action: aggregate_labels
                 label_set: [node]
                 aggregation_type: sum
-            new_name: k8s.node.fs.writes.bytes.rate
+            new_name: k8s.node.fs.writes.bytes.rate_temp
           - include: k8s.pod.fs.usage.bytes
             action: insert
             operations:
@@ -770,11 +770,11 @@ data:
             - k8s.pod.network.packets_transmitted
             - k8s.pod.network.receive_packets_dropped
             - k8s.pod.network.transmit_packets_dropped
-            - k8s.node.fs.reads.rate
-            - k8s.node.fs.writes.rate
+            - k8s.node.fs.reads.rate_temp
+            - k8s.node.fs.writes.rate_temp
             - k8s.node.fs.iops
-            - k8s.node.fs.reads.bytes.rate
-            - k8s.node.fs.writes.bytes.rate
+            - k8s.node.fs.reads.bytes.rate_temp
+            - k8s.node.fs.writes.bytes.rate_temp
             - k8s.node.fs.throughput
             - k8s.node.network.bytes_received
             - k8s.node.network.bytes_transmitted
@@ -797,11 +797,11 @@ data:
           - k8s.pod.network.packets_transmitted
           - k8s.pod.network.receive_packets_dropped
           - k8s.pod.network.transmit_packets_dropped
-          - k8s.node.fs.reads.rate
-          - k8s.node.fs.writes.rate
+          - k8s.node.fs.reads.rate_temp
+          - k8s.node.fs.writes.rate_temp
           - k8s.node.fs.iops
-          - k8s.node.fs.reads.bytes.rate
-          - k8s.node.fs.writes.bytes.rate
+          - k8s.node.fs.reads.bytes.rate_temp
+          - k8s.node.fs.writes.bytes.rate_temp
           - k8s.node.fs.throughput
           - k8s.node.network.bytes_received
           - k8s.node.network.bytes_transmitted
@@ -842,13 +842,13 @@ data:
         rules:
           - name: k8s.node.fs.iops
             type: calculate
-            metric1: k8s.node.fs.reads.rate
-            metric2: k8s.node.fs.writes.rate
+            metric1: k8s.node.fs.reads.rate_temp
+            metric2: k8s.node.fs.writes.rate_temp
             operation: add
           - name: k8s.node.fs.throughput
             type: calculate
-            metric1: k8s.node.fs.reads.bytes.rate
-            metric2: k8s.node.fs.writes.bytes.rate
+            metric1: k8s.node.fs.reads.bytes.rate_temp
+            metric2: k8s.node.fs.writes.bytes.rate_temp
             operation: add
       experimental_metricsgeneration/pod:
         rules:
