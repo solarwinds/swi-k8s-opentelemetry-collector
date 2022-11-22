@@ -31,9 +31,12 @@ jobs:
             skaffold build -p=builder-only --tag ${CIRCLE_SHA1}
       - run:
           name: Get installed packages
+          # remove Gopkg.lock and Gopkg.touml (as legacy `dep` dependency definition files) as they do not have any impact what dependencies are actually used
+          # those files just confuse Mend as Mend think the code is using such dependencies
           command: |
             docker create --name builder swi-k8s-opentelemetry-collector-builder:${CIRCLE_SHA1}
             docker cp builder:/src/vendor go-packages
+            find go-packages -type f \( -name 'Gopkg.lock' -or -name 'Gopkg.toml' \) -print -delete
       - persist_to_workspace:
           root: .
           paths:
