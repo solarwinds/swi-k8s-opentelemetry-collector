@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta22
+apiVersion: skaffold/v3
 kind: Config
 metadata:
   name: swi-k8s-opentelemetry-collector
@@ -9,7 +9,7 @@ build:
       dockerfile: build/docker/Dockerfile
   local:
     push: false
-deploy:
+manifests:
   helm:
     releases:
     - name: monitoring
@@ -22,6 +22,9 @@ deploy:
     - tests/deploy/base
     buildArgs:
     - --load-restrictor LoadRestrictionsNone
+deploy:
+  kubectl: {}
+  helm: {}
   kubeContext: docker-desktop
 profiles:
 - name: builder-only

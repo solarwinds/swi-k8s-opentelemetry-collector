@@ -127,7 +127,17 @@ filter:
 
 ### Deployment
 
-To run local environment run: `skaffold dev` command.
+To run the collector in a local environment, execute:
+
+```shell
+skaffold dev
+```
+
+For Skaffold v2, use the following command instead:
+
+```shell
+skaffold dev -f .\skaffold2.yaml
+```
 
 That will:
 
