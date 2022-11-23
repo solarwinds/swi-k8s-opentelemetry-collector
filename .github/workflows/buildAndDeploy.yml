@@ -48,7 +48,7 @@ jobs:
 
       - name: Tail Otel mock events for 60 seconds
         run: |
-          kubectl delete pods -l component=node-exporter -n monitoring
+          kubectl run dummy --image ubuntu -- /bin/bash -ec "while :; do echo '.'; sleep 5 ; done"
           mkdir -p OtelLogs
           kubetail timeseries-mock-service --namespace monitoring > OtelLogs/events.log &
           sleep 60
