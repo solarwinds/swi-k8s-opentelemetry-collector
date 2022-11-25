@@ -24,32 +24,33 @@ import (
 	"context"
 	"testing"
 
-	metricspb "github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1"
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/consumertest"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.opentelemetry.io/collector/processor/processorhelper"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/testing/protocmp"
-
-	internaldata "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/opencensus"
 )
 
-func TestSwMetricsTransformProcessor(t *testing.T) {
+func TestMetricsTransformProcessor(t *testing.T) {
 	for _, test := range standardTests {
 		t.Run(test.name, func(t *testing.T) {
 			next := new(consumertest.MetricsSink)
 
-			p := newSwMetricsTransformProcessor(zap.NewExample(), test.transforms)
+			p := &metricsTransformProcessor{
+				transforms: test.transforms,
+				logger:     zap.NewExample(),
+			}
 
 			mtp, err := processorhelper.NewMetricsProcessor(
 				context.Background(),
 				componenttest.NewNopProcessorCreateSettings(),
 				&Config{
-					ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
+					ProcessorSettings: config.NewProcessorSettings(component.NewID(typeStr)),
 				},
 				next,
 				p.processMetrics,
@@ -58,51 +59,89 @@ func TestSwMetricsTransformProcessor(t *testing.T) {
 
 			caps := mtp.Capabilities()
 			assert.Equal(t, true, caps.MutatesData)
-			ctx := context.Background()
 
 			// process
-			cErr := mtp.ConsumeMetrics(context.Background(), internaldata.OCToMetrics(nil, nil, test.in))
+			inMetrics := pmetric.NewMetrics()
+			inMetricsSlice := inMetrics.ResourceMetrics().AppendEmpty().ScopeMetrics().AppendEmpty().Metrics()
+			for _, m := range test.in {
+				m.MoveTo(inMetricsSlice.AppendEmpty())
+			}
+			cErr := mtp.ConsumeMetrics(context.Background(), inMetrics)
 			assert.NoError(t, cErr)
 
 			// get and check results
 			got := next.AllMetrics()
 			require.Equal(t, 1, len(got))
-			_, _, actualOutMetrics := internaldata.ResourceMetricsToOC(got[0].ResourceMetrics().At(0))
-			require.Equal(t, len(test.out), len(actualOutMetrics))
-
-			for idx, out := range test.out {
-				actualOut := actualOutMetrics[idx]
-				if diff := cmp.Diff(actualOut, out, protocmp.Transform()); diff != "" {
-					t.Errorf("Unexpected difference:\n%v", diff)
-				}
+			gotMetricsSlice := pmetric.NewMetricSlice()
+			if got[0].ResourceMetrics().Len() > 0 {
+				gotMetricsSlice = got[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics()
 			}
 
-			assert.NoError(t, mtp.Shutdown(ctx))
+			require.Equal(t, len(test.out), gotMetricsSlice.Len())
+			for i, expected := range test.out {
+				assert.Equal(t, sortDataPoints(expected), sortDataPoints(gotMetricsSlice.At(i)))
+			}
 		})
 	}
 }
 
-func BenchmarkSwMetricsTransformProcessorRenameMetrics(b *testing.B) {
-	const metricCount = 1000
+func sortDataPoints(m pmetric.Metric) pmetric.Metric {
+	switch m.Type() {
+	case pmetric.MetricTypeSum:
+		m.Sum().DataPoints().Sort(lessNumberDatapoint)
+	case pmetric.MetricTypeGauge:
+		m.Gauge().DataPoints().Sort(lessNumberDatapoint)
+	case pmetric.MetricTypeHistogram:
+		m.Histogram().DataPoints().Sort(lessHistogramDatapoint)
+	}
+	return m
+}
 
-	transforms := []internalTransform{
-		{
-			MetricIncludeFilter: internalFilterStrict{include: "metric"},
-			Action:              Insert,
-			NewName:             "new/metric1",
-		},
+func lessNumberDatapoint(a, b pmetric.NumberDataPoint) bool {
+	if a.StartTimestamp() != b.StartTimestamp() {
+		return a.StartTimestamp() < b.StartTimestamp()
+	}
+	if a.Timestamp() != b.Timestamp() {
+		return a.Timestamp() < b.Timestamp()
+	}
+	if a.IntValue() != b.IntValue() {
+		return a.IntValue() < b.IntValue()
+	}
+	if a.DoubleValue() != b.DoubleValue() {
+		return a.DoubleValue() < b.DoubleValue()
+	}
+	return lessAttributes(a.Attributes(), b.Attributes())
+}
+
+func lessHistogramDatapoint(a, b pmetric.HistogramDataPoint) bool {
+	if a.StartTimestamp() != b.StartTimestamp() {
+		return a.StartTimestamp() < b.StartTimestamp()
+	}
+	if a.Timestamp() != b.Timestamp() {
+		return a.Timestamp() < b.Timestamp()
+	}
+	if a.Count() != b.Count() {
+		return a.Count() < b.Count()
+	}
+	if a.Sum() != b.Sum() {
+		return a.Sum() < b.Sum()
+	}
+	return lessAttributes(a.Attributes(), b.Attributes())
+}
+
+func lessAttributes(a, b pcommon.Map) bool {
+	if a.Len() != b.Len() {
+		return a.Len() < b.Len()
 	}
 
-	in := make([]*metricspb.Metric, metricCount)
-	for i := 0; i < metricCount; i++ {
-		in[i] = metricBuilder().setName("metric1").build()
-	}
-	p := newSwMetricsTransformProcessor(nil, transforms)
-	mtp, _ := processorhelper.NewMetricsProcessor(context.Background(), componenttest.NewNopProcessorCreateSettings(), &Config{}, consumertest.NewNop(), p.processMetrics)
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		assert.NoError(b, mtp.ConsumeMetrics(context.Background(), internaldata.OCToMetrics(nil, nil, in)))
-	}
+	var res bool
+	a.Range(func(k string, v pcommon.Value) bool {
+		bv, ok := b.Get(k)
+		if !ok || v.Str() < bv.Str() {
+			res = true
+			return false
+		}
+		return true
+	})
+	return res
 }

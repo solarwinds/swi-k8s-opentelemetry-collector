@@ -1,16 +1,17 @@
-ARG GOLANG_IMAGE=docker.io/library/golang:1.19.1-alpine@sha256:ca4f0513119dfbdc65ae7b76b69688f0723ed00d9ecf9de68abbf6ed01ef11bf
+ARG GOLANG_IMAGE=docker.io/library/golang:1.19.3-bullseye@sha256:d388153691a825844ebb3586dd04d1c60a2215522cc445701424205dffc8a83e
 
 FROM ${GOLANG_IMAGE} as builder
 
 COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
 
-RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.61.0
+RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.64.0
 
 WORKDIR /src
 COPY ["./src/", "./src/"]
 RUN CGO_ENABLED=0 /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
 
 # create vendor folder (for mend scanning)
+SHELL ["/bin/bash", "-c"]
 ARG CREATE_VENDOR_DIR
 RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else go mod vendor ; fi
 
