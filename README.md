@@ -45,6 +45,7 @@ The metrics collection and processing configuration is included in the manifest 
 In order to reduce the size of the collected data, the swi-k8s-opentelemetry-collector whitelists only selected metrics that are key for successful entity ingestion on the Solarwinds Observability side. The list of observed metrics can be easily modified by simply adding or removing the desired metrics from the list located in the `scrape_configs` section of the collector configuration.
 
 Default metrics monitored by swi-k8s-opentelemetry-collector:
+
 - container_cpu_usage_seconds_total
 - container_spec_cpu_quota
 - container_spec_cpu_period
@@ -52,35 +53,79 @@ Default metrics monitored by swi-k8s-opentelemetry-collector:
 - container_spec_memory_limit_bytes
 - container_cpu_cfs_throttled_periods_total
 - container_cpu_cfs_periods_total
+- container_fs_reads_total
+- container_fs_writes_total
+- container_fs_reads_bytes_total
+- container_fs_writes_bytes_total
+- container_fs_usage_bytes
+- container_network_receive_bytes_total
+- container_network_transmit_bytes_total
+- container_network_receive_packets_total
+- container_network_transmit_packets_total
+- container_network_receive_packets_dropped_total
+- container_network_transmit_packets_dropped_total
+- kube_deployment_created
+- kube_daemonset_created
+- kube_namespace_created
 - kube_node_info
 - kube_node_created
 - kube_node_status_capacity
 - kube_node_status_condition
 - kube_pod_created
 - kube_pod_info
-- kube_pod_start_time
+- kube_pod_owner
 - kube_pod_completion_time
 - kube_pod_status_phase
+- kube_pod_status_ready
+- kube_pod_status_reason
 - kube_pod_start_time
-- kube_resourcequota
-- kube_pod_container_status_restarts_total
-- kube_node_status_allocatable
-- kube_pod_container_resource_requests
 - '{\_\_name\_\_=~"kube_pod_container_.*"}'
+- kube_namespace_status_phase
+- kube_deployment_labels
+- kube_deployment_spec_replicas
+- kube_deployment_spec_paused
+- kube_deployment_status_replicas
+- kube_deployment_status_replicas_ready
+- kube_deployment_status_replicas_available
+- kube_deployment_status_replicas_updated
+- kube_deployment_status_replicas_unavailable
+- kube_deployment_status_condition
+- kube_replicaset_owner
+- kube_replicaset_created
+- kube_statefulset_labels
+- kube_statefulset_replicas
+- kube_statefulset_status_replicas_ready
+- kube_statefulset_status_replicas_current
+- kube_statefulset_status_replicas_updated
+- kube_statefulset_created
+- kube_daemonset_labels
+- kube_daemonset_status_current_number_scheduled
+- kube_daemonset_status_desired_number_scheduled
+- kube_daemonset_status_updated_number_scheduled
+- kube_daemonset_status_number_available
+- kube_daemonset_status_number_misscheduled
+- kube_daemonset_status_number_ready
+- kube_daemonset_status_number_unavailable
+- kube_resourcequota
+- kube_node_status_allocatable
+- kube_node_spec_unschedulable
 
 Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform. 
 
 Processors included in the collector:
-  - [batch](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor)
-  - [cumulativetodelta](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/cumulativetodeltaprocessor)
-  - [deltatorate](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/deltatorateprocessor)
-  - [experimental_metricsgeneration](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricsgenerationprocessor)
-  - [groupbyattrs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/groupbyattrsprocessor)
-  - [memory_limiter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor)
-  - [metricstransform](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricstransformprocessor)
-  - [prometheustypeconvert](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/prometheustypeconverterprocessor)
-  - [resource](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourceprocessor)
-  - [swmetricstransform](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/swmetricstransformprocessor)
+
+- [attributes](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/attributesprocessor)
+- [batch](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor)
+- [cumulativetodelta](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/cumulativetodeltaprocessor)
+- [deltatorate](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/deltatorateprocessor)
+- [experimental_metricsgeneration](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricsgenerationprocessor)
+- [filter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor)
+- [groupbyattrs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/groupbyattrsprocessor)
+- [memory_limiter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor)
+- [metricstransform](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricstransformprocessor)
+- [prometheustypeconvert](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/prometheustypeconverterprocessor)
+- [resource](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourceprocessor)
+- [swmetricstransform](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/swmetricstransformprocessor)
 
 ### Logs
 
@@ -127,7 +172,17 @@ filter:
 
 ### Deployment
 
-To run local environment run: `skaffold dev` command.
+To run the collector in a local environment, execute:
+
+```shell
+skaffold dev
+```
+
+For Skaffold v2, use the following command instead:
+
+```shell
+skaffold dev -f .\skaffold2.yaml
+```
 
 That will:
 
@@ -138,7 +193,24 @@ That will:
 
 Possible issues:
 
-- if you get error like `Error: INSTALLATION FAILED: failed to download https://github.com/prometheus-community/helm-charts...`, you need to update helm repo: `helm repo update`
+- if you get errors like:
+
+  ```text
+  Error: INSTALLATION FAILED: failed to download https://github.com/prometheus-community/helm-charts...
+  ```
+
+  or
+
+  ```text
+  Error: INSTALLATION FAILED: no cached repo found. (try 'helm repo update'): open C:\Users\<user>\AppData\Local\Temp\helm\repository\stable-index.yaml: The system cannot find the file specified.
+  ```
+
+  you need to update Helm repo:
+
+  ```shell
+  helm repo update
+  ```
+
 - if you get error like
 
   ```text
@@ -146,7 +218,7 @@ Possible issues:
           failed to fetch https://kubernetes-charts.storage.googleapis.com/index.yaml : 403 Forbidden
   ```
 
-  you need to update path to a helm repository:
+  you need to update path to a Helm repository:
 
   ```shell
   helm repo add "stable" "https://charts.helm.sh/stable" --force-update
