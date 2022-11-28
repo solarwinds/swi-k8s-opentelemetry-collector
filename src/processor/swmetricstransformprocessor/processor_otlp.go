@@ -294,7 +294,7 @@ func initResourceMetrics(dest pmetric.ResourceMetrics, resource pcommon.Resource
 	resource.CopyTo(dest.Resource())
 
 	for k, v := range transform.GroupResourceLabels {
-		dest.Resource().Attributes().PutString(k, v)
+		dest.Resource().Attributes().PutStr(k, v)
 	}
 
 	sm := dest.ScopeMetrics().AppendEmpty()

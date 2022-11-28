@@ -27,7 +27,7 @@ import (
 // filterDataPoints filters data points according to the provided data point value
 func filterDataPoints(metric pmetric.Metric, mtpOp internalOperation) {
 	action := mtpOp.configOperation.DataPointValueAction
-	
+
 	switch metric.Type() {
 	case pmetric.MetricTypeGauge:
 		metric.Gauge().DataPoints().RemoveIf(func(dp pmetric.NumberDataPoint) bool {
@@ -38,13 +38,13 @@ func filterDataPoints(metric pmetric.Metric, mtpOp internalOperation) {
 			case pmetric.NumberDataPointValueTypeDouble:
 				return !includeDataPoint(dp.DoubleValue(), mtpOp.configOperation.DataPointValue, action)
 			}
-			
+
 			return false
 		})
 	}
 }
 
-func includeDataPoint(dataPointValue float64, filterValue float64, action DataPointValueAction) bool {	
+func includeDataPoint(dataPointValue float64, filterValue float64, action DataPointValueAction) bool {
 	switch action {
 	case Include:
 		return dataPointValue == filterValue

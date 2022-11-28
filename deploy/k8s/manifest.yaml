@@ -52,36 +52,10 @@ data:
         check_interval: 1s
         limit_mib: 3686
         spike_limit_mib: 1228
-      prometheustypeconvert:
-        transforms:
-          - include: container_cpu_usage_seconds_total
-            convert_type: sum
-          - include: container_cpu_cfs_throttled_periods_total
-            convert_type: sum
-          - include: container_cpu_cfs_periods_total
-            convert_type: sum
-          - include: apiserver_request_total
-            convert_type: sum
-          - include: container_fs_reads_total
-            convert_type: sum
-          - include: container_fs_writes_total
-            convert_type: sum
-          - include: container_fs_reads_bytes_total
-            convert_type: sum
-          - include: container_fs_writes_bytes_total
-            convert_type: sum
-          - include: container_network_receive_bytes_total
-            convert_type: sum
-          - include: container_network_transmit_bytes_total
-            convert_type: sum
-          - include: container_network_receive_packets_total
-            convert_type: sum
-          - include: container_network_transmit_packets_total
-            convert_type: sum
-          - include: container_network_receive_packets_dropped_total
-            convert_type: sum
-          - include: container_network_transmit_packets_dropped_total
-            convert_type: sum
+      transform:
+        metrics:
+          statements:
+            - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
       # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
       #   where kube-state-metric is deployed on
       attributes/remove_node:
@@ -1215,7 +1189,7 @@ data:
             - otlp
           processors:
             - memory_limiter
-            - prometheustypeconvert
+            - transform
             - attributes/remove_node
             - attributes/remove_pod
             - attributes/remove_container

@@ -30,7 +30,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/config/configtest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/service/servicetest"
 )
@@ -47,7 +46,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 	assert.Equal(t, cfg, &Config{
 		ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 	})
-	assert.NoError(t, configtest.CheckConfigStruct(cfg))
+	assert.NoError(t, componenttest.CheckConfigStruct(cfg))
 }
 
 func TestCreateProcessors(t *testing.T) {
