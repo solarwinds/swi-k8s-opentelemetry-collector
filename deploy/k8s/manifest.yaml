@@ -59,24 +59,24 @@ data:
       # unify attributes 
       attributes/unify:
         actions:
-          - key: k8s.node.name
-            from_attribute: instance
-            action: insert
-          - key: k8s.node.name
-            from_attribute: kubernetes_io_hostname
-            action: insert
-          - key: k8s.node.name
-            from_attribute: node
-            action: insert
-          - key: k8s.node.name
+          - key: node
             from_attribute: exported_node
             action: insert
-            
+          - key: node
+            from_attribute: kubernetes_io_hostname
+            action: insert
+          - key: node
+            from_attribute: instance
+            action: insert
+          - key: node
+            from_attribute: exported_instance
+            action: insert
+          
           - key: instance
             action: delete
           - key: kubernetes_io_hostname
             action: delete
-          - key: node
+          - key: exported_instance
             action: delete
           - key: exported_node
             action: delete
@@ -361,7 +361,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.network.bytes_received
           - include: k8s.container_network_transmit_bytes_total
@@ -370,7 +370,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.network.bytes_transmitted
           - include: k8s.container_network_receive_packets_total
@@ -379,7 +379,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.network.packets_received
           - include: k8s.container_network_transmit_packets_total
@@ -388,7 +388,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.network.packets_transmitted
           - include: k8s.container_network_receive_packets_dropped_total
@@ -397,7 +397,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.network.receive_packets_dropped
           - include: k8s.container_network_transmit_packets_dropped_total
@@ -406,7 +406,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.network.transmit_packets_dropped
           - include: k8s.kube_pod_container_status_waiting
@@ -466,7 +466,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.fs.reads.rate
           - include: k8s.container_fs_writes_total
@@ -476,7 +476,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.fs.writes.rate
           - include: k8s.container_fs_reads_bytes_total
@@ -486,7 +486,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.fs.reads.bytes.rate
           - include: k8s.container_fs_writes_bytes_total
@@ -496,7 +496,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.fs.writes.bytes.rate
           - include: k8s.container_fs_usage_bytes
@@ -506,7 +506,7 @@ data:
             experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
             operations:
               - action: aggregate_labels
-                label_set: [pod, namespace, k8s.node.name]
+                label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.fs.usage.bytes
           # Node metrics
@@ -562,77 +562,77 @@ data:
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.network.bytes_received
           - include: k8s.pod.network.bytes_transmitted
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.network.bytes_transmitted
           - include: k8s.pod.network.packets_received
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.network.packets_received
           - include: k8s.pod.network.packets_transmitted
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.network.packets_transmitted
           - include: k8s.pod.network.receive_packets_dropped
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.network.receive_packets_dropped
           - include: k8s.pod.network.transmit_packets_dropped
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.network.transmit_packets_dropped
           - include: k8s.pod.fs.reads.rate
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.fs.reads.rate_temp
           - include: k8s.pod.fs.writes.rate
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.fs.writes.rate_temp
           - include: k8s.pod.fs.reads.bytes.rate
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.fs.reads.bytes.rate_temp
           - include: k8s.pod.fs.writes.bytes.rate
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.fs.writes.bytes.rate_temp
           - include: k8s.pod.fs.usage.bytes
             action: insert
             operations:
               - action: aggregate_labels
-                label_set: [k8s.node.name]
+                label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.fs.usage
 
@@ -858,7 +858,7 @@ data:
             operation: divide
       groupbyattrs/node:
         keys:
-          - k8s.node.name
+          - node
       # Transformations done after grouping per node
       metricstransform/aggregate_node_level:
         transforms:
@@ -901,7 +901,7 @@ data:
           - container
           - image
           - image_id
-          - k8s.node.name
+          - node
           - sw.k8s.pod.status
           - sw.k8s.namespace.status
           - sw.k8s.node.status
@@ -946,6 +946,11 @@ data:
             action: insert
 
           # Node
+          - key: k8s.node.name
+            from_attribute: node
+            action: upsert
+          - key: node
+            action: delete
 
           - key: sw.k8s.node.version
             from_attribute: kubelet_version
