@@ -628,6 +628,24 @@ data:
                 label_set: [node]
                 aggregation_type: sum
             new_name: k8s.node.fs.writes.bytes.rate_temp
+          - include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+            match_type: regexp
+            action: combine
+            submatch_case: lower
+            operations:
+              - action: aggregate_labels
+                label_set:  [node]
+                aggregation_type: sum
+            new_name: k8s.node.fs.iops
+          - include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+            match_type: regexp
+            action: combine
+            submatch_case: lower
+            operations:
+              - action: aggregate_labels
+                label_set:  [node]
+                aggregation_type: sum
+            new_name: k8s.node.fs.throughput
           - include: k8s.pod.fs.usage.bytes
             action: insert
             operations:
@@ -769,11 +787,7 @@ data:
             - k8s.pod.network.packets_transmitted
             - k8s.pod.network.receive_packets_dropped
             - k8s.pod.network.transmit_packets_dropped
-            - k8s.node.fs.reads.rate_temp
-            - k8s.node.fs.writes.rate_temp
             - k8s.node.fs.iops
-            - k8s.node.fs.reads.bytes.rate_temp
-            - k8s.node.fs.writes.bytes.rate_temp
             - k8s.node.fs.throughput
             - k8s.node.network.bytes_received
             - k8s.node.network.bytes_transmitted
@@ -796,11 +810,7 @@ data:
           - k8s.pod.network.packets_transmitted
           - k8s.pod.network.receive_packets_dropped
           - k8s.pod.network.transmit_packets_dropped
-          - k8s.node.fs.reads.rate_temp
-          - k8s.node.fs.writes.rate_temp
           - k8s.node.fs.iops
-          - k8s.node.fs.reads.bytes.rate_temp
-          - k8s.node.fs.writes.bytes.rate_temp
           - k8s.node.fs.throughput
           - k8s.node.network.bytes_received
           - k8s.node.network.bytes_transmitted
@@ -837,18 +847,6 @@ data:
             metric1: apiserver_request_not_failed_temp
             metric2: apiserver_request_total_temp
             operation: percent
-      experimental_metricsgeneration/node:
-        rules:
-          - name: k8s.node.fs.iops
-            type: calculate
-            metric1: k8s.node.fs.reads.rate_temp
-            metric2: k8s.node.fs.writes.rate_temp
-            operation: add
-          - name: k8s.node.fs.throughput
-            type: calculate
-            metric1: k8s.node.fs.reads.bytes.rate_temp
-            metric2: k8s.node.fs.writes.bytes.rate_temp
-            operation: add
       experimental_metricsgeneration/pod:
         rules:
           - name: k8s.pod.spec.cpu.limit
@@ -1216,7 +1214,6 @@ data:
             - deltatorate
             - metricstransform/aggregate_rate
             - experimental_metricsgeneration/cluster
-            - experimental_metricsgeneration/node
             - experimental_metricsgeneration/pod
             - groupbyattrs/node
             - metricstransform/aggregate_node_level
