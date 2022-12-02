@@ -499,6 +499,36 @@ data:
                 label_set: [pod, namespace, node]
                 aggregation_type: sum
             new_name: k8s.pod.fs.writes.bytes.rate
+          - include: k8s.pod.fs.reads.rate
+            action: insert
+            new_name: k8s.pod.fs.reads.rate_temp
+          - include: k8s.pod.fs.writes.rate
+            action: insert
+            new_name: k8s.pod.fs.writes.rate_temp
+          - include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+            match_type: regexp
+            action: combine
+            submatch_case: lower
+            operations:
+              - action: aggregate_labels
+                label_set:  [pod, namespace, node]
+                aggregation_type: sum
+            new_name: k8s.pod.fs.iops
+          - include: k8s.pod.fs.reads.bytes.rate
+            action: insert
+            new_name: k8s.pod.fs.reads.bytes.rate_temp
+          - include: k8s.pod.fs.writes.bytes.rate
+            action: insert
+            new_name: k8s.pod.fs.writes.bytes_temp
+          - include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+            match_type: regexp
+            action: combine
+            submatch_case: lower
+            operations:
+              - action: aggregate_labels
+                label_set:  [pod, namespace, node]
+                aggregation_type: sum
+            new_name: k8s.pod.fs.throughput
           - include: k8s.container_fs_usage_bytes
             action: insert
             match_type: regexp
@@ -777,6 +807,8 @@ data:
             - k8s.pod.cpu.usage.seconds.rate
             - apiserver_request_not_failed_temp
             - apiserver_request_total_temp
+            - k8s.pod.fs.iops
+            - k8s.pod.fs.throughput
             - k8s.pod.fs.reads.rate
             - k8s.pod.fs.writes.rate
             - k8s.pod.fs.reads.bytes.rate
@@ -800,6 +832,8 @@ data:
         metrics:
           - k8s.node.cpu.usage.seconds.rate
           - k8s.pod.cpu.usage.seconds.rate
+          - k8s.pod.fs.iops
+          - k8s.pod.fs.throughput
           - k8s.pod.fs.reads.rate
           - k8s.pod.fs.writes.rate
           - k8s.pod.fs.reads.bytes.rate
