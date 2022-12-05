@@ -1,0 +1,74 @@
+exporters:
+  otlp:
+    endpoint: ${OTEL_ENVOY_ADDRESS}
+    tls:
+      insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+    headers:
+      "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+extensions:
+  health_check: {}
+  memory_ballast:
+{{ toYaml .Values.otel.events.memory_ballast | indent 4 }}
+
+processors:
+  memory_limiter:
+{{ toYaml .Values.otel.events.memory_limiter | indent 4 }}
+
+{{- if .Values.otel.events.filter }}
+  filter:
+{{ toYaml .Values.otel.events.filter | indent 4 }}
+{{- end }}
+
+  resource/events:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+
+      - key: sw.k8s.log.type
+        value: event
+        action: insert
+  batch:
+{{ toYaml .Values.otel.events.batch | indent 4 }}
+
+receivers:
+  k8s_events:
+
+service:
+  extensions:
+    - health_check
+    - memory_ballast
+  pipelines:
+{{- if .Values.otel.events.enabled }}
+    logs:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+{{- if .Values.otel.events.filter }}
+        - filter
+{{- end}}
+        - resource/events
+        - batch
+      receivers:
+        - k8s_events
+{{- end }}
+  telemetry:
+{{- if .Values.otel.events.telemetry.logs.enabled }}
+    logs:
+      level: {{ .Values.otel.events.telemetry.logs.level }}
+{{- end }}
+{{- if .Values.otel.events.telemetry.metrics.enabled }}
+    metrics:
+      address: {{ .Values.otel.events.telemetry.metrics.address }}
+{{- end }}

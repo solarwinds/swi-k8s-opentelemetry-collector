@@ -1,0 +1,72 @@
+{{- if .Values.otel.metrics.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.fullname" . }}-metrics
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/metrics-collector-config-map.yaml") . | sha256sum }}
+    checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+    checksum/config_env: {{ include (print $.Template.BasePath "/metrics-collector-env-config-map.yaml") . | sha256sum }}
+    checksum/values: {{ toJson .Values | sha256sum }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" . }}-metrics
+  template:
+    metadata:
+      labels:
+{{ include "common.template-labels" . | indent 8 }}
+        app: {{ include "common.fullname" . }}-metrics
+    spec:
+      securityContext: {}
+      containers:
+        - name: opentelemetry-collector
+          command:
+            - /swi-otelcol
+            - --config=/conf/relay.yaml
+          securityContext: {}
+          image: {{ .Values.otel.container_image }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" . }}-common-env
+            - configMapRef:
+                name: {{ include "common.fullname" . }}-metrics-env-config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+{{ toYaml .Values.otel.metrics.resources | indent 12 }}
+          volumeMounts:
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+              readOnly: true
+      volumes:
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: {{ include "common.fullname" . }}-metrics-config
+            items:
+              - key: metrics.config
+                path: relay.yaml
+{{- end}}

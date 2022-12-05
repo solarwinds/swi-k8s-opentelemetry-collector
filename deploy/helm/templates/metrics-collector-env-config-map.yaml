@@ -1,0 +1,12 @@
+{{- if .Values.otel.metrics.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-metrics-env-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+data:
+  PROMETHEUS_URL: {{ quote .Values.otel.metrics.prometheus_url }}
+  SCRAPE_INTERVAL: {{ quote .Values.otel.metrics.scrape_interval }}
+{{- end}}

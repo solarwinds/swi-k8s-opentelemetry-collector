@@ -1,0 +1,204 @@
+# This values file provides the default values for the chart. Placeholders like
+# <PROMETHEUS_URL> will be provided via the values.yaml provided during the cluster
+# onboarding process--or you can provide your own with the appropriate values
+# given to you during initial onboarding for an initial cluster and region.
+
+nameOverride: ""
+fullnameOverride: ""
+
+otel:
+  # e.g. otel-collector.dc-01.cloud.solarwinds.com:443
+  endpoint: <OTEL_API_ENDPOINT>
+  tls_insecure: false
+  container_image: solarwinds/swi-opentelemetry-collector:0.1.8
+
+  # Configuration for metrics collection
+  metrics:
+    # Define whether metrics will be collected and sent
+    enabled: true
+
+    # URL of prometheus where to scrape
+    prometheus_url: <PROMETHEUS_URL>
+
+    # This filter is applied after metric processing, it is the place where metrics could be filtered out
+    # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    filter:
+      metrics:
+        exclude:
+          match_type: regexp
+          metric_names:
+            - .*_temp
+            - apiserver_request_total
+
+    # Use this configuration to scrape extra metrics from Prometheus. Multiple metrics can be specified.
+    # See format in https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors
+    extra_scrape_metrics: []
+
+    # Batching configuration for metrics
+    # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
+    batch:
+      send_batch_size: 4096
+      send_batch_max_size: 4096
+      timeout: 1s
+    
+    # How often the metrics are scraped from Prometheus
+    scrape_interval: 60s
+
+    # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
+    # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 2048
+      spike_limit_mib: 512
+
+    # Memory Ballast enables applications to configure memory ballast for the process.
+    # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/ballastextension for configuration reference
+    memory_ballast:
+      size_mib: 700
+
+    # Resource configuration for singleton collector
+    resources:
+      requests:
+        memory: 1.1Gi
+      limits:
+        # override if your singleton collector is being OOM-killed.
+        memory: 2.5Gi
+    
+    # Telemetry information of the collector
+    # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
+    telemetry:
+      logs: 
+        enabled: true
+        level: "info"
+      metrics: 
+        enabled: true
+        address: 0.0.0.0:8888
+
+  # Configuration for Events collection
+  events: 
+    # Define whether metrics will be collected and sent
+    enabled: true
+
+    # This filter is applied after events processing, it is the place where events could be filtered out
+    # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    # filter:
+
+    # Batching configuration for metrics
+    # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
+    batch:
+      send_batch_size: 1024
+      send_batch_max_size: 1024
+      timeout: 1s
+
+    # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
+    # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 512
+      spike_limit_mib: 128
+
+    # Memory Ballast enables applications to configure memory ballast for the process.
+    # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/ballastextension for configuration reference
+    memory_ballast:
+      size_mib: 200
+
+    # Resource configuration
+    resources:
+      requests:
+        memory: 32Mi
+      limits:
+        memory: 600Mi
+    
+    # Telemetry information of the collector
+    # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
+    telemetry:
+      logs: 
+        enabled: true
+        level: "info"
+      metrics: 
+        enabled: true
+        address: 0.0.0.0:8888
+
+  # Configuration for Logs collection
+  logs: 
+    # Define whether logs will be collected and sent
+    enabled: true
+
+    # If true, the journal logs on nodes will be collected
+    # Each log has following attributes so they can be filtered out by them using filter configuration:
+    #   * sw.k8s.log.type=journal
+    #   * k8s.cluster.name - name of the cluster (input generated during onboarding)
+    #   * sw.k8s.cluster.uid - UUID of the cluster (input generated during onboarding)
+    #   * sw.k8s.agent.manifest.version - version of the manifest
+    #   * k8s.node.name - node from which the journal logs are coming from
+    journal: true
+
+    # If true, the container logs will be collected
+    # Each log has following attributes so they can be filtered out by them using filter configuration:
+    #   * sw.k8s.log.type=container
+    #   * k8s.cluster.name - name of the cluster (input generated during onboarding)
+    #   * sw.k8s.cluster.uid - name of the cluster (input generated during onboarding)
+    #   * sw.k8s.agent.manifest.version - version of the manifest
+    #   * k8s.node.name - node from which the container logs are coming from
+    #   * k8s.container.name - name of the container that is reporting logs
+    #   * k8s.namespace.name - namespace of the container
+    #   * k8s.pod.name - pod of the container
+    #   * run_id - id of the container run
+    #   * k8s.pod.uid - pod's uid
+    container: true
+
+    # This filter is applied after metric processing, it is the place where metrics could be filtered out
+    # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    filter:
+      include:
+        match_type: regexp
+        record_attributes:
+          # allow only system namespaces (kube-system, kube-public)
+          - key: k8s.namespace.name
+            value: ^kube-.*$
+
+    # Batching configuration for logs
+    # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
+    batch:
+      send_batch_size: 1024
+      send_batch_max_size: 1024
+      timeout: 1s
+
+    # Telemetry information of the collector
+    # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
+    telemetry:
+      logs: 
+        enabled: true
+        level: "info"
+      metrics: 
+        enabled: true
+        address: 0.0.0.0:8888
+
+    # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
+    # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 921
+      spike_limit_mib: 307
+    
+    # Memory Ballast enables applications to configure memory ballast for the process.
+    # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/ballastextension for configuration reference
+    memory_ballast:
+      size_mib: 341
+
+    # Resource configuration for Log collector
+    resources:
+      requests:
+        cpu: 100m
+        memory: 32Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+cluster:
+  name: <KUBERNETES_CLUSTER_NAME>
+  uid: <CLUSTER_UID>
+
+# Set labels to every deployed resource
+# commonLabels: 
+

@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta22
+apiVersion: skaffold/v3
 kind: Config
 metadata:
   name: swi-k8s-opentelemetry-collector
@@ -9,19 +9,34 @@ build:
       dockerfile: build/docker/Dockerfile
   local:
     push: false
-deploy:
-  helm:
-    releases:
-    - name: monitoring
-      remoteChart: prometheus
-      namespace: monitoring
-      createNamespace: true
-      repo: https://prometheus-community.github.io/helm-charts
+manifests:
   kustomize:
     paths:
     - tests/deploy/base
     buildArgs:
     - --load-restrictor LoadRestrictionsNone
+deploy:
+  kubectl: {}
+  helm: 
+    releases:
+      - name: swi-k8s-opentelemetry-collector
+        chartPath: deploy/helm
+        namespace: monitoring
+        createNamespace: true
+        setValues:
+          otel.metrics.prometheus_url: monitoring-prometheus-server.monitoring.svc.cluster.local:80
+          otel.endpoint: timeseries-mock-service:9082
+          otel.tls_insecure: true
+          otel.container_image: swi-k8s-opentelemetry-collector
+          otel.metrics.scrape_interval: "15s"
+          cluster.name: cluster name
+          cluster.uid: cluster-uid-123456789
+        upgradeOnChange: true
+      - name: monitoring
+        remoteChart: prometheus
+        namespace: monitoring
+        createNamespace: true
+        repo: https://prometheus-community.github.io/helm-charts
   kubeContext: docker-desktop
 profiles:
 - name: builder-only
