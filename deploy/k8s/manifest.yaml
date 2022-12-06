@@ -378,7 +378,20 @@ data:
             metrics:
               statements:
                 - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-                # unify attributes 
+                      
+          # removing instance attribute on kube_ metrics as it doesn't represent node
+          attributes/remove_instance:
+            include:
+                match_type: regexp
+                metric_names:
+                  - kube_.*
+            actions:
+              - key: instance
+                action: delete
+              - key: exported_instance
+                action: delete
+        
+          # unify attributes 
           attributes/unify:
             actions:
               - key: node
@@ -840,7 +853,7 @@ data:
                 new_name: k8s.pod.fs.reads.bytes.rate_temp
               - include: k8s.pod.fs.writes.bytes.rate
                 action: insert
-                new_name: k8s.pod.fs.writes.bytes_temp
+                new_name: k8s.pod.fs.writes.bytes.rate_temp
               - include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
                 match_type: regexp
                 action: combine
@@ -1557,6 +1570,7 @@ data:
               processors:
                 - memory_limiter
                 - transform
+                - attributes/remove_instance
                 - attributes/unify
                 - attributes/remove_node
                 - attributes/remove_pod
@@ -1879,7 +1893,7 @@ metadata:
   name: swi-k8s-opentelemetry-collector-metrics
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: e0f01f451f64c67f7d543d05b36ccf7b848844d6b02ac818edac7e5db878df4e
+    checksum/config: cd5f69176cdd42cf2076a2b63cd8b0a2f771ec2610d8310b776256d65b0290a0
     checksum/config_common_env: 35325c758f46cdca071e063a411081235af4c73fd9edc847e7627765ddbd019e
     checksum/config_env: 82db4006fe84fd8be0a6fe4a931ba96ceb084b009ca068d0ac81ec9f485d0bea
     checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d

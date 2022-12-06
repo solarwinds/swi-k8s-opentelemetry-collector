@@ -17,7 +17,20 @@ processors:
     metrics:
       statements:
         - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-        # unify attributes 
+              
+  # removing instance attribute on kube_ metrics as it doesn't represent node
+  attributes/remove_instance:
+    include:
+        match_type: regexp
+        metric_names:
+          - kube_.*
+    actions:
+      - key: instance
+        action: delete
+      - key: exported_instance
+        action: delete
+
+  # unify attributes 
   attributes/unify:
     actions:
       - key: node
@@ -479,7 +492,7 @@ processors:
         new_name: k8s.pod.fs.reads.bytes.rate_temp
       - include: k8s.pod.fs.writes.bytes.rate
         action: insert
-        new_name: k8s.pod.fs.writes.bytes_temp
+        new_name: k8s.pod.fs.writes.bytes.rate_temp
       - include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
         match_type: regexp
         action: combine
@@ -1194,6 +1207,7 @@ service:
       processors:
         - memory_limiter
         - transform
+        - attributes/remove_instance
         - attributes/unify
         - attributes/remove_node
         - attributes/remove_pod
