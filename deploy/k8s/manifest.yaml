@@ -56,6 +56,18 @@ data:
         metrics:
           statements:
             - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
+            
+      # removing instance attribute on kube_ metrics as it doesn't represent node
+      attributes/remove_instance:
+        include:
+            match_type: regexp
+            metric_names:
+              - kube_.*
+        actions:
+          - key: instance
+            action: delete
+          - key: exported_instance
+            action: delete
       # unify attributes 
       attributes/unify:
         actions:
@@ -1234,6 +1246,7 @@ data:
           processors:
             - memory_limiter
             - transform
+            - attributes/remove_instance
             - attributes/unify
             - attributes/remove_node
             - attributes/remove_pod
