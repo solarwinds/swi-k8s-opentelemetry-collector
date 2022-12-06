@@ -24,6 +24,7 @@ data:
   OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
   MANIFEST_VERSION: "2.0.0"
+  APP_VERSION: "0.1.8"
 ---
 # Source: swi-k8s-opentelemetry-collector/templates/events-collector-config-map.yaml
 apiVersion: v1
@@ -59,6 +60,10 @@ data:
               # Collector and Manifest version
               - key: sw.k8s.agent.manifest.version
                 value: ${MANIFEST_VERSION}
+                action: insert
+        
+              - key: sw.k8s.agent.app.version
+                value: ${APP_VERSION}
                 action: insert
         
               # Cluster
@@ -157,6 +162,10 @@ data:
                 value: ${MANIFEST_VERSION}
                 action: insert
         
+              - key: sw.k8s.agent.app.version
+                value: ${APP_VERSION}
+                action: insert
+        
               # Cluster
               - key: sw.k8s.cluster.uid
                 value: ${CLUSTER_UID}
@@ -181,6 +190,10 @@ data:
               # Collector and Manifest version
               - key: sw.k8s.agent.manifest.version
                 value: ${MANIFEST_VERSION}
+                action: insert
+        
+              - key: sw.k8s.agent.app.version
+                value: ${APP_VERSION}
                 action: insert
         
               # Cluster
@@ -1303,6 +1316,10 @@ data:
                 value: ${MANIFEST_VERSION}
                 action: insert
         
+              - key: sw.k8s.agent.app.version
+                value: ${APP_VERSION}
+                action: insert
+        
               # Cluster
               - key: sw.k8s.cluster.uid
                 value: ${CLUSTER_UID}
@@ -1462,6 +1479,10 @@ data:
               # Collector and Manifest version
               - key: sw.k8s.agent.manifest.version
                 value: ${MANIFEST_VERSION}
+                action: insert
+        
+              - key: sw.k8s.agent.app.version
+                value: ${APP_VERSION}
                 action: insert
         
               # Cluster
@@ -1705,8 +1726,8 @@ metadata:
   name: swi-k8s-opentelemetry-collector-logs
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: fce41f6cb08854de483d45c30c3a58d75e18729f0dc541f9cf9f2c1cc1ee81a3
-    checksum/config_common_env: 35325c758f46cdca071e063a411081235af4c73fd9edc847e7627765ddbd019e
+    checksum/config: 3c7755b717a742bb404546d2af9d46b6ddcca80983b6151e6b529faa9bcdc087
+    checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
     checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
@@ -1722,8 +1743,8 @@ spec:
         app.kubernetes.io/name: swi-k8s-opentelemetry-collector
         app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
       annotations:
-        checksum/config: fce41f6cb08854de483d45c30c3a58d75e18729f0dc541f9cf9f2c1cc1ee81a3
-        checksum/config_common_env: 35325c758f46cdca071e063a411081235af4c73fd9edc847e7627765ddbd019e
+        checksum/config: 3c7755b717a742bb404546d2af9d46b6ddcca80983b6151e6b529faa9bcdc087
+        checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
         checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
 
     spec:
@@ -1818,8 +1839,8 @@ metadata:
   name: swi-k8s-opentelemetry-collector-events
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 5ae154be9a7aee9973c934c0bb68965e6f43fd07a788200169ff507b72dcc487
-    checksum/config_common_env: 35325c758f46cdca071e063a411081235af4c73fd9edc847e7627765ddbd019e
+    checksum/config: ef88228d5eff7bff2387b2335db500865bfc884a2f2766ce1490ac8ede3b25b5
+    checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
     checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
@@ -1893,8 +1914,8 @@ metadata:
   name: swi-k8s-opentelemetry-collector-metrics
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: cd5f69176cdd42cf2076a2b63cd8b0a2f771ec2610d8310b776256d65b0290a0
-    checksum/config_common_env: 35325c758f46cdca071e063a411081235af4c73fd9edc847e7627765ddbd019e
+    checksum/config: 735dd3865b58ac94e5abdd90b372bffc69416a4d4f5119a9dbe38c1a05977e80
+    checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
     checksum/config_env: 82db4006fe84fd8be0a6fe4a931ba96ceb084b009ca068d0ac81ec9f485d0bea
     checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
   labels:
