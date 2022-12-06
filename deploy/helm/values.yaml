@@ -35,12 +35,11 @@ otel:
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     filter:
-      metrics:
-        exclude:
-          match_type: regexp
-          metric_names:
-            - .*_temp
-            - apiserver_request_total
+      exclude:
+        match_type: regexp
+        metric_names:
+          - .*_temp
+          - apiserver_request_total
 
     # Use this configuration to scrape extra metrics from Prometheus. Multiple metrics can be specified.
     # See format in https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors
