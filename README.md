@@ -241,6 +241,16 @@ Possible issues:
   helm repo add "stable" "https://charts.helm.sh/stable" --force-update
   ```
 
+### Develop against remote prometheus
+You can port forward Prometheus server to localhost:9090 and run
+```
+skaffold dev -p=remote-prometheus
+```
+
+In order to change Prometheus endpoint that is hosted on HTTPS you can adjust skaffold.yaml file:
+* add `otel.metrics.prometheus.scheme: https`
+* update `otel.metrics.prometheus.url: <remote prometheus>`
+
 ### Updating manifest
 Temporarily there will be `manifest.yaml` and Helm chart in the repository. In order to avoid maintaining two sources the `manifest.yaml` is generated using `helm template` command. So please do not write directly to `manifest.yaml` file. 
 

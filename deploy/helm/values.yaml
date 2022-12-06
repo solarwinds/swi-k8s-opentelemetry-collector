@@ -22,8 +22,15 @@ otel:
     # Define whether metrics will be collected and sent
     enabled: true
 
-    # URL of prometheus where to scrape
-    prometheus_url: <PROMETHEUS_URL>
+    prometheus: 
+      # URL of prometheus where to scrape
+      url: <PROMETHEUS_URL>
+
+      # Prometheus URL scheme. It can take the values `http` or `https`
+      scheme: http
+
+      # How often the metrics are scraped from Prometheus
+      scrape_interval: 60s
 
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
@@ -45,9 +52,6 @@ otel:
       send_batch_size: 4096
       send_batch_max_size: 4096
       timeout: 1s
-    
-    # How often the metrics are scraped from Prometheus
-    scrape_interval: 60s
 
     # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference

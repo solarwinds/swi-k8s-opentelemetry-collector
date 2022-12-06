@@ -24,13 +24,12 @@ deploy:
         namespace: monitoring
         createNamespace: true
         setValues:
-          otel.metrics.prometheus_url: monitoring-prometheus-server.monitoring.svc.cluster.local:80
+          otel.metrics.prometheus.url: monitoring-prometheus-server.monitoring.svc.cluster.local:80
           otel.endpoint: timeseries-mock-service:9082
           otel.tls_insecure: true
           otel.image.repository: "swi-k8s-opentelemetry-collector"
           otel.image.tag: ""
-          otel.image.pullPolicy: "IfNotPresent"
-          otel.metrics.scrape_interval: "15s"
+          otel.metrics.prometheus.scrape_interval: "15s"
           cluster.name: cluster name
           cluster.uid: cluster-uid-123456789
         upgradeOnChange: true
@@ -58,6 +57,25 @@ profiles:
           CREATE_VENDOR_DIR: "true"
     local:
       push: false
+- name: remote-prometheus
+  deploy:
+    helm: 
+      releases:
+        - name: swi-k8s-opentelemetry-collector
+          chartPath: deploy/helm
+          namespace: monitoring
+          createNamespace: true
+          setValues:
+            # port forward Prometheus Webserver to localhost:9090
+            otel.metrics.prometheus.url: host.docker.internal:9090
+            otel.endpoint: timeseries-mock-service:9082
+            otel.tls_insecure: true
+            otel.image.repository: "swi-k8s-opentelemetry-collector"
+            otel.image.tag: ""
+            otel.metrics.prometheus.scrape_interval: "15s"
+            cluster.name: cluster name
+            cluster.uid: cluster-uid-123456789
+          upgradeOnChange: true
 - name: ci
   activation:
   - env: CI=true

@@ -1129,7 +1129,8 @@ receivers:
     config:
       scrape_configs:
         - job_name: prometheus
-          scrape_interval: ${SCRAPE_INTERVAL}
+          scheme: {{ .Values.otel.metrics.prometheus.scheme | default "http" | quote }}
+          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
           metrics_path: "/federate"
           honor_timestamps: false
           params:

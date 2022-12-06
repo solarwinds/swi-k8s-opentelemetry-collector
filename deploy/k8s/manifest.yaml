@@ -1508,7 +1508,8 @@ data:
             config:
               scrape_configs:
                 - job_name: prometheus
-                  scrape_interval: ${SCRAPE_INTERVAL}
+                  scheme: "http"
+                  scrape_interval: "60s"
                   metrics_path: "/federate"
                   honor_timestamps: false
                   params:
@@ -1634,7 +1635,6 @@ metadata:
     app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
 data:
   PROMETHEUS_URL: "<PROMETHEUS_URL>"
-  SCRAPE_INTERVAL: "60s"
 ---
 # Source: swi-k8s-opentelemetry-collector/templates/cluster-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1728,7 +1728,7 @@ metadata:
   annotations:
     checksum/config: 3c7755b717a742bb404546d2af9d46b6ddcca80983b6151e6b529faa9bcdc087
     checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
-    checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
+    checksum/values: 7b877fdb86d4047f6e1ea090dd66db0ed29deb9143cbda6a13a14855f21da632
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
     app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
@@ -1745,7 +1745,7 @@ spec:
       annotations:
         checksum/config: 3c7755b717a742bb404546d2af9d46b6ddcca80983b6151e6b529faa9bcdc087
         checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
-        checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
+        checksum/values: 7b877fdb86d4047f6e1ea090dd66db0ed29deb9143cbda6a13a14855f21da632
 
     spec:
       terminationGracePeriodSeconds: 30
@@ -1841,7 +1841,7 @@ metadata:
   annotations:
     checksum/config: ef88228d5eff7bff2387b2335db500865bfc884a2f2766ce1490ac8ede3b25b5
     checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
-    checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
+    checksum/values: 7b877fdb86d4047f6e1ea090dd66db0ed29deb9143cbda6a13a14855f21da632
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
     app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
@@ -1914,10 +1914,10 @@ metadata:
   name: swi-k8s-opentelemetry-collector-metrics
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 735dd3865b58ac94e5abdd90b372bffc69416a4d4f5119a9dbe38c1a05977e80
+    checksum/config: 240be2abafd84363753bd2dd70f0599c59f9286546c2d2ceddca3c1646495699
     checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
-    checksum/config_env: 82db4006fe84fd8be0a6fe4a931ba96ceb084b009ca068d0ac81ec9f485d0bea
-    checksum/values: fbd027b253bf6c6360d546f844ea029ebcc4d3d196cf1250d4aaf26b451bc99d
+    checksum/config_env: fba6a0aa0c60ef86a77a6db3750d1ffa8370f0242881e13525cefbfd6144ddf3
+    checksum/values: 7b877fdb86d4047f6e1ea090dd66db0ed29deb9143cbda6a13a14855f21da632
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
     app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
