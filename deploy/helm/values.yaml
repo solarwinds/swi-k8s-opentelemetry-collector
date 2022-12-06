@@ -10,7 +10,12 @@ otel:
   # e.g. otel-collector.dc-01.cloud.solarwinds.com:443
   endpoint: <OTEL_API_ENDPOINT>
   tls_insecure: false
-  container_image: solarwinds/swi-opentelemetry-collector:0.1.8
+
+  image:
+    repository: solarwinds/swi-opentelemetry-collector
+    # if not set appVersion field from Chart.yaml is used
+    tag: ""
+    pullPolicy: IfNotPresent
 
   # Configuration for metrics collection
   metrics:

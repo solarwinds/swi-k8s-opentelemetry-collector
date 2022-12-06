@@ -39,12 +39,10 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Common labels
 */}}
 {{- define "common.labels" -}}
-{{- if not .Values.externalRenderer}}
-helm.sh/chart: {{ include "common.chart" . }}
-{{- end }}
 {{ include "common.template-labels" . }}
 {{- if .Chart.AppVersion }}
 {{- if not .Values.externalRenderer}}
+helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 {{- end }}

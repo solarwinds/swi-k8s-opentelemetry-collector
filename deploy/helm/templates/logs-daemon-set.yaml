@@ -33,8 +33,8 @@ spec:
         runAsGroup: 0
       containers:
         - name: swi-opentelemetry-collector
-          image: {{ .Values.otel.container_image }}
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
             - /swi-otelcol
             - --config=/conf/relay.yaml

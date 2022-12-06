@@ -24,13 +24,13 @@ spec:
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
       containers:
-        - name: opentelemetry-collector
+        - name: swi-opentelemetry-collector
           command:
             - /swi-otelcol
             - --config=/conf/relay.yaml
           securityContext: {}
-          image: {{ .Values.otel.container_image }}
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
             - name: MY_POD_IP
               valueFrom:
