@@ -127,13 +127,13 @@ data:
         extensions:
           health_check: {}
           memory_ballast:
-            size_mib: 341
+            size_mib: 200
         
         processors:
           memory_limiter:
             check_interval: 1s
-            limit_mib: 921
-            spike_limit_mib: 307
+            limit_mib: 550
+            spike_limit_mib: 200
           # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
           filter:
             logs: 
@@ -1726,9 +1726,9 @@ metadata:
   name: swi-k8s-opentelemetry-collector-logs
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 3c7755b717a742bb404546d2af9d46b6ddcca80983b6151e6b529faa9bcdc087
+    checksum/config: 1e5a65d0e4daea3ba77c82d1097d7e28030ab28fba6ba9ba728b701ca47fb7bc
     checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
-    checksum/values: 43fd270a1566f3f94d7c15307f706a38a6fc6c9de54081364708322094d5478d
+    checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
     app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
@@ -1743,9 +1743,9 @@ spec:
         app.kubernetes.io/name: swi-k8s-opentelemetry-collector
         app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
       annotations:
-        checksum/config: 3c7755b717a742bb404546d2af9d46b6ddcca80983b6151e6b529faa9bcdc087
+        checksum/config: 1e5a65d0e4daea3ba77c82d1097d7e28030ab28fba6ba9ba728b701ca47fb7bc
         checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
-        checksum/values: 43fd270a1566f3f94d7c15307f706a38a6fc6c9de54081364708322094d5478d
+        checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
 
     spec:
       terminationGracePeriodSeconds: 30
@@ -1793,9 +1793,9 @@ spec:
               port: 13133
           resources:
             limits:
-              memory: 1Gi
+              memory: 600Mi
             requests:
-              memory: 32Mi
+              memory: 600Mi
           volumeMounts:
             - mountPath: /var/log/pods
               name: varlogpods
@@ -1841,7 +1841,7 @@ metadata:
   annotations:
     checksum/config: ef88228d5eff7bff2387b2335db500865bfc884a2f2766ce1490ac8ede3b25b5
     checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
-    checksum/values: 43fd270a1566f3f94d7c15307f706a38a6fc6c9de54081364708322094d5478d
+    checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
     app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
@@ -1894,7 +1894,7 @@ spec:
             limits:
               memory: 600Mi
             requests:
-              memory: 32Mi
+              memory: 600Mi
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
@@ -1917,7 +1917,7 @@ metadata:
     checksum/config: 240be2abafd84363753bd2dd70f0599c59f9286546c2d2ceddca3c1646495699
     checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
     checksum/config_env: fba6a0aa0c60ef86a77a6db3750d1ffa8370f0242881e13525cefbfd6144ddf3
-    checksum/values: 43fd270a1566f3f94d7c15307f706a38a6fc6c9de54081364708322094d5478d
+    checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
     app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
@@ -1971,7 +1971,7 @@ spec:
             limits:
               memory: 2.5Gi
             requests:
-              memory: 1Gi
+              memory: 2.5Gi
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
