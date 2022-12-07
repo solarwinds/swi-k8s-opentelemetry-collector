@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta22
+apiVersion: skaffold/v3
 kind: Config
 metadata:
   name: swi-k8s-opentelemetry-collector
@@ -9,19 +9,41 @@ build:
       dockerfile: build/docker/Dockerfile
   local:
     push: false
-deploy:
-  helm:
-    releases:
-    - name: monitoring
-      remoteChart: prometheus
-      namespace: monitoring
-      createNamespace: true
-      repo: https://prometheus-community.github.io/helm-charts
+manifests:
   kustomize:
     paths:
     - tests/deploy/base
     buildArgs:
     - --load-restrictor LoadRestrictionsNone
+deploy:
+  kubectl: {}
+  helm: 
+    releases:
+      - name: swi-k8s-opentelemetry-collector
+        chartPath: deploy/helm
+        namespace: monitoring
+        createNamespace: true
+        setValues:
+          otel.metrics.prometheus.url: monitoring-prometheus-server.monitoring.svc.cluster.local:80
+          otel.endpoint: timeseries-mock-service:9082
+          otel.tls_insecure: true
+          otel.image.repository: "swi-k8s-opentelemetry-collector"
+          otel.image.tag: ""
+          otel.metrics.prometheus.scrape_interval: "15s"
+          cluster.name: cluster name
+          cluster.uid: cluster-uid-123456789
+        upgradeOnChange: true
+
+      - name: monitoring
+        remoteChart: prometheus
+        namespace: monitoring
+        createNamespace: true
+        repo: https://prometheus-community.github.io/helm-charts
+        version: 19.0.1
+        setValues:
+          alertmanager.enabled: false
+          prometheus-node-exporter.enabled: false
+          prometheus-pushgateway.enabled: false
   kubeContext: docker-desktop
 profiles:
 - name: builder-only
@@ -35,6 +57,25 @@ profiles:
           CREATE_VENDOR_DIR: "true"
     local:
       push: false
+- name: remote-prometheus
+  deploy:
+    helm: 
+      releases:
+        - name: swi-k8s-opentelemetry-collector
+          chartPath: deploy/helm
+          namespace: monitoring
+          createNamespace: true
+          setValues:
+            # port forward Prometheus Webserver to localhost:9090
+            otel.metrics.prometheus.url: host.docker.internal:9090
+            otel.endpoint: timeseries-mock-service:9082
+            otel.tls_insecure: true
+            otel.image.repository: "swi-k8s-opentelemetry-collector"
+            otel.image.tag: ""
+            otel.metrics.prometheus.scrape_interval: "15s"
+            cluster.name: cluster name
+            cluster.uid: cluster-uid-123456789
+          upgradeOnChange: true
 - name: ci
   activation:
   - env: CI=true

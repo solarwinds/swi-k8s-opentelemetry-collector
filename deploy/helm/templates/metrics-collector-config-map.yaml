@@ -1,0 +1,12 @@
+{{- if .Values.otel.metrics.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-metrics-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+data:
+  metrics.config: |
+{{ tpl (.Files.Get "metrics-collector-config.yaml") . | indent 8 }}
+{{- end}}

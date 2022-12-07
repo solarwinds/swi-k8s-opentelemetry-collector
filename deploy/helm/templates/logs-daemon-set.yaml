@@ -1,0 +1,108 @@
+{{- if .Values.otel.logs.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "common.fullname" . }}-logs
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
+    checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+    checksum/values: {{ toJson .Values | sha256sum }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" . }}-logs
+  template:
+    metadata:
+      labels:
+        app: {{ include "common.fullname" . }}-logs
+{{ include "common.labels" . | indent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
+        checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+        checksum/values: {{ toJson .Values | sha256sum }}
+
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        ## In order to reliably read logs from mounted node logging paths, we need to run as root
+        fsGroup: 0
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: swi-opentelemetry-collector
+          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          command:
+            - /swi-otelcol
+            - --config=/conf/relay.yaml
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" . }}-common-env
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+{{ toYaml .Values.otel.logs.resources | indent 12 }}
+          volumeMounts:
+            - mountPath: /var/log/pods
+              name: varlogpods
+              readOnly: true
+            - mountPath: /var/log/containers
+              name: varlogcontainers
+              readOnly: true
+            - mountPath: /var/lib/docker/containers
+              name: varlibdockercontainers
+              readOnly: true
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+              readOnly: true
+            - mountPath: /run/log/journal
+              name: runlogjournal
+              readOnly: true
+      volumes:
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: runlogjournal
+          hostPath:
+            path: /run/log/journal
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: {{ include "common.fullname" . }}-logs-config
+            items:
+              - key: logs.config
+                path: relay.yaml
+{{- end }}

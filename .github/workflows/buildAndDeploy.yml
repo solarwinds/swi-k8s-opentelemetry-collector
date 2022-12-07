@@ -56,7 +56,7 @@ jobs:
       - name: Tail Otel mock logs for 60 seconds
         run: |
           mkdir -p OtelLogs
-          kubetail timeseries-logs-mock-service --namespace monitoring > OtelLogs/logs.log &
+          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/logs.log &
           sleep 60
 
       # Delete resources and wait some time for its termination
@@ -110,6 +110,49 @@ jobs:
         with:
           name: image
           path: swi-k8s-opentelemetry-collector.tar
+          retention-days: 2
+
+  helm_verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.0
+
+      - name: Lint helm
+        run: helm lint deploy/helm
+
+      - name: Generate manifest.yaml
+        run: helm template swi-k8s-opentelemetry-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > generated_manifest.yaml
+
+      - name: Verify manifest matches helm chart
+        run: |
+          file1="deploy/k8s/manifest.yaml"
+          file2="generated_manifest.yaml"
+          if cmp -s "$file1" "$file2"; then
+              printf 'The file "%s" is the same as "%s"\n' "$file1" "$file2"
+          else
+              printf 'The file "%s" is different from "%s"\n' "$file1" "$file2"
+              exit 1
+          fi
+        shell: bash
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: generated_manifest.yaml
+          path: generated_manifest.yaml
+          retention-days: 2
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: manifest.yaml
+          path: deploy/k8s/manifest.yaml
           retention-days: 2
 
   deploy_dockerhub:

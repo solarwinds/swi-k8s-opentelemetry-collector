@@ -127,6 +127,16 @@ Processors included in the collector:
 - [resource](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourceprocessor)
 - [swmetricstransform](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/swmetricstransformprocessor)
 
+#### Helm
+To scrape more metrics set `otel.metrics.extra_scrape_metrics` value. Example:
+```
+otel:
+  metrics:
+    extra_scrape_metrics:
+      - node_cpu_seconds_total
+      - node_cpu_guest_seconds_total
+```
+
 ### Logs
 
 The logs collection and processing configuration is included in the manifest as a ConfigMap under the `logs.config` key.
@@ -160,11 +170,24 @@ filter:
 +              value: <NAMESPACE_NAME>
 ```
 
+#### Helm
+To collect logs for a specific namespace, adjust the `otel.logs.filter` value. For example to scrape all logs:
+```
+otel:
+  logs:
+    filter:
+      include:
+        match_type: regexp
+        record_attributes:
+          - key: k8s.namespace.name
+            value: ^.*$
+```
+
 ## Development
 
 ### Prerequisites
 
-- [Skaffold](https://skaffold.dev) at least [v1.31.0](https://github.com/GoogleContainerTools/skaffold/releases/tag/v1.31.0)
+- [Skaffold](https://skaffold.dev) at least [v2.0.3](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.0.3)
   - On windows, do not install it using choco due to [this issue](https://github.com/GoogleContainerTools/skaffold/issues/4058)
 - [Kustomize](https://kustomize.io): `choco install kustomize`
 - [Helm](https://helm.sh): `choco install kubernetes-helm`
@@ -176,12 +199,6 @@ To run the collector in a local environment, execute:
 
 ```shell
 skaffold dev
-```
-
-For Skaffold v2, use the following command instead:
-
-```shell
-skaffold dev -f .\skaffold2.yaml
 ```
 
 That will:
@@ -223,6 +240,24 @@ Possible issues:
   ```shell
   helm repo add "stable" "https://charts.helm.sh/stable" --force-update
   ```
+
+### Develop against remote prometheus
+You can port forward Prometheus server to localhost:9090 and run
+```
+skaffold dev -p=remote-prometheus
+```
+
+In order to change Prometheus endpoint that is hosted on HTTPS you can adjust skaffold.yaml file:
+* add `otel.metrics.prometheus.scheme: https`
+* update `otel.metrics.prometheus.url: <remote prometheus>`
+
+### Updating manifest
+Temporarily there will be `manifest.yaml` and Helm chart in the repository. In order to avoid maintaining two sources the `manifest.yaml` is generated using `helm template` command. So please do not write directly to `manifest.yaml` file. 
+
+Update Helm chart and use following command to update the manifest:
+```
+helm template swi-k8s-opentelemetry-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
+```
 
 ## Publishing
 customized Otel Collector image is getting published to https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector 
