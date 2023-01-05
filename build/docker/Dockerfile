@@ -4,7 +4,7 @@ FROM ${GOLANG_IMAGE} as builder
 
 COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
 
-RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.64.0
+RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.67.0
 
 WORKDIR /src
 COPY ["./src/", "./src/"]

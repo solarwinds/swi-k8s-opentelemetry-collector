@@ -20,9 +20,7 @@
 
 package swmetricstransformprocessor
 
-import (
-	"go.opentelemetry.io/collector/config"
-)
+import "go.opentelemetry.io/collector/component"
 
 const (
 	// IncludeFieldName is the mapstructure field name for Include field
@@ -61,8 +59,6 @@ const (
 
 // Config defines configuration for Resource processor.
 type Config struct {
-	config.ProcessorSettings `mapstructure:",squash"` // squash ensures fields are correctly decoded in embedded struct
-
 	// Transform specifies a list of transforms on metrics with each transform focusing on one metric.
 	Transforms []Transform `mapstructure:"transforms"`
 }
@@ -235,6 +231,8 @@ const (
 )
 
 var matchTypes = []MatchType{StrictMatchType, RegexpMatchType}
+
+var _ component.Config = (*Config)(nil)
 
 func (mt MatchType) isValid() bool {
 	for _, matchType := range matchTypes {
