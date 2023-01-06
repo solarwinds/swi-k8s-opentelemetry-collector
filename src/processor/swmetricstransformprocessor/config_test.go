@@ -26,22 +26,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/service/servicetest"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap/confmaptest"
 )
 
 func TestLoadingFullConfig(t *testing.T) {
 	tests := []struct {
 		configFile string
-		filterName config.ComponentID
+		id         component.ID
 		expCfg     *Config
 	}{
 		{
 			configFile: "config_full.yaml",
-			filterName: config.NewComponentID(typeStr),
+			id:         component.NewID(typeStr),
 			expCfg: &Config{
-				ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 				Transforms: []Transform{
 					{
 						MetricIncludeFilter: FilterConfig{
@@ -56,9 +54,8 @@ func TestLoadingFullConfig(t *testing.T) {
 		},
 		{
 			configFile: "config_full.yaml",
-			filterName: config.NewComponentIDWithName(typeStr, "multiple"),
+			id:         component.NewIDWithName(typeStr, "multiple"),
 			expCfg: &Config{
-				ProcessorSettings: config.NewProcessorSettings(config.NewComponentIDWithName(typeStr, "multiple")),
 				Transforms: []Transform{
 					{
 						MetricIncludeFilter: FilterConfig{
@@ -146,9 +143,8 @@ func TestLoadingFullConfig(t *testing.T) {
 		},
 		{
 			configFile: "config_deprecated.yaml",
-			filterName: config.NewComponentID(typeStr),
+			id:         component.NewID(typeStr),
 			expCfg: &Config{
-				ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 				Transforms: []Transform{
 					{
 						MetricName: "old_name",
@@ -161,17 +157,20 @@ func TestLoadingFullConfig(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.filterName.String(), func(t *testing.T) {
+		t.Run(test.id.String(), func(t *testing.T) {
 
-			factories, err := componenttest.NopFactories()
-			assert.NoError(t, err)
+			cm, err := confmaptest.LoadConf(filepath.Join("testdata", test.configFile))
+			require.NoError(t, err)
 
 			factory := NewFactory()
-			factories.Processors[typeStr] = factory
-			cfg, err := servicetest.LoadConfigAndValidate(filepath.Join("testdata", test.configFile), factories)
-			assert.NoError(t, err)
-			require.NotNil(t, cfg)
-			assert.Equal(t, test.expCfg, cfg.Processors[test.filterName])
+			cfg := factory.CreateDefaultConfig()
+
+			sub, err := cm.Sub(test.id.String())
+			require.NoError(t, err)
+			require.NoError(t, component.UnmarshalConfig(sub, cfg))
+
+			assert.NoError(t, component.ValidateConfig(cfg))
+			assert.Equal(t, test.expCfg, cfg)
 		})
 	}
 }

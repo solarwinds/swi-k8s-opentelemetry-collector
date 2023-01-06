@@ -24,7 +24,7 @@ data:
   OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
   MANIFEST_VERSION: "2.0.0"
-  APP_VERSION: "0.1.8"
+  APP_VERSION: "0.2.0"
 ---
 # Source: swi-k8s-opentelemetry-collector/templates/events-collector-config-map.yaml
 apiVersion: v1
@@ -54,6 +54,73 @@ data:
             check_interval: 1s
             limit_mib: 512
             spike_limit_mib: 128
+          transform/severity:
+            log_statements:
+              - context: log
+                statements:
+                  - set(severity_text, "Error") where 
+                        attributes["k8s.event.reason"] == "Failed" 
+                        or attributes["k8s.event.reason"] == "BackOff"
+                        or attributes["k8s.event.reason"] == "FailedKillPod"
+                        or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+                        or attributes["k8s.event.reason"] == "NetworkNotReady"
+                        or attributes["k8s.event.reason"] == "InspectFailed"
+                        or attributes["k8s.event.reason"] == "ErrImageNeverPull"
+                        or attributes["k8s.event.reason"] == "NodeNotReady"
+                        or attributes["k8s.event.reason"] == "NodeNotSchedulable"
+                        or attributes["k8s.event.reason"] == "KubeletSetupFailed"
+                        or attributes["k8s.event.reason"] == "FailedAttachVolume"
+                        or attributes["k8s.event.reason"] == "FailedMount"
+                        or attributes["k8s.event.reason"] == "VolumeResizeFailed"
+                        or attributes["k8s.event.reason"] == "FileSystemResizeFailed"
+                        or attributes["k8s.event.reason"] == "FailedMapVolume"
+                        or attributes["k8s.event.reason"] == "ContainerGCFailed"
+                        or attributes["k8s.event.reason"] == "ImageGCFailed"
+                        or attributes["k8s.event.reason"] == "FailedNodeAllocatableEnforcement"
+                        or attributes["k8s.event.reason"] == "FailedCreatePodSandBox"
+                        or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+                        or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+                        or attributes["k8s.event.reason"] == "InvalidDiskCapacity"
+                        or attributes["k8s.event.reason"] == "FreeDiskSpaceFailed"
+                        or attributes["k8s.event.reason"] == "FailedSync"
+                        or attributes["k8s.event.reason"] == "FailedValidation"
+                        or attributes["k8s.event.reason"] == "FailedPostStartHook"
+                        or attributes["k8s.event.reason"] == "FailedPreStopHook"
+                  - set(severity_number, 17) where 
+                        attributes["k8s.event.reason"] == "Failed" 
+                        or attributes["k8s.event.reason"] == "BackOff"
+                        or attributes["k8s.event.reason"] == "FailedKillPod"
+                        or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+                        or attributes["k8s.event.reason"] == "NetworkNotReady"
+                        or attributes["k8s.event.reason"] == "InspectFailed"
+                        or attributes["k8s.event.reason"] == "ErrImageNeverPull"
+                        or attributes["k8s.event.reason"] == "NodeNotReady"
+                        or attributes["k8s.event.reason"] == "NodeNotSchedulable"
+                        or attributes["k8s.event.reason"] == "KubeletSetupFailed"
+                        or attributes["k8s.event.reason"] == "FailedAttachVolume"
+                        or attributes["k8s.event.reason"] == "FailedMount"
+                        or attributes["k8s.event.reason"] == "VolumeResizeFailed"
+                        or attributes["k8s.event.reason"] == "FileSystemResizeFailed"
+                        or attributes["k8s.event.reason"] == "FailedMapVolume"
+                        or attributes["k8s.event.reason"] == "ContainerGCFailed"
+                        or attributes["k8s.event.reason"] == "ImageGCFailed"
+                        or attributes["k8s.event.reason"] == "FailedNodeAllocatableEnforcement"
+                        or attributes["k8s.event.reason"] == "FailedCreatePodSandBox"
+                        or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+                        or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+                        or attributes["k8s.event.reason"] == "InvalidDiskCapacity"
+                        or attributes["k8s.event.reason"] == "FreeDiskSpaceFailed"
+                        or attributes["k8s.event.reason"] == "FailedSync"
+                        or attributes["k8s.event.reason"] == "FailedValidation"
+                        or attributes["k8s.event.reason"] == "FailedPostStartHook"
+                        or attributes["k8s.event.reason"] == "FailedPreStopHook"
+        
+                  - set(severity_text, "Warning") where 
+                        attributes["k8s.event.reason"] == "ProbeWarning" 
+                        or attributes["k8s.event.reason"] == "Unhealthy"
+                  - set(severity_number, 13) where 
+                        attributes["k8s.event.reason"] == "ProbeWarning" 
+                        or attributes["k8s.event.reason"] == "Unhealthy"
         
           resource/events:
             attributes:
@@ -96,6 +163,7 @@ data:
                 - otlp
               processors:
                 - memory_limiter
+                - transform/severity
                 - resource/events
                 - batch
               receivers:
@@ -1727,7 +1795,7 @@ metadata:
   namespace: <NAMESPACE>
   annotations:
     checksum/config: 1e5a65d0e4daea3ba77c82d1097d7e28030ab28fba6ba9ba728b701ca47fb7bc
-    checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
+    checksum/config_common_env: e751e00734addef64cbd6bf1505e449018bbf8fdce42bca7df4fafcdbe673f63
     checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
@@ -1744,7 +1812,7 @@ spec:
         app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
       annotations:
         checksum/config: 1e5a65d0e4daea3ba77c82d1097d7e28030ab28fba6ba9ba728b701ca47fb7bc
-        checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
+        checksum/config_common_env: e751e00734addef64cbd6bf1505e449018bbf8fdce42bca7df4fafcdbe673f63
         checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
 
     spec:
@@ -1756,7 +1824,7 @@ spec:
         runAsGroup: 0
       containers:
         - name: swi-opentelemetry-collector
-          image: "solarwinds/swi-opentelemetry-collector:0.1.8"
+          image: "solarwinds/swi-opentelemetry-collector:0.2.0"
           imagePullPolicy: IfNotPresent
           command:
             - /swi-otelcol
@@ -1839,8 +1907,8 @@ metadata:
   name: swi-k8s-opentelemetry-collector-events
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: ef88228d5eff7bff2387b2335db500865bfc884a2f2766ce1490ac8ede3b25b5
-    checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
+    checksum/config: 7d9fdfa8c6329c79dfba5c69b0c983b345bf27c349babf10393a0c7f1f639824
+    checksum/config_common_env: e751e00734addef64cbd6bf1505e449018bbf8fdce42bca7df4fafcdbe673f63
     checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
   labels:
     app.kubernetes.io/name: swi-k8s-opentelemetry-collector
@@ -1865,7 +1933,7 @@ spec:
             - /swi-otelcol
             - --config=/conf/relay.yaml
           securityContext: {}
-          image: "solarwinds/swi-opentelemetry-collector:0.1.8"
+          image: "solarwinds/swi-opentelemetry-collector:0.2.0"
           imagePullPolicy: IfNotPresent
           env:
             - name: MY_POD_IP
@@ -1915,7 +1983,7 @@ metadata:
   namespace: <NAMESPACE>
   annotations:
     checksum/config: 240be2abafd84363753bd2dd70f0599c59f9286546c2d2ceddca3c1646495699
-    checksum/config_common_env: a3bf182a23ce7f5f095c140d6f5b7d21d76c2000be85ffd36cbc8a6816b0c20e
+    checksum/config_common_env: e751e00734addef64cbd6bf1505e449018bbf8fdce42bca7df4fafcdbe673f63
     checksum/config_env: fba6a0aa0c60ef86a77a6db3750d1ffa8370f0242881e13525cefbfd6144ddf3
     checksum/values: a12f1312eed4b1e8cecd3b734bd29865450524dbae324769735e8ae051d70b33
   labels:
@@ -1940,7 +2008,7 @@ spec:
             - /swi-otelcol
             - --config=/conf/relay.yaml
           securityContext: {}
-          image: "solarwinds/swi-opentelemetry-collector:0.1.8"
+          image: "solarwinds/swi-opentelemetry-collector:0.2.0"
           imagePullPolicy: IfNotPresent
           env:
             - name: MY_POD_IP

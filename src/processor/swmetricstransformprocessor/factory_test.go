@@ -28,24 +28,23 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
-	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/confmap/confmaptest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
-	"go.opentelemetry.io/collector/service/servicetest"
+	"go.opentelemetry.io/collector/processor/processortest"
 )
 
 func TestType(t *testing.T) {
 	factory := NewFactory()
 	pType := factory.Type()
-	assert.Equal(t, pType, config.Type("swmetricstransform"))
+	assert.Equal(t, pType, component.Type(typeStr))
 }
 
 func TestCreateDefaultConfig(t *testing.T) {
 	factory := NewFactory()
 	cfg := factory.CreateDefaultConfig()
-	assert.Equal(t, cfg, &Config{
-		ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
-	})
+	assert.Equal(t, cfg, &Config{})
 	assert.NoError(t, componenttest.CheckConfigStruct(cfg))
 }
 
@@ -102,38 +101,43 @@ func TestCreateProcessors(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		factories, err := componenttest.NopFactories()
-		assert.NoError(t, err)
+		t.Run(test.configName, func(t *testing.T) {
+			cm, err := confmaptest.LoadConf(filepath.Join("testdata", test.configName))
+			assert.NoError(t, err)
 
-		factory := NewFactory()
-		factories.Processors[typeStr] = factory
-		config, err := servicetest.LoadConfigAndValidate(filepath.Join("testdata", test.configName), factories)
-		assert.NoError(t, err)
+			for k := range cm.ToStringMap() {
+				// Check if all processor variations that are defined in test config can be actually created
+				factory := NewFactory()
+				cfg := factory.CreateDefaultConfig()
 
-		for name, cfg := range config.Processors {
-			t.Run(fmt.Sprintf("%s/%s", test.configName, name), func(t *testing.T) {
+				sub, err := cm.Sub(k)
+				assert.NoError(t, err)
+				assert.NoError(t, component.UnmarshalConfig(sub, cfg))
+
 				tp, tErr := factory.CreateTracesProcessor(
 					context.Background(),
-					componenttest.NewNopProcessorCreateSettings(),
-					cfg,
-					consumertest.NewNop())
+					processortest.NewNopCreateSettings(),
+					cfg, consumertest.NewNop(),
+				)
 				// Not implemented error
 				assert.Error(t, tErr)
 				assert.Nil(t, tp)
 
 				mp, mErr := factory.CreateMetricsProcessor(
 					context.Background(),
-					componenttest.NewNopProcessorCreateSettings(),
+					processortest.NewNopCreateSettings(),
 					cfg,
-					consumertest.NewNop())
+					consumertest.NewNop(),
+				)
+
 				if test.succeed {
 					assert.NotNil(t, mp)
 					assert.NoError(t, mErr)
 				} else {
 					assert.EqualError(t, mErr, test.errorMessage)
 				}
-			})
-		}
+			}
+		})
 	}
 }
 
