@@ -44,73 +44,9 @@ The metrics collection and processing configuration is included in the manifest 
 
 In order to reduce the size of the collected data, the swi-k8s-opentelemetry-collector whitelists only selected metrics that are key for successful entity ingestion on the Solarwinds Observability side. The list of observed metrics can be easily modified by simply adding or removing the desired metrics from the list located in the `scrape_configs` section of the collector configuration.
 
-Default metrics monitored by swi-k8s-opentelemetry-collector:
+Default metrics monitored by swi-k8s-opentelemetry-collector: [exported_metrics.md](exported_metrics.md)
 
-- container_cpu_usage_seconds_total
-- container_spec_cpu_quota
-- container_spec_cpu_period
-- container_memory_working_set_bytes
-- container_spec_memory_limit_bytes
-- container_cpu_cfs_throttled_periods_total
-- container_cpu_cfs_periods_total
-- container_fs_reads_total
-- container_fs_writes_total
-- container_fs_reads_bytes_total
-- container_fs_writes_bytes_total
-- container_fs_usage_bytes
-- container_network_receive_bytes_total
-- container_network_transmit_bytes_total
-- container_network_receive_packets_total
-- container_network_transmit_packets_total
-- container_network_receive_packets_dropped_total
-- container_network_transmit_packets_dropped_total
-- kube_deployment_created
-- kube_daemonset_created
-- kube_namespace_created
-- kube_node_info
-- kube_node_created
-- kube_node_status_capacity
-- kube_node_status_condition
-- kube_pod_created
-- kube_pod_info
-- kube_pod_owner
-- kube_pod_completion_time
-- kube_pod_status_phase
-- kube_pod_status_ready
-- kube_pod_status_reason
-- kube_pod_start_time
-- '{\_\_name\_\_=~"kube_pod_container_.*"}'
-- kube_namespace_status_phase
-- kube_deployment_labels
-- kube_deployment_spec_replicas
-- kube_deployment_spec_paused
-- kube_deployment_status_replicas
-- kube_deployment_status_replicas_ready
-- kube_deployment_status_replicas_available
-- kube_deployment_status_replicas_updated
-- kube_deployment_status_replicas_unavailable
-- kube_deployment_status_condition
-- kube_replicaset_owner
-- kube_replicaset_created
-- kube_statefulset_labels
-- kube_statefulset_replicas
-- kube_statefulset_status_replicas_ready
-- kube_statefulset_status_replicas_current
-- kube_statefulset_status_replicas_updated
-- kube_statefulset_created
-- kube_daemonset_labels
-- kube_daemonset_status_current_number_scheduled
-- kube_daemonset_status_desired_number_scheduled
-- kube_daemonset_status_updated_number_scheduled
-- kube_daemonset_status_number_available
-- kube_daemonset_status_number_misscheduled
-- kube_daemonset_status_number_ready
-- kube_daemonset_status_number_unavailable
-- kube_resourcequota
-- kube_node_status_allocatable
-- kube_node_spec_unschedulable
-
-Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform. 
+Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
 
 Processors included in the collector:
 
