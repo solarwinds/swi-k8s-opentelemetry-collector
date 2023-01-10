@@ -6,7 +6,7 @@ Assets to monitor kubernetes infrastructure in SolarWinds Observability
 
 - [About](#about)
 - [Installation](#installation)
-- [Development](#development)
+- [Development](doc/development.md)
 
 ## About
 
@@ -44,7 +44,7 @@ The metrics collection and processing configuration is included in the manifest 
 
 In order to reduce the size of the collected data, the swi-k8s-opentelemetry-collector whitelists only selected metrics that are key for successful entity ingestion on the Solarwinds Observability side. The list of observed metrics can be easily modified by simply adding or removing the desired metrics from the list located in the `scrape_configs` section of the collector configuration.
 
-Default metrics monitored by swi-k8s-opentelemetry-collector: [exported_metrics.md](exported_metrics.md)
+Default metrics monitored by swi-k8s-opentelemetry-collector: [exported_metrics.md](doc/exported_metrics.md)
 
 Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
 
@@ -119,89 +119,3 @@ otel:
           - key: k8s.namespace.name
             value: ^.*$
 ```
-
-## Development
-
-### Prerequisites
-
-- [Skaffold](https://skaffold.dev) at least [v2.0.3](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.0.3)
-  - On windows, do not install it using choco due to [this issue](https://github.com/GoogleContainerTools/skaffold/issues/4058)
-- [Kustomize](https://kustomize.io): `choco install kustomize`
-- [Helm](https://helm.sh): `choco install kubernetes-helm`
-- [Docker desktop](https://www.docker.com/products/docker-desktop) with Kubernetes enabled
-
-### Deployment
-
-To run the collector in a local environment, execute:
-
-```shell
-skaffold dev
-```
-
-That will:
-
-- build customized Otel Collector image
-- deploy Prometheus
-- deploy OtelEndpoint mock (to see that customized Otel Collector is sending metrics correctly)
-- deploy customized Otel Collector
-
-Possible issues:
-
-- if you get errors like:
-
-  ```text
-  Error: INSTALLATION FAILED: failed to download https://github.com/prometheus-community/helm-charts...
-  ```
-
-  or
-
-  ```text
-  Error: INSTALLATION FAILED: no cached repo found. (try 'helm repo update'): open C:\Users\<user>\AppData\Local\Temp\helm\repository\stable-index.yaml: The system cannot find the file specified.
-  ```
-
-  you need to update Helm repo:
-
-  ```shell
-  helm repo update
-  ```
-
-- if you get error like
-
-  ```text
-  ...Unable to get an update from the "stable" chart repository (https://kubernetes-charts.storage.googleapis.com/):
-          failed to fetch https://kubernetes-charts.storage.googleapis.com/index.yaml : 403 Forbidden
-  ```
-
-  you need to update path to a Helm repository:
-
-  ```shell
-  helm repo add "stable" "https://charts.helm.sh/stable" --force-update
-  ```
-
-### Develop against remote prometheus
-You can port forward Prometheus server to localhost:9090 and run
-```
-skaffold dev -p=remote-prometheus
-```
-
-In order to change Prometheus endpoint that is hosted on HTTPS you can adjust skaffold.yaml file:
-* add `otel.metrics.prometheus.scheme: https`
-* update `otel.metrics.prometheus.url: <remote prometheus>`
-
-### Updating manifest
-Temporarily there will be `manifest.yaml` and Helm chart in the repository. In order to avoid maintaining two sources the `manifest.yaml` is generated using `helm template` command. So please do not write directly to `manifest.yaml` file. 
-
-Update Helm chart and use following command to update the manifest:
-```
-helm template swi-k8s-opentelemetry-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
-```
-
-## Publishing
-customized Otel Collector image is getting published to https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector 
-
-Steps to publish new version:
-* Create GitHub release selecting the Tag/branch you want to release with description of changes
-  * use tag in semver format, it is the tag which Docker hub image will have publicly
-  * publish release
-* GitHub action will be triggered that will build the release and wait for publish approval
-* after CODEOWNERS approve it, it will be published to Dockerhub public repository
