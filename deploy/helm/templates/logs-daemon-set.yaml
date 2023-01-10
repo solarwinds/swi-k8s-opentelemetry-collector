@@ -25,6 +25,9 @@ spec:
         checksum/values: {{ toJson .Values | sha256sum }}
 
     spec:
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
       terminationGracePeriodSeconds: 30
       securityContext:
         ## In order to reliably read logs from mounted node logging paths, we need to run as root
