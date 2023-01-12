@@ -76,7 +76,7 @@ Temporarily there will be `manifest.yaml` and Helm chart in the repository. In o
 Update Helm chart and use following command to update the manifest:
 
 ```shell
-helm template swi-k8s-opentelemetry-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
+helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
 ```
 
 ## Publishing
@@ -101,7 +101,7 @@ Helm chart is published to <https://helm.solarwinds.com>.
 2. Propagate the version change to `manifest.yaml` (see [Updating manifest](#updating-manifest) for more info):
 
     ```shell
-    helm template swi-k8s-opentelemetry-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
+    helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
     ```
 
 3. Create PR for the changes to the `main` branch and merge them.
@@ -112,7 +112,7 @@ Helm chart is published to <https://helm.solarwinds.com>.
     helm package deploy\helm\
     ```
 
-    It will create a file with name like `swi-k8s-opentelemetry-collector-2.0.1-alpha.1.tgz`.
+    It will create a file with name like `swo-k8s-collector-2.0.1-alpha.1.tgz`.
 6. Switch to branch `gh-pages`. The file generated in the previous step should stay in the folder.
 7. Package the Helm chart:
 

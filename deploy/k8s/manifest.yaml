@@ -1,40 +1,40 @@
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/service-account.yaml
+# Source: swo-k8s-collector/templates/service-account.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: swi-k8s-opentelemetry-collector
+  name: swo-k8s-collector
   namespace: <NAMESPACE>
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/common-env-config-map.yaml
+# Source: swo-k8s-collector/templates/common-env-config-map.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: swi-k8s-opentelemetry-collector-common-env
+  name: swo-k8s-collector-common-env
   namespace: <NAMESPACE>
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 data:
   CLUSTER_NAME: "<CLUSTER_NAME>"
   CLUSTER_UID: "<CLUSTER_UID>"
   OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
-  MANIFEST_VERSION: "2.0.1-alpha.1"
+  MANIFEST_VERSION: "2.0.2-alpha"
   APP_VERSION: "0.2.0"
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/events-collector-config-map.yaml
+# Source: swo-k8s-collector/templates/events-collector-config-map.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: swi-k8s-opentelemetry-collector-events-config
+  name: swo-k8s-collector-events-config
   namespace: <NAMESPACE>
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 data:
   events.config: |
         exporters:
@@ -174,15 +174,15 @@ data:
             metrics:
               address: 0.0.0.0:8888
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/logs-collector-config-map.yaml
+# Source: swo-k8s-collector/templates/logs-collector-config-map.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: swi-k8s-opentelemetry-collector-logs-config
+  name: swo-k8s-collector-logs-config
   namespace: <NAMESPACE>
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 data:
   logs.config: |
         exporters:
@@ -427,15 +427,15 @@ data:
             metrics:
               address: 0.0.0.0:8888
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/metrics-collector-config-map.yaml
+# Source: swo-k8s-collector/templates/metrics-collector-config-map.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: swi-k8s-opentelemetry-collector-metrics-config
+  name: swo-k8s-collector-metrics-config
   namespace: <NAMESPACE>
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 data:
   metrics.config: |
         exporters:
@@ -1692,26 +1692,26 @@ data:
             metrics:
               address: 0.0.0.0:8888
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/metrics-collector-env-config-map.yaml
+# Source: swo-k8s-collector/templates/metrics-collector-env-config-map.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: swi-k8s-opentelemetry-collector-metrics-env-config
+  name: swo-k8s-collector-metrics-env-config
   namespace: <NAMESPACE>
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 data:
   PROMETHEUS_URL: "<PROMETHEUS_URL>"
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/cluster-role.yaml
+# Source: swo-k8s-collector/templates/cluster-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: swi-k8s-opentelemetry-collector-role
+  name: swo-k8s-collector-role
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 rules:
   - apiGroups:
       - ""
@@ -1770,49 +1770,49 @@ rules:
       - list
       - watch
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/cluster-role-binding.yaml
+# Source: swo-k8s-collector/templates/cluster-role-binding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: swi-k8s-opentelemetry-collector-role-binding
+  name: swo-k8s-collector-role-binding
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: swi-k8s-opentelemetry-collector-role
+  name: swo-k8s-collector-role
 subjects:
   - kind: ServiceAccount
-    name: swi-k8s-opentelemetry-collector
+    name: swo-k8s-collector
     namespace: <NAMESPACE>
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/logs-daemon-set.yaml
+# Source: swo-k8s-collector/templates/logs-daemon-set.yaml
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: swi-k8s-opentelemetry-collector-logs
+  name: swo-k8s-collector-logs
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 1e5a65d0e4daea3ba77c82d1097d7e28030ab28fba6ba9ba728b701ca47fb7bc
-    checksum/config_common_env: 69b018c2c8bd055b6cc551fe95e85fdb86e3884c5b37fa3860248c50663bbda5
+    checksum/config: fd93bc26a2c57d2727aca6bb030381339318aa5ac9191711862264a1fc90712a
+    checksum/config_common_env: 4b78fe8ae7a88c6711792e593f2a37e00b244ca1736adab65a06b3248ca8b0dd
     checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 spec:
   selector:
     matchLabels:
-      app: swi-k8s-opentelemetry-collector-logs
+      app: swo-k8s-collector-logs
   template:
     metadata:
       labels:
-        app: swi-k8s-opentelemetry-collector-logs
-        app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-        app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+        app: swo-k8s-collector-logs
+        app.kubernetes.io/name: swo-k8s-collector
+        app.kubernetes.io/instance: swo-k8s-collector
       annotations:
-        checksum/config: 1e5a65d0e4daea3ba77c82d1097d7e28030ab28fba6ba9ba728b701ca47fb7bc
-        checksum/config_common_env: 69b018c2c8bd055b6cc551fe95e85fdb86e3884c5b37fa3860248c50663bbda5
+        checksum/config: fd93bc26a2c57d2727aca6bb030381339318aa5ac9191711862264a1fc90712a
+        checksum/config_common_env: 4b78fe8ae7a88c6711792e593f2a37e00b244ca1736adab65a06b3248ca8b0dd
         checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
 
     spec:
@@ -1850,7 +1850,7 @@ spec:
                   optional: true
           envFrom:
             - configMapRef:
-                name: swi-k8s-opentelemetry-collector-common-env
+                name: swo-k8s-collector-common-env
           livenessProbe:
             httpGet:
               path: /
@@ -1895,37 +1895,37 @@ spec:
             path: /run/log/journal
         - name: opentelemetry-collector-configmap
           configMap:
-            name: swi-k8s-opentelemetry-collector-logs-config
+            name: swo-k8s-collector-logs-config
             items:
               - key: logs.config
                 path: relay.yaml
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/events-collector-deployment.yaml
+# Source: swo-k8s-collector/templates/events-collector-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: swi-k8s-opentelemetry-collector-events
+  name: swo-k8s-collector-events
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 7d9fdfa8c6329c79dfba5c69b0c983b345bf27c349babf10393a0c7f1f639824
-    checksum/config_common_env: 69b018c2c8bd055b6cc551fe95e85fdb86e3884c5b37fa3860248c50663bbda5
+    checksum/config: 3079ccec4fe37f496e829f686e34d816b635c3750dea7e078c821010f3d238d8
+    checksum/config_common_env: 4b78fe8ae7a88c6711792e593f2a37e00b244ca1736adab65a06b3248ca8b0dd
     checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: swi-k8s-opentelemetry-collector-events
+      app: swo-k8s-collector-events
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-        app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
-        app: swi-k8s-opentelemetry-collector-events
+        app.kubernetes.io/name: swo-k8s-collector
+        app.kubernetes.io/instance: swo-k8s-collector
+        app: swo-k8s-collector-events
     spec:
-      serviceAccountName: swi-k8s-opentelemetry-collector
+      serviceAccountName: swo-k8s-collector
       securityContext: {}
       containers:
         - name: swi-opentelemetry-collector
@@ -1949,7 +1949,7 @@ spec:
                   optional: true
           envFrom:
             - configMapRef:
-                name: swi-k8s-opentelemetry-collector-common-env
+                name: swo-k8s-collector-common-env
           livenessProbe:
             httpGet:
               path: /
@@ -1970,36 +1970,36 @@ spec:
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
-            name: swi-k8s-opentelemetry-collector-events-config
+            name: swo-k8s-collector-events-config
             items:
               - key: events.config
                 path: relay.yaml
 ---
-# Source: swi-k8s-opentelemetry-collector/templates/metrics-deployment.yaml
+# Source: swo-k8s-collector/templates/metrics-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: swi-k8s-opentelemetry-collector-metrics
+  name: swo-k8s-collector-metrics
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 240be2abafd84363753bd2dd70f0599c59f9286546c2d2ceddca3c1646495699
-    checksum/config_common_env: 69b018c2c8bd055b6cc551fe95e85fdb86e3884c5b37fa3860248c50663bbda5
-    checksum/config_env: fba6a0aa0c60ef86a77a6db3750d1ffa8370f0242881e13525cefbfd6144ddf3
+    checksum/config: fa02a81d7a487fc97b44a2e5d22c1a3babba6225bbbe834649dadc502911653e
+    checksum/config_common_env: 4b78fe8ae7a88c6711792e593f2a37e00b244ca1736adab65a06b3248ca8b0dd
+    checksum/config_env: 69527c661c505be09f4d26ac8cf06c6777da5a33ad895e4328c41539aead509a
     checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
   labels:
-    app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-    app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/instance: swo-k8s-collector
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: swi-k8s-opentelemetry-collector-metrics
+      app: swo-k8s-collector-metrics
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: swi-k8s-opentelemetry-collector
-        app.kubernetes.io/instance: swi-k8s-opentelemetry-collector
-        app: swi-k8s-opentelemetry-collector-metrics
+        app.kubernetes.io/name: swo-k8s-collector
+        app.kubernetes.io/instance: swo-k8s-collector
+        app: swo-k8s-collector-metrics
     spec:
       securityContext: {}
       containers:
@@ -2024,9 +2024,9 @@ spec:
                   optional: true
           envFrom:
             - configMapRef:
-                name: swi-k8s-opentelemetry-collector-common-env
+                name: swo-k8s-collector-common-env
             - configMapRef:
-                name: swi-k8s-opentelemetry-collector-metrics-env-config
+                name: swo-k8s-collector-metrics-env-config
           livenessProbe:
             httpGet:
               path: /
@@ -2047,7 +2047,7 @@ spec:
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
-            name: swi-k8s-opentelemetry-collector-metrics-config
+            name: swo-k8s-collector-metrics-config
             items:
               - key: metrics.config
                 path: relay.yaml
