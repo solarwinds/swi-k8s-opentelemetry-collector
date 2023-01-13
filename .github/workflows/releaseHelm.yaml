@@ -5,14 +5,59 @@ on:
     branches:
       - feature/NH-29204
 
+  # release:
+  #   types: [published]
+
 jobs:
-  release:
+  # release:
+  #   permissions:
+  #     contents: write # to push chart release and create a release (helm/chart-releaser-action)
+  #     packages: write # needed for ghcr access
+  #     id-token: write # needed for keyless signing
+
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v3
+
+  #     - name: Fetch history
+  #       run: git fetch --prune --unshallow
+
+  #     - name: Configure Git
+  #       run: |
+  #         git config user.name "$GITHUB_ACTOR"
+  #         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+  #     - name: Set up Helm
+  #       uses: azure/setup-helm@v3.5
+  #       with:
+  #         version: v3.9.2
+
+  #     - name: Run chart-releaser
+  #       uses: helm/chart-releaser-action@v1.5.0
+  #       with:
+  #         charts_dir: deploy
+  #       env:
+  #         CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  #         CR_PR: true
+  #         CR_PUSH: false
+  #         # CR_SKIP_EXISTING: true
+
+  #     - name: Setup upterm session
+  #       uses: mxschmitt/action-tmate@v3
+  #       if: ${{ always() }}
+
+  deploy_helm:
+    runs-on: ubuntu-latest
     permissions:
       contents: write # to push chart release and create a release (helm/chart-releaser-action)
       packages: write # needed for ghcr access
       id-token: write # needed for keyless signing
-
-    runs-on: ubuntu-latest
+    name: Deploy Helm chart to GitHub pages
+    # if: github.event_name == 'release' && github.event.action == 'published' && contains(github.ref, 'swo-k8s-collector')
+    # environment:
+    #   name: github-pages
+    #   url: https://helm.solarwinds.com
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -31,15 +76,8 @@ jobs:
           version: v3.9.2
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.5.0
+        uses: ./.github/actions/chart-releaser
         with:
           charts_dir: deploy
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          CR_PR: true
-          CR_PUSH: false
-          # CR_SKIP_EXISTING: true
-
-      - name: Setup upterm session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ always() }}
