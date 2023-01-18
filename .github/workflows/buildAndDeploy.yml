@@ -40,23 +40,12 @@ jobs:
       - name: Deploy services using Skaffold
         run: skaffold deploy --build-artifacts=/tmp/tags.json
 
-      - name: Tail Otel mock metrics for 60 seconds
+      # this step should produce all types: events, metrics and logs
+      - name: Tail Otel mock for 60 seconds
         run: |
+          kubectl run dummy --image ubuntu -- /bin/bash -ec "while :; do echo '!!testlog!!'; sleep 5 ; done"
           mkdir -p OtelLogs
-          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/metrics.log &
-          sleep 60
-
-      - name: Tail Otel mock events for 60 seconds
-        run: |
-          kubectl run dummy --image ubuntu -- /bin/bash -ec "while :; do echo '.'; sleep 5 ; done"
-          mkdir -p OtelLogs
-          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/events.log &
-          sleep 60
-
-      - name: Tail Otel mock logs for 60 seconds
-        run: |
-          mkdir -p OtelLogs
-          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/logs.log &
+          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/output.log &
           sleep 60
 
       # Delete resources and wait some time for its termination
@@ -67,7 +56,7 @@ jobs:
 
       - name: Evaluate metrics collection functionality
         run: |
-          if grep -q "k8s.kube_pod_info" "OtelLogs/metrics.log"; then
+          if grep -q "k8s.kube_pod_info" "OtelLogs/output.log"; then
             echo "Expected metrics found"
           else
             echo "Metrics are missing"
@@ -76,7 +65,7 @@ jobs:
 
       - name: Evaluate events collection functionality
         run: |
-          if grep -q "k8s.event." "OtelLogs/events.log"; then
+          if grep -q "k8s.event." "OtelLogs/output.log"; then
             echo "Expected events found"
           else
             echo "Events are missing"
@@ -85,7 +74,7 @@ jobs:
 
       - name: Evaluate logs collection functionality
         run: |
-          if grep -q "#logs" "OtelLogs/logs.log"; then
+          if grep -q "!!testlog!!" "OtelLogs/output.log"; then
             echo "Some logs found"
           else
             echo "Logs are missing"
