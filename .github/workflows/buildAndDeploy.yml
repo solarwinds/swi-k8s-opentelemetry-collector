@@ -61,7 +61,7 @@ jobs:
 
       # Delete resources and wait some time for its termination
       - name: Destroy environment
-        run: | 
+        run: |
           skaffold delete
           sleep 20
 
@@ -73,7 +73,7 @@ jobs:
             echo "Metrics are missing"
             exit 1
           fi
-      
+
       - name: Evaluate events collection functionality
         run: |
           if grep -q "k8s.event." "OtelLogs/events.log"; then
@@ -101,12 +101,12 @@ jobs:
           retention-days: 30
 
       - name: Save image
-        if: github.event_name == 'release' && github.event.action == 'published'
+        if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
         run: |
           docker save --output swi-k8s-opentelemetry-collector.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}
 
       - uses: actions/upload-artifact@v3
-        if: github.event_name == 'release' && github.event.action == 'published'
+        if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
         with:
           name: image
           path: swi-k8s-opentelemetry-collector.tar
@@ -159,7 +159,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_and_test
     name: Deploy to docker hub
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
     environment:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
@@ -167,7 +167,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: image
-      
+
       - name: Get image tag
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
