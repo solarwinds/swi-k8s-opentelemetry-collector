@@ -69,16 +69,6 @@ In order to change Prometheus endpoint that is hosted on HTTPS you can adjust sk
 - add `otel.metrics.prometheus.scheme: https`
 - update `otel.metrics.prometheus.url: <remote prometheus>`
 
-## Updating manifest
-
-Temporarily there will be `manifest.yaml` and Helm chart in the repository. In order to avoid maintaining two sources, the `manifest.yaml` is generated using `helm template` command. So please do not write directly to `manifest.yaml` file.
-
-Update Helm chart and use following command to update the manifest:
-
-```shell
-helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
-```
-
 ## Publishing
 
 ### Docker image
@@ -88,8 +78,8 @@ Customized Otel Collector image is getting published to <https://hub.docker.com/
 Steps to publish new version:
 
 1. Create GitHub release selecting the Tag/branch you want to release with description of changes
-    - use tag in semver format, it is the tag which Docker hub image will have publicly
-    - publish release
+   - use tag in semver format, it is the tag which Docker hub image will have publicly
+   - publish release
 2. GitHub action will be triggered that will build the release and wait for publish approval
 3. after CODEOWNERS approve it, it will be published to Dockerhub public repository
 
@@ -98,27 +88,23 @@ Steps to publish new version:
 Helm chart is published to <https://helm.solarwinds.com>.
 
 1. Update property `version` in [deploy/helm/Chart.yaml](deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format)
-2. Propagate the version change to `manifest.yaml` (see [Updating manifest](#updating-manifest) for more info):
+2. Create PR for the changes to the `main` branch and merge them.
+3. Tag the merged commit in GitHub. Use format `helm-v<chartVersion>`, e.g. `helm-v2.0.1-alpha.1`.
+4. Package the Helm chart:
 
-    ```shell
-    helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
-    ```
+   ```shell
+   helm package deploy\helm\
+   ```
 
-3. Create PR for the changes to the `main` branch and merge them.
-4. Tag the merged commit in GitHub. Use format `helm-v<chartVersion>`, e.g. `helm-v2.0.1-alpha.1`.
-5. Package the Helm chart:
+   It will create a file with name like `swo-k8s-collector-2.0.1-alpha.1.tgz`.
 
-    ```shell
-    helm package deploy\helm\
-    ```
+5. Switch to branch `gh-pages`. The file generated in the previous step should stay in the folder.
+6. Package the Helm chart:
 
-    It will create a file with name like `swo-k8s-collector-2.0.1-alpha.1.tgz`.
-6. Switch to branch `gh-pages`. The file generated in the previous step should stay in the folder.
-7. Package the Helm chart:
+   ```shell
+   helm repo index . --url https://helm.solarwinds.com
+   ```
 
-    ```shell
-    helm repo index . --url https://helm.solarwinds.com
-    ```
+   It will update the `index.yaml` file with a new entry for the file.
 
-    It will update the `index.yaml` file with a new entry for the file.
-8. Create PR for the changes to the `gh-pages` branch and merge them.
+7. Create PR for the changes to the `gh-pages` branch and merge them.
