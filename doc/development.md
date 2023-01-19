@@ -1,5 +1,14 @@
 # Development
 
+## Contribution Guidelines
+
+1. Pull the latest changes from the `master` branch.
+2. Create your new (local) work branch.
+3. Work on/commit your changes, see Development bellow.
+4. Add an entry to the `Unreleased` section of `deploy/helm/CHANGELOG.md` describing your changes.
+5. Push your branch to GitHub and create a Pull Request.
+6. Once approved, the Pull Request can be merged with the `master` branch.
+
 ## Prerequisites
 
 - [Skaffold](https://skaffold.dev) at least [v2.0.3](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.0.3)
@@ -97,13 +106,21 @@ Steps to publish new version:
 
 Helm chart is published to <https://helm.solarwinds.com>.
 
-1. Update property `version` in [deploy/helm/Chart.yaml](deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format)
+1. Update property `version` in [deploy/helm/Chart.yaml](deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format).
 2. Propagate the version change to `manifest.yaml` (see [Updating manifest](#updating-manifest) for more info):
 
    ```shell
    helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
    ```
 
-3. Create PR for the changes to the `main` branch and merge them.
-4. Run "Release Helm Chart" GitHub action workflow
-5. Review PR that was created for the changes to the `gh-pages` branch and merge them.
+3. Update [deploy/helm/CHANGELOG.md](deploy/helm/CHANGELOG.md):
+   1. Create release record with the right version and the date.
+   2. Write all changes recorded in `Unreleased` section into the release.
+4. Create PR for the changes to the `master` branch and merge them.
+5. Run "Release Helm Chart" GitHub action workflow.
+6. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](deploy/helm/CHANGELOG.md) into its description.
+7. Review PR that was created for the changes to the `gh-pages` branch and merge them.
+
+   ```shell
+   helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
+   ```
