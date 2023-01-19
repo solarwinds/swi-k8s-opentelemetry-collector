@@ -4,20 +4,20 @@ metadata:
   name: swi-k8s-opentelemetry-collector
 build:
   artifacts:
-  - image: swi-k8s-opentelemetry-collector
-    docker:
-      dockerfile: build/docker/Dockerfile
+    - image: swi-k8s-opentelemetry-collector
+      docker:
+        dockerfile: build/docker/Dockerfile
   local:
     push: false
 manifests:
   kustomize:
     paths:
-    - tests/deploy/base
+      - tests/deploy/base
     buildArgs:
-    - --load-restrictor LoadRestrictionsNone
+      - --load-restrictor LoadRestrictionsNone
 deploy:
   kubectl: {}
-  helm: 
+  helm:
     releases:
       - name: swi-k8s-opentelemetry-collector
         chartPath: deploy/helm
@@ -30,6 +30,11 @@ deploy:
           otel.image.repository: "swi-k8s-opentelemetry-collector"
           otel.image.tag: ""
           otel.metrics.prometheus.scrape_interval: "15s"
+          otel.logs.filter.include.record_attributes[0].key: "k8s.namespace.name"
+          otel.logs.filter.include.record_attributes[0].value: "^.*$"
+          otel.logs.filter.exclude.match_type: "strict"
+          otel.logs.filter.exclude.record_attributes[0].key: "k8s.namespace.name"
+          otel.logs.filter.exclude.record_attributes[0].value: "monitoring"
           cluster.name: cluster name
           cluster.uid: cluster-uid-123456789
         upgradeOnChange: true
@@ -46,44 +51,44 @@ deploy:
           prometheus-pushgateway.enabled: false
   kubeContext: docker-desktop
 profiles:
-- name: builder-only
-  build:
-    artifacts:
-    - image: swi-k8s-opentelemetry-collector-builder
-      docker:
-        dockerfile: build/docker/Dockerfile
-        target: builder
-        buildArgs:
-          CREATE_VENDOR_DIR: "true"
-    local:
-      push: false
-- name: remote-prometheus
-  deploy:
-    helm: 
-      releases:
-        - name: swi-k8s-opentelemetry-collector
-          chartPath: deploy/helm
-          namespace: monitoring
-          createNamespace: true
-          setValues:
-            # port forward Prometheus Webserver to localhost:9090
-            otel.metrics.prometheus.url: host.docker.internal:9090
-            otel.endpoint: timeseries-mock-service:9082
-            otel.tls_insecure: true
-            otel.image.repository: "swi-k8s-opentelemetry-collector"
-            otel.image.tag: ""
-            otel.metrics.prometheus.scrape_interval: "15s"
-            cluster.name: cluster name
-            cluster.uid: cluster-uid-123456789
-          upgradeOnChange: true
-- name: ci
-  activation:
-  - env: CI=true
-  build:
-    local:
-      push: false
-      useBuildkit: true
-      concurrency: 0
-  deploy:
-    # `default` is k3s default context name
-    kubeContext: default
+  - name: builder-only
+    build:
+      artifacts:
+        - image: swi-k8s-opentelemetry-collector-builder
+          docker:
+            dockerfile: build/docker/Dockerfile
+            target: builder
+            buildArgs:
+              CREATE_VENDOR_DIR: "true"
+      local:
+        push: false
+  - name: remote-prometheus
+    deploy:
+      helm:
+        releases:
+          - name: swi-k8s-opentelemetry-collector
+            chartPath: deploy/helm
+            namespace: monitoring
+            createNamespace: true
+            setValues:
+              # port forward Prometheus Webserver to localhost:9090
+              otel.metrics.prometheus.url: host.docker.internal:9090
+              otel.endpoint: timeseries-mock-service:9082
+              otel.tls_insecure: true
+              otel.image.repository: "swi-k8s-opentelemetry-collector"
+              otel.image.tag: ""
+              otel.metrics.prometheus.scrape_interval: "15s"
+              cluster.name: cluster name
+              cluster.uid: cluster-uid-123456789
+            upgradeOnChange: true
+  - name: ci
+    activation:
+      - env: CI=true
+    build:
+      local:
+        push: false
+        useBuildkit: true
+        concurrency: 0
+    deploy:
+      # `default` is k3s default context name
+      kubeContext: default

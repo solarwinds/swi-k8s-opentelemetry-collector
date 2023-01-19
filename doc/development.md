@@ -89,22 +89,5 @@ Helm chart is published to <https://helm.solarwinds.com>.
 
 1. Update property `version` in [deploy/helm/Chart.yaml](deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format)
 2. Create PR for the changes to the `main` branch and merge them.
-3. Tag the merged commit in GitHub. Use format `helm-v<chartVersion>`, e.g. `helm-v2.0.1-alpha.1`.
-4. Package the Helm chart:
-
-   ```shell
-   helm package deploy\helm\
-   ```
-
-   It will create a file with name like `swo-k8s-collector-2.0.1-alpha.1.tgz`.
-
-5. Switch to branch `gh-pages`. The file generated in the previous step should stay in the folder.
-6. Package the Helm chart:
-
-   ```shell
-   helm repo index . --url https://helm.solarwinds.com
-   ```
-
-   It will update the `index.yaml` file with a new entry for the file.
-
-7. Create PR for the changes to the `gh-pages` branch and merge them.
+3. Run "Release Helm Chart" GitHub action workflow
+4. Review PR that was created for the changes to the `gh-pages` branch and merge them.
