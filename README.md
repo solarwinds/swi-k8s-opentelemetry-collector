@@ -88,6 +88,8 @@ processors:
 -   logs:
 -     include:
 -         match_type: regexp
+-         # a log has to match all expressions in the list to be included
+-         # see https://github.com/google/re2/wiki/Syntax for regexp syntax
 -         record_attributes:
 -             # allow only system namespaces (kube-system, kube-public)
 -             - key: k8s.namespace.name
@@ -100,6 +102,8 @@ filter:
   logs:
     include:
         match_type: regexp
+        # a log has to match all expressions in the list to be included
+        # see https://github.com/google/re2/wiki/Syntax for regexp syntax
         record_attributes:
             # allow only system namespaces (kube-system, kube-public)
             - key: k8s.namespace.name
