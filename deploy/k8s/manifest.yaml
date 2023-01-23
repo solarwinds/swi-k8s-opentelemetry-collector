@@ -24,7 +24,7 @@ data:
   OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
   MANIFEST_VERSION: "2.0.2"
-  APP_VERSION: "0.2.0"
+  APP_VERSION: "0.3.0"
 ---
 # Source: swo-k8s-collector/templates/events-collector-config-map.yaml
 apiVersion: v1
@@ -193,6 +193,8 @@ data:
             headers:
               "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
         extensions:
+          file_storage:
+            directory: /var/lib/swo/checkpoints
           health_check: {}
           memory_ballast:
             size_mib: 200
@@ -200,8 +202,8 @@ data:
         processors:
           memory_limiter:
             check_interval: 1s
-            limit_mib: 550
-            spike_limit_mib: 200
+            limit_mib: 700
+            spike_limit_mib: 250
           # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
           filter:
             logs: 
@@ -297,6 +299,9 @@ data:
             start_at: beginning
             include_file_path: true
             include_file_name: false
+            storage: file_storage
+            max_log_size: 10MiB
+            max_concurrent_files: 2
             operators:
               # Find out which format is used by kubernetes
               - type: router
@@ -317,7 +322,7 @@ data:
                 timestamp:
                   parse_from: body.time
                   layout_type: gotime
-                  layout: '2006-01-02T15:04:05.000000000-07:00'
+                  layout: '2006-01-02T15:04:05.999999999-07:00'
               # Parse CRI-Containerd format
               - type: regex_parser
                 id: parser-containerd
@@ -397,6 +402,7 @@ data:
                 to: body
         service:
           extensions:
+            - file_storage
             - health_check
             - memory_ballast
           pipelines:
@@ -1795,9 +1801,9 @@ metadata:
   name: swo-k8s-collector-logs
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: fd93bc26a2c57d2727aca6bb030381339318aa5ac9191711862264a1fc90712a
-    checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
-    checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
+    checksum/config: d1d22dc94f7e67f8deb8db20a3a3592cb62c548326eafee9ac35cf6eb219e57f
+    checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
+    checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -1812,9 +1818,9 @@ spec:
         app.kubernetes.io/name: swo-k8s-collector
         app.kubernetes.io/instance: swo-k8s-collector
       annotations:
-        checksum/config: fd93bc26a2c57d2727aca6bb030381339318aa5ac9191711862264a1fc90712a
-        checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
-        checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
+        checksum/config: d1d22dc94f7e67f8deb8db20a3a3592cb62c548326eafee9ac35cf6eb219e57f
+        checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
+        checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
 
     spec:
       terminationGracePeriodSeconds: 30
@@ -1825,7 +1831,7 @@ spec:
         runAsGroup: 0
       containers:
         - name: swi-opentelemetry-collector
-          image: "solarwinds/swi-opentelemetry-collector:0.2.0"
+          image: "solarwinds/swi-opentelemetry-collector:0.3.0"
           imagePullPolicy: IfNotPresent
           command:
             - /swi-otelcol
@@ -1866,9 +1872,9 @@ spec:
               port: 13133
           resources:
             limits:
-              memory: 600Mi
+              memory: 800Mi
             requests:
-              memory: 600Mi
+              memory: 800Mi
           volumeMounts:
             - mountPath: /var/log/pods
               name: varlogpods
@@ -1885,6 +1891,8 @@ spec:
             - mountPath: /run/log/journal
               name: runlogjournal
               readOnly: true
+            - name: logcheckpoints
+              mountPath: /var/lib/swo/checkpoints
       volumes:
         - name: varlogpods
           hostPath:
@@ -1898,6 +1906,10 @@ spec:
         - name: runlogjournal
           hostPath:
             path: /run/log/journal
+        - name: logcheckpoints
+          hostPath:
+            path: /var/lib/swo/checkpoints
+            type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
             name: swo-k8s-collector-logs-config
@@ -1913,8 +1925,8 @@ metadata:
   namespace: <NAMESPACE>
   annotations:
     checksum/config: 3079ccec4fe37f496e829f686e34d816b635c3750dea7e078c821010f3d238d8
-    checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
-    checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
+    checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
+    checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -1938,7 +1950,7 @@ spec:
             - /swi-otelcol
             - --config=/conf/relay.yaml
           securityContext: {}
-          image: "solarwinds/swi-opentelemetry-collector:0.2.0"
+          image: "solarwinds/swi-opentelemetry-collector:0.3.0"
           imagePullPolicy: IfNotPresent
           env:
             - name: MY_POD_IP
@@ -1991,10 +2003,10 @@ metadata:
   name: swo-k8s-collector-metrics
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 794ec0d208de769e6b9c257bb29696c0656b01bcd309ceeb3d44404a445c7ded
-    checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
+    checksum/config: fa02a81d7a487fc97b44a2e5d22c1a3babba6225bbbe834649dadc502911653e
+    checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
     checksum/config_env: 69527c661c505be09f4d26ac8cf06c6777da5a33ad895e4328c41539aead509a
-    checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
+    checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -2017,7 +2029,7 @@ spec:
             - /swi-otelcol
             - --config=/conf/relay.yaml
           securityContext: {}
-          image: "solarwinds/swi-opentelemetry-collector:0.2.0"
+          image: "solarwinds/swi-opentelemetry-collector:0.3.0"
           imagePullPolicy: IfNotPresent
           env:
             - name: MY_POD_IP
