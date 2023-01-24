@@ -14,7 +14,7 @@ processors:
   memory_limiter:
 {{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
   transform:
-    metrics_statements:
+    metric_statements:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
