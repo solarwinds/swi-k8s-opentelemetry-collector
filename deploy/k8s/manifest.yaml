@@ -202,8 +202,8 @@ data:
         processors:
           memory_limiter:
             check_interval: 1s
-            limit_mib: 700
-            spike_limit_mib: 250
+            limit_mib: 550
+            spike_limit_mib: 300
           # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
           filter:
             logs: 
@@ -296,12 +296,12 @@ data:
             include: [ /var/log/pods/*/*/*.log ]
             # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
             exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
-            start_at: beginning
+            start_at: end
             include_file_path: true
             include_file_name: false
             storage: file_storage
             max_log_size: 10MiB
-            max_concurrent_files: 2
+            max_concurrent_files: 10
             operators:
               # Find out which format is used by kubernetes
               - type: router
@@ -1801,9 +1801,9 @@ metadata:
   name: swo-k8s-collector-logs
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: d1d22dc94f7e67f8deb8db20a3a3592cb62c548326eafee9ac35cf6eb219e57f
+    checksum/config: f246678ecb72e826f92512f6617ce9e10b8e8bf1828c072eab0de9e1a584eeed
     checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
-    checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
+    checksum/values: 446582cc71e657021c2233b4ef9c2f651393843c09eaf9aec8dd2f333ab0e5dc
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -1818,9 +1818,9 @@ spec:
         app.kubernetes.io/name: swo-k8s-collector
         app.kubernetes.io/instance: swo-k8s-collector
       annotations:
-        checksum/config: d1d22dc94f7e67f8deb8db20a3a3592cb62c548326eafee9ac35cf6eb219e57f
+        checksum/config: f246678ecb72e826f92512f6617ce9e10b8e8bf1828c072eab0de9e1a584eeed
         checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
-        checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
+        checksum/values: 446582cc71e657021c2233b4ef9c2f651393843c09eaf9aec8dd2f333ab0e5dc
 
     spec:
       terminationGracePeriodSeconds: 30
@@ -1872,9 +1872,9 @@ spec:
               port: 13133
           resources:
             limits:
-              memory: 800Mi
+              memory: 700Mi
             requests:
-              memory: 800Mi
+              memory: 700Mi
           volumeMounts:
             - mountPath: /var/log/pods
               name: varlogpods
@@ -1926,7 +1926,7 @@ metadata:
   annotations:
     checksum/config: 3079ccec4fe37f496e829f686e34d816b635c3750dea7e078c821010f3d238d8
     checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
-    checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
+    checksum/values: 446582cc71e657021c2233b4ef9c2f651393843c09eaf9aec8dd2f333ab0e5dc
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -2003,10 +2003,10 @@ metadata:
   name: swo-k8s-collector-metrics
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: fa02a81d7a487fc97b44a2e5d22c1a3babba6225bbbe834649dadc502911653e
+    checksum/config: 794ec0d208de769e6b9c257bb29696c0656b01bcd309ceeb3d44404a445c7ded
     checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
     checksum/config_env: 69527c661c505be09f4d26ac8cf06c6777da5a33ad895e4328c41539aead509a
-    checksum/values: cdf7e222176222d16cf75f58974e3e384a470c442667df6279ab1c4c9fdea8b5
+    checksum/values: 446582cc71e657021c2233b4ef9c2f651393843c09eaf9aec8dd2f333ab0e5dc
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
