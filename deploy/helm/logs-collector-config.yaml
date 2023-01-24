@@ -104,12 +104,12 @@ receivers:
     include: [ /var/log/pods/*/*/*.log ]
     # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
     exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
-    start_at: beginning
+    start_at: end
     include_file_path: true
     include_file_name: false
     storage: file_storage
     max_log_size: 10MiB
-    max_concurrent_files: 2
+    max_concurrent_files: 10
     operators:
       # Find out which format is used by kubernetes
       - type: router
