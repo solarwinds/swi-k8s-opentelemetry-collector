@@ -209,6 +209,11 @@ otel:
       limits:
         memory: 700Mi
 
+    # This default tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
+    tolerations:
+      - operator: Exists
+        effect: NoSchedule
+
 cluster:
   name: <CLUSTER_NAME>
   uid: <CLUSTER_UID>

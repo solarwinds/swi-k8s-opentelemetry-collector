@@ -31,6 +31,10 @@ spec:
         fsGroup: 0
         runAsUser: 0
         runAsGroup: 0
+      {{- with .Values.otel.logs.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
