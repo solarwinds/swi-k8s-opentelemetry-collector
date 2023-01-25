@@ -1,0 +1,21 @@
+schemaVersion: 2.0.0
+
+fileExistenceTests:
+  - name: 'no go binary'
+    path: '/usr/bin/go'
+    shouldExist: false
+  - name: 'OTEL collector binary'
+    path: '/swi-otelcol'
+    permissions: '-rwxr-xr-x'
+    shouldExist: true
+    isExecutableBy: 'group'
+  
+commandTests:
+  - name: "journalctl is working in the image"
+    command: "journalctl"
+    expectedOutput: ["-- No entries --\n"]
+    excludedError: ["No journal files were found.\n"]
+  - name: "swi-otelcol is working in the image"
+    command: "/swi-otelcol"
+    args: ["-v"]
+    expectedOutput: ["swi-k8s-opentelemetry-collector version 0.1.0"]
