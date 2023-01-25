@@ -92,3 +92,19 @@ profiles:
     deploy:
       # `default` is k3s default context name
       kubeContext: default
+  - name: ci-helm-e2e
+    patches:
+      - op: remove
+        path: /build/artifacts/0
+      - op: remove
+        path: /deploy/helm/releases/0/setValues/otel.image.repository
+      - op: remove
+        path: /deploy/helm/releases/0/setValues/otel.image.tag
+    build:
+      local:
+        push: false
+        useBuildkit: true
+        concurrency: 0
+    deploy:
+      # `default` is k3s default context name
+      kubeContext: default
