@@ -296,7 +296,7 @@ data:
             include: [ /var/log/pods/*/*/*.log ]
             # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
             exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
-            start_at: end
+            start_at: beginning
             include_file_path: true
             include_file_name: false
             storage: file_storage
@@ -1801,7 +1801,7 @@ metadata:
   name: swo-k8s-collector-logs
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: 4e2d60c876f7cb61720b9bf87a6f6138eca5ea5dfd0d0ba9881473324751d8d2
+    checksum/config: f58f76972cd8e6711768eb0f669a805c877709bd13bd401630b41ea814d799a2
     checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
     checksum/values: 446582cc71e657021c2233b4ef9c2f651393843c09eaf9aec8dd2f333ab0e5dc
   labels:
@@ -1818,7 +1818,7 @@ spec:
         app.kubernetes.io/name: swo-k8s-collector
         app.kubernetes.io/instance: swo-k8s-collector
       annotations:
-        checksum/config: 4e2d60c876f7cb61720b9bf87a6f6138eca5ea5dfd0d0ba9881473324751d8d2
+        checksum/config: f58f76972cd8e6711768eb0f669a805c877709bd13bd401630b41ea814d799a2
         checksum/config_common_env: 938c1233ef80a8cdc54819b66c1fab2786c5cea8ae96f872767fbf2dcf342fd6
         checksum/values: 446582cc71e657021c2233b4ef9c2f651393843c09eaf9aec8dd2f333ab0e5dc
 
