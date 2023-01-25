@@ -6,6 +6,8 @@ exporters:
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
 extensions:
+  file_storage:
+    directory: /var/lib/swo/checkpoints
   health_check: {}
   memory_ballast:
 {{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
@@ -102,9 +104,12 @@ receivers:
     include: [ /var/log/pods/*/*/*.log ]
     # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
     exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
-    start_at: beginning
+    start_at: end
     include_file_path: true
     include_file_name: false
+    storage: file_storage
+    max_log_size: 1MiB
+    max_concurrent_files: 10
     operators:
       # Find out which format is used by kubernetes
       - type: router
@@ -125,7 +130,7 @@ receivers:
         timestamp:
           parse_from: body.time
           layout_type: gotime
-          layout: '2006-01-02T15:04:05.000000000-07:00'
+          layout: '2006-01-02T15:04:05.999999999-07:00'
       # Parse CRI-Containerd format
       - type: regex_parser
         id: parser-containerd
@@ -205,6 +210,7 @@ receivers:
         to: body
 service:
   extensions:
+    - file_storage
     - health_check
     - memory_ballast
   pipelines:

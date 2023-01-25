@@ -146,6 +146,8 @@ otel:
     journal: true
 
     # If true, the container logs will be collected
+    # Log collection uses `filelog` OTEL receiver under the hood 
+    # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
     # Each log has following attributes so they can be filtered out by them using filter configuration:
     #   * sw.k8s.log.type=container
     #   * k8s.cluster.name - name of the cluster (input generated during onboarding)
@@ -193,7 +195,7 @@ otel:
     memory_limiter:
       check_interval: 1s
       limit_mib: 550
-      spike_limit_mib: 200
+      spike_limit_mib: 300
     
     # Memory Ballast enables applications to configure memory ballast for the process.
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/ballastextension for configuration reference
@@ -203,9 +205,9 @@ otel:
     # Resource configuration for Log collector
     resources:
       requests:
-        memory: 600Mi
+        memory: 700Mi
       limits:
-        memory: 600Mi
+        memory: 700Mi
 
 cluster:
   name: <CLUSTER_NAME>
