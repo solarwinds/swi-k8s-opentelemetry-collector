@@ -9,6 +9,10 @@ build:
         dockerfile: build/docker/Dockerfile
   local:
     push: false
+test:
+- image: swi-k8s-opentelemetry-collector
+  structureTests:
+    - './build/docker/structure-test.yaml'
 manifests:
   kustomize:
     paths:
@@ -84,6 +88,22 @@ profiles:
   - name: ci
     activation:
       - env: CI=true
+    build:
+      local:
+        push: false
+        useBuildkit: true
+        concurrency: 0
+    deploy:
+      # `default` is k3s default context name
+      kubeContext: default
+  - name: ci-helm-e2e
+    patches:
+      - op: remove
+        path: /build/artifacts/0
+      - op: remove
+        path: /deploy/helm/releases/0/setValues/otel.image.repository
+      - op: remove
+        path: /deploy/helm/releases/0/setValues/otel.image.tag
     build:
       local:
         push: false

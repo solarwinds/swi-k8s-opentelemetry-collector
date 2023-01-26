@@ -34,6 +34,9 @@ jobs:
       - name: Build
         run: skaffold build --file-output=/tmp/tags.json --tag ${{ steps.generate-tag.outputs.value }}
 
+      - name: Test
+        run: skaffold test --build-artifacts=/tmp/tags.json
+
       - name: Deploy kubernetes
         uses: ./.github/actions/deploy-kubernetes
 
@@ -100,6 +103,73 @@ jobs:
           name: image
           path: swi-k8s-opentelemetry-collector.tar
           retention-days: 2
+
+  # Verify whether Helm chart works with image published in DockerHub
+  helm_e2e:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.generate-tag.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Deploy skaffold
+        uses: ./.github/actions/deploy-skaffold
+
+      - name: Deploy kubernetes
+        uses: ./.github/actions/deploy-kubernetes
+
+      - name: Deploy services using Skaffold
+        run: skaffold deploy -p=ci-helm-e2e
+
+      # this step should produce all types: events, metrics and logs
+      - name: Tail Otel mock for 60 seconds
+        run: |
+          kubectl run dummy --image ubuntu -- /bin/bash -ec "while :; do echo '!!testlog!!'; sleep 5 ; done"
+          mkdir -p OtelLogs
+          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/output.log &
+          sleep 60
+
+      # Delete resources and wait some time for its termination
+      - name: Destroy environment
+        run: |
+          skaffold delete
+          sleep 20
+
+      - name: Evaluate metrics collection functionality
+        run: |
+          if grep -q "k8s.kube_pod_info" "OtelLogs/output.log"; then
+            echo "Expected metrics found"
+          else
+            echo "Metrics are missing"
+            exit 1
+          fi
+
+      - name: Evaluate events collection functionality
+        run: |
+          if grep -q "k8s.event." "OtelLogs/output.log"; then
+            echo "Expected events found"
+          else
+            echo "Events are missing"
+            exit 1
+          fi
+
+      - name: Evaluate logs collection functionality
+        run: |
+          if grep -q "!!testlog!!" "OtelLogs/output.log"; then
+            echo "Some logs found"
+          else
+            echo "Logs are missing"
+            exit 1
+          fi
+
+      - name: Capture Otel logs
+        uses: actions/upload-artifact@v2
+        if: failure() && hashFiles('OtelLogs') != '' # test existance of some report in `OtelLogs` folder
+        with:
+          name: OtelLogs
+          path: OtelLogs/
+          retention-days: 30
 
   helm_verify:
     runs-on: ubuntu-latest

@@ -31,6 +31,10 @@ spec:
         fsGroup: 0
         runAsUser: 0
         runAsGroup: 0
+      {{- with .Values.otel.logs.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
@@ -60,6 +64,12 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" . }}-common-env
+{{- if .Values.otel.logs.telemetry.metrics.enabled }}
+          ports:
+            - name: http
+              containerPort: {{ (split ":" .Values.otel.logs.telemetry.metrics.address)._1 }}
+              protocol: TCP
+{{- end}}
           livenessProbe:
             httpGet:
               path: /
@@ -86,6 +96,8 @@ spec:
             - mountPath: /run/log/journal
               name: runlogjournal
               readOnly: true
+            - name: logcheckpoints
+              mountPath: /var/lib/swo/checkpoints
       volumes:
         - name: varlogpods
           hostPath:
@@ -99,6 +111,10 @@ spec:
         - name: runlogjournal
           hostPath:
             path: /run/log/journal
+        - name: logcheckpoints
+          hostPath:
+            path: /var/lib/swo/checkpoints
+            type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
             name: {{ include "common.fullname" . }}-logs-config
