@@ -25,10 +25,23 @@ processors:
 
   groupbyattrs/all:
     keys:
+      - k8s.deployment.name
       - k8s.container.name
       - k8s.namespace.name
       - k8s.pod.name
       - k8s.pod.uid
+
+  attributes/common:
+    actions:
+      - key: k8s.pod.name
+        pattern: (?P<k8s_deployment>[a-z0-9]+(?:-[a-z0-9]+)*?)-[a-f0-9]{10}-[a-z0-9]{5}
+        action: extract
+      - key: k8s.deployment.name
+        from_attribute: k8s_deployment
+        action: insert
+      - key: k8s_deployment
+        action: delete
+      
 
   resource/container:
     attributes:
@@ -223,6 +236,7 @@ service:
 {{- if .Values.otel.logs.filter }}
         - filter
 {{- end }}
+        - attributes/common
         - groupbyattrs/all
         - resource/container
         - batch
@@ -235,6 +249,7 @@ service:
         - otlp
       processors:
         - memory_limiter
+        - attributes/common
         - groupbyattrs/all
         - resource/journal
         - batch
