@@ -34,6 +34,9 @@ jobs:
       - name: Build
         run: skaffold build --file-output=/tmp/tags.json --tag ${{ steps.generate-tag.outputs.value }}
 
+      - name: Test
+        run: skaffold test --build-artifacts=/tmp/tags.json
+
       - name: Deploy kubernetes
         uses: ./.github/actions/deploy-kubernetes
 
