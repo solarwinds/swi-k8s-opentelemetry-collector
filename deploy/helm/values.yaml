@@ -214,6 +214,16 @@ otel:
       - operator: Exists
         effect: NoSchedule
 
+    # Properties that can be configured on filelog reciever. For full description of properties 
+    # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
+    receiver:
+      start_at: end
+      poll_interval: 200ms
+      max_concurrent_files: 10
+      encoding: utf-8
+      fingerprint_size: 1kb
+      max_log_size: 1MiB
+
 cluster:
   name: <CLUSTER_NAME>
   uid: <CLUSTER_UID>
