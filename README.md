@@ -1,21 +1,25 @@
-# swi-k8s-opentelemetry-collector
+# swo-k8s-collector
 
-Assets to monitor kubernetes infrastructure in SolarWinds Observability
+Assets to monitor Kubernetes infrastructure using SolarWinds Observability
 
 ## Table of contents
 
 - [About](#about)
 - [Installation](#installation)
-- [Development](doc/development.md)
+- [Limitations](#limitations)
+- [Customization](#customization)
+
+Development documentation: [development.md](doc/development.md)
 
 ## About
 
 This repository contains:
-* Kubernetes manifest files to collect metrics provided by existing Prometheus server, events and logs and export it to SolarWinds Observability infrastructure.
-* Dockerfile for images published to Docker hub that is deployed as part of Kubernetes monitoring
-* All related sources that are built into that:
-  * Custom OpenTelemetry collector processors  
-  * OpenTelemetry collector configuration
+
+- Source files for Helm chart `swo-k8s-collector`, used for collecting metrics (provided by existing Prometheus server), events and logs and exporting them to SolarWinds Observability platform.
+- Dockerfile for an image published to Docker hub, that is deployed as part of Kubernetes monitoring
+- All related sources that are built into that:
+  - Custom OpenTelemetry Collector processors  
+  - OpenTelemetry Collector configuration
 
 Components that are being deployed:
 
@@ -25,26 +29,39 @@ Components that are being deployed:
 - DaemonSet - customized OpenTelemetry Collector deployment, configured to poll container logs
 
 ## Installation
+
 Walk through Add Kubernetes wizard in SolarWinds Observability
 
 ## Limitations
-* Supported kubernetes version: 1.18 and higher.
-  * Local kubernetes deployments (e.q. Minikube) are not supported (although most of the functionality may be working).
-* Supported kube-state-metrics: 1.5.0 and higher.
-* Supported architectures: Linux x86-64 (`amd64`).
+
+- Supported Kubernetes version: 1.18 and higher.
+  - Local Kubernetes deployments (e.q. Minikube) are not supported (although most of the functionality may be working).
+- Supported kube-state-metrics: 1.5.0 and higher.
+- Supported architectures: Linux x86-64 (`amd64`).
 
 ## Customization
-The [manifest](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/blob/master/deploy/k8s/manifest.yaml) that you are about to deploy to your cluster using the Add Kubernetes wizard contains [OpenTelemetry configuration](https://opentelemetry.io/docs/collector/configuration/) which defines the metrics and logs to be monitored. It allows you to customize the list of metrics and logs to be monitored, as well as their preprocessing.
 
-**WARNING: Custom modifications to OpenTelemetry collector configurations can lead to unexpected Kubernetes agent behavior, data loss, and subsequent entity ingestion failures on the Solarwinds Observability platform side.**
+The [Helm chart](deploy/helm/Chart.yaml) that you are about to deploy to your cluster has various configuration options. The full list, including the default settings, is available in [values.yaml](deploy/helm/values.yaml).
+
+Internally, it contains [OpenTelemetry Collector configuration](https://opentelemetry.io/docs/collector/configuration/), which defines the metrics and logs to be monitored as well as their preprocessing.
+
+**WARNING: Custom modifications to OpenTelemetry Collector configurations can lead to unexpected `swo-k8s-collector` behavior, data loss, and subsequent entity ingestion failures on the Solarwinds Observability platform side.**
 
 ### Metrics
 
-The metrics collection and processing configuration is included in the manifest as a ConfigMap under the `metrics.config` key.
+Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
 
-In order to reduce the size of the collected data, the swi-k8s-opentelemetry-collector whitelists only selected metrics that are key for successful entity ingestion on the Solarwinds Observability side. The list of observed metrics can be easily modified by simply adding or removing the desired metrics from the list located in the `scrape_configs` section of the collector configuration.
+In order to reduce the size of the collected data, the `swo-k8s-collector` collects only selected metrics that are key for successful entity ingestion on the SolarWinds Observability side. The list of observed metrics can be extended by setting `otel.metrics.extra_scrape_metrics` value. Example:
 
-Default metrics monitored by swi-k8s-opentelemetry-collector: [exported_metrics.md](doc/exported_metrics.md)
+```yaml
+otel:
+  metrics:
+    extra_scrape_metrics:
+      - node_cpu_seconds_total
+      - node_cpu_guest_seconds_total
+```
+
+The list of metrics collected by default: [exported_metrics.md](doc/exported_metrics.md)
 
 Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
 
@@ -64,56 +81,13 @@ Processors included in the collector:
 - [transform](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/transformprocessor)
 - [swmetricstransform](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/swmetricstransformprocessor)
 
-#### Helm
-To scrape more metrics set `otel.metrics.extra_scrape_metrics` value. Example:
-```
-otel:
-  metrics:
-    extra_scrape_metrics:
-      - node_cpu_seconds_total
-      - node_cpu_guest_seconds_total
-```
-
 ### Logs
 
-The logs collection and processing configuration is included in the manifest as a ConfigMap under the `logs.config` key.
+Once deployed to a Kubernetes cluster, the logs collection and processing configuration is stored as a ConfigMap under the `logs.config` key.
 
-To reduce the overall size of the data created during log collection, the collector whitelists container logs only on `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. Otherwise, the size of the collected data would lead to infrastructure overload. This behavior can be modified in the `filter` section of the log collection configuration.
+To avoid processing an excessive amount of data, the `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
 
-To collect all logs remove the `filter` section
-```diff
-processors:
-  # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
-- filter:
--   logs:
--     include:
--         match_type: regexp
--         # a log has to match all expressions in the list to be included
--         # see https://github.com/google/re2/wiki/Syntax for regexp syntax
--         record_attributes:
--             # allow only system namespaces (kube-system, kube-public)
--             - key: k8s.namespace.name
--               value: ^kube-.*$
-```
-
-To collect logs for a specific namespace, change the filter value with the name of the namespace to be monitored
-```diff
-filter:
-  logs:
-    include:
-        match_type: regexp
-        # a log has to match all expressions in the list to be included
-        # see https://github.com/google/re2/wiki/Syntax for regexp syntax
-        record_attributes:
-            # allow only system namespaces (kube-system, kube-public)
-            - key: k8s.namespace.name
--              value: ^kube-.*$
-+              value: <NAMESPACE_NAME>
-```
-
-#### Helm
-To collect logs for a specific namespace, adjust the `otel.logs.filter` value. For example to scrape all logs:
-```
+```yaml
 otel:
   logs:
     filter:
