@@ -117,12 +117,15 @@ receivers:
     include: [ /var/log/pods/*/*/*.log ]
     # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
     exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
-    start_at: beginning
+    start_at: {{ .Values.otel.logs.receiver.start_at }}
     include_file_path: true
     include_file_name: false
     storage: file_storage
-    max_log_size: 1MiB
-    max_concurrent_files: 10
+    max_log_size: {{ .Values.otel.logs.receiver.max_log_size }}
+    max_concurrent_files: {{ .Values.otel.logs.receiver.max_concurrent_files }}
+    fingerprint_size: {{ .Values.otel.logs.receiver.fingerprint_size }}
+    encoding: {{ .Values.otel.logs.receiver.encoding }}
+    poll_interval: {{ .Values.otel.logs.receiver.poll_interval }}
     operators:
       # Find out which format is used by kubernetes
       - type: router

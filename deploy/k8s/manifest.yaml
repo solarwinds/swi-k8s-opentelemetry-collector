@@ -23,7 +23,7 @@ data:
   CLUSTER_UID: "<CLUSTER_UID>"
   OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
-  MANIFEST_VERSION: "2.1.0-alpha.1"
+  MANIFEST_VERSION: "2.1.0-alpha.2"
   APP_VERSION: "0.3.0"
 ---
 # Source: swo-k8s-collector/templates/events-collector-config-map.yaml
@@ -309,12 +309,15 @@ data:
             include: [ /var/log/pods/*/*/*.log ]
             # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
             exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
-            start_at: beginning
+            start_at: end
             include_file_path: true
             include_file_name: false
             storage: file_storage
             max_log_size: 1MiB
             max_concurrent_files: 10
+            fingerprint_size: 1kb
+            encoding: utf-8
+            poll_interval: 200ms
             operators:
               # Find out which format is used by kubernetes
               - type: router
@@ -1815,9 +1818,9 @@ metadata:
   name: swo-k8s-collector-logs
   namespace: <NAMESPACE>
   annotations:
-    checksum/config: f5999193d228e854421049bb3f5a3cd9f2193a9e8cd24fa819f09aa54a5fa0a7
-    checksum/config_common_env: 13e642a54dfbf14f6b0d1f68b01b760126f7bcdbaf43afc6b6989166167eb2cb
-    checksum/values: 33377af90d2eb02be87694eb22c09ad229647dced68dfa9e4a179472da2c5ffb
+    checksum/config: f4d9f38ad4717446a1e8708aba49d08330cf5bf1c6c5e6a007d3d89171f6f764
+    checksum/config_common_env: 925b4020f42a72845db97347c5f9282fe40c2edba25c3cf40841b469857a837e
+    checksum/values: be63e9784bc5815c9e9036f80e2ac3e2464565b73e3e985fb5b938a7c5bdaaea
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -1832,9 +1835,9 @@ spec:
         app.kubernetes.io/name: swo-k8s-collector
         app.kubernetes.io/instance: swo-k8s-collector
       annotations:
-        checksum/config: f5999193d228e854421049bb3f5a3cd9f2193a9e8cd24fa819f09aa54a5fa0a7
-        checksum/config_common_env: 13e642a54dfbf14f6b0d1f68b01b760126f7bcdbaf43afc6b6989166167eb2cb
-        checksum/values: 33377af90d2eb02be87694eb22c09ad229647dced68dfa9e4a179472da2c5ffb
+        checksum/config: f4d9f38ad4717446a1e8708aba49d08330cf5bf1c6c5e6a007d3d89171f6f764
+        checksum/config_common_env: 925b4020f42a72845db97347c5f9282fe40c2edba25c3cf40841b469857a837e
+        checksum/values: be63e9784bc5815c9e9036f80e2ac3e2464565b73e3e985fb5b938a7c5bdaaea
 
     spec:
       terminationGracePeriodSeconds: 30
@@ -1943,8 +1946,8 @@ metadata:
   namespace: <NAMESPACE>
   annotations:
     checksum/config: 3079ccec4fe37f496e829f686e34d816b635c3750dea7e078c821010f3d238d8
-    checksum/config_common_env: 13e642a54dfbf14f6b0d1f68b01b760126f7bcdbaf43afc6b6989166167eb2cb
-    checksum/values: 33377af90d2eb02be87694eb22c09ad229647dced68dfa9e4a179472da2c5ffb
+    checksum/config_common_env: 925b4020f42a72845db97347c5f9282fe40c2edba25c3cf40841b469857a837e
+    checksum/values: be63e9784bc5815c9e9036f80e2ac3e2464565b73e3e985fb5b938a7c5bdaaea
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -2022,9 +2025,9 @@ metadata:
   namespace: <NAMESPACE>
   annotations:
     checksum/config: 794ec0d208de769e6b9c257bb29696c0656b01bcd309ceeb3d44404a445c7ded
-    checksum/config_common_env: 13e642a54dfbf14f6b0d1f68b01b760126f7bcdbaf43afc6b6989166167eb2cb
+    checksum/config_common_env: 925b4020f42a72845db97347c5f9282fe40c2edba25c3cf40841b469857a837e
     checksum/config_env: 69527c661c505be09f4d26ac8cf06c6777da5a33ad895e4328c41539aead509a
-    checksum/values: 33377af90d2eb02be87694eb22c09ad229647dced68dfa9e4a179472da2c5ffb
+    checksum/values: be63e9784bc5815c9e9036f80e2ac3e2464565b73e3e985fb5b938a7c5bdaaea
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
