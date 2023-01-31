@@ -9,10 +9,6 @@ build:
         dockerfile: build/docker/Dockerfile
   local:
     push: false
-test:
-- image: swi-k8s-opentelemetry-collector
-  structureTests:
-    - './build/docker/structure-test.yaml'
 manifests:
   kustomize:
     paths:
@@ -93,6 +89,10 @@ profiles:
         push: false
         useBuildkit: true
         concurrency: 0
+    test:
+      - image: swi-k8s-opentelemetry-collector
+        structureTests:
+          - './build/docker/structure-test.yaml'
     deploy:
       # `default` is k3s default context name
       kubeContext: default
