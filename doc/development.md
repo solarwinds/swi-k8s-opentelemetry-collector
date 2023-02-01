@@ -78,16 +78,6 @@ In order to change Prometheus endpoint that is hosted on HTTPS you can adjust sk
 - add `otel.metrics.prometheus.scheme: https`
 - update `otel.metrics.prometheus.url: <remote prometheus>`
 
-## Updating manifest
-
-Temporarily there will be `manifest.yaml` and Helm chart in the repository. In order to avoid maintaining two sources, the `manifest.yaml` is generated using `helm template` command. So please do not write directly to `manifest.yaml` file.
-
-Update Helm chart and use following command to update the manifest:
-
-```shell
-helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
-```
-
 ## Publishing
 
 ### Docker image
@@ -107,20 +97,10 @@ Steps to publish new version:
 Helm chart is published to <https://helm.solarwinds.com>.
 
 1. Update property `version` in [deploy/helm/Chart.yaml](deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format).
-2. Propagate the version change to `manifest.yaml` (see [Updating manifest](#updating-manifest) for more info):
-
-   ```shell
-   helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
-   ```
-
-3. Update [deploy/helm/CHANGELOG.md](deploy/helm/CHANGELOG.md):
+2. Update [deploy/helm/CHANGELOG.md](deploy/helm/CHANGELOG.md):
    1. Create release record with the right version and the date.
    2. Write all changes recorded in `Unreleased` section into the release.
-4. Create PR for the changes to the `master` branch and merge them.
-5. Run "Release Helm Chart" GitHub action workflow.
-6. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](deploy/helm/CHANGELOG.md) into its description.
-7. Review PR that was created for the changes to the `gh-pages` branch and merge them.
-
-   ```shell
-   helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > deploy/k8s/manifest.yaml
-   ```
+3. Create PR for the changes to the `master` branch and merge them.
+4. Run "Release Helm Chart" GitHub action workflow.
+5. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](deploy/helm/CHANGELOG.md) into its description.
+6. Review PR that was created for the changes to the `gh-pages` branch and merge them.

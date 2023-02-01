@@ -30,9 +30,7 @@ Common template labels
 {{- define "common.template-labels" -}}
 app.kubernetes.io/name: {{ template "common.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- if not .Values.externalRenderer}}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
 {{- end -}}
 
 {{/*
@@ -41,10 +39,8 @@ Common labels
 {{- define "common.labels" -}}
 {{ include "common.template-labels" . }}
 {{- if .Chart.AppVersion }}
-{{- if not .Values.externalRenderer}}
 helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
 {{- end }}
 {{- if .Values.commonLabels}}
 {{ toYaml .Values.commonLabels }}

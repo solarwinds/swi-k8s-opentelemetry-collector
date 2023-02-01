@@ -185,35 +185,6 @@ jobs:
       - name: Lint helm
         run: helm lint deploy/helm
 
-      - name: Generate manifest.yaml
-        run: helm template swo-k8s-collector deploy/helm -n="<NAMESPACE>" --set-string externalRenderer=true > generated_manifest.yaml
-
-      - name: Verify manifest matches helm chart
-        run: |
-          file1="deploy/k8s/manifest.yaml"
-          file2="generated_manifest.yaml"
-          if cmp -s "$file1" "$file2"; then
-              printf 'The file "%s" is the same as "%s"\n' "$file1" "$file2"
-          else
-              printf 'The file "%s" is different from "%s"\n' "$file1" "$file2"
-              exit 1
-          fi
-        shell: bash
-
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: generated_manifest.yaml
-          path: generated_manifest.yaml
-          retention-days: 2
-
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: manifest.yaml
-          path: deploy/k8s/manifest.yaml
-          retention-days: 2
-
   deploy_dockerhub:
     runs-on: ubuntu-latest
     needs: build_and_test
