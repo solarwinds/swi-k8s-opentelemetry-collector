@@ -4,10 +4,6 @@ kind: DaemonSet
 metadata:
   name: {{ include "common.fullname" . }}-logs
   namespace: {{ .Release.Namespace }}
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
-    checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
-    checksum/values: {{ toJson .Values | sha256sum }}
   labels:
 {{ include "common.labels" . | indent 4 }}
 spec:
