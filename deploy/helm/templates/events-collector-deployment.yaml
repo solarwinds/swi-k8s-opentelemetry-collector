@@ -4,10 +4,6 @@ kind: Deployment
 metadata:
   name: {{ include "common.fullname" . }}-events
   namespace: {{ .Release.Namespace }}
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/events-collector-config-map.yaml") . | sha256sum }}
-    checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
-    checksum/values: {{ toJson .Values | sha256sum }}
   labels:
 {{ include "common.labels" . | indent 4 }}
 spec:
@@ -17,6 +13,10 @@ spec:
       app: {{ include "common.fullname" . }}-events
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/events-collector-config-map.yaml") . | sha256sum }}
+        checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+        checksum/values: {{ toJson .Values | sha256sum }}
       labels:
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" . }}-events
