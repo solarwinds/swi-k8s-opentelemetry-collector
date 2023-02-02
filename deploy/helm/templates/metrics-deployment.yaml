@@ -18,16 +18,15 @@ spec:
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/config_env: {{ include (print $.Template.BasePath "/metrics-collector-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
-      labels:
-{{ include "common.template-labels" . | indent 8 }}
-        app: {{ include "common.fullname" . }}-metrics
 {{- if .Values.otel.metrics.telemetry.metrics.enabled }}
-      annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 | quote }}
         prometheus.io/path: "/metrics"
         prometheus.io/scheme: "http"
 {{- end}}
+      labels:
+{{ include "common.template-labels" . | indent 8 }}
+        app: {{ include "common.fullname" . }}-metrics
     spec:
       securityContext: {}
       containers:

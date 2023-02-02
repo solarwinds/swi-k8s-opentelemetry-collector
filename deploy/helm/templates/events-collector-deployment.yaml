@@ -17,16 +17,15 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/events-collector-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
-      labels:
-{{ include "common.template-labels" . | indent 8 }}
-        app: {{ include "common.fullname" . }}-events
 {{- if .Values.otel.events.telemetry.metrics.enabled }}
-      annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._1 | quote }}
         prometheus.io/path: "/metrics"
         prometheus.io/scheme: "http"
 {{- end}}
+      labels:
+{{ include "common.template-labels" . | indent 8 }}
+        app: {{ include "common.fullname" . }}-events
     spec:
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
