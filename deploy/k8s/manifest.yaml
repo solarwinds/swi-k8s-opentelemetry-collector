@@ -23,7 +23,7 @@ data:
   CLUSTER_UID: "<CLUSTER_UID>"
   OTEL_ENVOY_ADDRESS: "<OTEL_ENVOY_ADDRESS>"
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: "false"
-  MANIFEST_VERSION: "2.0.2"
+  MANIFEST_VERSION: "2.0.3"
   APP_VERSION: "0.2.0"
 ---
 # Source: swo-k8s-collector/templates/events-collector-config-map.yaml
@@ -1793,10 +1793,6 @@ kind: DaemonSet
 metadata:
   name: swo-k8s-collector-logs
   namespace: <NAMESPACE>
-  annotations:
-    checksum/config: fd93bc26a2c57d2727aca6bb030381339318aa5ac9191711862264a1fc90712a
-    checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
-    checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -1812,7 +1808,7 @@ spec:
         app.kubernetes.io/instance: swo-k8s-collector
       annotations:
         checksum/config: fd93bc26a2c57d2727aca6bb030381339318aa5ac9191711862264a1fc90712a
-        checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
+        checksum/config_common_env: 45971400641dbcc0e35e3e2d03bfd64c1d8147a1094ca53db1167dfc650f5c85
         checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
 
     spec:
@@ -1906,10 +1902,6 @@ kind: Deployment
 metadata:
   name: swo-k8s-collector-events
   namespace: <NAMESPACE>
-  annotations:
-    checksum/config: 3079ccec4fe37f496e829f686e34d816b635c3750dea7e078c821010f3d238d8
-    checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
-    checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -1920,6 +1912,10 @@ spec:
       app: swo-k8s-collector-events
   template:
     metadata:
+      annotations:
+        checksum/config: 3079ccec4fe37f496e829f686e34d816b635c3750dea7e078c821010f3d238d8
+        checksum/config_common_env: 45971400641dbcc0e35e3e2d03bfd64c1d8147a1094ca53db1167dfc650f5c85
+        checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
       labels:
         app.kubernetes.io/name: swo-k8s-collector
         app.kubernetes.io/instance: swo-k8s-collector
@@ -1981,11 +1977,6 @@ kind: Deployment
 metadata:
   name: swo-k8s-collector-metrics
   namespace: <NAMESPACE>
-  annotations:
-    checksum/config: fa02a81d7a487fc97b44a2e5d22c1a3babba6225bbbe834649dadc502911653e
-    checksum/config_common_env: 17fd36b327b09a676b997c26143c02baa4abeae85c79f3bbc343ecea9a3d57b6
-    checksum/config_env: 69527c661c505be09f4d26ac8cf06c6777da5a33ad895e4328c41539aead509a
-    checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
   labels:
     app.kubernetes.io/name: swo-k8s-collector
     app.kubernetes.io/instance: swo-k8s-collector
@@ -1996,6 +1987,11 @@ spec:
       app: swo-k8s-collector-metrics
   template:
     metadata:
+      annotations:
+        checksum/config: fa02a81d7a487fc97b44a2e5d22c1a3babba6225bbbe834649dadc502911653e
+        checksum/config_common_env: 45971400641dbcc0e35e3e2d03bfd64c1d8147a1094ca53db1167dfc650f5c85
+        checksum/config_env: 69527c661c505be09f4d26ac8cf06c6777da5a33ad895e4328c41539aead509a
+        checksum/values: f5a89406d17bf611bbc86e9e1cdc83535d2aa1b425aea62312512d068501d1ec
       labels:
         app.kubernetes.io/name: swo-k8s-collector
         app.kubernetes.io/instance: swo-k8s-collector
