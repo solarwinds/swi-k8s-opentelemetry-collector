@@ -4,10 +4,6 @@ kind: Deployment
 metadata:
   name: {{ include "common.fullname" . }}-events
   namespace: {{ .Release.Namespace }}
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/events-collector-config-map.yaml") . | sha256sum }}
-    checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
-    checksum/values: {{ toJson .Values | sha256sum }}
   labels:
 {{ include "common.labels" . | indent 4 }}
 spec:
@@ -17,16 +13,19 @@ spec:
       app: {{ include "common.fullname" . }}-events
   template:
     metadata:
-      labels:
-{{ include "common.template-labels" . | indent 8 }}
-        app: {{ include "common.fullname" . }}-events
-{{- if .Values.otel.events.telemetry.metrics.enabled }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/events-collector-config-map.yaml") . | sha256sum }}
+        checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+        checksum/values: {{ toJson .Values | sha256sum }}
+{{- if .Values.otel.events.telemetry.metrics.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._1 | quote }}
         prometheus.io/path: "/metrics"
         prometheus.io/scheme: "http"
 {{- end}}
+      labels:
+{{ include "common.template-labels" . | indent 8 }}
+        app: {{ include "common.fullname" . }}-events
     spec:
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
