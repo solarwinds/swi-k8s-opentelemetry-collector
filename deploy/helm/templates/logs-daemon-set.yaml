@@ -23,7 +23,12 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
-
+{{- if .Values.otel.logs.telemetry.metrics.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ (split ":" .Values.otel.logs.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+{{- end}}
     spec:
       terminationGracePeriodSeconds: 30
       securityContext:
