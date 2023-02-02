@@ -21,6 +21,13 @@ spec:
       labels:
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" . }}-metrics
+{{- if .Values.otel.metrics.telemetry.metrics.enabled }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+{{- end}}
     spec:
       securityContext: {}
       containers:
