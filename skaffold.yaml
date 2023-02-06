@@ -7,6 +7,12 @@ build:
     - image: swi-k8s-opentelemetry-collector
       docker:
         dockerfile: build/docker/Dockerfile
+    - image: integration-test
+      docker:
+        dockerfile: build/docker/IntegrationTest.Dockerfile
+    - image: wiremock
+      docker:
+        dockerfile: build/docker/WireMock.Dockerfile
   local:
     push: false
 manifests:
@@ -38,7 +44,7 @@ deploy:
           cluster.name: cluster name
           cluster.uid: cluster-uid-123456789
         upgradeOnChange: true
-
+      
       - name: monitoring
         remoteChart: prometheus
         namespace: monitoring
@@ -50,6 +56,11 @@ deploy:
           prometheus-node-exporter.enabled: false
           prometheus-pushgateway.enabled: false
   kubeContext: docker-desktop
+portForward:
+- resourceType: service
+  resourceName: timeseries-mock-service
+  namespace: monitoring
+  port: 8088
 profiles:
   - name: builder-only
     build:
@@ -94,7 +105,28 @@ profiles:
         structureTests:
           - './build/docker/structure-test.yaml'
     deploy:
-      # `default` is k3s default context name
+      kubectl: {}
+      helm:
+        releases:
+          - name: swi-k8s-opentelemetry-collector
+            chartPath: deploy/helm
+            namespace: monitoring
+            createNamespace: true
+            setValues:
+              otel.metrics.prometheus.url: wiremock.monitoring.svc.cluster.local:80
+              otel.endpoint: timeseries-mock-service:9082
+              otel.tls_insecure: true
+              otel.image.repository: "swi-k8s-opentelemetry-collector"
+              otel.image.tag: ""
+              otel.metrics.prometheus.scrape_interval: "15s"
+              otel.logs.filter.include.record_attributes[0].key: "k8s.namespace.name"
+              otel.logs.filter.include.record_attributes[0].value: "^.*$"
+              otel.logs.filter.exclude.match_type: "strict"
+              otel.logs.filter.exclude.record_attributes[0].key: "k8s.namespace.name"
+              otel.logs.filter.exclude.record_attributes[0].value: "monitoring"
+              cluster.name: cluster name
+              cluster.uid: cluster-uid-123456789
+            upgradeOnChange: true
       kubeContext: default
   - name: ci-helm-e2e
     patches:

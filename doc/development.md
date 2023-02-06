@@ -78,6 +78,25 @@ In order to change Prometheus endpoint that is hosted on HTTPS you can adjust sk
 - add `otel.metrics.prometheus.scheme: https`
 - update `otel.metrics.prometheus.url: <remote prometheus>`
 
+## Integration tests
+Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
+
+### Prerequisites
+Deploy cluster locally using `skaffold dev`
+### Run tests locally
+* Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
+* You can run it directly in cluster by manually triggering `integration-test` CronJob
+
+### Updating tests if processing is changed
+* Modify `WRITE_ACTUAL_JSON` envrionment variable in `Python: Pytest` debug configuration to `True`
+* Run tests
+* Read `actual.json`, format it to readable json, review it if it matches expected outcome and save it as `expected_output.json`
+
+### Updating mocked data if new data are scraped
+* Open `utils/cleanup_mocked_prometheus_response.py` fill Prometheus Host to `prometheushost = '<FILL HERE>'`
+* Run the script
+* Continue with `Updating tests if processing is changed`
+
 ## Publishing
 
 ### Docker image

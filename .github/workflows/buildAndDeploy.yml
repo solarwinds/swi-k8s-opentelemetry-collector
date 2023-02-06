@@ -47,6 +47,26 @@ jobs:
       - name: Deploy services using Skaffold
         run: skaffold deploy --build-artifacts=/tmp/tags.json
 
+      - name: Deploy services using Skaffold
+        run: skaffold verify --build-artifacts=/tmp/tags.json
+
+      - name: Run integration tests
+        run: |
+          kubectl create job --from=cronjob/integration-test -n=monitoring integration-test-manual
+
+          # Wait for the job to finish
+          while [ "$(kubectl get job integration-test-manual -n=monitoring -o jsonpath='{.status.active}')" != "0" ]; do
+            sleep 1;
+          done
+
+          # Evaluate the job status
+          status=$(kubectl get job integration-test-manual -n=monitoring -o jsonpath='{.status.succeeded}')
+          if [ "$status" == "1" ]; then
+            echo "Job finished successfully."
+          else
+            echo "Job failed with status: $status"
+          fi
+
       # this step should produce all types: events, metrics and logs
       - name: Tail Otel mock for 60 seconds
         run: |

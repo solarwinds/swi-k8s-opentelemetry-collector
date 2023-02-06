@@ -11,6 +11,10 @@ data:
     exporters:
       logging:
         loglevel: debug
+      file/logs:
+        path: /data/logs.json
+      file/metrics:
+        path: /data/metrics.json
     extensions:
       health_check: {}
       memory_ballast:
@@ -29,12 +33,14 @@ data:
         metrics:
           exporters:
           - logging
+          - file/metrics
           processors:
           receivers:
           - otlp
         logs:
           exporters:
           - logging
+          - file/logs
           processors:
           receivers:
           - otlp
@@ -51,6 +57,10 @@ spec:
       port: 9082
       targetPort: 9082
       name: grpc
+    - protocol: TCP
+      port: 8088
+      targetPort: 80
+      name: html
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -67,14 +77,14 @@ spec:
         app: timeseries-mock-service
     spec:
       securityContext:
-        {}
+        runAsUser: 0
       containers:
         - name: opentelemetry-collector
           command:
             - /otelcol-contrib
             - --config=/conf/relay.yaml
           securityContext:
-            {}
+            runAsUser: 0
           image: "otel/opentelemetry-collector-contrib:0.43.0"
           imagePullPolicy: IfNotPresent
           ports:
@@ -96,6 +106,18 @@ spec:
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
+            - name: output
+              mountPath: /data
+        - name: file-provider
+          image: nginx:alpine
+          command: ['sh', '-c', 'touch /usr/share/nginx/html/metrics.json && touch /usr/share/nginx/html/logs.json && chmod -R 777 /usr/share/nginx/html && nginx -g "daemon off;"']
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+          - name: output
+            mountPath: /usr/share/nginx/html
+          ports:
+          - containerPort: 80
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
@@ -103,6 +125,44 @@ spec:
             items:
               - key: relay
                 path: relay.yaml
-
+        - name: output
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wiremock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wiremock
+  template:
+    metadata:
+      labels:
+        app: wiremock
+    spec:
+      containers:
+        - name: wiremock
+          image: wiremock
+          args:
+            - --verbose
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_OPTS
+              value: "-Dwiremock.containerization=kubernetes -Dwiremock.extensions.containerization.replicas=1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wiremock
+spec:
+  selector:
+    app: wiremock
+  ports:
+    - name: wiremock
+      port: 8080
+      targetPort: 8080
 
 

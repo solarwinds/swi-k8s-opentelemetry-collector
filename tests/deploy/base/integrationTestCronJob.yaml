@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: integration-test
+spec:
+  suspend: true
+  schedule: "0 0 1 1 *" # schedule does not matter (set to yearly), it will be suspended anyway
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: integration-test
+              image: integration-test
+              env:
+                - name: TIMESERIES_MOCK_ENDPOINT
+                  value: timeseries-mock-service.monitoring.svc.cluster.local:8088
+          restartPolicy: Never
