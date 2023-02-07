@@ -23,16 +23,20 @@ processors:
     log_statements:
       - context: log
         statements:
-          - set(severity_text, "Error") where 
+          - set(severity_text, "Error") where
 {{ include "common.events-error-conditions" . | indent 16}}
-          - set(severity_number, 17) where 
+          - set(severity_number, 17) where
 {{ include "common.events-error-conditions" . | indent 16}}
 
-          - set(severity_text, "Warning") where 
+          - set(severity_text, "Warning") where
 {{ include "common.events-warning-conditions" . | indent 16}}
-          - set(severity_number, 13) where 
+          - set(severity_number, 13) where
 {{ include "common.events-warning-conditions" . | indent 16}}
-
+  transform/namespace:
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -77,6 +81,7 @@ service:
         - filter
 {{- end}}
         - transform/severity
+        - transform/namespace
         - resource/events
         - batch
       receivers:
