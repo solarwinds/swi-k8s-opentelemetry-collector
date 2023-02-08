@@ -47,9 +47,6 @@ jobs:
       - name: Deploy services using Skaffold
         run: skaffold deploy --build-artifacts=/tmp/tags.json
 
-      - name: Deploy services using Skaffold
-        run: skaffold verify --build-artifacts=/tmp/tags.json
-
       - name: Run integration tests
         run: |
           kubectl create job --from=cronjob/integration-test -n=monitoring integration-test-manual
@@ -143,8 +140,11 @@ jobs:
       - name: Deploy kubernetes
         uses: ./.github/actions/deploy-kubernetes
 
+      - name: Build
+        run: skaffold build --file-output=/tmp/tags.json
+
       - name: Deploy services using Skaffold
-        run: skaffold deploy -p=ci-helm-e2e
+        run: skaffold deploy -p=ci-helm-e2e --build-artifacts=/tmp/tags.json
 
       # this step should produce all types: events, metrics and logs
       - name: Tail Otel mock for 60 seconds
