@@ -7,7 +7,7 @@ exporters:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
 extensions:
   file_storage:
-    directory: /var/lib/swo/checkpoints
+{{ toYaml .Values.otel.logs.filestorage | indent 4 }}
   health_check: {}
   memory_ballast:
 {{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
