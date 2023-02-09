@@ -81,25 +81,14 @@ profiles:
       value: wiremock.monitoring.svc.cluster.local:8080
     - op: remove
       path: /deploy/helm/releases/1
+  # Useful to develop against remote prometheus instance (mounted locally on host.docker.internal:9090)
   - name: remote-prometheus
-    deploy:
-      helm:
-        releases:
-          - name: swi-k8s-opentelemetry-collector
-            chartPath: deploy/helm
-            namespace: monitoring
-            createNamespace: true
-            setValues:
-              # port forward Prometheus Webserver to localhost:9090
-              otel.metrics.prometheus.url: host.docker.internal:9090
-              otel.endpoint: timeseries-mock-service:9082
-              otel.tls_insecure: true
-              otel.image.repository: "swi-k8s-opentelemetry-collector"
-              otel.image.tag: ""
-              otel.metrics.prometheus.scrape_interval: "15s"
-              cluster.name: cluster name
-              cluster.uid: cluster-uid-123456789
-            upgradeOnChange: true
+    patches:
+    - op: replace
+      path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
+      value: host.docker.internal:9090
+    - op: remove
+      path: /deploy/helm/releases/1
   - name: ci
     activation:
       - env: CI=true

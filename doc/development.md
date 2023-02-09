@@ -82,7 +82,7 @@ In order to change Prometheus endpoint that is hosted on HTTPS you can adjust sk
 Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
 
 ### Prerequisites
-Deploy cluster locally using `skaffold dev`
+Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll mocked data)
 ### Run tests locally
 * Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
 * You can run it directly in cluster by manually triggering `integration-test` CronJob

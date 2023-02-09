@@ -25,40 +25,45 @@ def test_metric_names_generated():
             print(f"An error occurred while making the request: {e}")
 
         if response.status_code == 200:
-            print("Successfully downloaded!")
-            lines = response.content.splitlines()
-            metrics = [json.loads(line) for line in lines]
-            merged_json = merge_jsons(metrics)
-            metric_names = get_unique_metric_names(merged_json)
+            processed_successfully = True
+            try:
+                print("Successfully downloaded!")
+                lines = response.content.splitlines()
+                metrics = [json.loads(line) for line in lines]
+                merged_json = merge_jsons(metrics)
+                metric_names = get_unique_metric_names(merged_json)
 
-            actual_json = json.dumps(merged_json, sort_keys=True)
-            expected_json = json.dumps(expected_json_raw, sort_keys=True)
+                actual_json = json.dumps(merged_json, sort_keys=True)
+                expected_json = json.dumps(expected_json_raw, sort_keys=True)
 
-            write_actual = os.getenv("WRITE_ACTUAL_JSON", "False")
-            if write_actual == "True":
-                with open("actual.json", "w") as f:
-                    f.write(expected_json)
+                write_actual = os.getenv("WRITE_ACTUAL_JSON", "False")
+                if write_actual == "True":
+                    with open("actual.json", "w") as f:
+                        f.write(expected_json)
 
-            length_matches = False
-            if len(actual_json) == len(expected_json):
-                print(
-                    f'Length of outputs matches, expected: {len(expected_json)}, actual: {len(actual_json)}')
-                length_matches = True
-            else:
-                print(
-                    f'Length of outputs does not match, expected: {len(expected_json)}, actual: {len(actual_json)}')
-                time.sleep(2)
+                length_matches = False
+                if len(actual_json) == len(expected_json):
+                    print(
+                        f'Length of outputs matches, expected: {len(expected_json)}, actual: {len(actual_json)}')
+                    length_matches = True
+                else:
+                    print(
+                        f'Length of outputs does not match, expected: {len(expected_json)}, actual: {len(actual_json)}')
 
-            metric_matches = False
-            if all(name in metric_names for name in expected_metric_names):
-                print("All specific metric names are found in the response.")
-                metric_matches = True
-            else:
-                print('Some specific metric names are not found in the response')
-                print(f'Expected: {expected_metric_names}')
-                print(f'Actual: {metric_names}')
+                metric_matches = False
+                if all(name in metric_names for name in expected_metric_names):
+                    print("All specific metric names are found in the response.")
+                    metric_matches = True
+                else:
+                    print('Some specific metric names are not found in the response')
+                    print(f'Expected: {expected_metric_names}')
+                    print(f'Actual: {metric_names}')
+            except Exception as e:
+                print('An exception occurred: {}'.format(e))
+                processed_successfully = False;
 
-            if metric_matches and length_matches:
+
+            if processed_successfully and metric_matches and length_matches:
                 break
             else:
                 print('Retrying...')
