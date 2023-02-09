@@ -835,6 +835,12 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
+  # Converting the apiserver_request_.*_temp metrics back to Gauge to make them compatible with experimental_metricsgeneration
+  transform/apiserver:
+    metric_statements:
+      - context: datapoint
+        statements:
+          - convert_sum_to_gauge() where IsMatch(metric.name, "^apiserver_request_.*_temp$") == true
   experimental_metricsgeneration/cluster:
     rules:
       - name: k8s.cluster.memory.utilization
@@ -1232,6 +1238,7 @@ service:
         - cumulativetodelta
         - deltatorate
         - metricstransform/aggregate_rate
+        - transform/apiserver
         - experimental_metricsgeneration/cluster
         - experimental_metricsgeneration/pod
         - groupbyattrs/node
