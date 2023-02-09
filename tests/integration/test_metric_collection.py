@@ -17,6 +17,8 @@ def test_metric_names_generated():
     with open('expected_output.json', "r", newline='\n') as file_with_expected:
         expected_json_raw = json.load(file_with_expected)
 
+    metric_matches = False
+    length_matches = False
     while time.time() - start_time < timeout:
         response = None
         try: 
@@ -77,6 +79,10 @@ def test_metric_names_generated():
             time.sleep(2)
 
     if time.time() - start_time >= timeout:
+        if not metric_matches and actual_json is not None:
+            print(f'Actual json:')
+            print(actual_json)
+
         raise ValueError("Timed out waiting for specific metric names")
 
 

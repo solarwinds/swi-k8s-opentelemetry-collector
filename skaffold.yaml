@@ -101,6 +101,12 @@ profiles:
       - image: swi-k8s-opentelemetry-collector
         structureTests:
           - './build/docker/structure-test.yaml'
+    patches:
+    - op: replace
+      path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
+      value: wiremock.monitoring.svc.cluster.local:8080
+    - op: remove
+      path: /deploy/helm/releases/1
     deploy:
       kubeContext: default
   - name: ci-helm-e2e
