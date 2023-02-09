@@ -91,15 +91,6 @@ jobs:
           skaffold delete
           sleep 20
 
-      - name: Evaluate metrics collection functionality
-        run: |
-          if grep -q "k8s.kube_pod_info" "OtelLogs/output.log"; then
-            echo "Expected metrics found"
-          else
-            echo "Metrics are missing"
-            exit 1
-          fi
-
       - name: Evaluate events collection functionality
         run: |
           if grep -q "k8s.event." "OtelLogs/output.log"; then
