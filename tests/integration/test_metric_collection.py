@@ -14,42 +14,43 @@ def test_metric_names_generated():
                              'k8s.kube_deployment_spec_replicas', 'k8s.kube_node_created', 'k8s.pod.spec.memory.limit', 'k8s.cluster.cpu.utilization', 'k8s.kube_pod_info', 'k8s.pod.network.transmit_packets_dropped', 'k8s.kube_node_status_allocatable', 'k8s.node.memory.allocatable', 'k8s.kube_daemonset_created', 'k8s.cluster.cpu.capacity', 'k8s.node.cpu.capacity', 'k8s.container_spec_cpu_period', 'k8s.container_network_transmit_bytes_total', 'k8s.kube_deployment_status_replicas_ready', 'k8s.node.status.condition.diskpressure', 'k8s.node.network.bytes_received', 'k8s.kube_deployment_created', 'k8s.kube_deployment_status_replicas', 'k8s.kube_node_status_capacity', 'k8s.kube_daemonset_status_number_available', 'k8s.pod.containers', 'k8s.kube_pod_owner', 'k8s.node.cpu.usage.seconds.rate', 'up', 'k8s.kube_deployment_spec_paused', 'k8s.container_network_receive_bytes_total', 'k8s.kube_deployment_labels', 'k8s.kube_daemonset_status_number_ready', 'k8s.container.spec.memory.requests', 'k8s.container_network_transmit_packets_total', 'k8s.node.cpu.allocatable', 'k8s.cluster.memory.allocatable', 'k8s.kube_daemonset_status_number_misscheduled', 'k8s.kube_pod_container_info', 'k8s.container_fs_writes_bytes_total', 'k8s.pod.fs.iops', 'k8s.node.pods', 'k8s.kube_pod_container_status_running', 'k8s.node.network.receive_packets_dropped', 'k8s.node.status.condition.pidpressure', 'k8s.pod.network.bytes_transmitted', 'k8s.pod.spec.memory.requests', 'k8s.cluster.pods.running', 'k8s.cluster.nodes.ready.avg', 'k8s.pod.network.packets_transmitted', 'k8s.kube_daemonset_labels', 'k8s.pod.fs.usage.bytes', 'k8s.container_network_receive_packets_total', 'k8s.kube_node_status_condition', 'k8s.cluster.cpu.allocatable', 'k8s.container_fs_usage_bytes', 'k8s.cluster.pods', 'k8s.container_spec_memory_limit_bytes', 'k8s.kube_pod_status_ready', 'k8s.pod.network.bytes_received', 'scrape_series_added', 'k8s.pod.network.packets_received', 'k8s.node.network.packets_received', 'k8s.pod.cpu.usage.seconds.rate', 'k8s.container_fs_writes_total', 'k8s.kube_pod_container_resource_requests', 'k8s.kube_deployment_status_replicas_updated', 'k8s.node.fs.usage']
     start_time = time.time()
 
-    with open('expected_output.json', "r") as file_with_expected:
+    with open('expected_output.json', "r", newline='\n') as file_with_expected:
         expected_json_raw = json.load(file_with_expected)
 
     while time.time() - start_time < timeout:
-        try:
+        response = None
+        try: 
             response = requests.get(url)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             print(f"An error occurred while making the request: {e}")
 
-        if response.status_code == 200:
+        if response is not None and response.status_code == 200:
             processed_successfully = True
             try:
                 print("Successfully downloaded!")
                 lines = response.content.splitlines()
                 metrics = [json.loads(line) for line in lines]
                 merged_json = merge_jsons(metrics)
-                metric_names = get_unique_metric_names(merged_json)
 
-                actual_json = json.dumps(merged_json, sort_keys=True)
-                expected_json = json.dumps(expected_json_raw, sort_keys=True)
+                actual_json = json.dumps(merged_json, sort_keys=True, indent=2)
+                expected_json = json.dumps(expected_json_raw, sort_keys=True, indent=2)
 
                 write_actual = os.getenv("WRITE_ACTUAL_JSON", "False")
                 if write_actual == "True":
-                    with open("actual.json", "w") as f:
-                        f.write(expected_json)
+                    with open("actual.json", "w", newline='\n') as f:
+                        f.write(actual_json)
 
                 length_matches = False
-                if len(actual_json) == len(expected_json):
+                if len(actual_json.splitlines()) == len(expected_json.splitlines()):
                     print(
-                        f'Length of outputs matches, expected: {len(expected_json)}, actual: {len(actual_json)}')
+                        f'LineCount of outputs matches, expected: {len(expected_json.splitlines())}, actual: {len(actual_json.splitlines())}')
                     length_matches = True
                 else:
                     print(
-                        f'Length of outputs does not match, expected: {len(expected_json)}, actual: {len(actual_json)}')
+                        f'LineCount of outputs does not match, expected: {len(expected_json.splitlines())}, actual: {len(actual_json.splitlines())}')
 
+                metric_names = get_unique_metric_names(merged_json)
                 metric_matches = False
                 if all(name in metric_names for name in expected_metric_names):
                     print("All specific metric names are found in the response.")
@@ -69,8 +70,10 @@ def test_metric_names_generated():
                 print('Retrying...')
                 time.sleep(2)
         else:
-            print('Failed to download metrics. Response code:',
-                  response.status_code)
+            if response is not None:
+                print('Failed to download metrics. Response code:',
+                    response.status_code)
+            print('Retrying...')
             time.sleep(2)
 
     if time.time() - start_time >= timeout:
@@ -87,6 +90,6 @@ def merge_jsons(jsons):
 def get_unique_metric_names(merged_json):
     result = list(set([metric["name"]
                        for resource in merged_json["resourceMetrics"]
-                       for metric in resource["instrumentationLibraryMetrics"][0]["metrics"]
+                       for metric in resource["scopeMetrics"][0]["metrics"]
                        ]))
     return result
