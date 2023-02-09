@@ -54,8 +54,9 @@ def test_metric_names_generated():
                 print("All specific metric names are found in the response.")
                 metric_matches = True
             else:
-                print(
-                    f'Some specific metric names are not found in the response, expected: {expected_metric_names}, actual: {metric_names}')
+                print('Some specific metric names are not found in the response')
+                print(f'Expected: {expected_metric_names}')
+                print(f'Actual: {metric_names}')
 
             if metric_matches and length_matches:
                 break
@@ -68,7 +69,7 @@ def test_metric_names_generated():
             time.sleep(2)
 
     if time.time() - start_time >= timeout:
-        print("Timed out waiting for specific metric names")
+        raise ValueError("Timed out waiting for specific metric names")
 
 
 def merge_jsons(jsons):

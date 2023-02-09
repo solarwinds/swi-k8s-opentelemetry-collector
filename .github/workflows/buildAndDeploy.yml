@@ -51,18 +51,31 @@ jobs:
         run: |
           kubectl create job --from=cronjob/integration-test -n=monitoring integration-test-manual
 
-          # Wait for the job to finish
-          while [ "$(kubectl get job integration-test-manual -n=monitoring -o jsonpath='{.status.active}')" != "0" ]; do
-            sleep 1;
+          kubectl wait --for=condition=ready --timeout=10s pod -l job-name=integration-test-manual -n=monitoring
+          kubetail -l job-name=integration-test-manual --namespace monitoring &
+
+          # Wait for either complete or failed -
+          while true; do
+              if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual -n=monitoring 2>/dev/null; then
+                  job_result=0
+                  break
+              fi
+
+              if kubectl wait --for=condition=failed --timeout=0 jobs/integration-test-manual -n=monitoring 2>/dev/null; then
+                  job_result=1
+                  break
+              fi
+
+              echo "Waiting for tests to complete"
+              sleep 3
           done
 
-          # Evaluate the job status
-          status=$(kubectl get job integration-test-manual -n=monitoring -o jsonpath='{.status.succeeded}')
-          if [ "$status" == "1" ]; then
-            echo "Job finished successfully."
-          else
-            echo "Job failed with status: $status"
+          if [[ $job_result -eq 1 ]]; then
+              echo "Tests failed"
+              exit 1
           fi
+
+          echo "Tests succeeded"
 
       # this step should produce all types: events, metrics and logs
       - name: Tail Otel mock for 60 seconds
