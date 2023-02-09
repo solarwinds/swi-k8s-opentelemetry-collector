@@ -51,7 +51,7 @@ jobs:
         run: |
           kubectl create job --from=cronjob/integration-test -n=monitoring integration-test-manual
 
-          kubectl wait --for=condition=ready --timeout=10s pod -l job-name=integration-test-manual -n=monitoring
+          kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n=monitoring
           kubetail -l job-name=integration-test-manual --namespace monitoring &
 
           # Wait for either complete or failed -
