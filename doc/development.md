@@ -84,6 +84,7 @@ Integration tests are located in `tests/integration` and are supposed to verify 
 ### Prerequisites
 Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll mocked data)
 ### Run tests locally
+* Install all dependencies: `pip install --user -r tests/integration/requirements.txt` 
 * Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
 * You can run it directly in cluster by manually triggering `integration-test` CronJob
 

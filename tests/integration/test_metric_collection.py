@@ -58,9 +58,9 @@ def test_metric_names_generated():
                     print("All specific metric names are found in the response.")
                     metric_matches = True
                 else:
+                    missing_metric_names = [name in metric_names for name in expected_metric_names]
                     print('Some specific metric names are not found in the response')
-                    print(f'Expected: {expected_metric_names}')
-                    print(f'Actual: {metric_names}')
+                    print(f'Missing metrics: {missing_metric_names}')
             except Exception as e:
                 print('An exception occurred: {}'.format(e))
                 processed_successfully = False;
