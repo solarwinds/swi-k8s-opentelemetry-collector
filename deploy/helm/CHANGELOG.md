@@ -5,10 +5,13 @@ All notable changes to Helm charts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.1.0-beta.1] - 2023-02-09
 
 ### Added
 * if telemetry is enabled (true by default) OTEL collectors will contain prometheus annotations so that telemetry is discovered by Prometheus [#152](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/152).
+* configuration of `file_storage` extension is now available in `values.yaml`. [#157](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/157)
+    * default `timeout` is now set to `5s`
+* new events transform pipeline which sets **sw.namespace** attribute to **sw.events.inframon.k8s** [#155](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/155).
 
 ### Fixed
 * Properly annotate configmap checksums [#151](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/151)
@@ -17,14 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0-alpha.3] - 2023-01-31
 ### Added
 
-* Add attribute k8s.deployment.name to exported logs 
-[#145](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/145). 
+* Add attribute k8s.deployment.name to exported logs
+[#145](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/145).
 
 
 ## [2.1.0-alpha.2] - 2023-01-30
 ### Added
 
-* Exposed some configuration of [filelogreciever](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver) in `values.yaml` [#146](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/146). 
+* Exposed some configuration of [filelogreciever](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver) in `values.yaml` [#146](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/146).
 
 ### Changed
 
