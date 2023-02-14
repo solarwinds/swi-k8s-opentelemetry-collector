@@ -98,7 +98,7 @@ spec:
               name: runlogjournal
               readOnly: true
             - name: logcheckpoints
-              mountPath: /var/lib/swo/checkpoints
+              mountPath: {{ .Values.otel.logs.filestorage.directory }}
       volumes:
         - name: varlogpods
           hostPath:
@@ -114,7 +114,7 @@ spec:
             path: /run/log/journal
         - name: logcheckpoints
           hostPath:
-            path: /var/lib/swo/checkpoints
+            path: {{ printf "%s/%s" .Values.otel.logs.filestorage.directory .Values.cluster.uid }}
             type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Changed
 * Remove generated attribute k8s.deployment.name
+* Log collector suffix clusterId into folder which it mounts for checkpoints (e.q.`/var/lib/swo/checkpoints/<clusterId>`). This avoid unpredictable errors in scenario when previous monitoring was not deleted. [#161](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/161)
 
 ## [2.1.0-beta.1] - 2023-02-09
 
