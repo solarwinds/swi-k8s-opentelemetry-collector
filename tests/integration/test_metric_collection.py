@@ -83,7 +83,7 @@ def test_metric_names_generated():
             print(f'Actual json:')
             print(actual_json)
 
-        raise ValueError("Timed out waiting for specific metric names")
+        raise ValueError(f'Timed out waiting. metric_matches: {metric_matches}, metric_matches: {length_matches}, processed_successfully: {processed_successfully}')
 
 
 def merge_jsons(jsons):
