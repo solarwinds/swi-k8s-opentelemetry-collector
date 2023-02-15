@@ -15,11 +15,27 @@ data:
         path: /data/logs.json
       file/metrics:
         path: /data/metrics.json
+      file/events:
+        path: /data/events.json
     extensions:
       health_check: {}
       memory_ballast:
         size_mib: "204"
     processors:
+      filter/events_in:
+        logs: 
+          include:
+            match_type: strict
+            resource_attributes:
+              - Key: sw.k8s.log.type
+                Value: event
+      filter/events_out:
+        logs: 
+          exclude:
+            match_type: strict
+            resource_attributes:
+              - Key: sw.k8s.log.type
+                Value: event
     receivers:
       otlp:
         protocols:
@@ -37,11 +53,20 @@ data:
           processors:
           receivers:
           - otlp
-        logs:
+        logs/logs:
           exporters:
           - logging
           - file/logs
           processors:
+          - filter/events_out
+          receivers:
+          - otlp
+        logs/events:
+          exporters:
+          - logging
+          - file/events
+          processors:
+          - filter/events_in
           receivers:
           - otlp
 ---
@@ -110,7 +135,7 @@ spec:
               mountPath: /data
         - name: file-provider
           image: nginx:alpine
-          command: ['sh', '-c', 'touch /usr/share/nginx/html/metrics.json && touch /usr/share/nginx/html/logs.json && chmod -R 777 /usr/share/nginx/html && nginx -g "daemon off;"']
+          command: ['sh', '-c', 'touch /usr/share/nginx/html/events.json && touch /usr/share/nginx/html/metrics.json && touch /usr/share/nginx/html/logs.json && chmod -R 777 /usr/share/nginx/html && nginx -g "daemon off;"']
           securityContext:
             runAsUser: 0
           volumeMounts:

@@ -48,74 +48,7 @@ jobs:
         run: skaffold deploy --build-artifacts=/tmp/tags.json
 
       - name: Run integration tests
-        run: |
-          kubectl create job --from=cronjob/integration-test -n=monitoring integration-test-manual
-
-          kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n=monitoring
-          kubetail -l job-name=integration-test-manual --namespace monitoring &
-
-          # Wait for either complete or failed -
-          while true; do
-              if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual -n=monitoring 2>/dev/null; then
-                  job_result=0
-                  break
-              fi
-
-              if kubectl wait --for=condition=failed --timeout=0 jobs/integration-test-manual -n=monitoring 2>/dev/null; then
-                  job_result=1
-                  break
-              fi
-
-              echo "Waiting for tests to complete"
-              sleep 3
-          done
-
-          if [[ $job_result -eq 1 ]]; then
-              echo "Tests failed"
-              exit 1
-          fi
-
-          echo "Tests succeeded"
-
-      # this step should produce all types: events, metrics and logs
-      - name: Tail Otel mock for 60 seconds
-        run: |
-          kubectl run dummy --image ubuntu -- /bin/bash -ec "while :; do echo '!!testlog!!'; sleep 5 ; done"
-          mkdir -p OtelLogs
-          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/output.log &
-          sleep 60
-
-      # Delete resources and wait some time for its termination
-      - name: Destroy environment
-        run: |
-          skaffold delete
-          sleep 20
-
-      - name: Evaluate events collection functionality
-        run: |
-          if grep -q "k8s.event." "OtelLogs/output.log"; then
-            echo "Expected events found"
-          else
-            echo "Events are missing"
-            exit 1
-          fi
-
-      - name: Evaluate logs collection functionality
-        run: |
-          if grep -q "!!testlog!!" "OtelLogs/output.log"; then
-            echo "Some logs found"
-          else
-            echo "Logs are missing"
-            exit 1
-          fi
-
-      - name: Capture Otel logs
-        uses: actions/upload-artifact@v2
-        if: failure() && hashFiles('OtelLogs') != '' # test existance of some report in `OtelLogs` folder
-        with:
-          name: OtelLogs
-          path: OtelLogs/
-          retention-days: 30
+        uses: ./.github/actions/run-integration-tests
 
       - name: Save image
         if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
@@ -149,55 +82,10 @@ jobs:
 
       - name: Deploy services using Skaffold
         run: skaffold deploy -p=ci-helm-e2e --build-artifacts=/tmp/tags.json
+      
+      - name: Run integration tests
+        uses: ./.github/actions/run-integration-tests
 
-      # this step should produce all types: events, metrics and logs
-      - name: Tail Otel mock for 60 seconds
-        run: |
-          kubectl run dummy --image ubuntu -- /bin/bash -ec "while :; do echo '!!testlog!!'; sleep 5 ; done"
-          mkdir -p OtelLogs
-          kubetail timeseries-mock-service --namespace monitoring > OtelLogs/output.log &
-          sleep 60
-
-      # Delete resources and wait some time for its termination
-      - name: Destroy environment
-        run: |
-          skaffold delete
-          sleep 20
-
-      - name: Evaluate metrics collection functionality
-        run: |
-          if grep -q "k8s.kube_pod_info" "OtelLogs/output.log"; then
-            echo "Expected metrics found"
-          else
-            echo "Metrics are missing"
-            exit 1
-          fi
-
-      - name: Evaluate events collection functionality
-        run: |
-          if grep -q "k8s.event." "OtelLogs/output.log"; then
-            echo "Expected events found"
-          else
-            echo "Events are missing"
-            exit 1
-          fi
-
-      - name: Evaluate logs collection functionality
-        run: |
-          if grep -q "!!testlog!!" "OtelLogs/output.log"; then
-            echo "Some logs found"
-          else
-            echo "Logs are missing"
-            exit 1
-          fi
-
-      - name: Capture Otel logs
-        uses: actions/upload-artifact@v2
-        if: failure() && hashFiles('OtelLogs') != '' # test existance of some report in `OtelLogs` folder
-        with:
-          name: OtelLogs
-          path: OtelLogs/
-          retention-days: 30
 
   helm_verify:
     runs-on: ubuntu-latest
