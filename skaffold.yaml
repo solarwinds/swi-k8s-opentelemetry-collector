@@ -19,6 +19,7 @@ manifests:
   kustomize:
     paths:
       - tests/deploy/base
+      - tests/deploy/tests
     buildArgs:
       - --load-restrictor LoadRestrictionsNone
 deploy:
@@ -120,8 +121,6 @@ profiles:
       - op: replace
         path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
         value: wiremock.monitoring.svc.cluster.local:8080
-      - op: remove
-        path: /deploy/helm/releases/1
     build:
       local:
         push: false

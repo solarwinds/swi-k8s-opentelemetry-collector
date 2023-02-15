@@ -5,19 +5,19 @@ runs:
   steps:
     - name: Run Integration tests
       run: |
-        kubectl create job --from=cronjob/integration-test -n=monitoring integration-test-manual
+        kubectl create job --from=cronjob/integration-test integration-test-manual
 
-        kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n=monitoring
-        kubetail -l job-name=integration-test-manual --namespace monitoring &
+        kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual
+        kubetail -l job-name=integration-test-manual &
 
         # Wait for either complete or failed -
         while true; do
-            if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual -n=monitoring 2>/dev/null; then
+            if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual 2>/dev/null; then
                 job_result=0
                 break
             fi
 
-            if kubectl wait --for=condition=failed --timeout=0 jobs/integration-test-manual -n=monitoring 2>/dev/null; then
+            if kubectl wait --for=condition=failed --timeout=0 jobs/integration-test-manual 2>/dev/null; then
                 job_result=1
                 break
             fi

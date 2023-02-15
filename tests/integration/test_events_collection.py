@@ -9,7 +9,7 @@ pod_name = 'dummy-pod'
 expected_event = f'Started container {pod_name}'
 
 def setup_function():
-    subprocess.run(f'kubectl run {pod_name} -n=default --image ubuntu -- /bin/bash -ec "while :; do sleep 5 ; done"', shell=True)
+    subprocess.run(f'kubectl run {pod_name} --image bash:alpine3.16 -- -ec "while :; do sleep 5 ; done"', shell=True)
 
 def teardown_function():
     subprocess.run(f'kubectl delete pod {pod_name}', shell=True)
