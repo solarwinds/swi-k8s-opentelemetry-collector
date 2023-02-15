@@ -9,7 +9,7 @@ pod_name = 'dummy-logging-pod'
 tested_log = '!!testlog!!'
 
 def setup_function():
-    subprocess.run(f'kubectl run {pod_name} --image ubuntu -- /bin/bash -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"', shell=True)
+    subprocess.run(f'kubectl run {pod_name} -n=default --image ubuntu -- /bin/bash -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"', shell=True)
 
 def teardown_function():
     subprocess.run(f'kubectl delete pod {pod_name}', shell=True)
