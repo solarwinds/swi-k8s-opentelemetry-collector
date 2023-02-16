@@ -1,0 +1,39 @@
+name: 'Run Integration Tests'
+description: 'Run pytest integration tests'
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Integration tests
+      run: |
+        kubectl create job --from=cronjob/integration-test integration-test-manual
+
+        kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual
+        kubetail -l job-name=integration-test-manual &
+
+        # Wait for either complete or failed -
+        while true; do
+            if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual 2>/dev/null; then
+                job_result=0
+                break
+            fi
+
+            if kubectl wait --for=condition=failed --timeout=0 jobs/integration-test-manual 2>/dev/null; then
+                job_result=1
+                break
+            fi
+
+            echo "Waiting for tests to complete"
+            sleep 3
+        done
+
+        if [[ $job_result -eq 1 ]]; then
+            echo "Tests failed"
+            exit 1
+        fi
+
+        echo "Tests succeeded"
+      shell: bash
+
+
+
+
