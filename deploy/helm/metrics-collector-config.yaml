@@ -18,7 +18,7 @@ processors:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-              
+
   # removing instance attribute on kube_ metrics as it doesn't represent node
   attributes/remove_instance:
     include:
@@ -31,7 +31,7 @@ processors:
       - key: exported_instance
         action: delete
 
-  # unify attributes 
+  # unify attributes
   attributes/unify:
     actions:
       - key: node
@@ -46,7 +46,7 @@ processors:
       - key: node
         from_attribute: exported_instance
         action: insert
-      
+
       - key: instance
         action: delete
       - key: kubernetes_io_hostname
@@ -658,6 +658,9 @@ processors:
             aggregation_type: sum
         new_name: k8s.node.fs.usage
 
+      - include: k8s.node_boot_time_seconds
+        action: insert
+        new_name: k8s.node.age
 
       # Cluster metrics
       - include: k8s.kube_pod_info
@@ -954,6 +957,12 @@ processors:
         value: ${CLUSTER_NAME}
         action: insert
 
+      - key: sw.k8s.cluster.version
+        from_attribute: git_version
+        action: insert
+      - key: git_version
+        action: delete
+
       # Node
       - key: k8s.node.name
         from_attribute: node
@@ -983,6 +992,12 @@ processors:
         from_attribute: os_image
         action: insert
       - key: os_image
+        action: delete
+
+      - key: sw.k8s.node.internalip
+        from_attribute: internal_ip
+        action: insert
+      - key: internal_ip
         action: delete
 
       # Namespace
@@ -1162,6 +1177,7 @@ receivers:
               - "kube_node_created"
               - "kube_node_status_capacity"
               - "kube_node_status_condition"
+              - "node_boot_time_seconds"
               - "kube_pod_created"
               - "kube_pod_info"
               - "kube_pod_owner"
