@@ -205,6 +205,9 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_job_complete | Gauge |  | Job completed | native |
 | k8s.kube_job_failed | Gauge |  | Job failed | native |
 | k8s.kube_job_created | Gauge |  seconds | Unix creation timestamp | native |
+| k8s.kube_job_spec_completions | Gauge |   | Job completions | native |
+| k8s.kube_job_spec_parallelism | Gauge |   | Job parallelism | native |
+
 
 
 
