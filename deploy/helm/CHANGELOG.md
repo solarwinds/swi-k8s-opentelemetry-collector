@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added 
 * Collect metrics about kube jobs. 
+* Attribute k8s.pod.name to events
 
 ## [2.1.0] - 2023-02-16
 
