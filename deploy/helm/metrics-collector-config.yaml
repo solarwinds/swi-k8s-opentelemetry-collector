@@ -18,7 +18,7 @@ processors:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-              
+
   # removing instance attribute on kube_ metrics as it doesn't represent node
   attributes/remove_instance:
     include:
@@ -31,7 +31,7 @@ processors:
       - key: exported_instance
         action: delete
 
-  # unify attributes 
+  # unify attributes
   attributes/unify:
     actions:
       - key: node
@@ -46,7 +46,7 @@ processors:
       - key: node
         from_attribute: exported_instance
         action: insert
-      
+
       - key: instance
         action: delete
       - key: kubernetes_io_hostname
@@ -251,6 +251,24 @@ processors:
           - action: filter_datapoints
             datapoint_value: 0
             datapoint_value_action: exclude
+      - include: k8s.kube_job_created
+        action: update
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 0
+            datapoint_value_action: exclude
+      - include: k8s.kube_job_status_completion_time
+        action: update
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 0
+            datapoint_value_action: exclude
+      - include: k8s.kube_job_status_start_time
+        action: update
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 0
+            datapoint_value_action: exclude
   metricstransform/preprocessing:
     transforms:
       - include: k8s.kube_namespace_status_phase
@@ -425,6 +443,14 @@ processors:
           - action: update_label
             label: owner_name
             new_label: statefulset
+      - include: k8s.kube_pod_owner
+        experimental_match_labels: { "owner_kind": "Job", "owner_is_controller": "true" }
+        action: insert
+        new_name: k8s.kube.pod.owner.job
+        operations:
+          - action: update_label
+            label: owner_name
+            new_label: job_name
       - include: k8s.kube_replicaset_owner
         experimental_match_labels: { "owner_kind": "Deployment", "owner_is_controller": "true" }
         action: insert
@@ -766,6 +792,16 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
+
+      # Job metrics
+      - include: k8s.kube_job_owner
+        experimental_match_labels: { "owner_kind": "CronJob", "owner_is_controller": "true" }
+        action: insert
+        new_name: k8s.kube.job.owner.cronjob
+        operations:
+          - action: update_label
+            label: owner_name
+            new_label: cronjob
   swmetricstransform/postprocessing:
     transforms:
       - include: k8s.container.status
@@ -915,6 +951,8 @@ processors:
       - statefulset
       - deployment
       - replicaset
+      - job_name
+      - cronjob
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -983,6 +1021,12 @@ processors:
         from_attribute: os_image
         action: insert
       - key: os_image
+        action: delete
+
+      - key: sw.k8s.node.ip.internal
+        from_attribute: internal_ip
+        action: insert
+      - key: internal_ip
         action: delete
 
       # Namespace
@@ -1099,6 +1143,21 @@ processors:
         action: insert
       - key: daemonset
         action: delete
+
+      # Job
+      - key: k8s.job.name
+        from_attribute: job_name
+        action: insert
+      - key: job_name
+        action: delete
+
+      # CronJob
+      - key: k8s.cronjob.name
+        from_attribute: cronjob
+        action: insert
+      - key: cronjob
+        action: delete
+
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -1201,6 +1260,18 @@ receivers:
               - "kube_node_status_allocatable"
               - "kube_node_spec_unschedulable"
               - "apiserver_request_total"
+              - "kube_job_info"              
+              - "kube_job_owner"
+              - "kube_job_created"
+              - "kube_job_complete"
+              - "kube_job_failed"
+              - "kube_job_status_active"
+              - "kube_job_status_succeeded"
+              - "kube_job_status_failed"
+              - "kube_job_status_start_time"
+              - "kube_job_status_completion_time"
+              - "kube_job_spec_completions"
+              - "kube_job_spec_parallelism"
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
 {{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
 {{- end }}

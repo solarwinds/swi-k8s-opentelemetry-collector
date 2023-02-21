@@ -68,6 +68,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube.pod.owner.daemonset | Gauge |  | Information about the DaemonSet owning the Pod | custom |
 | k8s.kube.pod.owner.replicaset | Gauge |  | Information about the ReplicaSet owning the Pod | custom |
 | k8s.kube.pod.owner.statefulset | Gauge |  | Information about the StatefulSet owning the Pod | custom |
+| k8s.kube.pod.owner.job | Gauge |  | Information about the Job owning the Pod | custom |
 | k8s.pod.containers | Gauge |  | The count of containers on pod | custom |
 | k8s.pod.containers.running | Gauge |  | Current number of running containers on pod | custom |
 | k8s.pod.cpu.usage.seconds.rate | Gauge | seconds | The rate of pod cumulative CPU time consumed | custom |
@@ -188,6 +189,27 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_namespace_created | Gauge | seconds | Unix creation timestamp | native |
 | k8s.kube_namespace_status_phase | Gauge |  | Kubernetes namespace status phase | native |
 | k8s.kube_resourcequota | Gauge |  | ResourceQuota metric | native |
+
+## Job metrics
+
+| Metric | Type | Unit | Description | native/custom |
+| ---    | ---  | ---  | ---         | ---           |
+| k8s.kube_job_info | Gauge |  | Information about job | native |
+| k8s.kube_job_owner | Gauge |  | Information about the Job's owner  | native |
+| k8s.kube.job.owner.cronjob | Gauge |  | Information about the CronJob owning the Job | custom |
+| k8s.kube_job_status_active | Gauge |  | Determine whether job is active | native |
+| k8s.kube_job_status_succeeded | Gauge |  | Determine whether job succeeded | native |
+| k8s.kube_job_status_failed | Gauge |  | Determine whether job failed | native |
+| k8s.kube_job_status_start_time | Gauge | seconds | Unix start timestamp | native |
+| k8s.kube_job_status_completion_time | Gauge | seconds | Unix completion timestamp | native |
+| k8s.kube_job_complete | Gauge |  | Job completed | native |
+| k8s.kube_job_failed | Gauge |  | Job failed | native |
+| k8s.kube_job_created | Gauge |  seconds | Unix creation timestamp | native |
+| k8s.kube_job_spec_completions | Gauge |   | Job completions | native |
+| k8s.kube_job_spec_parallelism | Gauge |   | Job parallelism | native |
+
+
+
 
 ## Other metrics
 
