@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added 
 * Collect metrics about kube jobs. 
 
+### Added
+* Added internal ip attribute for node [#168](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/168).
+
 ## [2.1.0] - 2023-02-16
 
 ### Added

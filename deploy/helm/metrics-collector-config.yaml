@@ -18,7 +18,7 @@ processors:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-              
+
   # removing instance attribute on kube_ metrics as it doesn't represent node
   attributes/remove_instance:
     include:
@@ -31,7 +31,7 @@ processors:
       - key: exported_instance
         action: delete
 
-  # unify attributes 
+  # unify attributes
   attributes/unify:
     actions:
       - key: node
@@ -46,7 +46,7 @@ processors:
       - key: node
         from_attribute: exported_instance
         action: insert
-      
+
       - key: instance
         action: delete
       - key: kubernetes_io_hostname
@@ -1021,6 +1021,12 @@ processors:
         from_attribute: os_image
         action: insert
       - key: os_image
+        action: delete
+
+      - key: sw.k8s.node.ip.internal
+        from_attribute: internal_ip
+        action: insert
+      - key: internal_ip
         action: delete
 
       # Namespace
