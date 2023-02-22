@@ -28,6 +28,7 @@ spec:
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" . }}-metrics
     spec:
+      serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
       containers:
         - name: swi-opentelemetry-collector
