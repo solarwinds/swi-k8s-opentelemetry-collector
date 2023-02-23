@@ -29,6 +29,10 @@ spec:
         app: {{ include "common.fullname" . }}-metrics
     spec:
       securityContext: {}
+      initContainers:
+        - name: prometheus-check
+          image: busybox
+          command: ['sh', '-c', 'wget {{ .Values.otel.metrics.prometheus.url }}; if [ $? -ne 0 ]; then exit 1; fi']
       containers:
         - name: swi-opentelemetry-collector
           command:
