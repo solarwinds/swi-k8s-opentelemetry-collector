@@ -32,7 +32,7 @@ spec:
       initContainers:
         - name: prometheus-check
           image: busybox
-          command: ['sh', '-c', 'wget {{ .Values.otel.metrics.prometheus.url }}; if [ $? -ne 0 ]; then exit 1; fi']
+          command: ['sh', '-c', 'wget {{ .Values.otel.metrics.prometheus.url }}']
       containers:
         - name: swi-opentelemetry-collector
           command:
