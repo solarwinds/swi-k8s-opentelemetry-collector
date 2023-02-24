@@ -52,6 +52,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.node.status.condition.networkunavailable | Gauge |  | The condition networkunavailable of a cluster node (1 when true, 0 when false or unknown) | custom |
 | k8s.node.status.condition.pidpressure | Gauge |  | The condition pidpressure of a cluster node (1 when true, 0 when false or unknown) | custom |
 | k8s.node.status.condition.ready | Gauge |  | The condition ready of a cluster node (1 when true, 0 when false or unknown) | custom |
+| k8s.kubernetes_build_info | Gauge |  | Information about Kubernetes build  | native |
 
 ## Pod metrics
 
