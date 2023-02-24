@@ -124,6 +124,7 @@ processors:
         action: delete
       - key: exported_instance
         action: delete
+
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
@@ -771,14 +772,14 @@ processors:
             label_set: []
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
-        action: insert
-        match_type: regexp
-        experimental_match_labels: {"exported_job": ".*apiserver.*"}
-        new_name: sw.k8s.cluster.build
+        action: update
         operations:
-          - action: update_label
-            label: git_version
-            new_label: cluster_version
+          - action: delete_label_value
+            label: exported_job
+            label_value: kubernetes-nodes
+          - action: delete_label_value
+            label: exported_job
+            label_value: kubelet
 
       # Prometheus metrics
       - include: apiserver_request_total
@@ -962,7 +963,7 @@ processors:
       - replicaset
       - job_name
       - cronjob
-      - cluster_version
+      - git_version
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1003,10 +1004,8 @@ processors:
         action: insert
 
       - key: sw.k8s.cluster.version
-        from_attribute: cluster_version
+        from_attribute: git_version
         action: insert
-      - key: cluster_version
-        action: delete
 
       # Node
       - key: k8s.node.name
@@ -1312,6 +1311,8 @@ service:
         - attributes/remove_pod
         - attributes/remove_container
         - attributes/remove_service
+        # - attributes/extract_node_version
+        # - attributes/extract_apiserver_version
         - attributes/remove_other
         - metricstransform/rename
         - swmetricstransform/preprocessing
