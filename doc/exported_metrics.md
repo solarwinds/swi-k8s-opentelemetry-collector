@@ -19,6 +19,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.cluster.pods.running | Gauge |  | The count of pods in running phase | custom |
 | k8s.cluster.spec.cpu.requests | Gauge | cores | The total number of requested CPU by all containers in a cluster | custom |
 | k8s.cluster.spec.memory.requests | Gauge | bytes | The total number of requested memory by all containers in a cluster | custom |
+| k8s.kubernetes_build_info | Gauge |  | Information about Kubernetes build  | native |
 
 ## Node metrics
 
@@ -52,7 +53,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.node.status.condition.networkunavailable | Gauge |  | The condition networkunavailable of a cluster node (1 when true, 0 when false or unknown) | custom |
 | k8s.node.status.condition.pidpressure | Gauge |  | The condition pidpressure of a cluster node (1 when true, 0 when false or unknown) | custom |
 | k8s.node.status.condition.ready | Gauge |  | The condition ready of a cluster node (1 when true, 0 when false or unknown) | custom |
-| k8s.kubernetes_build_info | Gauge |  | Information about Kubernetes build  | native |
+
 
 ## Pod metrics
 
