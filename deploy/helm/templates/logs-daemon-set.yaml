@@ -43,7 +43,7 @@ spec:
           command: ['/bin/grpcurl', '-expand-headers',
                     '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
                     '-H', 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}',
-                    '-d', '{ "resourceLogs": [ { "resource": { "attributes": [ { "key": "sw.k8s.log.type", "value": { "stringValue": "journal" } } ] } } ] }',
+                    '-d', '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "{{ .Values.cluster.uid }}"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}',
                     '{{ .Values.otel.endpoint }}', 'opentelemetry.proto.collector.logs.v1.LogsService.Export']
           volumeMounts:
             - mountPath: opentelemetry/proto/collector/logs/v1/logs_service.proto
@@ -127,7 +127,6 @@ spec:
               readOnly: true
             - mountPath: /conf
               name: opentelemetry-collector-configmap
-              subPath: relay.yaml
               readOnly: true
             - mountPath: /run/log/journal
               name: runlogjournal
