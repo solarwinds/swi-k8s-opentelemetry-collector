@@ -64,6 +64,16 @@ Possible issues:
   ```shell
   helm repo add "stable" "https://charts.helm.sh/stable" --force-update
   ```
+### How can you analyze exported telemetry
+#### Metrics
+* You can look at `http://localhost:8088/metrics.json` (each line is JSON as bulk sent by OTEL collector)
+* You can also look at local Prometheus which collects all the outputs with metric names prefixed with `output_` at `http://localhost:8080`
+
+#### Logs
+You can look at `http://localhost:8088/logs.json` (each line is JSON as bulk sent by OTEL collector)
+
+#### Events
+You can look at `http://localhost:8088/events.json` (each line is JSON as bulk sent by OTEL collector)
 
 ## Develop against remote prometheus
 

@@ -17,6 +17,14 @@ data:
         path: /data/metrics.json
       file/events:
         path: /data/events.json
+      prometheus:
+        endpoint: "0.0.0.0:8080"
+        namespace: output
+        send_timestamps: true
+        metric_expiration: 1m
+        enable_open_metrics: true
+        resource_to_telemetry_conversion:
+          enabled: true
     extensions:
       health_check: {}
       memory_ballast:
@@ -50,6 +58,7 @@ data:
           exporters:
           - logging
           - file/metrics
+          - prometheus
           processors:
           receivers:
           - otlp
@@ -100,6 +109,11 @@ spec:
     metadata:
       labels:
         app: timeseries-mock-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
     spec:
       securityContext:
         runAsUser: 0
