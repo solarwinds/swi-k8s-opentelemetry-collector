@@ -36,6 +36,7 @@ spec:
       tolerations:
         {{ toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.otel.use_grpcurl_check }}
       initContainers:
         - name: otel-endpoint-check
           image: fullstorydev/grpcurl
@@ -68,6 +69,7 @@ spec:
                   name: solarwinds-api-token
                   key: SOLARWINDS_API_TOKEN
                   optional: true
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
