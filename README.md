@@ -6,7 +6,7 @@ Kubernetes Helm Charts to monitor Kubernetes infrastructure using [SolarWinds Ob
 
 [Helm](https://helm.sh) must be installed to use the charts.
 Please refer to Helm's [documentation](https://helm.sh/docs/) to get started.
-One Helm is set up properly, follow [documentation for SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/content/configure/configure-kubernetes.htm?cshid=app-add-kubernetes) to monitor your Kubernetes cluster and associated services with SolarWinds Observability.
+Once Helm is set up properly, follow [documentation for SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/content/configure/configure-kubernetes.htm?cshid=app-add-kubernetes) to monitor your Kubernetes cluster and associated services with SolarWinds Observability.
 
 ## Contributing
 
