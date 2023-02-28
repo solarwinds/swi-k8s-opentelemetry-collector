@@ -31,7 +31,7 @@ deploy:
         namespace: monitoring
         createNamespace: true
         setValues:
-          otel.metrics.prometheus.url: monitoring-prometheus-server.monitoring.svc.cluster.local:80
+          #otel.metrics.prometheus.url: monitoring-prometheus-server.monitoring.svc.cluster.local:80
           otel.endpoint: timeseries-mock-service:9082
           otel.tls_insecure: true
           otel.image.repository: "swi-k8s-opentelemetry-collector"
@@ -46,16 +46,16 @@ deploy:
           cluster.uid: cluster-uid-123456789
         upgradeOnChange: true
       
-      - name: monitoring
-        remoteChart: prometheus
-        namespace: monitoring
-        createNamespace: true
-        repo: https://prometheus-community.github.io/helm-charts
-        version: 19.0.1
-        setValues:
-          alertmanager.enabled: false
-          prometheus-node-exporter.enabled: false
-          prometheus-pushgateway.enabled: false
+      # - name: monitoring
+      #   remoteChart: prometheus
+      #   namespace: monitoring
+      #   createNamespace: true
+      #   repo: https://prometheus-community.github.io/helm-charts
+      #   version: 19.0.1
+      #   setValues:
+      #     alertmanager.enabled: false
+      #     prometheus-node-exporter.enabled: false
+      #     prometheus-pushgateway.enabled: false
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -80,16 +80,16 @@ profiles:
     - op: replace
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
       value: wiremock.monitoring.svc.cluster.local:8080
-    - op: remove
-      path: /deploy/helm/releases/1
+    # - op: remove
+    #   path: /deploy/helm/releases/1
   # Useful to develop against remote prometheus instance (mounted locally on host.docker.internal:9090)
   - name: remote-prometheus
     patches:
     - op: replace
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
       value: host.docker.internal:9090
-    - op: remove
-      path: /deploy/helm/releases/1
+    # - op: remove
+    #   path: /deploy/helm/releases/1
   - name: ci
     activation:
       - env: CI=true
@@ -106,8 +106,8 @@ profiles:
     - op: replace
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
       value: wiremock.monitoring.svc.cluster.local:8080
-    - op: remove
-      path: /deploy/helm/releases/1
+    # - op: remove
+    #   path: /deploy/helm/releases/1
     deploy:
       kubeContext: default
   - name: ci-helm-e2e
