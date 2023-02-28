@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added 
+* InitContainers where Prometheus and OTEL endpoints are checked
+
 ## [2.2.0-alpha.1] - 2023-02-21
 ### Added 
 * Collect metrics about kube jobs. 
