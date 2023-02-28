@@ -63,6 +63,11 @@ portForward:
   resourceName: timeseries-mock-service
   namespace: monitoring
   port: 8088
+- resourceType: service
+  resourceName: monitoring-prometheus-server
+  namespace: monitoring
+  port: 80
+  localPort: 8080
 profiles:
   - name: builder-only
     build:
@@ -83,6 +88,8 @@ profiles:
       value: wiremock.monitoring.svc.cluster.local:8080
     - op: remove
       path: /deploy/helm/releases/1
+    - op: remove
+      path: /portForward/1
   # Useful to develop against remote prometheus instance (mounted locally on host.docker.internal:9090)
   - name: remote-prometheus
     patches:
@@ -91,6 +98,8 @@ profiles:
       value: host.docker.internal:9090
     - op: remove
       path: /deploy/helm/releases/1
+    - op: remove
+      path: /portForward/1
   - name: ci
     activation:
       - env: CI=true
@@ -109,6 +118,8 @@ profiles:
       value: wiremock.monitoring.svc.cluster.local:8080
     - op: remove
       path: /deploy/helm/releases/1
+    - op: remove
+      path: /portForward/1
     deploy:
       kubeContext: default
   - name: ci-helm-e2e

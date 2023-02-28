@@ -128,10 +128,11 @@ processors:
         action: delete
       - key: exported_instance
         action: delete
+
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_)(.*)$$
+      - include: ^(kube_|container_|kubernetes_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -774,6 +775,15 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
+      - include: k8s.kubernetes_build_info
+        action: update
+        operations:
+          - action: delete_label_value
+            label: exported_job
+            label_value: kubernetes-nodes
+          - action: delete_label_value
+            label: exported_job
+            label_value: kubelet
 
       # Prometheus metrics
       - include: apiserver_request_total
@@ -957,6 +967,7 @@ processors:
       - replicaset
       - job_name
       - cronjob
+      - git_version
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -994,6 +1005,10 @@ processors:
 
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
+        action: insert
+
+      - key: sw.k8s.cluster.version
+        from_attribute: git_version
         action: insert
 
       # Node
@@ -1264,7 +1279,7 @@ receivers:
               - "kube_node_status_allocatable"
               - "kube_node_spec_unschedulable"
               - "apiserver_request_total"
-              - "kube_job_info"              
+              - "kube_job_info"
               - "kube_job_owner"
               - "kube_job_created"
               - "kube_job_complete"
@@ -1276,6 +1291,7 @@ receivers:
               - "kube_job_status_completion_time"
               - "kube_job_spec_completions"
               - "kube_job_spec_parallelism"
+              - "kubernetes_build_info"
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
 {{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
 {{- end }}
