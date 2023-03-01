@@ -8,7 +8,11 @@ exporters:
 extensions:
   file_storage:
 {{ toYaml .Values.otel.logs.filestorage | indent 4 }}
-  health_check: {}
+  health_check:
+    check_collector_pipeline:
+      enabled: true
+      interval: "5m"
+      exporter_failure_threshold: 5
   memory_ballast:
 {{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
 
