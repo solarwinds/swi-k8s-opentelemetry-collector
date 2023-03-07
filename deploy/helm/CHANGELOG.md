@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - k8s.namespace.name moved from attributes to resource.attributes
 
-### Added
-
 ## [2.2.0-alpha.2] - 2023-03-02
 
 ### Added
