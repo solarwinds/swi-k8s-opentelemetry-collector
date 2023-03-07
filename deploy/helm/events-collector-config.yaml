@@ -46,6 +46,8 @@ processors:
       - context: log
         statements:
           - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Pod"
+          - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"]) where attributes["k8s.namespace.name"] != nil
+          - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"] != nil
   resource/events:
     attributes:
       # Collector and Manifest version
