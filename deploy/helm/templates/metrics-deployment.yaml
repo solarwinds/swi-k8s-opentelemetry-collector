@@ -29,10 +29,13 @@ spec:
         app: {{ include "common.fullname" . }}-metrics
     spec:
       securityContext: {}
+      {{- if or .Values.otel.metrics.prometheus_check .Values.otel.metrics.swi_endpoint_check }}
       initContainers:
+        {{- if .Values.otel.metrics.prometheus_check }}
         - name: prometheus-check
           image: busybox
           command: ['sh', '-c', 'until $(wget --spider -nv {{ .Values.otel.metrics.prometheus.url }}/federate?); do echo waiting on prometheus; sleep 1; done']
+        {{- end }}
         {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
           image: fullstorydev/grpcurl
@@ -65,7 +68,8 @@ spec:
                   name: solarwinds-api-token
                   key: SOLARWINDS_API_TOKEN
                   optional: true
-        {{- end }}         
+        {{- end }}
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           command:
