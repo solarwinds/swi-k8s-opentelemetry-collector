@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - k8s.namespace.name moved from attributes to resource.attributes
+- introduced k8s.job.condition resource attribute for job which is can be Pending, Complete or Failed
 
 ## [2.2.0-alpha.2] - 2023-03-02
 
