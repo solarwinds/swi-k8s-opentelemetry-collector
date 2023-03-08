@@ -1,6 +1,7 @@
 import json
 import time
 import requests
+import traceback
 
 def get_all_bodies(log_bulk):
     result = [records["body"]["stringValue"]
@@ -39,8 +40,7 @@ def retry_until_ok(url, func, print_failure):
                 return False
         except Exception as e:
             last_exception = e
-            print('An exception occurred: {}'.format(e))
-
+            print(e, traceback.format_exc())
         if is_ok:
             print(f'Succesfully passed assert')
             break
