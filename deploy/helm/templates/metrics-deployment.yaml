@@ -29,6 +29,47 @@ spec:
         app: {{ include "common.fullname" . }}-metrics
     spec:
       securityContext: {}
+      {{- if or .Values.otel.metrics.prometheus_check .Values.otel.metrics.swi_endpoint_check }}
+      initContainers:
+        {{- if .Values.otel.metrics.prometheus_check }}
+        - name: prometheus-check
+          image: busybox
+          command: ['sh', '-c', 'until $(wget --spider -nv {{ .Values.otel.metrics.prometheus.url }}/federate?); do echo waiting on prometheus; sleep 1; done']
+        {{- end }}
+        {{- if .Values.otel.metrics.swi_endpoint_check }}
+        - name: otel-endpoint-check
+          image: fullstorydev/grpcurl
+          command: ['/bin/grpcurl', '-expand-headers',
+                    '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
+                    '-H', 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}',
+                    '-d', '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "{{ .Values.cluster.uid }}"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}',
+                    '{{ .Values.otel.endpoint }}', 'opentelemetry.proto.collector.logs.v1.LogsService.Export']
+          volumeMounts:
+            - mountPath: opentelemetry/proto/collector/logs/v1/logs_service.proto
+              name: opentelemetry-collector-configmap
+              subPath: logs_service.proto
+              readOnly: true
+            - mountPath: opentelemetry/proto/logs/v1/logs.proto
+              name: opentelemetry-collector-configmap
+              subPath: logs.proto
+              readOnly: true
+            - mountPath: opentelemetry/proto/common/v1/common.proto
+              name: opentelemetry-collector-configmap
+              subPath: common.proto
+              readOnly: true
+            - mountPath: opentelemetry/proto/resource/v1/resource.proto
+              name: opentelemetry-collector-configmap
+              subPath: resource.proto
+              readOnly: true
+          env:
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+        {{- end }}
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           command:
@@ -81,4 +122,12 @@ spec:
             items:
               - key: metrics.config
                 path: relay.yaml
+              - key: logs_service.proto
+                path: logs_service.proto
+              - key: logs.proto
+                path: logs.proto
+              - key: common.proto
+                path: common.proto
+              - key: resource.proto
+                path: resource.proto                
 {{- end}}

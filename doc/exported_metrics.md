@@ -19,6 +19,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.cluster.pods.running | Gauge |  | The count of pods in running phase | custom |
 | k8s.cluster.spec.cpu.requests | Gauge | cores | The total number of requested CPU by all containers in a cluster | custom |
 | k8s.cluster.spec.memory.requests | Gauge | bytes | The total number of requested memory by all containers in a cluster | custom |
+| k8s.kubernetes_build_info | Gauge |  | Information about Kubernetes build  | native |
 
 ## Node metrics
 
@@ -96,40 +97,40 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
-| k8s.container_cpu_cfs_periods_total | Counter | Number of elapsed enforcement period intervals | native |
-| k8s.container_cpu_cfs_throttled_periods_total | Counter | Number of throttled period intervals | native |
-| k8s.container_cpu_usage_seconds_total | Counter | secondsCumulative CPU time consumed | native |
-| k8s.container_fs_reads_bytes_total | Counter | bytesCumulative count of bytes read | native |
-| k8s.container_fs_reads_total | Counter | Cumulative count of reads completed | native |
-| k8s.container_fs_usage_bytes | Gauge | bytesNumber of bytes that are consumed by the container on this filesystem | native |
-| k8s.container_fs_writes_bytes_total | Counter | bytesCumulative count of bytes written | native |
-| k8s.container_fs_writes_total | Counter | Cumulative count of writes completed | native |
-| k8s.container_memory_working_set_bytes | Gauge | bytesCurrent working set | native |
-| k8s.container_network_receive_bytes_total | Counter | bytesCumulative count of bytes received | native |
-| k8s.container_network_receive_packets_dropped_total | Counter | Cumulative count of packets dropped while receiving | native |
-| k8s.container_network_receive_packets_total | Counter | Cumulative count of packets received | native |
-| k8s.container_network_transmit_bytes_total | Counter | bytesCumulative count of bytes transmitted | native |
-| k8s.container_network_transmit_packets_dropped_total | Counter | Cumulative count of packets dropped while transmitting | native |
-| k8s.container_network_transmit_packets_total | Counter | Cumulative count of packets transmitted | native |
-| k8s.container_spec_cpu_period | Gauge | CPU period of the container | native |
-| k8s.container_spec_cpu_quota | Gauge | CPU quota of the container | native |
-| k8s.container_spec_memory_limit_bytes | Gauge | bytesMemory limit for the container | native |
-| k8s.container.spec.cpu.requests | Gauge | coresThe number of requested CPU by a container | custom |
-| k8s.container.spec.memory.requests | Gauge | bytesThe number of requested memory by a container | custom |
-| k8s.container.status | Gauge | Describes the status of the container (waiting/running/terminated) | custom |
-| k8s.kube_pod_container_info | Gauge | Information about a container in a pod | native |
-| k8s.kube_pod_container_resource_limits | Gauge | cpu=\<cores\><br>memory=\<bytes\>The number of requested limit resource by a container | native |
-| k8s.kube_pod_container_resource_requests | Gauge | cpu=\<cores\><br>memory=\<bytes\>The number of requested request resource by a container | native |
-| k8s.kube_pod_container_state_started | Gauge | secondsStart time in unix timestamp for a pod container | native |
-| k8s.kube_pod_container_status_last_terminated_exitcode | Gauge | Describes the exit code for the last container in terminated state | native |
-| k8s.kube_pod_container_status_last_terminated_reason | Gauge | Describes the last reason the container was in terminated state | native |
-| k8s.kube_pod_container_status_ready | Gauge | Describes whether the containers readiness check succeeded | native |
-| k8s.kube_pod_container_status_restarts_total | Counter | The number of container restarts per container | native |
-| k8s.kube_pod_container_status_running | Gauge | Describes whether the container is currently in running state | native |
-| k8s.kube_pod_container_status_terminated | Gauge | Describes whether the container is currently in terminated state | native |
-| k8s.kube_pod_container_status_terminated_reason | Gauge | Describes the reason the container is currently in terminated state | native |
-| k8s.kube_pod_container_status_waiting | Gauge | Describes whether the container is currently in waiting state | native |
-| k8s.kube_pod_container_status_waiting_reason | Gauge | Describes the reason the container is currently in waiting state | native |
+| k8s.container_cpu_cfs_periods_total | Counter |  | Number of elapsed enforcement period intervals | native |
+| k8s.container_cpu_cfs_throttled_periods_total | Counter |  | Number of throttled period intervals | native |
+| k8s.container_cpu_usage_seconds_total | Counter |  | secondsCumulative CPU time consumed | native |
+| k8s.container_fs_reads_bytes_total | Counter |  | bytesCumulative count of bytes read | native |
+| k8s.container_fs_reads_total | Counter |  | Cumulative count of reads completed | native |
+| k8s.container_fs_usage_bytes | Gauge | bytes | Number of bytes that are consumed by the container on this filesystem | native |
+| k8s.container_fs_writes_bytes_total | Counter | bytes | Cumulative count of bytes written | native |
+| k8s.container_fs_writes_total | Counter |  | Cumulative count of writes completed | native |
+| k8s.container_memory_working_set_bytes | Gauge | bytes | Current working set | native |
+| k8s.container_network_receive_bytes_total | Counter | bytes | Cumulative count of bytes received | native |
+| k8s.container_network_receive_packets_dropped_total | Counter |  | Cumulative count of packets dropped while receiving | native |
+| k8s.container_network_receive_packets_total | Counter |  | Cumulative count of packets received | native |
+| k8s.container_network_transmit_bytes_total | Counter | bytes | Cumulative count of bytes transmitted | native |
+| k8s.container_network_transmit_packets_dropped_total | Counter |  | Cumulative count of packets dropped while transmitting | native |
+| k8s.container_network_transmit_packets_total | Counter |  | Cumulative count of packets transmitted | native |
+| k8s.container_spec_cpu_period | Gauge |  | CPU period of the container | native |
+| k8s.container_spec_cpu_quota | Gauge |  | CPU quota of the container | native |
+| k8s.container_spec_memory_limit_bytes | Gauge | bytes | Memory limit for the container | native |
+| k8s.container.spec.cpu.requests | Gauge | cores | The number of requested CPU by a container | custom |
+| k8s.container.spec.memory.requests | Gauge | bytes | The number of requested memory by a container | custom |
+| k8s.container.status | Gauge |  | Describes the status of the container (waiting/running/terminated) | custom |
+| k8s.kube_pod_container_info | Gauge |  | Information about a container in a pod | native |
+| k8s.kube_pod_container_resource_limits | Gauge | cpu=\<cores\><br>memory=\<bytes\> | The number of requested limit resource by a container | native |
+| k8s.kube_pod_container_resource_requests | Gauge | cpu=\<cores\><br>memory=\<bytes\> | The number of requested request resource by a container | native |
+| k8s.kube_pod_container_state_started | Gauge | seconds | Start time in unix timestamp for a pod container | native |
+| k8s.kube_pod_container_status_last_terminated_exitcode | Gauge |  | Describes the exit code for the last container in terminated state | native |
+| k8s.kube_pod_container_status_last_terminated_reason | Gauge  | | Describes the last reason the container was in terminated state | native |
+| k8s.kube_pod_container_status_ready | Gauge |  | Describes whether the containers readiness check succeeded | native |
+| k8s.kube_pod_container_status_restarts_total | Counter |  | The number of container restarts per container | native |
+| k8s.kube_pod_container_status_running | Gauge |  | Describes whether the container is currently in running state | native |
+| k8s.kube_pod_container_status_terminated | Gauge |  | Describes whether the container is currently in terminated state | native |
+| k8s.kube_pod_container_status_terminated_reason | Gauge |  | Describes the reason the container is currently in terminated state | native |
+| k8s.kube_pod_container_status_waiting | Gauge |  | Describes whether the container is currently in waiting state | native |
+| k8s.kube_pod_container_status_waiting_reason | Gauge |  | Describes the reason the container is currently in waiting state | native |
 
 ## Deployment metrics
 
@@ -207,9 +208,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_job_created | Gauge |  seconds | Unix creation timestamp | native |
 | k8s.kube_job_spec_completions | Gauge |   | Job completions | native |
 | k8s.kube_job_spec_parallelism | Gauge |   | Job parallelism | native |
-
-
-
 
 ## Other metrics
 

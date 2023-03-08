@@ -3,6 +3,7 @@ import os
 import json
 from jsonmerge import merge
 from test_utils import retry_until_ok
+import difflib
 
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
 url = f'http://{endpoint}/metrics.json'
@@ -69,13 +70,16 @@ def assert_test_metrics_line_length_match(content):
             f.write(actual_json)
 
     length_matches = False
-    if len(actual_json.splitlines()) == len(expected_json.splitlines()):
+
+    if actual_json == expected_json:
         print(
-            f'LineCount of outputs matches, expected: {len(expected_json.splitlines())}, actual: {len(actual_json.splitlines())}')
+            f'Outputs matches, expected chars: {len(expected_json)}, actual chars: {len(actual_json)}')
         length_matches = True
     else:
-        print(
-            f'LineCount of outputs does not match, expected: {len(expected_json.splitlines())}, actual: {len(actual_json.splitlines())}')
+        print('Outputs does not match')
+        for line in difflib.unified_diff(
+                expected_json.splitlines(), actual_json.splitlines(), lineterm='\n'):
+            print(line)
 
     return length_matches
 
@@ -88,11 +92,56 @@ def print_failure_line_count(content):
     print('Actual json:')
     print(actual_json)
 
+def resource_sorting_key(metric):
+    return "".join([f"{a['key']}={a['value']['stringValue']}" for a in metric["resource"]["attributes"]])
+
+def remove_time_in_datapoint(datapoint):
+    if "timeUnixNano" in datapoint:
+        datapoint["timeUnixNano"] = "0"
+    if "startTimeUnixNano" in datapoint:
+        datapoint["startTimeUnixNano"] = "0"
+
+def datapoint_sorting_key(datapoint):
+    if "attributes" in datapoint:
+        return "".join([f"{a['key']}={a['value']['stringValue']}" for a in datapoint["attributes"]])
+    elif "asDouble" in datapoint:
+        return datapoint["asDouble"]
+    elif "asInt" in datapoint:
+        return datapoint["asInt"]
+    elif "asString" in datapoint:
+        return datapoint["asString"]
+    else:
+        return datapoint
 
 def merge_jsons(jsons):
     result = {}
     for json_ in jsons:
         result = merge(result, json_)
+
+    # Sort the result and set timeStamps to 0 to make it easier to compare
+    result["resourceMetrics"] = sorted(result["resourceMetrics"], key=resource_sorting_key)
+    for resource in result["resourceMetrics"]:
+        resource["resource"]["attributes"] = sorted(resource["resource"]["attributes"], key=lambda a: a["key"])
+        for scope in resource["scopeMetrics"]:
+            scope["metrics"] = sorted(scope["metrics"], key=lambda m: m["name"])
+            for metric in scope["metrics"]:
+                if "sum" in metric:
+                    metric["sum"]["dataPoints"] = sorted(metric["sum"]["dataPoints"], key=datapoint_sorting_key)
+                    for dp in metric["sum"]["dataPoints"]:
+                        remove_time_in_datapoint(dp)
+                if "gauge" in metric:
+                    metric["gauge"]["dataPoints"] = sorted(metric["gauge"]["dataPoints"], key=datapoint_sorting_key)
+                    for dp in metric["gauge"]["dataPoints"]:
+                        remove_time_in_datapoint(dp)
+                if "histogram" in metric:
+                    metric["histogram"]["dataPoints"] = sorted(metric["histogram"]["dataPoints"], key=datapoint_sorting_key)
+                    for dp in metric["histogram"]["dataPoints"]:
+                        remove_time_in_datapoint(dp)
+
+                # Get rid of value of metric called "scrape_duration_seconds" as it is not stable
+                if metric["name"] == "scrape_duration_seconds":
+                    metric["gauge"]["dataPoints"][0]["asDouble"] = 0
+
     return result
 
 
