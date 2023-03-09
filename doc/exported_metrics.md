@@ -116,6 +116,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.container_spec_cpu_quota | Gauge |  | CPU quota of the container | native |
 | k8s.container_spec_memory_limit_bytes | Gauge | bytes | Memory limit for the container | native |
 | k8s.container.spec.cpu.requests | Gauge | cores | The number of requested CPU by a container | custom |
+| k8s.container.spec.cpu.limit | Gauge | cores | CPU quota of container in given CPU period | custom |
 | k8s.container.spec.memory.requests | Gauge | bytes | The number of requested memory by a container | custom |
 | k8s.container.status | Gauge |  | Describes the status of the container (waiting/running/terminated) | custom |
 | k8s.kube_pod_container_info | Gauge |  | Information about a container in a pod | native |
