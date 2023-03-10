@@ -1,0 +1,27 @@
+{{- if and .Values.otel.events.telemetry.metrics.enabled .Values.otel.events.telemetry.metrics.podMonitor.enabled }}
+apiVersion: "monitoring.coreos.com/v1"
+kind: PodMonitor
+metadata:
+  name: {{ include "common.fullname" . }}-events
+  {{- if .Values.otel.events.telemetry.metrics.podMonitor.namespace }}
+  namespace: {{ .Values.otel.events.telemetry.metrics.podMonitor.namespace }}
+  {{- else }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+    {{- if .Values.otel.events.telemetry.metrics.podMonitor.additionalLabels }}
+    {{- toYaml .Values.otel.events.telemetry.metrics.podMonitor.additionalLabels | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" . }}-events
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  podMetricsEndpoints:
+  - port: http
+    interval: {{ .Values.otel.events.telemetry.metrics.podMonitor.interval }}
+    scrapeTimeout: {{ .Values.otel.events.telemetry.metrics.podMonitor.scrapeTimeout }}
+{{- end }}
