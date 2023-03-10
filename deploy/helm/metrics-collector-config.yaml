@@ -6,11 +6,7 @@ exporters:
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
 extensions:
-  health_check:
-    check_collector_pipeline:
-      enabled: true
-      interval: "5m"
-      exporter_failure_threshold: 5 
+  health_check: {}
   memory_ballast:
 {{ toYaml .Values.otel.metrics.memory_ballast | indent 4 }}
 
@@ -22,7 +18,9 @@ processors:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-
+          - set(resource.attributes["job_condition"], "Pending") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0.0
+          - set(resource.attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^false$") == true and value_double > 0.0
+          - set(resource.attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0.0
   # removing instance attribute on kube_ metrics as it doesn't represent node
   attributes/remove_instance:
     include:
@@ -912,6 +910,13 @@ processors:
         metric1: k8s.pod.spec.cpu.quota_temp
         metric2: k8s.pod.spec.cpu.period_temp
         operation: divide
+  experimental_metricsgeneration/container:
+    rules:
+      - name: k8s.container.spec.cpu.limit
+        type: calculate
+        metric1: k8s.container_spec_cpu_quota
+        metric2: k8s.container_spec_cpu_period
+        operation: divide
   groupbyattrs/node:
     keys:
       - node
@@ -961,6 +966,7 @@ processors:
       - sw.k8s.pod.status
       - sw.k8s.namespace.status
       - sw.k8s.node.status
+      - sw.k8s.container.status
       - daemonset
       - statefulset
       - deployment
@@ -969,6 +975,7 @@ processors:
       - cronjob
       - git_version
       - internal_ip
+      - job_condition
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1193,6 +1200,12 @@ processors:
       - key: job_name
         action: delete
 
+      - key: k8s.job.condition
+        from_attribute: job_condition
+        action: insert
+      - key: job_condition
+        action: delete
+
       # CronJob
       - key: k8s.cronjob.name
         from_attribute: cronjob
@@ -1349,6 +1362,7 @@ service:
         - metricstransform/aggregate_rate
         - experimental_metricsgeneration/cluster
         - experimental_metricsgeneration/pod
+        - experimental_metricsgeneration/container
         - groupbyattrs/node
         - metricstransform/aggregate_node_level
         - groupbyattrs/pod
