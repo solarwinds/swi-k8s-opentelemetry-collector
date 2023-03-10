@@ -1,4 +1,4 @@
-ARG GOLANG_IMAGE=docker.io/library/golang:1.19.3-bullseye@sha256:d388153691a825844ebb3586dd04d1c60a2215522cc445701424205dffc8a83e
+ARG GOLANG_IMAGE=docker.io/library/golang:1.19.7-bullseye@sha256:7767d772324bf9e98417806bfc321a805ab0f41bedcbd1a854929a5e33e29444
 
 FROM ${GOLANG_IMAGE} as base
 WORKDIR /src
