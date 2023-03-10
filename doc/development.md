@@ -129,11 +129,11 @@ Steps to publish new version:
 
 Helm chart is published to <https://helm.solarwinds.com>.
 
-1. Update property `version` in [deploy/helm/Chart.yaml](deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format).
-2. Update [deploy/helm/CHANGELOG.md](deploy/helm/CHANGELOG.md):
+1. Update property `version` in [deploy/helm/Chart.yaml](../deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format).
+2. Update [deploy/helm/CHANGELOG.md](../deploy/helm/CHANGELOG.md):
    1. Create release record with the right version and the date.
    2. Write all changes recorded in `Unreleased` section into the release.
 3. Create PR for the changes to the `master` branch and merge them.
 4. Run "Release Helm Chart" GitHub action workflow.
-5. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](deploy/helm/CHANGELOG.md) into its description.
+5. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](../deploy/helm/CHANGELOG.md) into its description.
 6. Review PR that was created for the changes to the `gh-pages` branch and merge them.
