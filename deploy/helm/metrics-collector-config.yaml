@@ -18,7 +18,7 @@ processors:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-          - set(resource.attributes["job_condition"], "Pending") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0.0
+          - set(resource.attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0.0
           - set(resource.attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^false$") == true and value_double > 0.0
           - set(resource.attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0.0
   # removing instance attribute on kube_ metrics as it doesn't represent node
