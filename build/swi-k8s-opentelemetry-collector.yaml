@@ -32,4 +32,7 @@ extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.69.0
     import: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
   - gomod: go.opentelemetry.io/collector/extension/ballastextension v0.69.0
-  
+
+replaces:
+  # forcing a new golang.org/x/net because of CVE-2022-41723 (can be removed after upgrade to otel-contrib 0.72.0)
+  - golang.org/x/net => golang.org/x/net v0.7.0
