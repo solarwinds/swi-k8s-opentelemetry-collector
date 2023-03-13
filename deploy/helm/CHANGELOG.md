@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added possibility to deploy `PodMonitor` resources so that OTEL collector telemetry is scraped by Prometheus Operator (see [Prometheus Operator design](https://prometheus-operator.dev/docs/operator/design/))
+- Added optional autoupdate support (set by `autoupdate.enabled` in `values.yaml`). 
 
 ## [2.2.0-alpha.3] - 2023-03-09
 

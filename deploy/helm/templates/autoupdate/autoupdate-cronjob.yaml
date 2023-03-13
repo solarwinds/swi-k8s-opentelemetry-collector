@@ -1,0 +1,31 @@
+{{- if .Values.autoupdate.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: helm-autoupdate
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  schedule: {{ quote .Values.autoupdate.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ include "common.fullname" . }}-autoupdate
+          containers:
+          - name: helm-upgrade
+            image: alpine/k8s:1.24.10
+            command: 
+              - /bin/bash
+              - /scripts/helm-upgrade.sh
+            volumeMounts:
+              - name: helm-upgrade-script
+                mountPath: /scripts/helm-upgrade.sh
+                subPath: helm-upgrade.sh
+          restartPolicy: Never
+          volumes:
+            - name: helm-upgrade-script
+              configMap:
+                name: {{ include "common.fullname" . }}-autoupdate-script
+{{- end }}
