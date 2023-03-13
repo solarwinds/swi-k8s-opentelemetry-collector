@@ -16,46 +16,60 @@ def extract_property(array_of_lines, propertyName):
 
 def replace_values(lines):
     result = []
-    replacements = [
-        ('node', 'test-node'),
-        ('instance', 'test-node'),
-        ('namespace', 'test-namespace'),
-        ('daemonset', 'test-daemonset'),
-        ('deployment', 'test-deployment'),
-        ('statefulset', 'test-statefulset'),
-        ('replicaset', 'test-replicaset'),
-        ('pod', 'test-pod'),
-        ('service', 'test-service'),
-        ('container', 'test-container'),
-        ('job', 'test-job'),
-        ('job_name', 'test-job-name'),
+    replacements: list[tuple[str, str, str | None]] = [
+        ('node', 'test-node', None),
+        ('instance', 'test-node', None),
+        ('namespace', 'test-namespace', None),
+        ('daemonset', 'test-daemonset', None),
+        ('deployment', 'test-deployment', None),
+        ('statefulset', 'test-statefulset', None),
+        ('replicaset', 'test-replicaset', None),
+        ('pod', 'test-pod', None),
+        ('service', 'test-service', None),
+        ('container', 'test-container', '(?!POD)[^"]+'),
+        ('job', 'test-job', None),
+        ('job_name', 'test-job-name', None),
     ]
     for line in lines:
         for replacement in replacements:
-            line = replace_line(line, replacement[0], replacement[1])
-        line = re.sub(r'(\d+)$', f'{now}', line) # replace datetime
+            line = replace_line(line, replacement[0], replacement[1], replacement[2])
+        line = re.sub(r'(\d+)$', f'{now}', line)  # replace datetime
         result.append(line)
     return result
 
-def replace_line(line, attribute, new_value):
-    return re.sub(fr'{attribute}="[^"]+"', f'{attribute}="{new_value}"', line)
+def replace_line(line, attribute, new_value, match_pattern):
+    if not match_pattern:
+        match_pattern = '[^"]+'
 
-indexers = []
-def limit_items_taken(name, target_number):
-    for item in indexers:
-        if item[0] == name:
-            result = item[1] <= target_number
-            item[1] += 1
-            return result
+    return re.sub(fr'{attribute}="{match_pattern}"', f'{attribute}="{new_value}"', line)
 
-    indexers.append(list((name, 1)))
-    return False
 
-def limit_metric_taken(line):
-    match = re.search(r'^([^\s\{\#]+)', line)
-    if match:
-        metric_name = match.group(1)
-        return limit_items_taken(metric_name, 1)
+def add_if_not_present(name: str, collection: set[str]) -> bool:
+    if name in collection:
+        return False
+    else:
+        collection.add(name)
+        return True
+
+
+detected_metric_names: set[str] = set()
+detected_metric_names_for_internal_containers: set[str] = set()
+detected_metric_names_for_other_containers: set[str] = set()
+
+
+def limit_metric_taken(line: str):
+    metric_name_match = re.search(r'^([^\s{#]+)', line)
+    internal_container = 'container="POD"' in line
+    other_container_match = re.search(r'container="(?!POD)[^"]+"', line)
+    if metric_name_match:
+        metric_name = metric_name_match.group(1)
+
+        if internal_container:
+            return add_if_not_present(metric_name, detected_metric_names_for_internal_containers)
+        elif other_container_match:
+            return add_if_not_present(metric_name, detected_metric_names_for_other_containers)
+        else:
+            return add_if_not_present(metric_name, detected_metric_names)
     else:
         return False
 
@@ -75,7 +89,6 @@ if response.status_code == 200:
     print("Successfully downloaded!")
     lines = [line.decode() for line in response.content.splitlines()]
     node = extract_property(lines, 'node')
-    apiserver_request_count = 0
     result = [line for line in lines
               if (line.startswith("#")
                   or limit_metric_taken(line) # Take at least one metric for each metric name
