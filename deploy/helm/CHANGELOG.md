@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 - k8s.job.condition, state name Pending changed to Active
+- 
 
 ### Added
 
 - Added possibility to deploy `PodMonitor` resources so that OTEL collector telemetry is scraped by Prometheus Operator (see [Prometheus Operator design](https://prometheus-operator.dev/docs/operator/design/))
+- Added k8s.container.cpu.usage.seconds.rate metric
 
 ## [2.2.0-alpha.3] - 2023-03-09
 

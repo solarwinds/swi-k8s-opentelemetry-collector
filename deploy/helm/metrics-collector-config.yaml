@@ -332,6 +332,9 @@ processors:
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
         experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
         new_name: k8s.pod.cpu.usage.seconds.rate
+      - include: k8s.container_cpu_usage_seconds_total
+        action: insert
+        new_name: k8s.container.cpu.usage.seconds.rate
       - include: k8s.container_memory_working_set_bytes
         action: insert
         match_type: regexp
@@ -827,6 +830,7 @@ processors:
       metrics:
         - k8s.node.cpu.usage.seconds.rate
         - k8s.pod.cpu.usage.seconds.rate
+        - k8s.container.cpu.usage.seconds.rate
         - apiserver_request_not_failed_temp
         - apiserver_request_total_temp
         - k8s.pod.fs.iops
@@ -854,6 +858,7 @@ processors:
     metrics:
       - k8s.node.cpu.usage.seconds.rate
       - k8s.pod.cpu.usage.seconds.rate
+      - k8s.container.cpu.usage.seconds.rate
       - k8s.pod.fs.iops
       - k8s.pod.fs.throughput
       - k8s.pod.fs.reads.rate
