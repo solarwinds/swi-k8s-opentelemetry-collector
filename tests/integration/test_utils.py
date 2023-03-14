@@ -23,6 +23,7 @@ def retry_until_ok(url, func, print_failure):
     while time.time() - start_time < timeout:
         is_ok = False
         try: 
+            response = None
             try: 
                 response = requests.get(url)
                 response.raise_for_status()

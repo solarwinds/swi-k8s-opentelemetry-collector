@@ -20,11 +20,12 @@ def test_metric_line_count_generated():
     retry_until_ok(url, assert_test_metrics_line_length_match,
                    print_failure_line_count)
 
+def test_no_metric_datapoints_for_internal_containers():
+    retry_until_ok(url, assert_test_no_metric_datapoints_for_internal_containers,
+                   print_failure_internal_containers)
 
 def assert_test_metric_names_found(content):
-    lines = content.splitlines()
-    metrics = [json.loads(line) for line in lines]
-    merged_json = merge_jsons(metrics)
+    merged_json = get_merged_json(content)
 
     metric_names = get_unique_metric_names(merged_json)
     if (len(metric_names) == 0):
@@ -41,7 +42,7 @@ def assert_test_metric_names_found(content):
         metric_matches = True
     else:
         missing_metric_names = [
-            name in metric_names for name in expected_metric_names]
+            name for name in expected_metric_names if name not in metric_names]
         print('Some specific metric names are not found in the response')
         print(f'Missing metrics: {missing_metric_names}')
 
@@ -57,9 +58,7 @@ def assert_test_metrics_line_length_match(content):
     with open('expected_output.json', "r", newline='\n') as file_with_expected:
         expected_json_raw = json.load(file_with_expected)
 
-    lines = content.splitlines()
-    metrics = [json.loads(line) for line in lines]
-    merged_json = merge_jsons(metrics)
+    merged_json = get_merged_json(content)
 
     actual_json = json.dumps(merged_json, sort_keys=True, indent=2)
     expected_json = json.dumps(expected_json_raw, sort_keys=True, indent=2)
@@ -85,9 +84,7 @@ def assert_test_metrics_line_length_match(content):
 
 
 def print_failure_line_count(content):
-    lines = content.splitlines()
-    metrics = [json.loads(line) for line in lines]
-    merged_json = merge_jsons(metrics)
+    merged_json = get_merged_json(content)
     actual_json = json.dumps(merged_json, sort_keys=True, indent=2)
     print('Actual json:')
     print(actual_json)
@@ -151,3 +148,29 @@ def get_unique_metric_names(merged_json):
                        for metric in resource["scopeMetrics"][0]["metrics"]
                        ]))
     return result
+
+def assert_test_no_metric_datapoints_for_internal_containers(content):
+    merged_json = get_merged_json(content)
+
+    container_names = get_unique_container_names(merged_json)
+    if "POD" in container_names:
+        print('The response contains datapoints for internal "POD" containers')
+        return False
+    else:
+        return True
+
+def print_failure_internal_containers(content):
+    print(f'Failed to find some of expected metric names')
+    print(expected_metric_names)
+
+def get_unique_container_names(merged_json):
+    result = list(set([resource_attribute["value"]["stringValue"]
+                       for resource in merged_json["resourceMetrics"]
+                       for resource_attribute in resource["resource"]["attributes"] if resource_attribute["key"] == "k8s.container.name"
+                       ]))
+    return result
+
+def get_merged_json(content):
+    lines = content.splitlines()
+    metrics = [json.loads(line) for line in lines]
+    return merge_jsons(metrics)

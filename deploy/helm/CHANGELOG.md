@@ -6,12 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- k8s.job.condition, state name Pending changed to Active
+
+### Added
+
+- Added optional autoupdate support (set by `autoupdate.enabled` in `values.yaml`) [#196](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/196). 
+
+## [2.2.0-alpha.4] - 2023-03-14
 
 ### Added
 
 - Added possibility to deploy `PodMonitor` resources so that OTEL collector telemetry is scraped by Prometheus Operator (see [Prometheus Operator design](https://prometheus-operator.dev/docs/operator/design/))
-- Added optional autoupdate support (set by `autoupdate.enabled` in `values.yaml`). 
+- Added k8s.container.cpu.usage.seconds.rate metric
+
+### Changed
+
+- k8s.job.condition, state name Pending changed to Active
+- Filtering out datapoints for internal k8s containers (with name "POD", usually using image "pause")
 
 ## [2.2.0-alpha.3] - 2023-03-09
 
