@@ -111,6 +111,10 @@ Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll moc
 * Run the script (`Python: File` in launch.json)
 * Continue with `Updating tests if processing is changed`
 
+### Updating utils used for testing
+
+Whenever there is a need to improve the test tooling, eg. the script for scraping test data from a Prometheus (`utils/cleanup_mocked_prometheus_response.py`), or data comparison code, or versions or Python packages, ..., it should always happen in a separate PR. Do not mix changes to the test framework with changes to the k8s collector itself. Otherwise a change to the testing framework might hide an unintentional change to the collector code.
+
 ## Publishing
 
 ### Docker image
