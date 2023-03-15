@@ -23,6 +23,7 @@ def retry_until_ok(url, func, print_failure):
     while time.time() - start_time < timeout:
         is_ok = False
         try: 
+            response = None
             try: 
                 response = requests.get(url)
                 response.raise_for_status()
@@ -37,7 +38,7 @@ def retry_until_ok(url, func, print_failure):
                     print('Failed to download otel messages. Response code:',
                         response.status_code)
 
-                return False
+                print('Failed to download otel messages')
         except Exception as e:
             last_exception = e
             print(e, traceback.format_exc())
