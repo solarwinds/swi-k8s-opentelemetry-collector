@@ -288,6 +288,17 @@ cluster:
   name: <CLUSTER_NAME>
   uid: <CLUSTER_UID>
 
+# If enabled it creates CronJob that will periodically check for new versions of the Helm chart and upgrade if available
+# Keep in mind that in order to update resources the job has full access to the namespace where it is deployed and also have access to modify ClusterRole and ClusterRolBinding
+autoupdate:
+  enabled: false
+
+  # How often the update will be checked. See https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#writing-a-cronjob-spec
+  schedule: "@daily"
+
+  # Whether it should check for pre-release versions
+  devel: false
+
 # Set labels to every deployed resource
 # commonLabels: 
 
