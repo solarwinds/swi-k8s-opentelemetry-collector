@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Added optional autoupdate support (set by `autoupdate.enabled` in `values.yaml`) [#196](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/196). 
+
 ## [2.2.0-alpha.4] - 2023-03-14
 
 ### Added
