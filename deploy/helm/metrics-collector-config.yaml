@@ -1151,9 +1151,19 @@ processors:
         action: delete
 
       # Container
-      - key: k8s.container.id
-        from_attribute: container_id
+      - key: container_id
+        action: extract
+        pattern: ^(?P<extracted_container_runtime>[^:]+)://(?P<extracted_container_id>[^/]+)$
+      - key: container.id
+        from_attribute: extracted_container_id
         action: insert
+      - key: extracted_container_id
+        action: delete
+      - key: container.runtime
+        from_attribute: extracted_container_runtime
+        action: insert
+      - key: extracted_container_runtime
+        action: delete
       - key: container_id
         action: delete
 
