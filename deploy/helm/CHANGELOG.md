@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.2.0-beta.1] - 2023-03-16
+
 ### Added
 
 - Adding `container.id` and `container.runtime` attributes to `k8s.kube_pod_container_info` metric for unique container identification [#182](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/182).
