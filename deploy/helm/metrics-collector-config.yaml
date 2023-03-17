@@ -309,7 +309,7 @@ processors:
         action: insert
         match_type: regexp
         # take datapoints with non-empty container label
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "container": "\\S+" }
         new_name: k8s.container.spec.memory.limit_temp
 
       # Pod resource metrics
@@ -345,7 +345,7 @@ processors:
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.cpu.usage.seconds.rate
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
@@ -354,24 +354,24 @@ processors:
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.memory.working_set
       - include: k8s.container_spec_cpu_quota
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU quota
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.spec.cpu.quota_temp
       - include: k8s.container_spec_cpu_period
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU period
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.spec.cpu.period_temp
       - include: k8s.container_network_receive_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -380,7 +380,7 @@ processors:
       - include: k8s.container_network_transmit_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -389,7 +389,7 @@ processors:
       - include: k8s.container_network_receive_packets_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -398,7 +398,7 @@ processors:
       - include: k8s.container_network_transmit_packets_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -407,7 +407,7 @@ processors:
       - include: k8s.container_network_receive_packets_dropped_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -416,7 +416,7 @@ processors:
       - include: k8s.container_network_transmit_packets_dropped_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -484,7 +484,7 @@ processors:
         action: insert
         match_type: regexp
         # non-empty container, datapoints of Pod's file system read ops
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -494,7 +494,7 @@ processors:
         action: insert
         match_type: regexp
         # non-empty container, datapoints of Pod's file system write ops
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -504,7 +504,7 @@ processors:
         action: insert
         match_type: regexp
         # non-empty container, datapoints of Pod's file system read bytes
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -514,7 +514,7 @@ processors:
         action: insert
         match_type: regexp
         # non-empty container, datapoints of Pod's file system written bytes
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -554,7 +554,7 @@ processors:
         action: insert
         match_type: regexp
         # non-empty container, datapoints of Pod's file system usage bytes
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed 
+- Fix grouping conditions for container_network_* and container_fs_* metrics to not relly on container attribute
+
 ## [2.2.0-beta.1] - 2023-03-16
 
 ### Added
