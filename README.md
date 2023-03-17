@@ -30,7 +30,7 @@ Components that are being deployed:
 
 ## Installation
 
-Walk through Add Kubernetes wizard in SolarWinds Observability
+Walk through Add Kubernetes wizard in [SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/default.htm#cshid=gh-k8s-collector)
 
 ## Limitations
 
