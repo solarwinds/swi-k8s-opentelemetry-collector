@@ -82,6 +82,31 @@ otel:
         # override if your singleton collector is being OOM-killed.
         memory: 2.5Gi
     
+    # k8s_instrumentation controls the automatic extraction of Kubernetes metadata from resources.
+    # When enabled, it instruments OpenTelemetry (OTEL) resources being sent.
+    k8s_instrumentation:
+      # Set 'enabled' to true to activate Kubernetes instrumentation.
+      enabled: true
+
+      labels:
+        # Set 'enabled' to true to instrument Kubernetes labels.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific labels from instrumentation.
+        # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        excludePattern: 
+
+      annotations:
+        # Set 'enabled' to true to instrument Kubernetes annotations.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific annotations from instrumentation.
+        # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        excludePattern:
+
+
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
     telemetry:

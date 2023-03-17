@@ -11,6 +11,55 @@ extensions:
 {{ toYaml .Values.otel.metrics.memory_ballast | indent 4 }}
 
 processors:
+{{- if .Values.otel.metrics.k8s_instrumentation.enabled }}
+  k8sattributes:
+    auth_type: "serviceAccount"
+    passthrough: false
+    extract:
+      metadata:
+        - k8s.deployment.name
+        - k8s.replicaset.name
+        - k8s.daemonset.name
+        - k8s.job.name
+        - k8s.cronjob.name
+        - k8s.statefulset.name
+{{- if .Values.otel.metrics.k8s_instrumentation.annotations.enabled }}
+      annotations:
+        - key_regex: (.*)
+          tag_name: k8s.pod.annotations.$$1
+          from: pod
+        - key_regex: (.*)
+          tag_name: k8s.namespace.annotations.$$1
+          from: namespace
+{{- end }}
+{{- if .Values.otel.metrics.k8s_instrumentation.labels.enabled }}
+      labels:
+        - key_regex: (.*)
+          tag_name: k8s.pod.labels.$$1
+          from: pod
+        - key_regex: (.*)
+          tag_name: k8s.namespace.labels.$$1
+          from: namespace
+{{- end }}
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
+  resource/k8sattributes_labels_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.metrics.k8s_instrumentation.labels.excludePattern }}
+{{- end }}
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
+  resource/k8sattributes_annotations_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
+{{- end }}  
+{{- end }}
   memory_limiter:
 {{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
   transform:
@@ -1394,6 +1443,15 @@ service:
         - filter
 {{- end }}
         - resource/metrics
+{{- if .Values.otel.metrics.k8s_instrumentation.enabled }}
+        - k8sattributes
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
+        - resource/k8sattributes_labels_filter
+{{- end }}
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
+        - resource/k8sattributes_annotations_filter
+{{- end }}    
+{{- end }}
         - batch
       receivers:
         - prometheus
