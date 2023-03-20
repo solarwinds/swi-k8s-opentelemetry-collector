@@ -34,7 +34,10 @@ spec:
         {{- if .Values.otel.metrics.prometheus_check }}
         - name: prometheus-check
           image: busybox
-          command: ['sh', '-c', 'until $(wget --spider -nv {{ .Values.otel.metrics.prometheus.url }}/federate?); do echo waiting on prometheus; sleep 1; done']
+          command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done']
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" . }}-metrics-env-config
         {{- end }}
         {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
