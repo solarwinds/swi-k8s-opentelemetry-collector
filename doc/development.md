@@ -99,9 +99,7 @@ Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll moc
 * You can run it directly in cluster by manually triggering `integration-test` CronJob
 
 ### Updating tests if processing is changed
-* Open `launch.json`, Modify `WRITE_ACTUAL` environment variable in `Python: Pytest` debug configuration to `True`
-* Run tests
-* Read `actual.json`, format it to readable json, review it if it matches expected outcome and save it as `expected_output.json`
+* Run `utils\set_expected_output.py` in Python
 
 ### Updating mocked data if new data are scraped
 * Open/Create `.env` file and set `PROMETHEUS_HOST` variable from where you want to generate mocked data. For example `PROMETHEUS_HOST=localhost:8080`
