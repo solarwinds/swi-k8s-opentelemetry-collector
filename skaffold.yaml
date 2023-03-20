@@ -31,13 +31,13 @@ deploy:
         namespace: monitoring
         createNamespace: true
         setValues:
-          otel.metrics.prometheus.url: monitoring-prometheus-server.monitoring.svc.cluster.local:80
           otel.metrics.swi_endpoint_check: false
           otel.metrics.prometheus_check: false
           otel.endpoint: timeseries-mock-service:9082
           otel.tls_insecure: true
           otel.image.repository: "swi-k8s-opentelemetry-collector"
           otel.image.tag: ""
+          otel.metrics.prometheus.autodeploy: true
           otel.metrics.prometheus.scrape_interval: "15s"
           otel.logs.filter.include.record_attributes[0].key: "k8s.namespace.name"
           otel.logs.filter.include.record_attributes[0].value: "^.*$"
@@ -47,17 +47,6 @@ deploy:
           cluster.name: cluster name
           cluster.uid: cluster-uid-123456789
         upgradeOnChange: true
-      
-      - name: monitoring
-        remoteChart: prometheus
-        namespace: monitoring
-        createNamespace: true
-        repo: https://prometheus-community.github.io/helm-charts
-        version: 19.0.1
-        setValues:
-          alertmanager.enabled: false
-          prometheus-node-exporter.enabled: false
-          prometheus-pushgateway.enabled: false
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -65,9 +54,9 @@ portForward:
   namespace: monitoring
   port: 8088
 - resourceType: service
-  resourceName: monitoring-prometheus-server
+  resourceName: prometheus-operated
   namespace: monitoring
-  port: 80
+  port: 9090
   localPort: 8080
 profiles:
   - name: builder-only
@@ -84,21 +73,23 @@ profiles:
   # Useful to develop integration tests - environment is configured to use mocked prometheus metrics
   - name: only-mock
     patches:
-    - op: replace
+    - op: add
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
       value: wiremock.monitoring.svc.cluster.local:8080
-    - op: remove
-      path: /deploy/helm/releases/1
+    - op: replace
+      path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.autodeploy
+      value: false
     - op: remove
       path: /portForward/1
   # Useful to develop against remote prometheus instance (mounted locally on host.docker.internal:9090)
   - name: remote-prometheus
     patches:
-    - op: replace
+    - op: add
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
       value: host.docker.internal:9090
-    - op: remove
-      path: /deploy/helm/releases/1
+    - op: replace
+      path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.autodeploy
+      value: false
     - op: remove
       path: /portForward/1
   - name: ci
@@ -114,11 +105,12 @@ profiles:
         structureTests:
           - './build/docker/structure-test.yaml'
     patches:
-    - op: replace
+    - op: add
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
       value: wiremock.monitoring.svc.cluster.local:8080
-    - op: remove
-      path: /deploy/helm/releases/1
+    - op: replace
+      path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.autodeploy
+      value: false
     - op: remove
       path: /portForward/1
     deploy:
@@ -131,9 +123,12 @@ profiles:
         path: /deploy/helm/releases/0/setValues/otel.image.repository
       - op: remove
         path: /deploy/helm/releases/0/setValues/otel.image.tag
-      - op: replace
+      - op: add
         path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
         value: wiremock.monitoring.svc.cluster.local:8080
+      - op: replace
+        path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.autodeploy
+        value: false
     build:
       local:
         push: false

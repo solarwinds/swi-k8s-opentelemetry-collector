@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- A new option to deploy `kube-prometheus-stack` as part of the k8s collector chart installation, controlled by setting `otel.metrics.prometheus.autodeploy: true` in `values.yaml`.
+
 ### Changed 
 - Fix grouping conditions for container_network_* and container_fs_* metrics to not relly on container attribute
 - Added metrics k8s.cluster.version which extract version from kubernetes_build_info. Metric kubernetes_build_info is not published

@@ -7,5 +7,9 @@ metadata:
   labels:
 {{ include "common.labels" . | indent 4 }}
 data:
+{{- if .Values.otel.metrics.prometheus.autodeploy }}
+  PROMETHEUS_URL: "prometheus-operated.{{ .Release.Namespace }}.svc.cluster.local:9090"
+{{- else }}
   PROMETHEUS_URL: {{ quote .Values.otel.metrics.prometheus.url }}
+{{- end }}
 {{- end}}
