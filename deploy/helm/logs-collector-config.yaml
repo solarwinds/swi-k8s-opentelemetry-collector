@@ -19,7 +19,7 @@ processors:
 {{- if .Values.otel.logs.filter }}
   # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
   filter:
-    logs: 
+    logs:
 {{ toYaml .Values.otel.logs.filter | indent 6 }}
 {{- end }}
 
@@ -29,7 +29,7 @@ processors:
       - k8s.namespace.name
       - k8s.pod.name
       - k8s.pod.uid
-      
+
 
   resource/container:
     attributes:
@@ -90,6 +90,13 @@ processors:
       - key: k8s.node.name
         value: ${NODE_NAME}
         action: insert
+
+  transform/syslogify:
+      error_mode: ignore
+      log_statements:
+        - context: log
+          statements:
+            - set(body , attributes["syslogsev"])
 
   batch:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
@@ -187,6 +194,25 @@ receivers:
         regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$'
         parse_from: attributes["log.file.path"]
 
+      # Parse severity from stream
+      - type: severity_parser
+        parse_from: body.stream
+        mapping:
+          info: stdout
+          error: stderr
+      # Calculate syslog severity
+      - type: add
+        field: attributes["syslogsev"]
+        value: "<11>1"
+        # in case of severity == error, emit user level messages (1 * 8) + error (3), trail with syslog version 1
+        #if: severity == error
+
+      - type: add
+        field: attributes["syslogsev"]
+        value: "<14>1"
+        # in case of severity == error, emit user level messages (1 * 8) + info (6), trail with syslog version 1
+        #if: severity == info
+
       # Rename attributes
       - type: move
         id: move-attributes
@@ -212,6 +238,7 @@ receivers:
       - type: move
         from: body.log
         to: body
+
 service:
   extensions:
     - file_storage
@@ -229,6 +256,7 @@ service:
 {{- end }}
         - groupbyattrs/all
         - resource/container
+        - transform/syslogify
         - batch
       receivers:
         - filelog
@@ -241,6 +269,7 @@ service:
         - memory_limiter
         - groupbyattrs/all
         - resource/journal
+        - transform/syslogify
         - batch
       receivers:
         - journald
