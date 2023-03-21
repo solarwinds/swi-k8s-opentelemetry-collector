@@ -787,15 +787,16 @@ processors:
             label_set: []
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
-        action: update
+        action: insert
+        experimental_match_labels: { "exported_job": "kubernetes-apiservers" }
+        new_name: k8s.cluster.version
         operations:
-          - action: delete_label_value
-            label: exported_job
-            label_value: kubernetes-nodes
-          - action: delete_label_value
-            label: exported_job
-            label_value: kubelet
-
+          - action: aggregate_labels
+            label_set: [git_version]
+            aggregation_type: sum
+      - include: k8s.kubernetes_build_info
+        action: update 
+        new_name: k8s.kubernetes_build_info_temp
       # Prometheus metrics
       - include: apiserver_request_total
         action: insert
@@ -1045,6 +1046,8 @@ processors:
       - key: sw.k8s.cluster.version
         from_attribute: git_version
         action: insert
+      - key: git_version
+        action: delete
 
       # Node
       - key: k8s.node.name
@@ -1342,7 +1345,7 @@ receivers:
               - "kube_job_status_completion_time"
               - "kube_job_spec_completions"
               - "kube_job_spec_parallelism"
-              - "kubernetes_build_info"
+              - '{__name__="kubernetes_build_info", job="kubernetes-apiservers"}'
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
 {{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
 {{- end }}
