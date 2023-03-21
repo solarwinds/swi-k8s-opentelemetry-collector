@@ -36,7 +36,7 @@ processors:
       datapoint:
       - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*") == true'
 
-  # removing instance attribute on kube_ metrics as it doesn't represent node
+  # removing instance attribute on kube_ metrics as it doesn't represent k8s.node.name
   attributes/remove_instance:
     include:
         match_type: regexp
@@ -49,21 +49,38 @@ processors:
         action: delete
 
   # unify attributes
-  attributes/unify:
+  attributes/unify_node_attribute:
+    include:
+      match_type: regexp
+      metric_names:      
+        - container_.*
+        - kube_node_.*
+        - kube_pod_info
+        - kube_pod_container_resource_requests
+        - kube_pod_container_resource_limits
     actions:
-      - key: node
+      - key: k8s.node.name
+        from_attribute: node
+        action: insert
+      - key: k8s.node.name
         from_attribute: exported_node
         action: insert
-      - key: node
+      - key: k8s.node.name
         from_attribute: kubernetes_io_hostname
         action: insert
-      - key: node
+      - key: k8s.node.name
         from_attribute: instance
         action: insert
-      - key: node
+      - key: k8s.node.name
         from_attribute: exported_instance
         action: insert
-
+      
+  # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
+  #   where kube-state-metric is deployed on  
+  attributes/remove_node:
+    actions:
+      - key: node
+        action: delete
       - key: instance
         action: delete
       - key: kubernetes_io_hostname
@@ -72,25 +89,7 @@ processors:
         action: delete
       - key: exported_node
         action: delete
-  # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
-  #   where kube-state-metric is deployed on
-  attributes/remove_node:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_.*
-    exclude:
-      match_type: regexp
-      metric_names:
-        - kube_node_.*
-        - kube_pod_info
-        - kube_pod_container_resource_requests
-        - kube_pod_container_resource_limits
-    actions:
-      - key: node
-        action: delete
-      - key: exported_node
-        action: delete
+
   attributes/remove_pod:
     include:
       match_type: regexp
@@ -371,55 +370,55 @@ processors:
       - include: k8s.container_network_receive_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.network.bytes_received
       - include: k8s.container_network_transmit_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.network.bytes_transmitted
       - include: k8s.container_network_receive_packets_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.network.packets_received
       - include: k8s.container_network_transmit_packets_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.network.packets_transmitted
       - include: k8s.container_network_receive_packets_dropped_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.network.receive_packets_dropped
       - include: k8s.container_network_transmit_packets_dropped_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.network.transmit_packets_dropped
       - include: k8s.kube_pod_container_status_waiting
@@ -483,37 +482,37 @@ processors:
       - include: k8s.container_fs_reads_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.fs.reads.rate
       - include: k8s.container_fs_writes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.fs.writes.rate
       - include: k8s.container_fs_reads_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.fs.reads.bytes.rate
       - include: k8s.container_fs_writes_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.fs.writes.bytes.rate
       - include: k8s.pod.fs.reads.rate
@@ -528,7 +527,7 @@ processors:
         submatch_case: lower
         operations:
           - action: aggregate_labels
-            label_set:  [pod, namespace, node]
+            label_set:  [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.fs.iops
       - include: k8s.pod.fs.reads.bytes.rate
@@ -543,19 +542,19 @@ processors:
         submatch_case: lower
         operations:
           - action: aggregate_labels
-            label_set:  [pod, namespace, node]
+            label_set:  [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.fs.throughput
       - include: k8s.container_fs_usage_bytes
         action: insert
         match_type: regexp
-        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
+        experimental_match_labels: { "k8s.node.name": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace, node]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.fs.usage.bytes
-      # Node metrics
+      # k8s.node.name metrics
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
         experimental_match_labels: { "id": "/" }
@@ -608,70 +607,70 @@ processors:
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.network.bytes_received
       - include: k8s.pod.network.bytes_transmitted
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.network.bytes_transmitted
       - include: k8s.pod.network.packets_received
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.network.packets_received
       - include: k8s.pod.network.packets_transmitted
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.network.packets_transmitted
       - include: k8s.pod.network.receive_packets_dropped
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.network.receive_packets_dropped
       - include: k8s.pod.network.transmit_packets_dropped
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.network.transmit_packets_dropped
       - include: k8s.pod.fs.reads.rate
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.fs.reads.rate_temp
       - include: k8s.pod.fs.writes.rate
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.fs.writes.rate_temp
       - include: k8s.pod.fs.reads.bytes.rate
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.fs.reads.bytes.rate_temp
       - include: k8s.pod.fs.writes.bytes.rate
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.fs.writes.bytes.rate_temp
       - include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
@@ -680,7 +679,7 @@ processors:
         submatch_case: lower
         operations:
           - action: aggregate_labels
-            label_set:  [node]
+            label_set:  [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.fs.iops
       - include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
@@ -689,14 +688,14 @@ processors:
         submatch_case: lower
         operations:
           - action: aggregate_labels
-            label_set:  [node]
+            label_set:  [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.fs.throughput
       - include: k8s.pod.fs.usage.bytes
         action: insert
         operations:
           - action: aggregate_labels
-            label_set: [node]
+            label_set: [k8s.node.name]
             aggregation_type: sum
         new_name: k8s.node.fs.usage
 
@@ -935,8 +934,8 @@ processors:
         operation: divide
   groupbyattrs/node:
     keys:
-      - node
-  # Transformations done after grouping per node
+      - k8s.node.name
+  # Transformations done after grouping per k8s.node.name
   metricstransform/aggregate_node_level:
     transforms:
       - include: k8s.kube_pod_info
@@ -978,7 +977,7 @@ processors:
       - container
       - image
       - image_id
-      - node
+      - k8s.node.name
       - sw.k8s.pod.status
       - sw.k8s.namespace.status
       - sw.k8s.node.status
@@ -1049,13 +1048,7 @@ processors:
       - key: git_version
         action: delete
 
-      # Node
-      - key: k8s.node.name
-        from_attribute: node
-        action: upsert
-      - key: node
-        action: delete
-
+      # k8s.node.name
       - key: sw.k8s.node.version
         from_attribute: kubelet_version
         action: insert
@@ -1366,7 +1359,7 @@ service:
         - transform
         - filter/remove_internal
         - attributes/remove_instance
-        - attributes/unify
+        - attributes/unify_node_attribute
         - attributes/remove_node
         - attributes/remove_pod
         - attributes/remove_container
