@@ -1439,7 +1439,6 @@ service:
         - filter
 {{- end }}
         - resource/metrics
-{{- if .Values.otel.metrics.k8s_instrumentation.enabled }}
         - k8sattributes
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
         - resource/k8sattributes_labels_filter
@@ -1447,7 +1446,6 @@ service:
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
         - resource/k8sattributes_annotations_filter
 {{- end }}    
-{{- end }}
         - batch
       receivers:
         - prometheus
