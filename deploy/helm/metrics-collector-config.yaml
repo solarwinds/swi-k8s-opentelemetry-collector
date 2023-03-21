@@ -1351,7 +1351,7 @@ receivers:
               - "kube_job_status_completion_time"
               - "kube_job_spec_completions"
               - "kube_job_spec_parallelism"
-              - "kubernetes_build_info", job=".*apiserver.*"}'
+              - '{__name__="kubernetes_build_info", job~=".*apiserver.*"}'
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
 {{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
 {{- end }}
