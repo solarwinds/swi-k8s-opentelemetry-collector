@@ -11,7 +11,6 @@ extensions:
 {{ toYaml .Values.otel.metrics.memory_ballast | indent 4 }}
 
 processors:
-{{- if .Values.otel.metrics.k8s_instrumentation.enabled }}
   k8sattributes:
     auth_type: "serviceAccount"
     passthrough: false
@@ -59,7 +58,6 @@ processors:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
 {{- end }}  
-{{- end }}
   memory_limiter:
 {{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
   transform:
