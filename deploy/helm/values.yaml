@@ -66,7 +66,7 @@ otel:
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
     memory_limiter:
       check_interval: 1s
-      limit_mib: 2048
+      limit_mib: 2560
       spike_limit_mib: 512
 
     # Memory Ballast enables applications to configure memory ballast for the process.
@@ -77,11 +77,33 @@ otel:
     # Resource configuration for singleton collector
     resources:
       requests:
-        memory: 2.5Gi
+        memory: 3Gi
       limits:
         # override if your singleton collector is being OOM-killed.
-        memory: 2.5Gi
+        memory: 3Gi
     
+    # k8s_instrumentation controls the automatic extraction of Kubernetes metadata from resources.
+    # It instruments OpenTelemetry (OTEL) resources being sent.
+    k8s_instrumentation:
+      labels:
+        # Set 'enabled' to true to instrument Kubernetes labels.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific labels from instrumentation.
+        # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        excludePattern: 
+
+      annotations:
+        # Set 'enabled' to true to instrument Kubernetes annotations.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific annotations from instrumentation.
+        # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        excludePattern:
+
+
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
     telemetry:

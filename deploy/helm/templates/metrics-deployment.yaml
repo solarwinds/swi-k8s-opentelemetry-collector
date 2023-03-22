@@ -28,6 +28,7 @@ spec:
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" . }}-metrics
     spec:
+      serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
       {{- if or .Values.otel.metrics.prometheus_check .Values.otel.metrics.swi_endpoint_check }}
       initContainers:
