@@ -18,9 +18,9 @@ processors:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
-          - set(resource.attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0.0
-          - set(resource.attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^false$") == true and value_double > 0.0
-          - set(resource.attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0.0
+          - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0
+          - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^false$") == true and value_double > 0
+          - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
 
   # Remove datapoints of internal k8s containers from metrics, excluding the "container_network_.+_total" metric where other datapoints don't exist
   # This is a workaround to not create container entities for POD containers
@@ -792,15 +792,17 @@ processors:
             label_set: []
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
-        action: update
+        action: insert
+        match_type: regexp
+        experimental_match_labels: { "exported_job": '.*apiservers.*' }
+        new_name: k8s.cluster.version
         operations:
-          - action: delete_label_value
-            label: exported_job
-            label_value: kubernetes-nodes
-          - action: delete_label_value
-            label: exported_job
-            label_value: kubelet
-
+          - action: aggregate_labels
+            label_set: [git_version]
+            aggregation_type: sum
+      - include: k8s.kubernetes_build_info
+        action: update 
+        new_name: k8s.kubernetes_build_info_temp
       # Prometheus metrics
       - include: apiserver_request_total
         action: insert
@@ -1050,6 +1052,8 @@ processors:
       - key: sw.k8s.cluster.version
         from_attribute: git_version
         action: insert
+      - key: git_version
+        action: delete
 
       # Node
       - key: k8s.node.name
@@ -1347,7 +1351,7 @@ receivers:
               - "kube_job_status_completion_time"
               - "kube_job_spec_completions"
               - "kube_job_spec_parallelism"
-              - "kubernetes_build_info"
+              - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
 {{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
 {{- end }}
