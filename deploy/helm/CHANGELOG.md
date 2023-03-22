@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed 
+- Fix grouping conditions for container_network_* and container_fs_* metrics to not relly on container attribute
+- Added metrics k8s.cluster.version which extract version from kubernetes_build_info. Metric kubernetes_build_info is not published
+
 ## [2.2.0-beta.1] - 2023-03-16
 
 ### Added
