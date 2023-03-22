@@ -44,6 +44,9 @@ jobs:
       - name: Deploy kubernetes
         uses: ./.github/actions/deploy-kubernetes
 
+      - name: Add dependency chart repos
+        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
       - name: Deploy services using Skaffold
         run: skaffold deploy --build-artifacts=/tmp/tags.json
 
@@ -77,6 +80,9 @@ jobs:
       - name: Deploy kubernetes
         uses: ./.github/actions/deploy-kubernetes
 
+      - name: Add dependency chart repos
+        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
       - name: Build
         run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
 
@@ -97,6 +103,12 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: v3.10.0
+
+      - name: Add dependency chart repos
+        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      - name: Download chart dependencies before linting
+        run: helm dependency build deploy/helm
 
       - name: Lint helm
         run: helm lint deploy/helm

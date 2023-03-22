@@ -1,5 +1,5 @@
 # This values file provides the default values for the chart. Placeholders like
-# <PROMETHEUS_URL> will be provided via the values.yaml provided during the cluster
+# <CLUSTER_NAME> will be provided via the values.yaml provided during the cluster
 # onboarding process--or you can provide your own with the appropriate values
 # given to you during initial onboarding for an initial cluster and region.
 
@@ -34,7 +34,7 @@ otel:
 
     prometheus: 
       # URL of prometheus where to scrape
-      url: <PROMETHEUS_URL>
+      url: ""
 
       # Prometheus URL scheme. It can take the values `http` or `https`
       scheme: http
@@ -302,3 +302,19 @@ autoupdate:
 # Set labels to every deployed resource
 # commonLabels: 
 
+prometheus:
+  # Whether the Prometheus server should be deployed as part of this chart.
+  # If true, the `otel.metrics.prometheus.url` setting is ignored.
+  enabled: false
+
+  alertmanager:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  server:
+    # Disabling persistent volume to make the chart compatible with new EKS clusters
+    # (this matches the behavior of `kube-prometheus-stack` chart).
+    persistentVolume:
+      enabled: false
