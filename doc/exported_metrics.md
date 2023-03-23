@@ -19,7 +19,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.cluster.pods.running | Gauge |  | The count of pods in running phase | custom |
 | k8s.cluster.spec.cpu.requests | Gauge | cores | The total number of requested CPU by all containers in a cluster | custom |
 | k8s.cluster.spec.memory.requests | Gauge | bytes | The total number of requested memory by all containers in a cluster | custom |
-| k8s.kubernetes_build_info | Gauge |  | Information about Kubernetes build  | native |
+| k8s.cluster.version | Gauge |  | Kubernetes cluster version| custom |
 
 ## Node metrics
 
@@ -116,6 +116,8 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.container_spec_cpu_quota | Gauge |  | CPU quota of the container | native |
 | k8s.container_spec_memory_limit_bytes | Gauge | bytes | Memory limit for the container | native |
 | k8s.container.spec.cpu.requests | Gauge | cores | The number of requested CPU by a container | custom |
+| k8s.container.spec.cpu.limit | Gauge | cores | CPU quota of container in given CPU period | custom |
+| k8s.container.cpu.usage.seconds.rate | Gauge | cores | The rate of pod cumulative CPU time consumed | custom |
 | k8s.container.spec.memory.requests | Gauge | bytes | The number of requested memory by a container | custom |
 | k8s.container.status | Gauge |  | Describes the status of the container (waiting/running/terminated) | custom |
 | k8s.kube_pod_container_info | Gauge |  | Information about a container in a pod | native |

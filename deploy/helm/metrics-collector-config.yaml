@@ -18,6 +18,23 @@ processors:
       - context: datapoint
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
+          - set(resource.attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0.0
+          - set(resource.attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^false$") == true and value_double > 0.0
+          - set(resource.attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0.0
+
+  # Remove datapoints of internal k8s containers from metrics, excluding the "container_network_.+_total" metric where other datapoints don't exist
+  # This is a workaround to not create container entities for POD containers
+  filter/remove_internal:
+    metrics:
+      datapoint:
+      - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*") == false'
+
+  # Remove datapoints of internal k8s containers from "container_network_.+_total" metrics after they were already processed
+  # This is a workaround to not create container entities for POD containers
+  filter/remove_internal_postprocessing:
+    metrics:
+      datapoint:
+      - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*") == true'
 
   # removing instance attribute on kube_ metrics as it doesn't represent node
   attributes/remove_instance:
@@ -292,7 +309,7 @@ processors:
         action: insert
         match_type: regexp
         # take datapoints with non-empty container label
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "container": "\\S+" }
         new_name: k8s.container.spec.memory.limit_temp
 
       # Pod resource metrics
@@ -328,30 +345,33 @@ processors:
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU usage
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.cpu.usage.seconds.rate
+      - include: k8s.container_cpu_usage_seconds_total
+        action: insert
+        new_name: k8s.container.cpu.usage.seconds.rate
       - include: k8s.container_memory_working_set_bytes
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's Memory usage
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.memory.working_set
       - include: k8s.container_spec_cpu_quota
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU quota
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.spec.cpu.quota_temp
       - include: k8s.container_spec_cpu_period
         action: insert
         match_type: regexp
         # empty `image` label and non-empty `pod` and `namespace` are datapoints of Pod's CPU period
-        experimental_match_labels: { "image": "^$", "pod": "(.|\\s)*\\S(.|\\s)*", "namespace": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
         new_name: k8s.pod.spec.cpu.period_temp
       - include: k8s.container_network_receive_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -360,7 +380,7 @@ processors:
       - include: k8s.container_network_transmit_bytes_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -369,7 +389,7 @@ processors:
       - include: k8s.container_network_receive_packets_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -378,7 +398,7 @@ processors:
       - include: k8s.container_network_transmit_packets_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -387,7 +407,7 @@ processors:
       - include: k8s.container_network_receive_packets_dropped_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -396,7 +416,7 @@ processors:
       - include: k8s.container_network_transmit_packets_dropped_total
         action: insert
         match_type: regexp
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -463,8 +483,7 @@ processors:
       - include: k8s.container_fs_reads_total
         action: insert
         match_type: regexp
-        # non-empty container, datapoints of Pod's file system read ops
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -473,8 +492,7 @@ processors:
       - include: k8s.container_fs_writes_total
         action: insert
         match_type: regexp
-        # non-empty container, datapoints of Pod's file system write ops
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -483,8 +501,7 @@ processors:
       - include: k8s.container_fs_reads_bytes_total
         action: insert
         match_type: regexp
-        # non-empty container, datapoints of Pod's file system read bytes
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -493,8 +510,7 @@ processors:
       - include: k8s.container_fs_writes_bytes_total
         action: insert
         match_type: regexp
-        # non-empty container, datapoints of Pod's file system written bytes
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -533,8 +549,7 @@ processors:
       - include: k8s.container_fs_usage_bytes
         action: insert
         match_type: regexp
-        # non-empty container, datapoints of Pod's file system usage bytes
-        experimental_match_labels: { "container": "(.|\\s)*\\S(.|\\s)*" }
+        experimental_match_labels: { "node": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, node]
@@ -772,15 +787,16 @@ processors:
             label_set: []
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
-        action: update
+        action: insert
+        experimental_match_labels: { "exported_job": "kubernetes-apiservers" }
+        new_name: k8s.cluster.version
         operations:
-          - action: delete_label_value
-            label: exported_job
-            label_value: kubernetes-nodes
-          - action: delete_label_value
-            label: exported_job
-            label_value: kubelet
-
+          - action: aggregate_labels
+            label_set: [git_version]
+            aggregation_type: sum
+      - include: k8s.kubernetes_build_info
+        action: update 
+        new_name: k8s.kubernetes_build_info_temp
       # Prometheus metrics
       - include: apiserver_request_total
         action: insert
@@ -825,6 +841,7 @@ processors:
       metrics:
         - k8s.node.cpu.usage.seconds.rate
         - k8s.pod.cpu.usage.seconds.rate
+        - k8s.container.cpu.usage.seconds.rate
         - apiserver_request_not_failed_temp
         - apiserver_request_total_temp
         - k8s.pod.fs.iops
@@ -852,6 +869,7 @@ processors:
     metrics:
       - k8s.node.cpu.usage.seconds.rate
       - k8s.pod.cpu.usage.seconds.rate
+      - k8s.container.cpu.usage.seconds.rate
       - k8s.pod.fs.iops
       - k8s.pod.fs.throughput
       - k8s.pod.fs.reads.rate
@@ -908,6 +926,13 @@ processors:
         metric1: k8s.pod.spec.cpu.quota_temp
         metric2: k8s.pod.spec.cpu.period_temp
         operation: divide
+  experimental_metricsgeneration/container:
+    rules:
+      - name: k8s.container.spec.cpu.limit
+        type: calculate
+        metric1: k8s.container_spec_cpu_quota
+        metric2: k8s.container_spec_cpu_period
+        operation: divide
   groupbyattrs/node:
     keys:
       - node
@@ -957,6 +982,7 @@ processors:
       - sw.k8s.pod.status
       - sw.k8s.namespace.status
       - sw.k8s.node.status
+      - sw.k8s.container.status
       - daemonset
       - statefulset
       - deployment
@@ -965,6 +991,7 @@ processors:
       - cronjob
       - git_version
       - internal_ip
+      - job_condition
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1019,6 +1046,8 @@ processors:
       - key: sw.k8s.cluster.version
         from_attribute: git_version
         action: insert
+      - key: git_version
+        action: delete
 
       # Node
       - key: k8s.node.name
@@ -1120,9 +1149,19 @@ processors:
         action: delete
 
       # Container
-      - key: k8s.container.id
-        from_attribute: container_id
+      - key: container_id
+        action: extract
+        pattern: ^(?P<extracted_container_runtime>[^:]+)://(?P<extracted_container_id>[^/]+)$
+      - key: container.id
+        from_attribute: extracted_container_id
         action: insert
+      - key: extracted_container_id
+        action: delete
+      - key: container.runtime
+        from_attribute: extracted_container_runtime
+        action: insert
+      - key: extracted_container_runtime
+        action: delete
       - key: container_id
         action: delete
 
@@ -1177,6 +1216,12 @@ processors:
         from_attribute: job_name
         action: insert
       - key: job_name
+        action: delete
+
+      - key: k8s.job.condition
+        from_attribute: job_condition
+        action: insert
+      - key: job_condition
         action: delete
 
       # CronJob
@@ -1300,7 +1345,7 @@ receivers:
               - "kube_job_status_completion_time"
               - "kube_job_spec_completions"
               - "kube_job_spec_parallelism"
-              - "kubernetes_build_info"
+              - '{__name__="kubernetes_build_info", job="kubernetes-apiservers"}'
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
 {{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
 {{- end }}
@@ -1319,6 +1364,7 @@ service:
         - memory_limiter
         - filter/receiver
         - transform
+        - filter/remove_internal
         - attributes/remove_instance
         - attributes/unify
         - attributes/remove_node
@@ -1330,11 +1376,13 @@ service:
         - swmetricstransform/preprocessing
         - metricstransform/preprocessing
         - swmetricstransform/postprocessing
+        - filter/remove_internal_postprocessing
         - cumulativetodelta
         - deltatorate
         - metricstransform/aggregate_rate
         - experimental_metricsgeneration/cluster
         - experimental_metricsgeneration/pod
+        - experimental_metricsgeneration/container
         - groupbyattrs/node
         - metricstransform/aggregate_node_level
         - groupbyattrs/pod

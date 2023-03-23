@@ -1,13 +1,11 @@
-ARG GOLANG_IMAGE=docker.io/library/golang:1.19.3-bullseye@sha256:d388153691a825844ebb3586dd04d1c60a2215522cc445701424205dffc8a83e
-
-FROM ${GOLANG_IMAGE} as base
+FROM docker.io/library/golang:1.19.7-bullseye@sha256:7767d772324bf9e98417806bfc321a805ab0f41bedcbd1a854929a5e33e29444 as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
 FROM base as builder
 
 COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
-RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.69.0
+RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.73.0
 RUN CGO_ENABLED=0 /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
 
 # create vendor folder (for mend scanning)
@@ -18,10 +16,10 @@ RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else 
 FROM base as tests
 RUN cd src/processor/swmetricstransformprocessor && go test ./...
 
-FROM alpine:latest as prep
+FROM alpine:3.17@sha256:e2e16842c9b54d985bf1ef9242a313f36b856181f188de21313820e177002501 as prep
 RUN apk --update add ca-certificates
 
-FROM debian:11.4 as journal
+FROM debian:11.6@sha256:6f1f698e20c8ae73b110eb614a2c6d13fbdb504bbbbcf2965c4d0b80b7bb7fb1 as journal
 RUN apt update
 RUN apt install -y systemd
 

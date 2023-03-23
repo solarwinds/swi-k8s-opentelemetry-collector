@@ -1,0 +1,37 @@
+{{- if .Values.autoupdate.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-autoupdate-script
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+data:
+  helm-upgrade.sh: |
+    #!/bin/bash
+
+    swo_k8s_collector="{{ .Chart.Name }}"
+    swo_repo="https://helm.solarwinds.com"
+{{- if .Values.autoupdate.devel }}
+    devel_flag="--devel"
+{{- else }}
+    devel_flag=""
+{{- end }}
+
+    helm repo add solarwinds $swo_repo
+
+    latest_version=$(helm search repo $swo_k8s_collector $devel_flag -o json | jq -r '.[] | "\(.version)"')
+    current_version="{{ .Chart.Version }}"
+
+    release="{{ .Release.Name }}"
+    namespace="{{ .Release.Namespace }}"
+    echo "Current version: $current_version, Last version: $latest_version"
+    # Compare the two versions
+    if [ "$latest_version" != "$current_version" ]; then
+        # Upgrade the release with the new version of the chart
+        echo "Upgrading $release in namespace $namespace to $swo_k8s_collector $latest_version"
+        helm upgrade $release $swo_k8s_collector --namespace $namespace --repo $swo_repo $devel_flag
+    else
+        echo "No upgrade needed for $release in namespace $namespace"
+    fi
+{{- end }}

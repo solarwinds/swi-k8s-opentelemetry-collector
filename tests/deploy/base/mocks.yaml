@@ -13,10 +13,16 @@ data:
         loglevel: debug
       file/logs:
         path: /data/logs.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
       file/metrics:
         path: /data/metrics.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
       file/events:
         path: /data/events.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
       prometheus:
         endpoint: "0.0.0.0:8080"
         namespace: output
@@ -35,15 +41,15 @@ data:
           include:
             match_type: strict
             resource_attributes:
-              - Key: sw.k8s.log.type
-                Value: event
+              - key: sw.k8s.log.type
+                value: event
       filter/events_out:
         logs: 
           exclude:
             match_type: strict
             resource_attributes:
-              - Key: sw.k8s.log.type
-                Value: event
+              - key: sw.k8s.log.type
+                value: event
     receivers:
       otlp:
         protocols:
@@ -124,7 +130,7 @@ spec:
             - --config=/conf/relay.yaml
           securityContext:
             runAsUser: 0
-          image: "otel/opentelemetry-collector-contrib:0.69.0"
+          image: "otel/opentelemetry-collector-contrib:0.73.0"
           imagePullPolicy: IfNotPresent
           ports:
             - name: otlp

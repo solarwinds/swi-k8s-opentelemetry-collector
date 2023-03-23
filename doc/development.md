@@ -99,9 +99,7 @@ Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll moc
 * You can run it directly in cluster by manually triggering `integration-test` CronJob
 
 ### Updating tests if processing is changed
-* Open `launch.json`, Modify `WRITE_ACTUAL` environment variable in `Python: Pytest` debug configuration to `True`
-* Run tests
-* Read `actual.json`, format it to readable json, review it if it matches expected outcome and save it as `expected_output.json`
+* Run `utils\set_expected_output.py` in Python
 
 ### Updating mocked data if new data are scraped
 * Open/Create `.env` file and set `PROMETHEUS_HOST` variable from where you want to generate mocked data. For example `PROMETHEUS_HOST=localhost:8080`
@@ -110,6 +108,10 @@ Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll moc
   * to get that you run `skaffold dev -p=only-mock` and check console output of `wiremock` pod, which logs full request it receive
 * Run the script (`Python: File` in launch.json)
 * Continue with `Updating tests if processing is changed`
+
+### Updating utils used for testing
+
+Whenever there is a need to improve the test tooling, eg. the script for scraping test data from a Prometheus (`utils/cleanup_mocked_prometheus_response.py`), or data comparison code, or versions or Python packages, ..., it should always happen in a separate PR. Do not mix changes to the test framework with changes to the k8s collector itself. Otherwise a change to the testing framework might hide an unintentional change to the collector code.
 
 ## Publishing
 
@@ -129,11 +131,11 @@ Steps to publish new version:
 
 Helm chart is published to <https://helm.solarwinds.com>.
 
-1. Update property `version` in [deploy/helm/Chart.yaml](deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format).
-2. Update [deploy/helm/CHANGELOG.md](deploy/helm/CHANGELOG.md):
+1. Update property `version` in [deploy/helm/Chart.yaml](../deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format).
+2. Update [deploy/helm/CHANGELOG.md](../deploy/helm/CHANGELOG.md):
    1. Create release record with the right version and the date.
    2. Write all changes recorded in `Unreleased` section into the release.
 3. Create PR for the changes to the `master` branch and merge them.
 4. Run "Release Helm Chart" GitHub action workflow.
-5. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](deploy/helm/CHANGELOG.md) into its description.
+5. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](../deploy/helm/CHANGELOG.md) into its description.
 6. Review PR that was created for the changes to the `gh-pages` branch and merge them.
