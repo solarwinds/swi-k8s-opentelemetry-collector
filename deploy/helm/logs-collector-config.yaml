@@ -97,6 +97,8 @@ processors:
         - context: log
           statements:
             - set(body, Concat([attributes["syslogsev"], attributes["rawtime"],  resource.attributes["k8s.container.name"], resource.attributes["k8s.pod.name"], "-", "-", "-", body ], " "))
+            - set(attributes["severitydesc"], Concat([severity_number, severity_text], "-"))
+            - set(severity_text, "xyz")
             - delete_key(attributes, "syslogsev")
             - delete_key(attributes, "rawtime")
 
