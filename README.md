@@ -1,6 +1,6 @@
 # swo-k8s-collector
 
-Assets to monitor Kubernetes infrastructure using SolarWinds Observability
+Assets to monitor Kubernetes infrastructure using [SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/default.htm#cshid=gh-k8s-collector)
 
 ## Table of contents
 
@@ -30,7 +30,7 @@ Components that are being deployed:
 
 ## Installation
 
-Walk through Add Kubernetes wizard in SolarWinds Observability
+Walk through Add Kubernetes wizard in [SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/default.htm#cshid=gh-k8s-collector)
 
 ## Limitations
 
@@ -48,6 +48,22 @@ Internally, it contains [OpenTelemetry Collector configuration](https://opentele
 **WARNING: Custom modifications to OpenTelemetry Collector configurations can lead to unexpected `swo-k8s-collector` behavior, data loss, and subsequent entity ingestion failures on the Solarwinds Observability platform side.**
 
 ### Metrics
+
+The `swo-k8s-collector` collects metrics from a Prometheus instance. To configure its address, set
+
+```yaml
+otel:
+  metrics:
+    prometheus:
+      url: <some_address>
+```
+
+Alternatively, **for testing purposes**, you can also let the collector deploy a Prometheus server for you.
+
+```yaml
+prometheus:
+  enabled: true
+```
 
 Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
 

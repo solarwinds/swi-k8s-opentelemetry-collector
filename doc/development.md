@@ -1,5 +1,15 @@
 # Development
 
+## Table of contents
+
+- [Contribution Guidelines](#contribution-guidelines)
+- [Prerequisites](#prerequisites)
+- [Deployment](#deployment)
+- [Develop against remote prometheus](#develop-against-remote-prometheus)
+- [Integration tests](#integration-tests)
+- [Updating Chart dependencies](#updating-chart-dependencies)
+- [Publishing](#publishing)
+
 ## Contribution Guidelines
 
 1. Pull the latest changes from the `master` branch.
@@ -13,8 +23,24 @@
 
 - [Skaffold](https://skaffold.dev) at least [v2.0.3](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.0.3)
   - On windows, do not install it using choco due to [this issue](https://github.com/GoogleContainerTools/skaffold/issues/4058)
-- [Kustomize](https://kustomize.io): `choco install kustomize`
-- [Helm](https://helm.sh): `choco install kubernetes-helm`
+- [Kustomize](https://kustomize.io):
+
+  ```shell
+  choco install kustomize
+  ```
+
+- [Helm](https://helm.sh):
+
+  ```shell
+  choco install kubernetes-helm
+  ```
+
+- Prometheus community Helm repo - it hosts a dependency for the collector's chart:
+
+  ```shell
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  ```
+
 - [Docker desktop](https://www.docker.com/products/docker-desktop) with Kubernetes enabled
 
 ## Deployment
@@ -99,9 +125,7 @@ Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll moc
 * You can run it directly in cluster by manually triggering `integration-test` CronJob
 
 ### Updating tests if processing is changed
-* Open `launch.json`, Modify `WRITE_ACTUAL` environment variable in `Python: Pytest` debug configuration to `True`
-* Run tests
-* Read `actual.json`, format it to readable json, review it if it matches expected outcome and save it as `expected_output.json`
+* Run `utils\set_expected_output.py` in Python
 
 ### Updating mocked data if new data are scraped
 * Open/Create `.env` file and set `PROMETHEUS_HOST` variable from where you want to generate mocked data. For example `PROMETHEUS_HOST=localhost:8080`
@@ -114,6 +138,20 @@ Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll moc
 ### Updating utils used for testing
 
 Whenever there is a need to improve the test tooling, eg. the script for scraping test data from a Prometheus (`utils/cleanup_mocked_prometheus_response.py`), or data comparison code, or versions or Python packages, ..., it should always happen in a separate PR. Do not mix changes to the test framework with changes to the k8s collector itself. Otherwise a change to the testing framework might hide an unintentional change to the collector code.
+
+## Updating Chart dependencies
+
+To update a dependency of the Helm chart:
+
+1. Update the `dependencies` section in [deploy/helm/Chart.yaml](../deploy/helm/Chart.yaml).
+2. Run
+
+    ```shell
+    helm dependency update deploy/helm
+    ```
+
+3. Commit changes in [deploy/helm/Chart.lock](../deploy/helm/Chart.lock).
+4. *(Optional)* Delete `*.tgz` files in `/deploy/helm/charts/` - they will be re-downloaded automatically as needed.
 
 ## Publishing
 

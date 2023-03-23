@@ -1,8 +1,7 @@
 import pytest
 import os
 import json
-from jsonmerge import merge
-from test_utils import retry_until_ok
+from test_utils import retry_until_ok, get_merged_json
 import difflib
 
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
@@ -10,7 +9,6 @@ url = f'http://{endpoint}/metrics.json'
 
 with open('expected_metric_names.txt', "r", newline='\n') as file_with_expected_metric_names:
     expected_metric_names = file_with_expected_metric_names.read().splitlines()
-
 
 def test_expected_metric_names_are_generated():
     retry_until_ok(url, assert_test_metric_names_found,
@@ -91,77 +89,6 @@ def print_failure_otel_content(content):
     actual_json = json.dumps(merged_json, sort_keys=True, indent=2)
     print('Actual json:')
     print(actual_json)
-
-
-def resource_sorting_key(metric):
-    return "".join([f"{a['key']}={a['value']['stringValue']}" for a in metric["resource"]["attributes"]])
-
-
-def remove_time_in_datapoint(datapoint):
-    if "timeUnixNano" in datapoint:
-        datapoint["timeUnixNano"] = "0"
-    if "startTimeUnixNano" in datapoint:
-        datapoint["startTimeUnixNano"] = "0"
-
-
-def sort_attributes(element):
-    if "attributes" in element:
-        element["attributes"] = sorted(
-            element["attributes"], key=lambda a: a["key"])
-
-
-def sort_datapoints(metric):
-    def datapoint_sorting_key(datapoint):
-        if "attributes" in datapoint:
-            return "".join([f"{a['key']}={a['value']['stringValue']}" for a in datapoint["attributes"]])
-        elif "asDouble" in datapoint:
-            return datapoint["asDouble"]
-        elif "asInt" in datapoint:
-            return datapoint["asInt"]
-        elif "asString" in datapoint:
-            return datapoint["asString"]
-        else:
-            return datapoint
-
-    metric["dataPoints"] = sorted(
-        metric["dataPoints"], key=datapoint_sorting_key)
-
-
-def process_metric_type(metric):
-    if "dataPoints" in metric:
-        for dp in metric["dataPoints"]:
-            remove_time_in_datapoint(dp)
-            sort_attributes(dp)
-        sort_datapoints(metric)
-
-
-def get_merged_json(content):
-    result = {}
-    for line in content.splitlines():
-        result = merge(result, json.loads(line))
-
-    # Sort the result and set timeStamps to 0 to make it easier to compare
-    for resource in result["resourceMetrics"]:
-        sort_attributes(resource["resource"])
-        for scope in resource["scopeMetrics"]:
-            scope["metrics"] = sorted(
-                scope["metrics"], key=lambda m: m["name"])
-            for metric in scope["metrics"]:
-                if "sum" in metric:
-                    process_metric_type(metric["sum"])
-                if "gauge" in metric:
-                    process_metric_type(metric["gauge"])
-                if "histogram" in metric:
-                    process_metric_type(metric["histogram"])
-
-                # Get rid of value of metric called "scrape_duration_seconds" as it is not stable
-                if metric["name"] == "scrape_duration_seconds":
-                    metric["gauge"]["dataPoints"][0]["asDouble"] = 0
-    result["resourceMetrics"] = sorted(
-        result["resourceMetrics"], key=resource_sorting_key)
-
-    return result
-
 
 def get_unique_metric_names(merged_json):
     result = list(set([metric["name"]
