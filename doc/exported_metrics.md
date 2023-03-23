@@ -184,6 +184,10 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_replicaset_created | Gauge | seconds | Unix creation timestamp | native |
 | k8s.kube_replicaset_owner | Gauge |  | Information about the ReplicaSet's owner | native |
 | k8s.kube.replicaset.owner.deployment | Gauge |  | Information about the Deployment owning the ReplicaSet | custom |
+| k8s.kube_replicaset_spec_replicas | Gauge |  | Information about the desired replicasets | native |
+| k8s.kube_replicaset_status_ready_replicas | Gauge |  | Information about the ready replicasets | native |
+| k8s.kube_replicaset_status_replicas | Gauge |  | Information about the current replicasets | native |
+
 
 ## Namespace metrics
 

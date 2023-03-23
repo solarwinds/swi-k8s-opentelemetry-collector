@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added 
+- New replicaset metrics `k8s.kube_replicaset_spec_replicas`, `k8s.kube_replicaset_status_ready_replicas`, `k8s.kube_replicaset_status_replicas`
+
 ## [2.3.0-alpha.2] - 2023-03-22
 
 ### Added
