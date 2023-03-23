@@ -1,0 +1,39 @@
+{{- if .Values.swoagent.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.cluster.name }}-swo-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  serviceName: {{ .Values.cluster.name }}-swo-agent
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.cluster.name }}-swo-agent
+  template:
+    metadata:
+      annotations:
+        checksum/values: {{ toJson .Values | sha256sum }}
+      labels:
+{{ include "common.template-labels" . | indent 8 }}
+        app: {{ .Values.cluster.name }}-swo-agent
+    spec:
+      securityContext: {}
+      containers:
+        - name: swo-agent 
+          image: {{ .Values.swoagent.image }}
+          env:
+            - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
+              value: {{ .Values.cluster.uid }}
+            - name: SWO_URL 
+              value: {{ trimPrefix "otel.collector" .Values.otel.endpoint }}
+            - name: UAMS_ACCESS_TOKEN 
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+          resources:
+{{ toYaml .Values.swoagent.resources | indent 12 }}
+{{- end}}
