@@ -96,7 +96,9 @@ processors:
       log_statements:
         - context: log
           statements:
-            - set(body , attributes["syslogsev"])
+            - set(body, Concat([attributes["syslogsev"], attributes["rawtime"],  resource.attributes["k8s.container.name"], resource.attributes["k8s.pod.name"], "-", "-", "-", body ], " "))
+            - delete_key(attributes, "syslogsev")
+            - delete_key(attributes, "rawtime")
 
   batch:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
@@ -205,19 +207,26 @@ receivers:
         field: attributes["syslogsev"]
         value: "<11>1"
         # in case of severity == error, emit user level messages (1 * 8) + error (3), trail with syslog version 1
-        #if: severity == error
+        if: body.stream == "stderr"
 
       - type: add
         field: attributes["syslogsev"]
         value: "<14>1"
-        # in case of severity == error, emit user level messages (1 * 8) + info (6), trail with syslog version 1
-        #if: severity == info
+        # in case of severity == info, emit user level messages (1 * 8) + info (6), trail with syslog version 1
+        if: body.stream == "stdout"
+
+      # - type: regex_parser
+      #   parse_from: body.log
+      #   regex: '^(?P<rawtime>[^ ^Z]+Z)'
 
       # Rename attributes
       - type: move
         id: move-attributes
         from: body.stream
         to: attributes["stream"]
+      - type: move
+        from: body.time
+        to: attributes["rawtime"]
       - type: move
         from: attributes.container_name
         to: attributes["k8s.container.name"]
@@ -238,6 +247,9 @@ receivers:
       - type: move
         from: body.log
         to: body
+
+
+
 
 service:
   extensions:
