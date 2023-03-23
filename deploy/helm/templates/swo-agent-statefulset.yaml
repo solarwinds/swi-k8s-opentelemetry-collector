@@ -2,23 +2,23 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.cluster.name }}-swo-agent
+  name: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}
 spec:
-  serviceName: {{ .Values.cluster.name }}-swo-agent
+  serviceName: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.cluster.name }}-swo-agent
+      app: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
   template:
     metadata:
       annotations:
         checksum/values: {{ toJson .Values | sha256sum }}
       labels:
 {{ include "common.template-labels" . | indent 8 }}
-        app: {{ .Values.cluster.name }}-swo-agent
+        app: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
     spec:
       securityContext: {}
       containers:
