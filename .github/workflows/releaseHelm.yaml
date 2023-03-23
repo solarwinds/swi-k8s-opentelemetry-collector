@@ -30,6 +30,9 @@ jobs:
         with:
           version: v3.9.2
 
+      - name: Add dependency chart repos
+        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
       - name: Set env
         run: |
           echo "CR_GIT_REPO=$(cut -d '/' -f 2 <<< $GITHUB_REPOSITORY)" >> $GITHUB_ENV

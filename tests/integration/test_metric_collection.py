@@ -10,7 +10,6 @@ url = f'http://{endpoint}/metrics.json'
 with open('expected_metric_names.txt', "r", newline='\n') as file_with_expected_metric_names:
     expected_metric_names = file_with_expected_metric_names.read().splitlines()
 
-
 def test_expected_metric_names_are_generated():
     retry_until_ok(url, assert_test_metric_names_found,
                    print_failure_metric_names)

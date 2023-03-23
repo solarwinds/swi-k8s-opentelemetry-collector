@@ -1,7 +1,7 @@
-apiVersion: v1
+apiVersion: v2
 name: swo-k8s-collector
-version: 2.3.0-alpha.1
-appVersion: "0.4.0"
+version: 2.3.0-alpha.2
+appVersion: "0.4.1"
 description: SolarWinds Kubernetes Integration
 keywords:
   - monitoring
@@ -17,3 +17,8 @@ sources:
 maintainers:
   - name: SolarWinds
     email: support@solarwinds.com
+dependencies:
+  - name: prometheus
+    repository: https://prometheus-community.github.io/helm-charts
+    version: "~> 19.7.2"
+    condition: prometheus.enabled
