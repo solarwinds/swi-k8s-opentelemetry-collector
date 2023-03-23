@@ -49,6 +49,22 @@ Internally, it contains [OpenTelemetry Collector configuration](https://opentele
 
 ### Metrics
 
+The `swo-k8s-collector` collects metrics from a Prometheus instance. To configure its address, set
+
+```yaml
+otel:
+  metrics:
+    prometheus:
+      url: <some_address>
+```
+
+Alternatively, **for testing purposes**, you can also let the collector deploy a Prometheus server for you.
+
+```yaml
+prometheus:
+  enabled: true
+```
+
 Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
 
 In order to reduce the size of the collected data, the `swo-k8s-collector` collects only selected metrics that are key for successful entity ingestion on the SolarWinds Observability side. The list of observed metrics can be extended by setting `otel.metrics.extra_scrape_metrics` value. Example:
