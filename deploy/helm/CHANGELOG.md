@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Added 
+### Added
+- New StatefulSet with light weight SWO Agent optionaly deployed by default
+
+## [2.3.0-alpha.3] - 2023-03-23
+
+### Added
 - New replicaset metrics `k8s.kube_replicaset_spec_replicas`, `k8s.kube_replicaset_status_ready_replicas`, `k8s.kube_replicaset_status_replicas`
 
 ## [2.3.0-alpha.2] - 2023-03-22
@@ -40,9 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added possibility to deploy `PodMonitor` resources so that OTEL collector telemetry is scraped by Prometheus Operator (see [Prometheus Operator design](https://prometheus-operator.dev/docs/operator/design/))
 - Added k8s.container.cpu.usage.seconds.rate metric
 - Adding `container.id` and `container.runtime` attributes to `k8s.kube_pod_container_info` metric for unique container identification [#182](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/182).
-- Added optional autoupdate support (set by `autoupdate.enabled` in `values.yaml`) [#196](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/196). 
+- Added optional autoupdate support (set by `autoupdate.enabled` in `values.yaml`) [#196](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/pull/196).
 
-### Changed 
+### Changed
 - Fix grouping conditions for container_network_* and container_fs_* metrics to not relly on container attribute
 - Added metrics k8s.cluster.version which extract version from kubernetes_build_info. Metric kubernetes_build_info is not published
 - Filtering out datapoints for internal k8s containers (with name "POD", usually using image "pause")
