@@ -1,0 +1,409 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "definitions": {
+        "Labels": {
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "string"
+                }
+            }
+        },
+        "CollectorTelemetry": {
+            "type": "object",
+            "properties": {
+                "logs": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "level": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "metrics": {
+                    "type": "object",
+                    "properties": {
+                        "address": {
+                            "type": "string"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "podMonitor": {
+                            "type": "object",
+                            "properties": {
+                                "additionalLabels": {
+                                    "$ref": "#/definitions/Labels"
+                                },
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "interval": {
+                                    "type": "string"
+                                },
+                                "namespace": {
+                                    "type": "string"
+                                },
+                                "scrapeTimeout": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "MemoryLimiter": {
+            "type": "object",
+            "properties": {
+                "check_interval": {
+                    "type": "string"
+                },
+                "limit_mib": {
+                    "type": "integer"
+                },
+                "spike_limit_mib": {
+                    "type": "integer"
+                }
+            }
+        },
+        "MemoryBallast": {
+            "type": "object",
+            "properties": {
+                "size_mib": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Batch": {
+            "type": "object",
+            "properties": {
+                "send_batch_max_size": {
+                    "type": "integer"
+                },
+                "send_batch_size": {
+                    "type": "integer"
+                },
+                "timeout": {
+                    "type": "string"
+                }
+            }
+        },
+        "ContainerResources": {
+            "type": "object",
+            "properties": {
+                "limits": {
+                    "type": "object",
+                    "properties": {
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "requests": {
+                    "type": "object",
+                    "properties": {
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "properties": {
+        "autoupdate": {
+            "type": "object",
+            "properties": {
+                "devel": {
+                    "type": "boolean"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "schedule": {
+                    "type": "string"
+                }
+            }
+        },
+        "cluster": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                }
+            }
+        },
+        "fullnameOverride": {
+            "type": "string"
+        },
+        "nameOverride": {
+            "type": "string"
+        },
+        "commonLabels": {
+            "$ref": "#/definitions/Labels"
+        },
+        "otel": {
+            "type": "object",
+            "properties": {
+                "endpoint": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": "object",
+                    "properties": {
+                        "batch": {
+                            "$ref": "#/definitions/Batch"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "filter": {
+                            "type": "object"
+                        },
+                        "memory_ballast": {
+                            "$ref": "#/definitions/MemoryBallast"
+                        },
+                        "memory_limiter": {
+                            "$ref": "#/definitions/MemoryLimiter"
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/ContainerResources"
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/CollectorTelemetry"
+                        }
+                    }
+                },
+                "https_proxy_url": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "object",
+                    "properties": {
+                        "pullPolicy": {
+                            "type": "string"
+                        },
+                        "repository": {
+                            "type": "string"
+                        },
+                        "tag": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "logs": {
+                    "type": "object",
+                    "properties": {
+                        "batch": {
+                            "$ref": "#/definitions/Batch"
+                        },
+                        "container": {
+                            "type": "boolean"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "filestorage": {
+                            "type": "object",
+                            "properties": {
+                                "directory": {
+                                    "type": "string"
+                                },
+                                "timeout": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "filter": {
+                            "type": "object"
+                        },
+                        "journal": {
+                            "type": "boolean"
+                        },
+                        "memory_ballast": {
+                            "$ref": "#/definitions/MemoryBallast"
+                        },
+                        "memory_limiter": {
+                            "$ref": "#/definitions/MemoryLimiter"
+                        },
+                        "receiver": {
+                            "type": "object",
+                            "properties": {
+                                "encoding": {
+                                    "type": "string"
+                                },
+                                "fingerprint_size": {
+                                    "type": "string"
+                                },
+                                "max_concurrent_files": {
+                                    "type": "integer"
+                                },
+                                "max_log_size": {
+                                    "type": "string"
+                                },
+                                "poll_interval": {
+                                    "type": "string"
+                                },
+                                "start_at": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/ContainerResources"
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/CollectorTelemetry"
+                        },
+                        "tolerations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "effect": {
+                                        "type": "string"
+                                    },
+                                    "operator": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "metrics": {
+                    "type": "object",
+                    "properties": {
+                        "batch": {
+                            "$ref": "#/definitions/Batch"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "extra_scrape_metrics": {
+                            "type": "array"
+                        },
+                        "filter": {
+                            "type": "object"
+                        },
+                        "k8s_instrumentation": {
+                            "type": "object",
+                            "properties": {
+                                "annotations": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "excludePattern": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "labels": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "excludePattern": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "memory_ballast": {
+                            "$ref": "#/definitions/MemoryBallast"
+                        },
+                        "memory_limiter": {
+                            "$ref": "#/definitions/MemoryLimiter"
+                        },
+                        "prometheus": {
+                            "type": "object",
+                            "properties": {
+                                "scheme": {
+                                    "type": "string"
+                                },
+                                "scrape_interval": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "prometheus_check": {
+                            "type": "boolean"
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/ContainerResources"
+                        },
+                        "swi_endpoint_check": {
+                            "type": "boolean"
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/CollectorTelemetry"
+                        }
+                    }
+                },
+                "tls_insecure": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "prometheus": {
+            "type": "object",
+            "properties": {
+                "alertmanager": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "prometheus-node-exporter": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "prometheus-pushgateway": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "server": {
+                    "type": "object",
+                    "properties": {
+                        "persistentVolume": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
