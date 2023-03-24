@@ -2,34 +2,38 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
+{{- if regexMatch "^[a-zA-Z]{1}[a-zA-Z0-9-\\ ]*[a-z0-9]{1}$" .Values.cluster.name }}
+  name: {{ printf "%s-swo-agent" .Values.cluster.name | lower | replace " " "-" | trunc 63  }}
+{{ else }}
+  name: {{ include "common.fullname" . }}-swo-agent
+{{ end }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}
 spec:
-  serviceName: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
+  serviceName: {{ include "common.fullname" . }}-swo-agent
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
+      app: {{ include "common.fullname" . }}-swo-agent
   template:
     metadata:
       annotations:
         checksum/values: {{ toJson .Values | sha256sum }}
       labels:
 {{ include "common.template-labels" . | indent 8 }}
-        app: {{ .Values.cluster.name | replace " " "-" }}-swo-agent
+        app: {{ include "common.fullname" . }}-swo-agent
     spec:
       securityContext: {}
       containers:
-        - name: swo-agent 
+        - name: swo-agent
           image: {{ .Values.swoagent.image }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
               value: {{ .Values.cluster.uid }}
-            - name: SWO_URL 
-              value: {{ .Values.otel.endpoint | trimPrefix "otel.collector" | trimPrefix "otel-collector" }}
-            - name: UAMS_ACCESS_TOKEN 
+            - name: SWO_URL
+              value: {{ .Values.otel.endpoint | trimPrefix "otel.collector." | trimPrefix "otel-collector." }}
+            - name: UAMS_ACCESS_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: solarwinds-api-token
