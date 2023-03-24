@@ -90,18 +90,21 @@ processors:
       - key: k8s.node.name
         value: ${NODE_NAME}
         action: insert
-
   transform/syslogify:
-      error_mode: ignore
-      log_statements:
-        - context: log
-          statements:
-            - set(body, Concat([attributes["syslogsev"], attributes["rawtime"],  resource.attributes["k8s.container.name"], resource.attributes["k8s.pod.name"], "-", "-", "-", body ], " "))
-            - set(attributes["severitydesc"], Concat([severity_number, severity_text], "-"))
-            - set(severity_text, "xyz")
-            - delete_key(attributes, "syslogsev")
-            - delete_key(attributes, "rawtime")
-
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set( attributes["syslog.facility"], 1 )
+          - set( attributes["syslog.version"], 1 )
+          - set( attributes["severity"], 3 ) where attributes["stream"] == "stderr"
+          - set( attributes["severity"], 6 ) where attributes["stream"] == "stdout"
+          - set( resource.attributes["host.hostname"], resource.attributes["k8s.container.name"])
+          - set( resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
+          - set( attributes["syslog.procid"], attributes["run_id"])
+          - set( attributes["syslog.msgid"], attributes["stream"])
+          - set( severity_text, "INFO") where attributes["stream"] == "stdout"
+          - set( severity_text, "ERROR") where attributes["stream"] == "stderr"
   batch:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
 
@@ -198,33 +201,18 @@ receivers:
         regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$'
         parse_from: attributes["log.file.path"]
 
-      # Parse severity from stream
+      # Extract severity from stream: stdout - info, stderr - error
       - type: severity_parser
         parse_from: body.stream
         mapping:
           info: stdout
           error: stderr
-      # Calculate syslog severity
-      - type: add
-        field: attributes["syslogsev"]
-        value: "<11>1"
-        # in case of severity == error, emit user level messages (1 * 8) + error (3), trail with syslog version 1
-        if: body.stream == "stderr"
-
-      - type: add
-        field: attributes["syslogsev"]
-        value: "<14>1"
-        # in case of severity == info, emit user level messages (1 * 8) + info (6), trail with syslog version 1
-        if: body.stream == "stdout"
 
       # Rename attributes
       - type: move
         id: move-attributes
         from: body.stream
         to: attributes["stream"]
-      - type: move
-        from: body.time
-        to: attributes["rawtime"]
       - type: move
         from: attributes.container_name
         to: attributes["k8s.container.name"]
@@ -242,9 +230,12 @@ receivers:
         to: attributes["k8s.pod.uid"]
       - type: remove
         field: attributes["log.file.path"]
+      - type: remove
+        field: body.time
       - type: move
         from: body.log
         to: body
+
 service:
   extensions:
     - file_storage
@@ -275,7 +266,6 @@ service:
         - memory_limiter
         - groupbyattrs/all
         - resource/journal
-        - transform/syslogify
         - batch
       receivers:
         - journald
