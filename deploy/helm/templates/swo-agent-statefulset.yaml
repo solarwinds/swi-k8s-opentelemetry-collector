@@ -27,7 +27,8 @@ spec:
       securityContext: {}
       containers:
         - name: swo-agent
-          image: {{ .Values.swoagent.image }}
+          image: {{ printf "%s:%s" .Values.swoagent.image.repository .Values.swoagent.image.tag }}
+          imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
               value: {{ .Values.cluster.uid }}
