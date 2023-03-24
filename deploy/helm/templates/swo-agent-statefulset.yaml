@@ -28,7 +28,7 @@ spec:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
               value: {{ .Values.cluster.uid }}
             - name: SWO_URL 
-              value: {{ trimPrefix "otel.collector" .Values.otel.endpoint }}
+              value: {{ .Values.otel.endpoint | trimPrefix "otel.collector" | trimPrefix "otel-collector" }}
             - name: UAMS_ACCESS_TOKEN 
               valueFrom:
                 secretKeyRef:
