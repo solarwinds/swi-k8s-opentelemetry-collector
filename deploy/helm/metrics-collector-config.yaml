@@ -57,7 +57,7 @@ processors:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
-{{- end }}  
+{{- end }}
   memory_limiter:
 {{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
   transform:
@@ -66,7 +66,7 @@ processors:
         statements:
           - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
           - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0
-          - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^false$") == true and value_double > 0
+          - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
           - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
 
   # Remove datapoints of internal k8s containers from metrics, excluding the "container_network_.+_total" metric where other datapoints don't exist
@@ -99,7 +99,7 @@ processors:
   attributes/unify_node_attribute:
     include:
       match_type: regexp
-      metric_names:      
+      metric_names:
         - container_.*
         - kube_node_.*
         - kube_pod_info
@@ -121,9 +121,9 @@ processors:
       - key: k8s.node.name
         from_attribute: exported_instance
         action: insert
-      
+
   # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
-  #   where kube-state-metric is deployed on  
+  #   where kube-state-metric is deployed on
   attributes/remove_node:
     actions:
       - key: node
@@ -842,7 +842,7 @@ processors:
             label_set: [git_version]
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
-        action: update 
+        action: update
         new_name: k8s.kubernetes_build_info_temp
       # Prometheus metrics
       - include: apiserver_request_total
@@ -1442,7 +1442,7 @@ service:
 {{- end }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
         - resource/k8sattributes_annotations_filter
-{{- end }}    
+{{- end }}
         - batch
       receivers:
         - prometheus
