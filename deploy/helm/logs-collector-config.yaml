@@ -198,13 +198,6 @@ receivers:
         regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$'
         parse_from: attributes["log.file.path"]
 
-      # Extract severity number from stream: stdout - info, stderr - error
-      - type: severity_parser
-        parse_from: body.stream
-        mapping:
-          info: stdout
-          error: stderr
-
       # Rename attributes
       - type: move
         id: move-attributes
