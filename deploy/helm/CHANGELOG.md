@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Added syslog attributes for log entry: `syslog.facility`, `syslog.version`, `syslog.procid`, `syslog.msgid`.
+- Added resource level attributes: `host.hostname` contains name of the pod, `service.name` contains name of the container.
 
 ## [2.3.0-alpha.3] - 2023-03-24
 
