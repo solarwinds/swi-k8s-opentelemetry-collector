@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added syslog attributes for log entry: `syslog.facility`, `syslog.version`, `syslog.procid`, `syslog.msgid`.
 - Added resource level attributes: `host.hostname` contains name of the pod, `service.name` contains name of the container.
 
+### Added
+- New StatefulSet with light weight SWO Agent optionaly deployed by default
+
 ## [2.3.0-alpha.3] - 2023-03-24
 
 ### Changed

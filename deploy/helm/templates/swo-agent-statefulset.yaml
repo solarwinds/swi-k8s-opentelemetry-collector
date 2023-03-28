@@ -1,0 +1,46 @@
+{{- if .Values.swoagent.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+{{- if regexMatch "^[a-zA-Z]{1}[a-zA-Z0-9-\\ ]*[a-z0-9]{1}$" .Values.cluster.name }}
+  name: {{ printf "%s-swo-agent" .Values.cluster.name | lower | replace " " "-" | trunc 63  }}
+{{ else }}
+  name: {{ include "common.fullname" . }}-swo-agent
+{{ end }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    solarwinds/swo-agent: true
+{{ include "common.labels" . | indent 4 }}
+spec:
+  serviceName: {{ include "common.fullname" . }}-swo-agent
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" . }}-swo-agent
+  template:
+    metadata:
+      annotations:
+        checksum/values: {{ toJson .Values | sha256sum }}
+      labels:
+{{ include "common.template-labels" . | indent 8 }}
+        app: {{ include "common.fullname" . }}-swo-agent
+        solarwinds/swo-agent: true
+    spec:
+      securityContext: {}
+      containers:
+        - name: swo-agent
+          image: {{ printf "%s:%s" .Values.swoagent.image.repository .Values.swoagent.image.tag }}
+          imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
+          env:
+            - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
+              value: {{ .Values.cluster.uid }}
+            - name: SWO_URL
+              value: {{ .Values.otel.endpoint | trimPrefix "otel.collector." | trimPrefix "otel-collector." }}
+            - name: UAMS_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+          resources:
+{{ toYaml .Values.swoagent.resources | indent 12 }}
+{{- end}}
