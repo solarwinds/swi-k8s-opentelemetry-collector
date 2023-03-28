@@ -19,7 +19,7 @@ processors:
 {{- if .Values.otel.logs.filter }}
   # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
   filter:
-    logs: 
+    logs:
 {{ toYaml .Values.otel.logs.filter | indent 6 }}
 {{- end }}
 
@@ -29,7 +29,9 @@ processors:
       - k8s.namespace.name
       - k8s.pod.name
       - k8s.pod.uid
-      
+      - host.hostname
+      - service.name
+
 
   resource/container:
     attributes:
@@ -90,6 +92,17 @@ processors:
       - key: k8s.node.name
         value: ${NODE_NAME}
         action: insert
+  transform/syslogify:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set( attributes["syslog.facility"], 1 )
+          - set( attributes["syslog.version"], 1 )
+          - set( attributes["host.hostname"], attributes["k8s.pod.name"])
+          - set( attributes["service.name"], attributes["k8s.container.name"])
+          - set( attributes["syslog.procid"], attributes["run_id"])
+          - set( attributes["syslog.msgid"], attributes["stream"])
 
   batch:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
@@ -209,9 +222,12 @@ receivers:
         to: attributes["k8s.pod.uid"]
       - type: remove
         field: attributes["log.file.path"]
+      - type: remove
+        field: body.time
       - type: move
         from: body.log
         to: body
+
 service:
   extensions:
     - file_storage
@@ -227,6 +243,7 @@ service:
 {{- if .Values.otel.logs.filter }}
         - filter
 {{- end }}
+        - transform/syslogify
         - groupbyattrs/all
         - resource/container
         - batch
