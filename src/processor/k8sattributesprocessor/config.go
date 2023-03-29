@@ -41,11 +41,14 @@ type Config struct {
 
 	// Association section allows to define rules for tagging spans, metrics,
 	// and logs with Pod metadata.
-	Association []PodAssociationConfig `mapstructure:"pod_association"`
+	Association []AssociationConfig `mapstructure:"pod_association"`
 
 	// Exclude section allows to define names of pod that should be
 	// ignored while tagging.
 	Exclude ExcludeConfig `mapstructure:"exclude"`
+
+	// Section allows to define rules for extracting annotations and labels from Deployment
+	Deployment DeploymentConfig `mapstructure:"deployment"`
 }
 
 func (cfg *Config) Validate() error {
@@ -53,6 +56,35 @@ func (cfg *Config) Validate() error {
 		return err
 	}
 
+	for _, assoc := range cfg.Association {
+		if len(assoc.Sources) > kube.PodIdentifierMaxLength {
+			return fmt.Errorf("too many association sources. limit is %v", kube.PodIdentifierMaxLength)
+		}
+	}
+
+	if err := cfg.Deployment.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Config defines configuration for Deployments.
+type DeploymentConfig struct {
+	// Extract section allows specifying extraction rules to extract data from k8s deployment specs
+	Extract ExtractConfig `mapstructure:"extract"`
+
+	// Filter section allows specifying filters to filter deployment by labels, fields, namespaces, etc.
+	Filter FilterConfig `mapstructure:"filter"`
+
+	// Exclude section allows to define names of deployment that should be ignored while tagging.
+	Exclude ExcludeDeploymentConfig `mapstructure:"exclude"`
+
+	// Association section allows to define rules for tagging spans, metrics, and logs with Deployment metadata.
+	Association []AssociationConfig `mapstructure:"association"`
+}
+
+func (cfg *DeploymentConfig) Validate() error {
 	for _, assoc := range cfg.Association {
 		if len(assoc.Sources) > kube.PodIdentifierMaxLength {
 			return fmt.Errorf("too many association sources. limit is %v", kube.PodIdentifierMaxLength)
@@ -238,9 +270,9 @@ type FieldFilterConfig struct {
 	Op string `mapstructure:"op"`
 }
 
-// PodAssociationConfig contain single rule how to associate Pod metadata
+// AssociationConfig contain single rule how to associate Pod metadata
 // with logs, spans and metrics
-type PodAssociationConfig struct {
+type AssociationConfig struct {
 	// Deprecated: Sources should be used to provide From and Name.
 	// If this is set, From and Name are going to be used as Sources' ones
 	// From represents the source of the association.
@@ -255,7 +287,7 @@ type PodAssociationConfig struct {
 
 	// List of pod association sources which should be taken
 	// to identify pod
-	Sources []PodAssociationSourceConfig `mapstructure:"sources"`
+	Sources []AssociationSourceConfig `mapstructure:"sources"`
 }
 
 // ExcludeConfig represent a list of Pods to exclude
@@ -263,12 +295,17 @@ type ExcludeConfig struct {
 	Pods []ExcludePodConfig `mapstructure:"pods"`
 }
 
+// ExcludeDeploymentConfig represent a list of Deployments to exclude
+type ExcludeDeploymentConfig struct {
+	Deployments []ExcludePodConfig `mapstructure:"deployments"`
+}
+
 // ExcludePodConfig represent a Pod name to ignore
 type ExcludePodConfig struct {
 	Name string `mapstructure:"name"`
 }
 
-type PodAssociationSourceConfig struct {
+type AssociationSourceConfig struct {
 	// From represents the source of the association.
 	// Allowed values are "connection" and "resource_attribute".
 	From string `mapstructure:"from"`

@@ -14,10 +14,12 @@
 
 // Package k8sattributesprocessor allow automatic tagging of spans, metrics and logs with k8s metadata.
 //
-// The processor automatically discovers k8s resources (pods), extracts metadata from them and adds the
-// extracted metadata to the relevant spans, metrics and logs. The processor uses the kubernetes API to discover all pods
+// The processor automatically discovers k8s resources (pods, deployments), extracts metadata from them and adds the
+// extracted metadata to the relevant spans, metrics and logs. The processor uses the kubernetes API to discover all pods and deployments
 // running in a cluster, keeps a record of their IP addresses, pod UIDs and interesting metadata.
-// The rules for associating the data passing through the processor (spans, metrics and logs) with specific Pod Metadata are configured via "pod_association" key.
+// The rules for associating the data passing through the processor (spans, metrics and logs) with specific Pod Metadata are configured via "pod_association" key
+// and Deployment Metadata are configured via "deployment_association".
+
 // It represents a list of associations that are executed in the specified order until the first one is able to do the match.
 //
 // Each association is specified as a list of sources of association.
@@ -71,12 +73,12 @@
 //     be explicitly requested in `metadata`. Specifying `k8s.container.restart_count` in the resource
 //     attributes will match only the specified container run; if omitted, the current instance is assumed.
 //
-// The k8sattributesprocessor can be used for automatic tagging of spans, metrics and logs with k8s labels and annotations from pods and namespaces.
-// The config for associating the data passing through the processor (spans, metrics and logs) with specific Pod/Namespace annotations/labels is configured via "annotations"  and "labels" keys.
-// This config represents a list of annotations/labels that are extracted from pods/namespaces and added to spans, metrics and logs.
+// The k8sattributesprocessor can be used for automatic tagging of spans, metrics and logs with k8s labels and annotations from pods, deployments and namespaces.
+// The config for associating the data passing through the processor (spans, metrics and logs) with specific Pod/Deployment/Namespace annotations/labels is configured via "annotations"  and "labels" keys.
+// This config represents a list of annotations/labels that are extracted from pods/deployments/namespaces and added to spans, metrics and logs.
 // Each item is specified as a config of tag_name (representing the tag name to tag the spans with),
 // key (representing the key used to extract value) and from (representing the kubernetes object used to extract the value).
-// The "from" field has only two possible values "pod" and "namespace" and defaults to "pod" if none is specified.
+// The "from" field has only two possible values "pod", "deployment" and "namespace" and defaults to "pod" if none is specified.
 //
 // A few examples to use this config are as follows:
 //
@@ -116,6 +118,9 @@
 //	rules:
 //	- apiGroups: [""]
 //	  resources: ["pods", "namespaces"]
+//	  verbs: ["get", "watch", "list"]
+//	- apiGroups: ["apps"]
+//	  resources: ["deployments"]
 //	  verbs: ["get", "watch", "list"]
 //	---
 //	apiVersion: rbac.authorization.k8s.io/v1

@@ -208,9 +208,9 @@ func createProcessorOpts(cfg component.Config) []option {
 	opts = append(opts, withAPIConfig(oCfg.APIConfig))
 
 	opts = append(opts, withExtractPodAssociations(oCfg.Association...))
-
 	opts = append(opts, withExcludes(oCfg.Exclude))
 
+	opts = append(opts, createDeploymentProcessorOpts(oCfg.Deployment)...)
 	return opts
 }
 

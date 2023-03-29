@@ -685,19 +685,19 @@ func Test_extractFieldRules(t *testing.T) {
 func TestWithExtractPodAssociation(t *testing.T) {
 	tests := []struct {
 		name string
-		args []PodAssociationConfig
+		args []AssociationConfig
 		want []kube.Association
 	}{
 		{
 			"empty",
-			[]PodAssociationConfig{},
+			[]AssociationConfig{},
 			[]kube.Association{},
 		},
 		{
 			"basic",
-			[]PodAssociationConfig{
+			[]AssociationConfig{
 				{
-					Sources: []PodAssociationSourceConfig{
+					Sources: []AssociationSourceConfig{
 						{
 							From: "label",
 							Name: "ip",
@@ -718,7 +718,7 @@ func TestWithExtractPodAssociation(t *testing.T) {
 		},
 		{
 			"deprecated",
-			[]PodAssociationConfig{
+			[]AssociationConfig{
 				{
 					From: "label",
 					Name: "ip",
@@ -737,7 +737,7 @@ func TestWithExtractPodAssociation(t *testing.T) {
 		},
 		{
 			"connection deprecated",
-			[]PodAssociationConfig{
+			[]AssociationConfig{
 				{
 					From: "connection",
 					Name: "ip",
@@ -755,9 +755,9 @@ func TestWithExtractPodAssociation(t *testing.T) {
 		},
 		{
 			"connection",
-			[]PodAssociationConfig{
+			[]AssociationConfig{
 				{
-					Sources: []PodAssociationSourceConfig{
+					Sources: []AssociationSourceConfig{
 						{
 							From: "connection",
 							Name: "ip",

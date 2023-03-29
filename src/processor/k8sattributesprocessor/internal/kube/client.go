@@ -58,6 +58,8 @@ type WatchClient struct {
 	// A map containing Namespace related data, used to associate them with resources.
 	// Key is namespace name
 	Namespaces map[string]*Namespace
+
+	DeploymentClient *WatchDeploymentClient
 }
 
 // Extract replicaset name from the pod name. Pod name is created using
@@ -69,7 +71,17 @@ var rRegex = regexp.MustCompile(`^(.*)-[0-9a-zA-Z]+$`)
 var cronJobRegex = regexp.MustCompile(`^(.*)-[0-9]+$`)
 
 // New initializes a new k8s Client.
-func New(logger *zap.Logger, apiCfg k8sconfig.APIConfig, rules ExtractionRules, filters Filters, associations []Association, exclude Excludes, newClientSet APIClientsetProvider, newInformer InformerProvider, newNamespaceInformer InformerProviderNamespace) (Client, error) {
+func New(
+	logger *zap.Logger,
+	apiCfg k8sconfig.APIConfig,
+	rules ExtractionRules,
+	filters Filters,
+	associations []Association,
+	exclude Excludes,
+	newClientSet APIClientsetProvider,
+	newInformer InformerProvider,
+	newNamespaceInformer InformerProviderNamespace,
+	clientDeployment *ClientDeployment) (Client, error) {
 	c := &WatchClient{
 		logger:          logger,
 		Rules:           rules,
@@ -117,6 +129,18 @@ func New(logger *zap.Logger, apiCfg k8sconfig.APIConfig, rules ExtractionRules, 
 	} else {
 		c.namespaceInformer = NewNoOpInformer(c.kc)
 	}
+
+	if clientDeployment != nil {
+		deploymentClient, err := NewWatchDeploymentClient(
+			c,
+			clientDeployment,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.DeploymentClient = deploymentClient
+	}
 	return c, err
 }
 
@@ -141,6 +165,10 @@ func (c *WatchClient) Start() {
 		c.logger.Error("error adding event handler to namespace informer", zap.Error(err))
 	}
 	go c.namespaceInformer.Run(c.stopCh)
+
+	if c.DeploymentClient != nil {
+		c.DeploymentClient.Start()
+	}
 }
 
 // Stop signals the the k8s watcher/informer to stop watching for new events.
@@ -269,6 +297,11 @@ func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
 	}
 	observability.RecordIPLookupMiss()
 	return nil, false
+}
+
+// GetDeployment returns the deployment identifier.
+func (c *WatchClient) GetDeployment(identifier DeploymentIdentifier) (*Deployment, bool) {
+	return c.DeploymentClient.GetDeployment(identifier)
 }
 
 // GetNamespace takes a namespace and returns the namespace object the namespace is associated with.

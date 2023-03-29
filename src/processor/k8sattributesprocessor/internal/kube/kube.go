@@ -97,13 +97,24 @@ var (
 // Client defines the main interface that allows querying pods by metadata.
 type Client interface {
 	GetPod(PodIdentifier) (*Pod, bool)
+	GetDeployment(DeploymentIdentifier) (*Deployment, bool)
 	GetNamespace(string) (*Namespace, bool)
 	Start()
 	Stop()
 }
 
 // ClientProvider defines a func type that returns a new Client.
-type ClientProvider func(*zap.Logger, k8sconfig.APIConfig, ExtractionRules, Filters, []Association, Excludes, APIClientsetProvider, InformerProvider, InformerProviderNamespace) (Client, error)
+type ClientProvider func(
+	*zap.Logger,
+	k8sconfig.APIConfig,
+	ExtractionRules,
+	Filters,
+	[]Association,
+	Excludes,
+	APIClientsetProvider,
+	InformerProvider,
+	InformerProviderNamespace,
+	*ClientDeployment) (Client, error)
 
 // APIClientsetProvider defines a func type that initializes and return a new kubernetes
 // Clientset object.

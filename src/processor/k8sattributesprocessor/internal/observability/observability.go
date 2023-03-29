@@ -34,6 +34,10 @@ func init() {
 		viewNamespacesAdded,
 		viewNamespacesUpdated,
 		viewNamespacesDeleted,
+		viewDeploymentsUpdated,
+		viewDeploymentsAdded,
+		viewDeploymentsDeleted,
+		viewDeploymentTableSize,
 	)
 }
 

@@ -171,8 +171,10 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 			a.From = kube.MetadataFromPod
 		case kube.MetadataFromNamespace:
 			a.From = kube.MetadataFromNamespace
+		case kube.MetadataFromDeployment:
+			a.From = kube.MetadataFromDeployment
 		default:
-			return rules, fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, namespace", a.From)
+			return rules, fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, deployment, namespace", a.From)
 		}
 
 		if name == "" && a.Key != "" {
@@ -181,6 +183,8 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 				name = fmt.Sprintf("k8s.pod.%s.%s", fieldType, a.Key)
 			} else if a.From == kube.MetadataFromNamespace {
 				name = fmt.Sprintf("k8s.namespace.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromDeployment {
+				name = fmt.Sprintf("k8s.deployment.%s.%s", fieldType, a.Key)
 			}
 		}
 
@@ -301,7 +305,7 @@ func withFilterFields(filters ...FieldFilterConfig) option {
 }
 
 // withExtractPodAssociations allows specifying options to associate pod metadata with incoming resource
-func withExtractPodAssociations(podAssociations ...PodAssociationConfig) option {
+func withExtractPodAssociations(podAssociations ...AssociationConfig) option {
 	return func(p *kubernetesprocessor) error {
 		associations := make([]kube.Association, 0, len(podAssociations))
 		var assoc kube.Association

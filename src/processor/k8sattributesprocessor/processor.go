@@ -44,6 +44,8 @@ type kubernetesprocessor struct {
 	filters         kube.Filters
 	podAssociations []kube.Association
 	podIgnore       kube.Excludes
+
+	deployment *kubernetesProcessorDeployment
 }
 
 func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kube.ClientProvider) error {
@@ -51,7 +53,17 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 		kubeClient = kube.New
 	}
 	if !kp.passthroughMode {
-		kc, err := kubeClient(logger, kp.apiConfig, kp.rules, kp.filters, kp.podAssociations, kp.podIgnore, nil, nil, nil)
+		kc, err := kubeClient(
+			logger,
+			kp.apiConfig,
+			kp.rules,
+			kp.filters,
+			kp.podAssociations,
+			kp.podIgnore,
+			nil,
+			nil,
+			nil,
+			kp.getClientDeployment(kp.deployment))
 		if err != nil {
 			return err
 		}
@@ -145,6 +157,10 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 				resource.Attributes().PutStr(key, val)
 			}
 		}
+	}
+
+	if kp.deployment != nil && !kp.deployment.isEmpty() {
+		kp.processResourceDeployment(ctx, resource)
 	}
 }
 

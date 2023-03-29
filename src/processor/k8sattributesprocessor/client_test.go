@@ -28,9 +28,10 @@ import (
 // fakeClient is used as a replacement for WatchClient in test cases.
 type fakeClient struct {
 	Pods              map[kube.PodIdentifier]*kube.Pod
+	Deployments       map[kube.DeploymentIdentifier]*kube.Deployment
 	Rules             kube.ExtractionRules
 	Filters           kube.Filters
-	Associations      []kube.Association
+	PodAssociations   []kube.Association
 	Informer          cache.SharedInformer
 	NamespaceInformer cache.SharedInformer
 	Namespaces        map[string]*kube.Namespace
@@ -43,15 +44,26 @@ func selectors() (labels.Selector, fields.Selector) {
 }
 
 // newFakeClient instantiates a new FakeClient object and satisfies the ClientProvider type
-func newFakeClient(_ *zap.Logger, apiCfg k8sconfig.APIConfig, rules kube.ExtractionRules, filters kube.Filters, associations []kube.Association, exclude kube.Excludes, _ kube.APIClientsetProvider, _ kube.InformerProvider, _ kube.InformerProviderNamespace) (kube.Client, error) {
+func newFakeClient(
+	_ *zap.Logger,
+	apiCfg k8sconfig.APIConfig,
+	rules kube.ExtractionRules,
+	filters kube.Filters,
+	podAssociations []kube.Association,
+	exclude kube.Excludes,
+	_ kube.APIClientsetProvider,
+	_ kube.InformerProvider,
+	_ kube.InformerProviderNamespace,
+	deployment *kube.ClientDeployment) (kube.Client, error) {
 	cs := fake.NewSimpleClientset()
 
 	ls, fs := selectors()
 	return &fakeClient{
 		Pods:              map[kube.PodIdentifier]*kube.Pod{},
+		Deployments:       map[kube.DeploymentIdentifier]*kube.Deployment{},
 		Rules:             rules,
 		Filters:           filters,
-		Associations:      associations,
+		PodAssociations:   podAssociations,
 		Informer:          kube.NewFakeInformer(cs, "", ls, fs),
 		NamespaceInformer: kube.NewFakeInformer(cs, "", ls, fs),
 		StopCh:            make(chan struct{}),

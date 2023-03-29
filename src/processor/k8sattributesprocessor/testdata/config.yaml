@@ -70,6 +70,25 @@ k8sattributes/2:
     - from: resource_attribute
       name: k8s.pod.uid
 
+  deployment:
+      extract:
+        metadata:
+          - k8s.deployment.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.deployment.annotations.$$1
+            from: deployment
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.deployment.labels.$$1
+            from: deployment
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.deployment.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+
   exclude:
     pods:
       - name: jaeger-agent

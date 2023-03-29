@@ -96,7 +96,6 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 	assert.Equal(t, "2.2.2.2", got.Address)
 	assert.Equal(t, "podC", got.Name)
 	assert.Equal(t, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", got.PodUID)
-
 }
 
 func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interface{})) {
@@ -125,12 +124,12 @@ func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj in
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil)
+	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, nil)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil)
+	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -146,6 +145,10 @@ func TestBadFilters(t *testing.T) {
 		newFakeAPIClientset,
 		NewFakeInformer,
 		NewFakeNamespaceInformer,
+		&ClientDeployment{
+			Associations: []Association{},
+			Informer:     NewFakeDeploymentInformer,
+		},
 	)
 	assert.Error(t, err)
 	assert.Nil(t, c)
@@ -182,7 +185,20 @@ func TestConstructorErrors(t *testing.T) {
 			gotAPIConfig = c
 			return nil, fmt.Errorf("error creating k8s client")
 		}
-		c, err := New(zap.NewNop(), apiCfg, er, ff, []Association{}, Excludes{}, clientProvider, NewFakeInformer, NewFakeNamespaceInformer)
+		c, err := New(
+			zap.NewNop(),
+			apiCfg,
+			er,
+			ff,
+			[]Association{},
+			Excludes{},
+			clientProvider,
+			NewFakeInformer,
+			NewFakeNamespaceInformer,
+			&ClientDeployment{
+				Associations: []Association{},
+				Informer:     NewFakeDeploymentInformer,
+			})
 		assert.Nil(t, c)
 		assert.Error(t, err)
 		assert.Equal(t, "error creating k8s client", err.Error())
@@ -1328,7 +1344,7 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 			{Name: regexp.MustCompile(`jaeger-collector`)},
 		},
 	}
-	associations := []Association{
+	podAssociations := []Association{
 		{
 			Sources: []AssociationSource{
 				{
@@ -1345,7 +1361,31 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 			},
 		},
 	}
-	c, err := New(logger, k8sconfig.APIConfig{}, e, f, associations, exclude, newFakeAPIClientset, NewFakeInformer, NewFakeNamespaceInformer)
+
+	deploymentAssociations := []Association{
+		{
+			Sources: []AssociationSource{
+				{
+					From: "resource_attribute",
+					Name: "k8s.deployment.uid",
+				},
+			},
+		},
+	}
+	c, err := New(
+		logger,
+		k8sconfig.APIConfig{},
+		e,
+		f,
+		podAssociations,
+		exclude,
+		newFakeAPIClientset,
+		NewFakeInformer,
+		NewFakeNamespaceInformer,
+		&ClientDeployment{
+			Associations: deploymentAssociations,
+			Informer:     NewFakeDeploymentInformer,
+		})
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
 }

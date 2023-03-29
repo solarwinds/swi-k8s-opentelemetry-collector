@@ -70,9 +70,9 @@ func TestLoadConfig(t *testing.T) {
 						{Key: "key2", Value: "value2", Op: "not-equals"},
 					},
 				},
-				Association: []PodAssociationConfig{
+				Association: []AssociationConfig{
 					{
-						Sources: []PodAssociationSourceConfig{
+						Sources: []AssociationSourceConfig{
 							{
 								From: "resource_attribute",
 								Name: "ip",
@@ -80,7 +80,7 @@ func TestLoadConfig(t *testing.T) {
 						},
 					},
 					{
-						Sources: []PodAssociationSourceConfig{
+						Sources: []AssociationSourceConfig{
 							{
 								From: "resource_attribute",
 								Name: "k8s.pod.ip",
@@ -88,7 +88,7 @@ func TestLoadConfig(t *testing.T) {
 						},
 					},
 					{
-						Sources: []PodAssociationSourceConfig{
+						Sources: []AssociationSourceConfig{
 							{
 								From: "resource_attribute",
 								Name: "host.name",
@@ -96,7 +96,7 @@ func TestLoadConfig(t *testing.T) {
 						},
 					},
 					{
-						Sources: []PodAssociationSourceConfig{
+						Sources: []AssociationSourceConfig{
 							{
 								From: "connection",
 								Name: "ip",
@@ -107,6 +107,31 @@ func TestLoadConfig(t *testing.T) {
 					{
 						From: "resource_attribute",
 						Name: "k8s.pod.uid",
+					},
+				},
+				Deployment: DeploymentConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.deployment.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.deployment.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromDeployment},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.deployment.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromDeployment},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.deployment.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
 					},
 				},
 				Exclude: ExcludeConfig{
