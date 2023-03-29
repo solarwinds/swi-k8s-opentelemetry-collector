@@ -10,9 +10,13 @@ Once Helm is set up properly, follow [documentation for SolarWinds Observability
 
 ## Contributing
 
-The source code of SolarWinds Observability kubernetes Helm charts can be found on Github: https://github.com/solarwinds/swi-k8s-opentelemetry-collector
+The source code of SolarWinds Observability kubernetes Helm charts can be found on Github: [solarwinds/swi-k8s-opentelemetry-collector](https://github.com/solarwinds/swi-k8s-opentelemetry-collector)
 
 For contributing please refer to our [contribution guidelines](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/blob/master/doc/development.md#development) for details.
+
+## Releases
+
+https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases
 
 ## License
 
