@@ -16,7 +16,7 @@ For contributing please refer to our [contribution guidelines](https://github.co
 
 ## Releases
 
-https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases
+[https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases)
 
 ## License
 
