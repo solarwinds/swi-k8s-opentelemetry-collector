@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Enabled honor_labels option to keep scraped data over server-side labels
+
 ## [2.3.0-alpha.4] - 2023-03-29
 
 ### Added

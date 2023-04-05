@@ -92,8 +92,6 @@ processors:
     actions:
       - key: instance
         action: delete
-      - key: exported_instance
-        action: delete
 
   # unify attributes
   attributes/unify_node_attribute:
@@ -110,16 +108,10 @@ processors:
         from_attribute: node
         action: insert
       - key: k8s.node.name
-        from_attribute: exported_node
-        action: insert
-      - key: k8s.node.name
         from_attribute: kubernetes_io_hostname
         action: insert
       - key: k8s.node.name
         from_attribute: instance
-        action: insert
-      - key: k8s.node.name
-        from_attribute: exported_instance
         action: insert
 
   # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
@@ -131,10 +123,6 @@ processors:
       - key: instance
         action: delete
       - key: kubernetes_io_hostname
-        action: delete
-      - key: exported_instance
-        action: delete
-      - key: exported_node
         action: delete
 
   attributes/remove_pod:
@@ -182,10 +170,6 @@ processors:
       - key: job
         action: delete
       - key: instance
-        action: delete
-      - key: exported_job
-        action: delete
-      - key: exported_instance
         action: delete
 
   metricstransform/rename:
@@ -835,7 +819,7 @@ processors:
       - include: k8s.kubernetes_build_info
         action: insert
         match_type: regexp
-        experimental_match_labels: { "exported_job": '.*apiservers.*' }
+        experimental_match_labels: { "job": '.*apiservers.*' }
         new_name: k8s.cluster.version
         operations:
           - action: aggregate_labels
@@ -1013,7 +997,7 @@ processors:
       - container_runtime_version
       - provider_id
       - os_image
-      - exported_namespace
+      - namespace
       - uid
       - pod_ip
       - host_ip
@@ -1132,12 +1116,6 @@ processors:
         from_attribute: namespace
         action: insert
       - key: namespace
-        action: delete
-
-      - key: k8s.namespace.name
-        from_attribute: exported_namespace
-        action: upsert
-      - key: exported_namespace
         action: delete
 
       # Pod
@@ -1308,6 +1286,7 @@ receivers:
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
           metrics_path: "/federate"
           honor_timestamps: false
+          honor_labels: true
           params:
             "match[]":
               - "container_cpu_usage_seconds_total"
