@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
 package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor"
 
@@ -159,7 +162,10 @@ func createKubernetesProcessor(
 	cfg component.Config,
 	options ...option,
 ) (*kubernetesprocessor, error) {
-	kp := &kubernetesprocessor{logger: params.Logger}
+	kp := &kubernetesprocessor{
+		logger:    params.Logger,
+		resources: make(map[string]*kubernetesProcessorResource),
+	}
 
 	warnDeprecatedMetadataConfig(kp.logger, cfg)
 	warnDeprecatedPodAssociationConfig(kp.logger, cfg)
@@ -211,6 +217,12 @@ func createProcessorOpts(cfg component.Config) []option {
 	opts = append(opts, withExcludes(oCfg.Exclude))
 
 	opts = append(opts, createDeploymentProcessorOpts(oCfg.Deployment)...)
+	opts = append(opts, createStatefulSetProcessorOpts(oCfg.StatefulSet)...)
+	opts = append(opts, createReplicaSetProcessorOpts(oCfg.ReplicaSet)...)
+	opts = append(opts, createDaemonSetProcessorOpts(oCfg.DaemonSet)...)
+	opts = append(opts, createJobProcessorOpts(oCfg.Job)...)
+	opts = append(opts, createCronJobProcessorOpts(oCfg.CronJob)...)
+	opts = append(opts, createNodeProcessorOpts(oCfg.Node)...)
 	return opts
 }
 

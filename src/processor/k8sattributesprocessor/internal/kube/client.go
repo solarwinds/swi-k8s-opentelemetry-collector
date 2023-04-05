@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
 package kube // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
 
@@ -59,7 +62,13 @@ type WatchClient struct {
 	// Key is namespace name
 	Namespaces map[string]*Namespace
 
-	DeploymentClient *WatchDeploymentClient
+	DeploymentClient  *WatchResourceClient[KubernetesResource]
+	StatefulSetClient *WatchResourceClient[KubernetesResource]
+	ReplicaSetClient  *WatchResourceClient[KubernetesResource]
+	DaemonSetClient   *WatchResourceClient[KubernetesResource]
+	JobClient         *WatchResourceClient[KubernetesResource]
+	CronJobClient     *WatchResourceClient[KubernetesResource]
+	NodeClient        *WatchResourceClient[KubernetesResource]
 }
 
 // Extract replicaset name from the pod name. Pod name is created using
@@ -81,7 +90,7 @@ func New(
 	newClientSet APIClientsetProvider,
 	newInformer InformerProvider,
 	newNamespaceInformer InformerProviderNamespace,
-	clientDeployment *ClientDeployment) (Client, error) {
+	clientResources map[string]*ClientResource) (Client, error) {
 	c := &WatchClient{
 		logger:          logger,
 		Rules:           rules,
@@ -130,16 +139,88 @@ func New(
 		c.namespaceInformer = NewNoOpInformer(c.kc)
 	}
 
-	if clientDeployment != nil {
+	if clientResources[MetadataFromDeployment] != nil {
 		deploymentClient, err := NewWatchDeploymentClient(
 			c,
-			clientDeployment,
+			clientResources[MetadataFromDeployment],
 		)
 		if err != nil {
 			return nil, err
 		}
 
 		c.DeploymentClient = deploymentClient
+	}
+
+	if clientResources[MetadataFromStatefulSet] != nil {
+		statefulSetClient, err := NewWatchStatefulSetClient(
+			c,
+			clientResources[MetadataFromStatefulSet],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.StatefulSetClient = statefulSetClient
+	}
+
+	if clientResources[MetadataFromReplicaSet] != nil {
+		replicaSetClient, err := NewWatchReplicaSetClient(
+			c,
+			clientResources[MetadataFromReplicaSet],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.ReplicaSetClient = replicaSetClient
+	}
+
+	if clientResources[MetadataFromDaemonSet] != nil {
+		daemonSetClient, err := NewWatchDaemonSetClient(
+			c,
+			clientResources[MetadataFromDaemonSet],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.DaemonSetClient = daemonSetClient
+	}
+
+	if clientResources[MetadataFromJob] != nil {
+		jobClient, err := NewWatchJobClient(
+			c,
+			clientResources[MetadataFromJob],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.JobClient = jobClient
+	}
+
+	if clientResources[MetadataFromCronJob] != nil {
+		cronJobClient, err := NewWatchCronJobClient(
+			c,
+			clientResources[MetadataFromCronJob],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.CronJobClient = cronJobClient
+	}
+
+	if clientResources[MetadataFromNode] != nil {
+		nodeClient, err := NewWatchNodeClient(
+			c,
+			clientResources[MetadataFromNode],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.NodeClient = nodeClient
 	}
 	return c, err
 }
@@ -168,6 +249,30 @@ func (c *WatchClient) Start() {
 
 	if c.DeploymentClient != nil {
 		c.DeploymentClient.Start()
+	}
+
+	if c.StatefulSetClient != nil {
+		c.StatefulSetClient.Start()
+	}
+
+	if c.ReplicaSetClient != nil {
+		c.ReplicaSetClient.Start()
+	}
+
+	if c.DaemonSetClient != nil {
+		c.DaemonSetClient.Start()
+	}
+
+	if c.JobClient != nil {
+		c.JobClient.Start()
+	}
+
+	if c.CronJobClient != nil {
+		c.CronJobClient.Start()
+	}
+
+	if c.NodeClient != nil {
+		c.NodeClient.Start()
 	}
 }
 
@@ -300,8 +405,25 @@ func (c *WatchClient) GetPod(identifier PodIdentifier) (*Pod, bool) {
 }
 
 // GetDeployment returns the deployment identifier.
-func (c *WatchClient) GetDeployment(identifier DeploymentIdentifier) (*Deployment, bool) {
-	return c.DeploymentClient.GetDeployment(identifier)
+func (c *WatchClient) GetResource(resourceType string, identifier ResourceIdentifier) (KubernetesResource, bool) {
+	switch resourceType {
+	case MetadataFromDeployment:
+		return c.DeploymentClient.GetResource(identifier)
+	case MetadataFromStatefulSet:
+		return c.StatefulSetClient.GetResource(identifier)
+	case MetadataFromReplicaSet:
+		return c.ReplicaSetClient.GetResource(identifier)
+	case MetadataFromDaemonSet:
+		return c.DaemonSetClient.GetResource(identifier)
+	case MetadataFromJob:
+		return c.JobClient.GetResource(identifier)
+	case MetadataFromCronJob:
+		return c.CronJobClient.GetResource(identifier)
+	case MetadataFromNode:
+		return c.NodeClient.GetResource(identifier)
+	}
+
+	return nil, false
 }
 
 // GetNamespace takes a namespace and returns the namespace object the namespace is associated with.

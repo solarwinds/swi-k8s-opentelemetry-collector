@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 
 package kube
 
@@ -124,12 +126,12 @@ func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj in
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, nil)
+	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, map[string]*ClientResource{})
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, nil)
+	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, map[string]*ClientResource{})
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -145,9 +147,14 @@ func TestBadFilters(t *testing.T) {
 		newFakeAPIClientset,
 		NewFakeInformer,
 		NewFakeNamespaceInformer,
-		&ClientDeployment{
-			Associations: []Association{},
-			Informer:     NewFakeDeploymentInformer,
+		map[string]*ClientResource{
+			MetadataFromDeployment:  newEmptyClientResource(),
+			MetadataFromStatefulSet: newEmptyClientResource(),
+			MetadataFromReplicaSet:  newEmptyClientResource(),
+			MetadataFromDaemonSet:   newEmptyClientResource(),
+			MetadataFromJob:         newEmptyClientResource(),
+			MetadataFromCronJob:     newEmptyClientResource(),
+			MetadataFromNode:        newEmptyClientResource(),
 		},
 	)
 	assert.Error(t, err)
@@ -195,9 +202,14 @@ func TestConstructorErrors(t *testing.T) {
 			clientProvider,
 			NewFakeInformer,
 			NewFakeNamespaceInformer,
-			&ClientDeployment{
-				Associations: []Association{},
-				Informer:     NewFakeDeploymentInformer,
+			map[string]*ClientResource{
+				MetadataFromDeployment:  newEmptyClientResource(),
+				MetadataFromStatefulSet: newEmptyClientResource(),
+				MetadataFromReplicaSet:  newEmptyClientResource(),
+				MetadataFromDaemonSet:   newEmptyClientResource(),
+				MetadataFromJob:         newEmptyClientResource(),
+				MetadataFromCronJob:     newEmptyClientResource(),
+				MetadataFromNode:        newEmptyClientResource(),
 			})
 		assert.Nil(t, c)
 		assert.Error(t, err)
@@ -1362,16 +1374,6 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 		},
 	}
 
-	deploymentAssociations := []Association{
-		{
-			Sources: []AssociationSource{
-				{
-					From: "resource_attribute",
-					Name: "k8s.deployment.uid",
-				},
-			},
-		},
-	}
 	c, err := New(
 		logger,
 		k8sconfig.APIConfig{},
@@ -1382,12 +1384,40 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 		newFakeAPIClientset,
 		NewFakeInformer,
 		NewFakeNamespaceInformer,
-		&ClientDeployment{
-			Associations: deploymentAssociations,
-			Informer:     NewFakeDeploymentInformer,
+		map[string]*ClientResource{
+			MetadataFromDeployment:  newClientResource("k8s.deployment.uid"),
+			MetadataFromStatefulSet: newClientResource("k8s.statefulset.uid"),
+			MetadataFromReplicaSet:  newClientResource("k8s.replicaset.uid"),
+			MetadataFromDaemonSet:   newClientResource("k8s.daemonset.uid"),
+			MetadataFromJob:         newClientResource("k8s.job.uid"),
+			MetadataFromCronJob:     newClientResource("k8s.cronjob.uid"),
+			MetadataFromNode:        newClientResource("k8s.node.uid"),
 		})
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
+}
+
+func newClientResource(attributeKey string) *ClientResource {
+	return &ClientResource{
+		Associations: []Association{
+			{
+				Sources: []AssociationSource{
+					{
+						From: "resource_attribute",
+						Name: attributeKey,
+					},
+				},
+			},
+		},
+		Informer: NewFakeResourceInformer,
+	}
+}
+
+func newEmptyClientResource() *ClientResource {
+	return &ClientResource{
+		Associations: []Association{},
+		Informer:     NewFakeResourceInformer,
+	}
 }
 
 func newTestClient(t *testing.T) (*WatchClient, *observer.ObservedLogs) {

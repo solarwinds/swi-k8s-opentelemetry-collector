@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
 package k8sattributesprocessor
 
@@ -129,6 +132,153 @@ func TestLoadConfig(t *testing.T) {
 								{
 									From: "resource_attribute",
 									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
+				StatefulSet: StatefulSetConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.statefulset.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.statefulset.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromStatefulSet},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.statefulset.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromStatefulSet},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.statefulset.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
+				ReplicaSet: ReplicaSetConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.replicaset.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.replicaset.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromReplicaSet},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.replicaset.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromReplicaSet},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.replicaset.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
+				DaemonSet: DaemonSetConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.daemonset.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.daemonset.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromDaemonSet},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.daemonset.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromDaemonSet},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.daemonset.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
+
+				Job: JobConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.job.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.job.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromJob},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.job.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromJob},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.job.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
+				CronJob: CronJobConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.cronjob.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.cronjob.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromCronJob},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.cronjob.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromCronJob},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.cronjob.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
+				Node: NodeConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.node.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.node.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromNode},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.node.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromNode},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.node.name",
 								},
 							},
 						},
