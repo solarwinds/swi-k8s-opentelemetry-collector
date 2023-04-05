@@ -3,6 +3,7 @@ import time
 import requests
 import traceback
 from jsonmerge import merge
+import re
 
 def get_all_bodies(log_bulk):
     result = [records["body"]["stringValue"]
@@ -75,6 +76,11 @@ def sort_attributes(element):
         element["attributes"] = sorted(
             element["attributes"], key=lambda a: a["key"])
 
+def replace_uid_attributes(element):
+    if "attributes" in element:
+        for attribute in element["attributes"]:
+            if re.match(r"^.*(pod|deployment|statefulset|replicaset|daemonset|job|cronjob|node)\.uid$", attribute["key"]):
+                attribute["value"]["stringValue"] = "00000000-0000-0000-0000-000000000000"
 
 def sort_datapoints(metric):
     def datapoint_sorting_key(datapoint):
@@ -109,6 +115,7 @@ def get_merged_json(content):
     # Sort the result and set timeStamps to 0 to make it easier to compare
     for resource in result["resourceMetrics"]:
         sort_attributes(resource["resource"])
+        replace_uid_attributes(resource["resource"])
         for scope in resource["scopeMetrics"]:
             scope["metrics"] = sorted(
                 scope["metrics"], key=lambda m: m["name"])

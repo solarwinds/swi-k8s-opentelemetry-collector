@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Added automatic extraction of Kubernetes labels and annotations from additional resources (Deployment, StatefulSet, ReplicaSet, DaemonSet, Job, CronJob, Node) and sent using resource attributes with metric
+
 ## [2.3.0-alpha.4] - 2023-03-29
 
 ### Added

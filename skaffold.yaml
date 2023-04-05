@@ -49,7 +49,7 @@ deploy:
           # excluded annotations:
           # * kubectl.kubernetes.io/last-applied-configuration - deployed by kubectl, contains full config for each resource
           # * cni.projectcalico.org/ - deployed in CI system (k3s)
-          otel.metrics.k8s_instrumentation.annotations.excludePattern: "(kubectl\\.kubernetes\\.io/last-applied-configuration)|(cni\\.projectcalico\\.org/.*)"
+          otel.metrics.k8s_instrumentation.annotations.excludePattern: "(kubectl\\.kubernetes\\.io/last-applied-configuration)|(cni\\.projectcalico\\.org/.*)|(deployment\\.kubernetes\\.io/revision)|(deprecated\\.daemonset\\.template\\.generation)"
           # excluded labels:
           # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
           otel.metrics.k8s_instrumentation.labels.excludePattern: "skaffold\\.dev/.*"
