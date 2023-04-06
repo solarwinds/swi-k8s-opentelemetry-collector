@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Enabled honor_labels option to keep scraped data over server-side labels
 
+### Fixed
+- Fixed calculation of `k8s.pod.spec.memory.limit` on newer container runtime (no longer use `container_spec_memory_limit_bytes`, but `kube_pod_container_resource_limits`)
+
 ## [2.3.0-alpha.4] - 2023-03-29
 
 ### Added

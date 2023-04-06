@@ -473,11 +473,10 @@ processors:
         experimental_match_labels: { "resource": "cpu" }
         action: insert
         new_name: k8s.container.spec.cpu.requests
-      - include: k8s.container_spec_memory_limit_bytes
+      - include: k8s.kube_pod_container_resource_limits
         action: insert
         match_type: regexp
-        # take datapoints with non-empty container label
-        experimental_match_labels: { "container": "\\S+" }
+        experimental_match_labels: { "resource": "memory" }
         new_name: k8s.container.spec.memory.limit_temp
 
       # Pod resource metrics
