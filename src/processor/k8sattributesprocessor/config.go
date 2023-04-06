@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
 package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor"
 
@@ -49,6 +52,24 @@ type Config struct {
 
 	// Section allows to define rules for extracting annotations and labels from Deployment
 	Deployment DeploymentConfig `mapstructure:"deployment"`
+
+	// Section allows to define rules for extracting annotations and labels from StatefulSet
+	StatefulSet StatefulSetConfig `mapstructure:"statefulset"`
+
+	// Section allows to define rules for extracting annotations and labels from ReplicaSet
+	ReplicaSet ReplicaSetConfig `mapstructure:"replicaset"`
+
+	// Section allows to define rules for extracting annotations and labels from DaemonSet
+	DaemonSet DaemonSetConfig `mapstructure:"daemonset"`
+
+	// Section allows to define rules for extracting annotations and labels from Job
+	Job JobConfig `mapstructure:"job"`
+
+	// Section allows to define rules for extracting annotations and labels from CronJob
+	CronJob CronJobConfig `mapstructure:"cronjob"`
+
+	// Section allows to define rules for extracting annotations and labels from Node
+	Node NodeConfig `mapstructure:"node"`
 }
 
 func (cfg *Config) Validate() error {
@@ -63,6 +84,30 @@ func (cfg *Config) Validate() error {
 	}
 
 	if err := cfg.Deployment.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.StatefulSet.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.ReplicaSet.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.DaemonSet.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.Job.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.CronJob.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.Node.Validate(); err != nil {
 		return err
 	}
 
@@ -85,7 +130,90 @@ type DeploymentConfig struct {
 }
 
 func (cfg *DeploymentConfig) Validate() error {
-	for _, assoc := range cfg.Association {
+	return validateAssociation(cfg.Association)
+}
+
+// Config defines configuration for StatefulSet.
+type StatefulSetConfig struct {
+	// Extract section allows specifying extraction rules to extract data from k8s StatefulSet specs
+	Extract ExtractConfig `mapstructure:"extract"`
+
+	// Filter section allows specifying filters to filter StatefulSet by labels, fields, namespaces, etc.
+	Filter FilterConfig `mapstructure:"filter"`
+
+	// Exclude section allows to define names of StatefulSet that should be ignored while tagging.
+	Exclude ExcludeStatefulSetConfig `mapstructure:"exclude"`
+
+	// Association section allows to define rules for tagging spans, metrics, and logs with StatefulSet metadata.
+	Association []AssociationConfig `mapstructure:"association"`
+}
+
+func (cfg *StatefulSetConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+// ReplicaSetConfig defines configuration for ReplicaSet.
+type ReplicaSetConfig struct {
+	Extract     ExtractConfig           `mapstructure:"extract"`
+	Filter      FilterConfig            `mapstructure:"filter"`
+	Exclude     ExcludeReplicaSetConfig `mapstructure:"exclude"`
+	Association []AssociationConfig     `mapstructure:"association"`
+}
+
+func (cfg *ReplicaSetConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+// DaemonSetConfig defines configuration for DaemonSet.
+type DaemonSetConfig struct {
+	Extract     ExtractConfig          `mapstructure:"extract"`
+	Filter      FilterConfig           `mapstructure:"filter"`
+	Exclude     ExcludeDaemonSetConfig `mapstructure:"exclude"`
+	Association []AssociationConfig    `mapstructure:"association"`
+}
+
+func (cfg *DaemonSetConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+// JobConfig defines configuration for Job.
+type JobConfig struct {
+	Extract     ExtractConfig       `mapstructure:"extract"`
+	Filter      FilterConfig        `mapstructure:"filter"`
+	Exclude     ExcludeJobConfig    `mapstructure:"exclude"`
+	Association []AssociationConfig `mapstructure:"association"`
+}
+
+func (cfg *JobConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+// CronJobConfig defines configuration for CronJob.
+type CronJobConfig struct {
+	Extract     ExtractConfig        `mapstructure:"extract"`
+	Filter      FilterConfig         `mapstructure:"filter"`
+	Exclude     ExcludeCronJobConfig `mapstructure:"exclude"`
+	Association []AssociationConfig  `mapstructure:"association"`
+}
+
+func (cfg *CronJobConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+// NodeConfig defines configuration for Node.
+type NodeConfig struct {
+	Extract     ExtractConfig       `mapstructure:"extract"`
+	Filter      FilterConfig        `mapstructure:"filter"`
+	Exclude     ExcludeNodeConfig   `mapstructure:"exclude"`
+	Association []AssociationConfig `mapstructure:"association"`
+}
+
+func (cfg *NodeConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+func validateAssociation(associationConfig []AssociationConfig) error {
+	for _, assoc := range associationConfig {
 		if len(assoc.Sources) > kube.PodIdentifierMaxLength {
 			return fmt.Errorf("too many association sources. limit is %v", kube.PodIdentifierMaxLength)
 		}
@@ -298,6 +426,36 @@ type ExcludeConfig struct {
 // ExcludeDeploymentConfig represent a list of Deployments to exclude
 type ExcludeDeploymentConfig struct {
 	Deployments []ExcludePodConfig `mapstructure:"deployments"`
+}
+
+// ExcludeStatefulSetConfig represent a list of StatefulSet to exclude
+type ExcludeStatefulSetConfig struct {
+	StatefulSet []ExcludePodConfig `mapstructure:"statefulsets"`
+}
+
+// ExcludeReplicaSetConfig represent a list of ReplicaSet to exclude
+type ExcludeReplicaSetConfig struct {
+	ReplicaSets []ExcludePodConfig `mapstructure:"replicasets"`
+}
+
+// ExcludeDaemonSetConfig represent a list of DaemonSet to exclude
+type ExcludeDaemonSetConfig struct {
+	DaemonSets []ExcludePodConfig `mapstructure:"daemonsets"`
+}
+
+// ExcludeJobConfig represent a list of Job to exclude
+type ExcludeJobConfig struct {
+	Jobs []ExcludePodConfig `mapstructure:"jobs"`
+}
+
+// ExcludeCronJobConfig represent a list of CronJob to exclude
+type ExcludeCronJobConfig struct {
+	CronJobs []ExcludePodConfig `mapstructure:"cronjobs"`
+}
+
+// ExcludeNodeConfig represent a list of Node to exclude
+type ExcludeNodeConfig struct {
+	Nodes []ExcludePodConfig `mapstructure:"nodes"`
 }
 
 // ExcludePodConfig represent a Pod name to ignore

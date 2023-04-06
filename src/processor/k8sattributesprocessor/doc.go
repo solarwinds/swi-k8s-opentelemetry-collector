@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
+
 // Package k8sattributesprocessor allow automatic tagging of spans, metrics and logs with k8s metadata.
 //
-// The processor automatically discovers k8s resources (pods, deployments), extracts metadata from them and adds the
-// extracted metadata to the relevant spans, metrics and logs. The processor uses the kubernetes API to discover all pods and deployments
+// The processor automatically discovers k8s resources (pods, deployments, statefulset, replicaset, daemonset, job, cronjob, node), extracts metadata from them and adds the
+// extracted metadata to the relevant spans, metrics and logs. The processor uses the kubernetes API to discover all resources
 // running in a cluster, keeps a record of their IP addresses, pod UIDs and interesting metadata.
 // The rules for associating the data passing through the processor (spans, metrics and logs) with specific Pod Metadata are configured via "pod_association" key
-// and Deployment Metadata are configured via "deployment_association".
+// and Deployment Metadata are configured via "deployment" section, similarly StatefulSet, ReplicaSet, DaemonSet, Job, CronJob and Node has their related sections.
 
 // It represents a list of associations that are executed in the specified order until the first one is able to do the match.
 //
@@ -73,12 +76,12 @@
 //     be explicitly requested in `metadata`. Specifying `k8s.container.restart_count` in the resource
 //     attributes will match only the specified container run; if omitted, the current instance is assumed.
 //
-// The k8sattributesprocessor can be used for automatic tagging of spans, metrics and logs with k8s labels and annotations from pods, deployments and namespaces.
-// The config for associating the data passing through the processor (spans, metrics and logs) with specific Pod/Deployment/Namespace annotations/labels is configured via "annotations"  and "labels" keys.
-// This config represents a list of annotations/labels that are extracted from pods/deployments/namespaces and added to spans, metrics and logs.
+// The k8sattributesprocessor can be used for automatic tagging of spans, metrics and logs with k8s labels and annotations from pods, deployments, statefulsets, replicasets, daemonsets, jobs, cronjobs, nodes and namespaces.
+// The config for associating the data passing through the processor (spans, metrics and logs) with specific kubernetes resource annotations/labels is configured via "annotations"  and "labels" keys.
+// This config represents a list of annotations/labels that are extracted from individual kubernetes resources and added to spans, metrics and logs.
 // Each item is specified as a config of tag_name (representing the tag name to tag the spans with),
 // key (representing the key used to extract value) and from (representing the kubernetes object used to extract the value).
-// The "from" field has only two possible values "pod", "deployment" and "namespace" and defaults to "pod" if none is specified.
+// The "from" field has only two possible values "pod", "deployment", "statefulset", "replicaset", "daemonset", "job", "cronjob", "node" and "namespace" and defaults to "pod" if none is specified.
 //
 // A few examples to use this config are as follows:
 //
@@ -117,10 +120,13 @@
 //	  name: otel-collector
 //	rules:
 //	- apiGroups: [""]
-//	  resources: ["pods", "namespaces"]
+//	  resources: ["pods", "namespaces", "nodes"]
 //	  verbs: ["get", "watch", "list"]
 //	- apiGroups: ["apps"]
-//	  resources: ["deployments"]
+//	  resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+//	  verbs: ["get", "watch", "list"]
+//	- apiGroups: ["batch"]
+//	  resources: ["jobs", "cronjobs"]
 //	  verbs: ["get", "watch", "list"]
 //	---
 //	apiVersion: rbac.authorization.k8s.io/v1
@@ -160,7 +166,37 @@
 //	   - from: resource_attribute
 //	     name: k8s.pod.uid
 //	   - from: connection
-//
+//    deployment:
+//      extract:
+//        metadata:
+//          - k8s.deployment.uid
+//        annotations:
+//          - key_regex: (.*)
+//            tag_name: k8s.deployment.annotations.$$1
+//            from: deployment
+//        labels:
+//          - key_regex: (.*)
+//            tag_name: k8s.deployment.labels.$$1
+//            from: deployment
+//      association:
+//      - sources:
+//          - from: resource_attribute
+//            name: k8s.deployment.name
+//          - from: resource_attribute
+//            name: k8s.namespace.name
+//    statefulset:
+//       ...
+//    replicaset:
+//       ...
+//    daemonset:
+//       ...
+//    job:
+//       ...
+//    cronjob:
+//       ...
+//    node:
+//       ...
+
 // # Deployment scenarios
 //
 // The processor supports running both in agent and collector mode.

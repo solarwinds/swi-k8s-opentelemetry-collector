@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
-// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
+package k8sattributesprocessor
 
-package observability
+import (
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
+)
+
+func (f *fakeClient) GetResource(resourceType string, identifier kube.ResourceIdentifier) (kube.KubernetesResource, bool) {
+	p, ok := f.Resources[resourceType][identifier]
+	return p, ok
+}

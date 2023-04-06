@@ -88,6 +88,114 @@ k8sattributes/2:
             name: k8s.deployment.name
           - from: resource_attribute
             name: k8s.namespace.name
+  statefulset:
+      extract:
+        metadata:
+          - k8s.statefulset.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.statefulset.annotations.$$1
+            from: statefulset
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.statefulset.labels.$$1
+            from: statefulset
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.statefulset.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+  replicaset:
+      extract:
+        metadata:
+          - k8s.replicaset.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.replicaset.annotations.$$1
+            from: replicaset
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.replicaset.labels.$$1
+            from: replicaset
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.replicaset.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+  daemonset:
+      extract:
+        metadata:
+          - k8s.daemonset.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.daemonset.annotations.$$1
+            from: daemonset
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.daemonset.labels.$$1
+            from: daemonset
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.daemonset.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+  job:
+      extract:
+        metadata:
+          - k8s.job.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.job.annotations.$$1
+            from: job
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.job.labels.$$1
+            from: job
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.job.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+
+  cronjob:
+      extract:
+        metadata:
+          - k8s.cronjob.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.cronjob.annotations.$$1
+            from: cronjob
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.cronjob.labels.$$1
+            from: cronjob
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.cronjob.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+
+  node:
+      extract:
+        metadata:
+          - k8s.node.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.node.annotations.$$1
+            from: node
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.node.labels.$$1
+            from: node
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.node.name
 
   exclude:
     pods:

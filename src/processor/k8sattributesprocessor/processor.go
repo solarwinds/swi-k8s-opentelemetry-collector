@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
 package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor"
 
@@ -45,7 +48,7 @@ type kubernetesprocessor struct {
 	podAssociations []kube.Association
 	podIgnore       kube.Excludes
 
-	deployment *kubernetesProcessorDeployment
+	resources map[string]*kubernetesProcessorResource
 }
 
 func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kube.ClientProvider) error {
@@ -63,7 +66,15 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 			nil,
 			nil,
 			nil,
-			kp.getClientDeployment(kp.deployment))
+			map[string]*kube.ClientResource{
+				kube.MetadataFromDeployment:  kp.getClientResource(kp.resources[kube.MetadataFromDeployment]),
+				kube.MetadataFromStatefulSet: kp.getClientResource(kp.resources[kube.MetadataFromStatefulSet]),
+				kube.MetadataFromReplicaSet:  kp.getClientResource(kp.resources[kube.MetadataFromReplicaSet]),
+				kube.MetadataFromDaemonSet:   kp.getClientResource(kp.resources[kube.MetadataFromDaemonSet]),
+				kube.MetadataFromJob:         kp.getClientResource(kp.resources[kube.MetadataFromJob]),
+				kube.MetadataFromCronJob:     kp.getClientResource(kp.resources[kube.MetadataFromCronJob]),
+				kube.MetadataFromNode:        kp.getClientResource(kp.resources[kube.MetadataFromNode]),
+			})
 		if err != nil {
 			return err
 		}
@@ -159,8 +170,10 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 		}
 	}
 
-	if kp.deployment != nil && !kp.deployment.isEmpty() {
-		kp.processResourceDeployment(ctx, resource)
+	for resourceType, k8sResource := range kp.resources {
+		if k8sResource != nil && !k8sResource.isEmpty() {
+			processGenericResource(kp, resourceType, k8sResource.associations, ctx, resource)
+		}
 	}
 }
 

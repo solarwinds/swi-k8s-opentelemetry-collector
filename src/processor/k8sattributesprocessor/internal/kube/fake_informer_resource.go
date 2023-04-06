@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -23,7 +23,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-type FakeDeploymentInformer struct {
+type FakeResourceInformer struct {
 	*FakeController
 
 	namespace     string
@@ -31,13 +31,13 @@ type FakeDeploymentInformer struct {
 	fieldSelector fields.Selector
 }
 
-func NewFakeDeploymentInformer(
+func NewFakeResourceInformer(
 	_ kubernetes.Interface,
 	namespace string,
 	labelSelector labels.Selector,
 	fieldSelector fields.Selector,
 ) cache.SharedInformer {
-	return &FakeDeploymentInformer{
+	return &FakeResourceInformer{
 		FakeController: &FakeController{},
 		namespace:      namespace,
 		labelSelector:  labelSelector,
@@ -45,34 +45,34 @@ func NewFakeDeploymentInformer(
 	}
 }
 
-func (f *FakeDeploymentInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+func (f *FakeResourceInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
 	return f.AddEventHandlerWithResyncPeriod(handler, time.Second)
 }
 
-func (f *FakeDeploymentInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, resyncPeriod time.Duration) (cache.ResourceEventHandlerRegistration, error) {
+func (f *FakeResourceInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, resyncPeriod time.Duration) (cache.ResourceEventHandlerRegistration, error) {
 	return handler, nil
 }
 
-func (f *FakeDeploymentInformer) RemoveEventHandler(handle cache.ResourceEventHandlerRegistration) error {
+func (f *FakeResourceInformer) RemoveEventHandler(handle cache.ResourceEventHandlerRegistration) error {
 	return nil
 }
 
-func (f *FakeDeploymentInformer) IsStopped() bool {
+func (f *FakeResourceInformer) IsStopped() bool {
 	return false
 }
 
-func (f *FakeDeploymentInformer) SetTransform(handler cache.TransformFunc) error {
+func (f *FakeResourceInformer) SetTransform(handler cache.TransformFunc) error {
 	return nil
 }
 
-func (f *FakeDeploymentInformer) GetStore() cache.Store {
+func (f *FakeResourceInformer) GetStore() cache.Store {
 	return cache.NewStore(func(obj interface{}) (string, error) { return "", nil })
 }
 
-func (f *FakeDeploymentInformer) GetController() cache.Controller {
+func (f *FakeResourceInformer) GetController() cache.Controller {
 	return f.FakeController
 }
 
-func (f *FakeDeploymentInformer) SetWatchErrorHandler(cache.WatchErrorHandler) error {
+func (f *FakeResourceInformer) SetWatchErrorHandler(cache.WatchErrorHandler) error {
 	return nil
 }

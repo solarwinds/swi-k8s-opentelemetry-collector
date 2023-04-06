@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
 package k8sattributesprocessor
 
@@ -28,7 +31,6 @@ import (
 // fakeClient is used as a replacement for WatchClient in test cases.
 type fakeClient struct {
 	Pods              map[kube.PodIdentifier]*kube.Pod
-	Deployments       map[kube.DeploymentIdentifier]*kube.Deployment
 	Rules             kube.ExtractionRules
 	Filters           kube.Filters
 	PodAssociations   []kube.Association
@@ -36,6 +38,8 @@ type fakeClient struct {
 	NamespaceInformer cache.SharedInformer
 	Namespaces        map[string]*kube.Namespace
 	StopCh            chan struct{}
+
+	Resources map[string]map[kube.ResourceIdentifier]kube.KubernetesResource
 }
 
 func selectors() (labels.Selector, fields.Selector) {
@@ -54,13 +58,21 @@ func newFakeClient(
 	_ kube.APIClientsetProvider,
 	_ kube.InformerProvider,
 	_ kube.InformerProviderNamespace,
-	deployment *kube.ClientDeployment) (kube.Client, error) {
+	_ map[string]*kube.ClientResource) (kube.Client, error) {
 	cs := fake.NewSimpleClientset()
 
 	ls, fs := selectors()
 	return &fakeClient{
-		Pods:              map[kube.PodIdentifier]*kube.Pod{},
-		Deployments:       map[kube.DeploymentIdentifier]*kube.Deployment{},
+		Pods: map[kube.PodIdentifier]*kube.Pod{},
+		Resources: map[string]map[kube.ResourceIdentifier]kube.KubernetesResource{
+			kube.MetadataFromDeployment:  {},
+			kube.MetadataFromStatefulSet: {},
+			kube.MetadataFromReplicaSet:  {},
+			kube.MetadataFromDaemonSet:   {},
+			kube.MetadataFromJob:         {},
+			kube.MetadataFromCronJob:     {},
+			kube.MetadataFromNode:        {},
+		},
 		Rules:             rules,
 		Filters:           filters,
 		PodAssociations:   podAssociations,

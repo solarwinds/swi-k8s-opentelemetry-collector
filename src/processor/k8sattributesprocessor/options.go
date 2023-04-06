@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
+// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
 package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor"
 
@@ -173,8 +176,20 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 			a.From = kube.MetadataFromNamespace
 		case kube.MetadataFromDeployment:
 			a.From = kube.MetadataFromDeployment
+		case kube.MetadataFromStatefulSet:
+			a.From = kube.MetadataFromStatefulSet
+		case kube.MetadataFromReplicaSet:
+			a.From = kube.MetadataFromReplicaSet
+		case kube.MetadataFromDaemonSet:
+			a.From = kube.MetadataFromDaemonSet
+		case kube.MetadataFromJob:
+			a.From = kube.MetadataFromJob
+		case kube.MetadataFromCronJob:
+			a.From = kube.MetadataFromCronJob
+		case kube.MetadataFromNode:
+			a.From = kube.MetadataFromNode
 		default:
-			return rules, fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, deployment, namespace", a.From)
+			return rules, fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, deployment, statefulset, replicaset, daemonset, job, cronjob, node, namespace", a.From)
 		}
 
 		if name == "" && a.Key != "" {
@@ -185,6 +200,18 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 				name = fmt.Sprintf("k8s.namespace.%s.%s", fieldType, a.Key)
 			} else if a.From == kube.MetadataFromDeployment {
 				name = fmt.Sprintf("k8s.deployment.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromStatefulSet {
+				name = fmt.Sprintf("k8s.statefulset.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromReplicaSet {
+				name = fmt.Sprintf("k8s.replicaset.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromDaemonSet {
+				name = fmt.Sprintf("k8s.daemonset.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromJob {
+				name = fmt.Sprintf("k8s.job.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromCronJob {
+				name = fmt.Sprintf("k8s.cronjob.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromNode {
+				name = fmt.Sprintf("k8s.node.%s.%s", fieldType, a.Key)
 			}
 		}
 

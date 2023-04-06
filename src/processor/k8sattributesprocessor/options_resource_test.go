@@ -1,8 +1,8 @@
-// Copyright 2020 OpenTelemetry Authors
+// Copyright 2022 SolarWinds Worldwide, LLC. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// You may obtain a copy of the License at:
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -22,7 +22,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
 )
 
-func TestWithExtractDeploymentAssociation(t *testing.T) {
+func TestWithExtractResourceAssociation(t *testing.T) {
 	tests := []struct {
 		name string
 		args []AssociationConfig
@@ -60,11 +60,13 @@ func TestWithExtractDeploymentAssociation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &kubernetesprocessor{
-				deployment: &kubernetesProcessorDeployment{},
+				resources: map[string]*kubernetesProcessorResource{
+					kube.MetadataFromDeployment: {},
+				},
 			}
-			opt := withExtractDeploymentAssociations(tt.args...)
+			opt := withExtractResourceAssociations(kube.MetadataFromDeployment, tt.args...)
 			assert.NoError(t, opt(p))
-			assert.Equal(t, tt.want, p.deployment.associations)
+			assert.Equal(t, tt.want, p.resources[kube.MetadataFromDeployment].associations)
 		})
 	}
 }
