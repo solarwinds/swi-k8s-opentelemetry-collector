@@ -62,13 +62,13 @@ type Config struct {
 	// Section allows to define rules for extracting annotations and labels from DaemonSet
 	DaemonSet DaemonSetConfig `mapstructure:"daemonset"`
 
-	// Section allows to define rules for extracting annotations and labels from StatefulSet
+	// Section allows to define rules for extracting annotations and labels from Job
 	Job JobConfig `mapstructure:"job"`
 
-	// Section allows to define rules for extracting annotations and labels from StatefulSet
+	// Section allows to define rules for extracting annotations and labels from CronJob
 	CronJob CronJobConfig `mapstructure:"cronjob"`
 
-	// Section allows to define rules for extracting annotations and labels from StatefulSet
+	// Section allows to define rules for extracting annotations and labels from Node
 	Node NodeConfig `mapstructure:"node"`
 }
 
