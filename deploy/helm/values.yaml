@@ -32,7 +32,7 @@ otel:
     # Check if Prometheus endpoint is reachable
     prometheus_check: true
 
-    prometheus: 
+    prometheus:
       # URL of prometheus where to scrape
       url: ""
 
@@ -81,7 +81,7 @@ otel:
       limits:
         # override if your singleton collector is being OOM-killed.
         memory: 3Gi
-    
+
     # k8s_instrumentation controls the automatic extraction of Kubernetes metadata from resources.
     # It instruments OpenTelemetry (OTEL) resources being sent.
     k8s_instrumentation:
@@ -92,7 +92,7 @@ otel:
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern: 
+        excludePattern:
 
       annotations:
         # Set 'enabled' to true to instrument Kubernetes annotations.
@@ -107,13 +107,13 @@ otel:
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
     telemetry:
-      logs: 
+      logs:
         enabled: true
         level: "info"
-      metrics: 
+      metrics:
         enabled: true
         address: 0.0.0.0:8888
-        podMonitor: 
+        podMonitor:
           # Create a `PodMonitor` to collect Prometheus metrics.
           enabled: false
 
@@ -131,7 +131,7 @@ otel:
           scrapeTimeout: 25s
 
   # Configuration for Events collection
-  events: 
+  events:
     # Define whether metrics will be collected and sent
     enabled: true
 
@@ -164,17 +164,17 @@ otel:
         memory: 600Mi
       limits:
         memory: 600Mi
-    
+
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
     telemetry:
-      logs: 
+      logs:
         enabled: true
         level: "info"
-      metrics: 
+      metrics:
         enabled: true
         address: 0.0.0.0:8888
-        podMonitor: 
+        podMonitor:
           # Create a `PodMonitor` to collect Prometheus metrics.
           enabled: false
 
@@ -192,7 +192,7 @@ otel:
           scrapeTimeout: 25s
 
   # Configuration for Logs collection
-  logs: 
+  logs:
     # Define whether logs will be collected and sent
     enabled: true
 
@@ -206,7 +206,7 @@ otel:
     journal: true
 
     # If true, the container logs will be collected
-    # Log collection uses `filelog` OTEL receiver under the hood 
+    # Log collection uses `filelog` OTEL receiver under the hood
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
     # Each log has following attributes so they can be filtered out by them using filter configuration:
     #   * sw.k8s.log.type=container
@@ -243,13 +243,13 @@ otel:
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
     telemetry:
-      logs: 
+      logs:
         enabled: true
         level: "info"
-      metrics: 
+      metrics:
         enabled: true
         address: 0.0.0.0:8888
-        podMonitor: 
+        podMonitor:
           # Create a `PodMonitor` to collect Prometheus metrics.
           enabled: false
 
@@ -272,7 +272,7 @@ otel:
       check_interval: 1s
       limit_mib: 550
       spike_limit_mib: 300
-    
+
     # Memory Ballast enables applications to configure memory ballast for the process.
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/ballastextension for configuration reference
     memory_ballast:
@@ -290,7 +290,7 @@ otel:
       - operator: Exists
         effect: NoSchedule
 
-    # Properties that can be configured on filelog reciever. For full description of properties 
+    # Properties that can be configured on filelog reciever. For full description of properties
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
     receiver:
       start_at: end
@@ -299,8 +299,8 @@ otel:
       encoding: utf-8
       fingerprint_size: 1kb
       max_log_size: 1MiB
-    
-    # Properties that can be configured on filestorage that is used to persist log checkpoints. 
+
+    # Properties that can be configured on filestorage that is used to persist log checkpoints.
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
     filestorage:
       directory: /var/lib/swo/checkpoints
@@ -322,7 +322,7 @@ autoupdate:
   devel: false
 
 # Set labels to every deployed resource
-# commonLabels: 
+# commonLabels:
 
 prometheus:
   # Whether the Prometheus server should be deployed as part of this chart.
@@ -340,3 +340,20 @@ prometheus:
     # (this matches the behavior of `kube-prometheus-stack` chart).
     persistentVolume:
       enabled: false
+
+
+swoagent:
+  # Whether the SWO Agent should be deployed as part of this chart.
+  # If not, integrations are not available.
+
+  enabled: false
+  image:
+    repository: solarwinds/swo-agent
+    tag: "latest"
+    pullPolicy: Always
+  resources:
+    limits:
+      memory: 800Mi
+    requests:
+      memory: 800Mi
+      cpu: 100m
