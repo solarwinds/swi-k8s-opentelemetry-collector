@@ -3,6 +3,7 @@ import time
 import requests
 import traceback
 from jsonmerge import merge
+import re
 
 def get_all_bodies(log_bulk):
     result = [records["body"]["stringValue"]
@@ -74,7 +75,6 @@ def sort_attributes(element):
     if "attributes" in element:
         element["attributes"] = sorted(
             element["attributes"], key=lambda a: a["key"])
-
 
 def sort_datapoints(metric):
     def datapoint_sorting_key(datapoint):

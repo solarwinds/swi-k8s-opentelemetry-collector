@@ -22,3 +22,133 @@ spec:
   - name: test-container
     image: busybox
     command: ["sh", "-c", "sleep infinity"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  namespace: test-namespace
+  labels:
+    app: test-deployment
+  annotations:
+    test-annotation: "test-value"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-deployment
+  template:
+    metadata:
+      labels:
+        app: test-deployment
+      annotations:
+        test-annotation: "test-value"
+    spec:
+      containers:
+      - name: test-container
+        image: busybox
+        command: ["sh", "-c", "sleep infinity"]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: test-statefulset
+  namespace: test-namespace
+  labels:
+    app: test-statefulset
+  annotations:
+    test-annotation: "test-value"
+spec:
+  serviceName: "test-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-statefulset
+  template:
+    metadata:
+      labels:
+        app: test-statefulset
+      annotations:
+        test-annotation: "test-value"
+    spec:
+      containers:
+      - name: test-container
+        image: busybox
+        command: ["sh", "-c", "sleep infinity"]
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: test-replicaset
+  namespace: test-namespace
+  labels:
+    app: test-replicaset
+  annotations:
+    test-annotation: "test-value"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-replicaset
+  template:
+    metadata:
+      labels:
+        app: test-replicaset
+      annotations:
+        test-annotation: "test-value"
+    spec:
+      containers:
+      - name: test-container
+        image: busybox
+        command: ["sh", "-c", "sleep infinity"]
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: test-daemonset
+  namespace: test-namespace
+  labels:
+    app: test-daemonset
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    matchLabels:
+      app: test-daemonset
+  template:
+    metadata:
+      labels:
+        app: test-daemonset
+      annotations:
+        test-annotation: "test-value"
+    spec:
+      containers:
+      - name: test-container
+        image: busybox
+        command: ["sh", "-c", "sleep infinity"]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: test-cronjob
+  namespace: test-namespace
+  labels:
+    app: test-cronjob
+  annotations:
+    test-annotation: "test-value"
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: test-cronjob
+          annotations:
+            test-annotation: "test-value"
+        spec:
+          containers:
+          - name: test-container
+            image: busybox
+            command: ["sh", "-c", "sleep 10"]
+          restartPolicy: Never
