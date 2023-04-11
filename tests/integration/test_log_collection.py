@@ -1,7 +1,6 @@
 import pytest
 import os
-import subprocess
-from test_utils import get_all_bodies_for_all_sent_content, retry_until_ok
+from test_utils import get_all_bodies_for_all_sent_content, retry_until_ok, run_shell_command
 
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
 url = f'http://{endpoint}/logs.json'
@@ -9,10 +8,10 @@ pod_name = 'dummy-logging-pod'
 tested_log = '!!testlog!!'
 
 def setup_function():
-    subprocess.run(f'kubectl run {pod_name} --image bash:alpine3.16 -- -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"', shell=True)
+    run_shell_command(f'kubectl run {pod_name} --image bash:alpine3.16 -- -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"')
 
 def teardown_function():
-    subprocess.run(f'kubectl delete pod {pod_name}', shell=True)
+    run_shell_command(f'kubectl delete pod {pod_name}')
 
 def test_logs_generated():
     retry_until_ok(url, assert_test_log_found, print_failure)

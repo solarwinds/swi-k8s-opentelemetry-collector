@@ -42,6 +42,13 @@ processors:
       - context: log
         statements:
           - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Pod"
+          - set(resource.attributes["k8s.deployment.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Deployment"
+          - set(resource.attributes["k8s.statefulset.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "StatefulSet"
+          - set(resource.attributes["k8s.replicaset.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "ReplicaSet"
+          - set(resource.attributes["k8s.daemonset.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "DaemonSet"
+          - set(resource.attributes["k8s.job.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Job"
+          - set(resource.attributes["k8s.cronjob.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "CronJob"
+          - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Node"
           - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"]) where attributes["k8s.namespace.name"] != nil
           - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"] != nil
   resource/events:
@@ -69,6 +76,20 @@ processors:
         action: insert
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
+  k8sattributes:
+{{ include "common.k8s-instrumentation" (tuple . .Values.otel.events.k8s_instrumentation.annotations.enabled .Values.otel.events.k8s_instrumentation.labels.enabled) | indent 4 }}
+{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
+  resource/k8sattributes_labels_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.events.k8s_instrumentation.labels.excludePattern }}
+{{- end }}
+{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
+  resource/k8sattributes_annotations_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.events.k8s_instrumentation.annotations.excludePattern }}
+{{- end }}
 
 receivers:
   k8s_events:
@@ -91,6 +112,13 @@ service:
         - transform/namespace
         - transform/entity_attributes
         - resource/events
+        - k8sattributes
+{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
+        - resource/k8sattributes_labels_filter
+{{- end }}
+{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
+        - resource/k8sattributes_annotations_filter
+{{- end }}
         - batch
       receivers:
         - k8s_events
