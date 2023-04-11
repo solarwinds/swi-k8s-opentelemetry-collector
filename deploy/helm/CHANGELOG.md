@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Changed
+### [2.3.0-alpha.7] - 2023-04-12
+- Added automatic extraction of Kubernetes labels and annotations from events.
 
+## [2.3.0-alpha.6] - 2023-04-06
+
+### Added
+- Added automatic extraction of Kubernetes labels and annotations from additional resources (Deployment, StatefulSet, ReplicaSet, DaemonSet, Job, CronJob, Node) and sent using resource attributes with metric
+
+## [2.3.0-alpha.5] - 2023-04-06
+
+### Changed
 - Enabled honor_labels option to keep scraped data over server-side labels
+
+### Fixed
+- Fixed calculation of `k8s.pod.spec.memory.limit` on newer container runtime (no longer use `container_spec_memory_limit_bytes`, but `kube_pod_container_resource_limits`)
 
 ## [2.3.0-alpha.4] - 2023-03-29
 

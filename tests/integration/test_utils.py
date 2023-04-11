@@ -3,6 +3,14 @@ import time
 import requests
 import traceback
 from jsonmerge import merge
+import subprocess
+import re
+
+def get_all_log_resources(log_bulk):
+    result = [resource
+              for resource in log_bulk["resourceLogs"]
+              ]
+    return result
 
 def get_all_bodies(log_bulk):
     result = [records["body"]["stringValue"]
@@ -16,6 +24,12 @@ def get_all_bodies_for_all_sent_content(content):
     lines = content.splitlines()
     log_bulks = [json.loads(line) for line in lines]
     return [get_all_bodies(log_bulk) for log_bulk in log_bulks]
+
+def get_all_resources_for_all_sent_content(content):
+    lines = content.splitlines()
+    log_bulks = [json.loads(line) for line in lines]
+    return [get_all_log_resources(log_bulk) for log_bulk in log_bulks]
+
 
 def retry_until_ok(url, func, print_failure):
     timeout = 120  # set the timeout in seconds
@@ -75,7 +89,6 @@ def sort_attributes(element):
         element["attributes"] = sorted(
             element["attributes"], key=lambda a: a["key"])
 
-
 def sort_datapoints(metric):
     def datapoint_sorting_key(datapoint):
         if "attributes" in datapoint:
@@ -128,3 +141,9 @@ def get_merged_json(content):
 
     return result
 
+# Function to run a shell command and print its output and errors
+def run_shell_command(command):
+    print(f"{command}")
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)

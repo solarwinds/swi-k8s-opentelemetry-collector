@@ -156,14 +156,14 @@ otel:
     # Memory Ballast enables applications to configure memory ballast for the process.
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/ballastextension for configuration reference
     memory_ballast:
-      size_mib: 200
+      size_mib: 300
 
     # Resource configuration
     resources:
       requests:
-        memory: 600Mi
+        memory: 1000Mi
       limits:
-        memory: 600Mi
+        memory: 1000Mi
 
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
@@ -190,6 +190,27 @@ otel:
 
           # Timeout if metrics can't be retrieved in given time interval
           scrapeTimeout: 25s
+    
+    # k8s_instrumentation controls the automatic extraction of Kubernetes metadata from resources.
+    # It instruments OpenTelemetry (OTEL) resources being sent.
+    k8s_instrumentation:
+      labels:
+        # Set 'enabled' to true to instrument Kubernetes labels.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific labels from instrumentation.
+        # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        excludePattern:
+
+      annotations:
+        # Set 'enabled' to true to instrument Kubernetes annotations.
+        enabled: false
+
+        # Provide a regular expression pattern to exclude specific annotations from instrumentation.
+        # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        excludePattern:
 
   # Configuration for Logs collection
   logs:
