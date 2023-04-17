@@ -308,6 +308,45 @@ processors:
         experimental_match_labels: { "resource": "memory" }
         new_name: k8s.container.spec.memory.limit_temp
 
+      - include: k8s.container_fs_reads_total
+        action: insert
+        new_name: k8s.container_fs_reads_total_temp
+      - include: k8s.container_fs_writes_total
+        action: insert
+        new_name: k8s.container_fs_writes_total_temp
+      - include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+        match_type: regexp
+        action: combine
+        submatch_case: lower
+        new_name: k8s.container.fs.iops
+        operations:
+          - action: aggregate_labels
+            label_set:  [container]
+            aggregation_type: sum
+
+      - include: k8s.container_fs_reads_bytes_total
+        action: insert
+        new_name: k8s.container_fs_reads_bytes_total_temp
+      - include: k8s.container_fs_writes_bytes_total
+        action: insert
+        new_name: k8s.container_fs_writes_bytes_total_temp
+      - include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+        match_type: regexp
+        action: combine
+        submatch_case: lower
+        new_name: k8s.container.fs.throughput
+        operations:
+          - action: aggregate_labels
+            label_set:  [container]
+            aggregation_type: sum
+
+      - include: k8s.container_network_receive_bytes_total
+        action: insert        
+        new_name: k8s.container.network.bytes_received
+      - include: k8s.container_network_transmit_bytes_total
+        action: insert        
+        new_name: k8s.container.network.bytes_transmitted
+
       # Pod resource metrics
       - include: k8s.kube_pod_container_status_running
         action: insert
@@ -838,7 +877,11 @@ processors:
       metrics:
         - k8s.node.cpu.usage.seconds.rate
         - k8s.pod.cpu.usage.seconds.rate
+        - k8s.container.fs.iops
+        - k8s.container.fs.throughput
         - k8s.container.cpu.usage.seconds.rate
+        - k8s.container.network.bytes_received
+        - k8s.container.network.bytes_transmitted
         - apiserver_request_not_failed_temp
         - apiserver_request_total_temp
         - k8s.pod.fs.iops
@@ -866,7 +909,11 @@ processors:
     metrics:
       - k8s.node.cpu.usage.seconds.rate
       - k8s.pod.cpu.usage.seconds.rate
+      - k8s.container.fs.iops
+      - k8s.container.fs.throughput
       - k8s.container.cpu.usage.seconds.rate
+      - k8s.container.network.bytes_received
+      - k8s.container.network.bytes_transmitted
       - k8s.pod.fs.iops
       - k8s.pod.fs.throughput
       - k8s.pod.fs.reads.rate

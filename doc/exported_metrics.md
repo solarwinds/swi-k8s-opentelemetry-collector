@@ -120,6 +120,10 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.container.cpu.usage.seconds.rate | Gauge | cores | The rate of pod cumulative CPU time consumed | custom |
 | k8s.container.spec.memory.requests | Gauge | bytes | The number of requested memory by a container | custom |
 | k8s.container.status | Gauge |  | Describes the status of the container (waiting/running/terminated) | custom |
+| k8s.container.fs.iops | Gauge |  | Rate of reads and writes on container | custom |
+| k8s.container.fs.throughput | Gauge |  | Rate of bytes read and written on container | custom |
+| k8s.container.network.bytes_received | Gauge |  | Rate of bytes received on container | custom |
+| k8s.container.network.bytes_transmitted | Gauge |  | Rate of bytes transmitted on container | custom |
 | k8s.kube_pod_container_info | Gauge |  | Information about a container in a pod | native |
 | k8s.kube_pod_container_resource_limits | Gauge | cpu=\<cores\><br>memory=\<bytes\> | The number of requested limit resource by a container | native |
 | k8s.kube_pod_container_resource_requests | Gauge | cpu=\<cores\><br>memory=\<bytes\> | The number of requested request resource by a container | native |
