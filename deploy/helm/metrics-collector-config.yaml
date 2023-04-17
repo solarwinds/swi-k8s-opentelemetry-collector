@@ -48,7 +48,7 @@ processors:
   filter/remove_internal_postprocessing:
     metrics:
       datapoint:
-      - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*") == true'
+      - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*") == true'
 
   # removing instance attribute on kube_ metrics as it doesn't represent k8s.node.name
   attributes/remove_instance:
