@@ -2,7 +2,6 @@ import json
 import time
 import requests
 import traceback
-from jsonmerge import merge
 import subprocess
 import re
 
@@ -73,9 +72,25 @@ def retry_until_ok(url, func, print_failure):
 
         raise ValueError("Timed out waiting")
     
-def resource_sorting_key(metric):
-    return "".join([f"{a['key']}={a['value']['stringValue']}" for a in metric["resource"]["attributes"]])
+def get_hash_key_by_attributes(obj):
+    sorted_attributes = sorted(obj["attributes"], key=lambda a: a["key"])
+    return "".join([f"{a['key']}={a['value']['stringValue']}" for a in sorted_attributes])
 
+
+def resource_sorting_key(resource):
+    return get_hash_key_by_attributes(resource["resource"])
+
+def datapoint_sorting_key(datapoint):
+    if "attributes" in datapoint:
+        return get_hash_key_by_attributes(datapoint)
+    elif "asDouble" in datapoint:
+        return datapoint["asDouble"]
+    elif "asInt" in datapoint:
+        return datapoint["asInt"]
+    elif "asString" in datapoint:
+        return datapoint["asString"]
+    else:
+        return datapoint
 
 def remove_time_in_datapoint(datapoint):
     if "timeUnixNano" in datapoint:
@@ -90,18 +105,6 @@ def sort_attributes(element):
             element["attributes"], key=lambda a: a["key"])
 
 def sort_datapoints(metric):
-    def datapoint_sorting_key(datapoint):
-        if "attributes" in datapoint:
-            return "".join([f"{a['key']}={a['value']['stringValue']}" for a in datapoint["attributes"]])
-        elif "asDouble" in datapoint:
-            return datapoint["asDouble"]
-        elif "asInt" in datapoint:
-            return datapoint["asInt"]
-        elif "asString" in datapoint:
-            return datapoint["asString"]
-        else:
-            return datapoint
-
     metric["dataPoints"] = sorted(
         metric["dataPoints"], key=datapoint_sorting_key)
 
@@ -113,11 +116,59 @@ def process_metric_type(metric):
             sort_attributes(dp)
         sort_datapoints(metric)
 
+def merge_datapoints(existing_datapoints, new_datapoints):
+    existing_datapoints_dict = {datapoint_sorting_key(dp): dp for dp in existing_datapoints}
+
+    for new_datapoint in new_datapoints:
+        new_datapoint_hash_key = datapoint_sorting_key(new_datapoint)
+
+        if new_datapoint_hash_key in existing_datapoints_dict:
+            existing_datapoints_dict[new_datapoint_hash_key].update(new_datapoint)
+        else:
+            existing_datapoints.append(new_datapoint)
+
+def merge_metrics(existing_metric, new_metric):
+    metric_types = ["sum", "gauge", "histogram"]
+
+    for metric_type in metric_types:
+        if metric_type in existing_metric and metric_type in new_metric:
+            existing_datapoints = existing_metric[metric_type]["dataPoints"]
+            new_datapoints = new_metric[metric_type]["dataPoints"]
+            merge_datapoints(existing_datapoints, new_datapoints)
+
+def merge_scope_metrics(existing_scope, new_scope):
+    existing_metrics = {metric["name"]: metric for metric in existing_scope["metrics"]}
+    
+    for new_metric in new_scope["metrics"]:
+        if new_metric["name"] in existing_metrics:
+            merge_metrics(existing_metrics[new_metric["name"]], new_metric)
+        else:
+            existing_scope["metrics"].append(new_metric)
+
+def merge_resources(existing_resource, new_resource):
+    existing_scopes = existing_resource["scopeMetrics"]
+    new_scopes = new_resource["scopeMetrics"]
+
+    for new_scope in new_scopes:
+        for existing_scope in existing_scopes:
+            merge_scope_metrics(existing_scope, new_scope)
+            break
+        else:
+            existing_scopes.append(new_scope)
+            
+def custom_json_merge(result, new_json):
+    new_resources = {resource_sorting_key(resource): resource for resource in new_json["resourceMetrics"]}
+    for existing_resource in result["resourceMetrics"]:
+        existing_key = resource_sorting_key(existing_resource)
+        if existing_key in new_resources:
+            merge_resources(existing_resource, new_resources.pop(existing_key))
+
+    result["resourceMetrics"].extend(new_resources.values())
 
 def get_merged_json(content):
-    result = {}
+    result = {"resourceMetrics": []}
     for line in content.splitlines():
-        result = merge(result, json.loads(line))
+        custom_json_merge(result, json.loads(line))
 
     # Sort the result and set timeStamps to 0 to make it easier to compare
     for resource in result["resourceMetrics"]:
