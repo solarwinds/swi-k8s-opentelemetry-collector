@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Added new container metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput`, `k8s.container.network.bytes_received`, `k8s.container.network.bytes_transmitted`
 - Added scraping of `kube_pod_init_container_*` metrics
 
 ### [2.3.0] - 2023-04-13
