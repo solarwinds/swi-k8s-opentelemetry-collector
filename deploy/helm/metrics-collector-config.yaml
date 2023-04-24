@@ -159,6 +159,15 @@ processors:
       - key: sw.k8s.container.init
         action: insert
         value: "false"
+  attributes/remove_temp:
+    include:
+      match_type: regexp
+      metric_names:
+        - .*
+    actions:
+      - key: temp
+        pattern: (.*_temp$)|(^\$.*) # attributes starting with $ are result of `combine` operations
+        action: delete
 
   metricstransform/rename:
     transforms:
@@ -1478,6 +1487,7 @@ service:
         - metricstransform/preprocessing
         - swmetricstransform/postprocessing
         - filter/remove_internal_postprocessing
+        - attributes/remove_temp
         - cumulativetodelta
         - deltatorate
         - experimental_metricsgeneration/cluster

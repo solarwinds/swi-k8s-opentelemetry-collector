@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### [2.4.0-alpha.2] - 2023-04-24
+
 ### Added
 - kube-state-metrics is now bundled with the Helm chart so that its metrics are predictable
 
