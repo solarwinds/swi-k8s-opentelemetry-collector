@@ -814,13 +814,6 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
-      - include: k8s.node.memory.working_set
-        action: insert
-        new_name: k8s.cluster.memory.working_set_temp
-        operations:
-          - action: aggregate_labels
-            label_set: []
-            aggregation_type: sum
       - include: k8s.kubernetes_build_info
         action: insert
         match_type: regexp
@@ -934,29 +927,8 @@ processors:
       - k8s.node.network.packets_transmitted
       - k8s.node.network.receive_packets_dropped
       - k8s.node.network.transmit_packets_dropped
-  metricstransform/aggregate_rate:
-    transforms:
-      - include: k8s.node.cpu.usage.seconds.rate
-        action: insert
-        new_name: k8s.cluster.cpu.usage.seconds.rate_temp
-        operations:
-          - action: aggregate_labels
-            label_set: []
-            aggregation_type: sum
   experimental_metricsgeneration/cluster:
     rules:
-      - name: k8s.cluster.memory.utilization
-        unit: Percent
-        type: calculate
-        metric1: k8s.cluster.memory.working_set_temp
-        metric2: k8s.cluster.memory.allocatable
-        operation: percent
-      - name: k8s.cluster.cpu.utilization
-        unit: Percent
-        type: calculate
-        metric1: k8s.cluster.cpu.usage.seconds.rate_temp
-        metric2: k8s.cluster.cpu.allocatable
-        operation: percent
       - name: k8s.apiserver.request.successrate
         unit: Percent
         type: calculate
@@ -1320,6 +1292,22 @@ receivers:
               - "container_network_transmit_packets_total"
               - "container_network_receive_packets_dropped_total"
               - "container_network_transmit_packets_dropped_total"
+              - "apiserver_request_total"
+              - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
+{{- if .Values.otel.metrics.extra_scrape_metrics }}
+{{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
+{{- end }}
+          static_configs:
+            - targets:
+                - ${PROMETHEUS_URL}
+        - job_name: kube-state-metrics
+          scheme: {{ (index .Values.otel.metrics "kube-state-metrics").scheme | default "http" | quote }}
+          scrape_interval: {{ quote (index .Values.otel.metrics "kube-state-metrics").scrape_interval }}
+          metrics_path: "/metrics"
+          honor_timestamps: true
+          honor_labels: true
+          params:
+            "match[]":
               - "kube_deployment_created"
               - "kube_daemonset_created"
               - "kube_namespace_created"
@@ -1369,7 +1357,6 @@ receivers:
               - "kube_resourcequota"
               - "kube_node_status_allocatable"
               - "kube_node_spec_unschedulable"
-              - "apiserver_request_total"
               - "kube_job_info"
               - "kube_job_owner"
               - "kube_job_created"
@@ -1382,13 +1369,9 @@ receivers:
               - "kube_job_status_completion_time"
               - "kube_job_spec_completions"
               - "kube_job_spec_parallelism"
-              - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
-{{- if .Values.otel.metrics.extra_scrape_metrics }}
-{{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
-{{- end }}
           static_configs:
             - targets:
-                - ${PROMETHEUS_URL}
+                - ${KUBE_STATE_METRICS_URL}
 service:
   extensions:
     - health_check
@@ -1416,7 +1399,6 @@ service:
         - filter/remove_internal_postprocessing
         - cumulativetodelta
         - deltatorate
-        - metricstransform/aggregate_rate
         - experimental_metricsgeneration/cluster
         - experimental_metricsgeneration/pod
         - experimental_metricsgeneration/container

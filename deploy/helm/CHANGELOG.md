@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added new container metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput`, `k8s.container.network.bytes_received`, `k8s.container.network.bytes_transmitted`
 - Added scraping of `kube_pod_init_container_*` metrics
+- kube-state-metrics is now bundled with the Helm chart so that its metrics are predictable
+
+### Changed
+- `k8s.cluster.memory.utilization` and `k8s.cluster.cpu.utilization` are no longer calculated. They are replaced by composite metric calculated by the platform
 
 ### [2.3.0] - 2023-04-13
 
