@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### [2.4.0-alpha.4] - 2023-04-25
+
+### Changed
+- Updated metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput` to be correctly bind by swo processing pipeline
+
+
 ### [2.4.0-alpha.3] - 2023-04-25
 
 ### Changed
