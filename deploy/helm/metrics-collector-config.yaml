@@ -48,7 +48,7 @@ processors:
   filter/remove_internal_postprocessing:
     metrics:
       datapoint:
-      - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*") == true'
+      - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*") == true'
 
   # removing instance attribute on kube_ metrics as it doesn't represent k8s.node.name
   attributes/remove_instance:
@@ -70,6 +70,8 @@ processors:
         - kube_pod_info
         - kube_pod_container_resource_requests
         - kube_pod_container_resource_limits
+        - kube_pod_init_container_resource_requests
+        - kube_pod_init_container_resource_limits
     actions:
       - key: k8s.node.name
         from_attribute: node
@@ -113,6 +115,7 @@ processors:
       match_type: regexp
       metric_names:
         - kube_pod_container_.*
+        - kube_pod_init_container_.*
     actions:
       - key: container
         action: delete
@@ -137,6 +140,33 @@ processors:
       - key: job
         action: delete
       - key: instance
+        action: delete
+  attributes/identify_init_container:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_pod_init_container_.*
+    actions:
+      - key: sw.k8s.container.init
+        action: insert
+        value: "true"
+  attributes/identify_standard_container:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_pod_container_.*
+    actions:
+      - key: sw.k8s.container.init
+        action: insert
+        value: "false"
+  attributes/remove_temp:
+    include:
+      match_type: regexp
+      metric_names:
+        - .*
+    actions:
+      - key: temp
+        pattern: (.*_temp$)|(^\$.*) # attributes starting with $ are result of `combine` operations
         action: delete
 
   metricstransform/rename:
@@ -294,19 +324,140 @@ processors:
             new_label: sw.k8s.namespace.status
 
       # Container metrics
-      - include: k8s.kube_pod_container_resource_requests
-        experimental_match_labels: { "resource": "memory" }
+      - include: k8s.kube_pod_container_resource_limits
+        experimental_match_labels: { "resource": "cpu" }
         action: insert
-        new_name: k8s.container.spec.memory.requests
+        new_name: k8s.container.spec.cpu.limit_temp
+      - include: k8s.kube_pod_init_container_resource_limits
+        experimental_match_labels: { "resource": "cpu" }
+        action: insert
+        new_name: k8s.initcontainer.spec.cpu.limit_temp
+      - include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+        match_type: regexp
+        action: combine
+        new_name: k8s.container.spec.cpu.limit
+
       - include: k8s.kube_pod_container_resource_requests
         experimental_match_labels: { "resource": "cpu" }
         action: insert
+        new_name: k8s.container.spec.cpu.requests_temp
+      - include: k8s.kube_pod_init_container_resource_requests
+        experimental_match_labels: { "resource": "cpu" }
+        action: insert
+        new_name: k8s.initcontainer.spec.cpu.requests_temp
+      - include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
+        match_type: regexp
+        action: combine
         new_name: k8s.container.spec.cpu.requests
+
+      - include: k8s.kube_pod_container_resource_requests
+        experimental_match_labels: { "resource": "memory" }
+        action: insert
+        new_name: k8s.container.spec.memory.requests_temp
+      - include: k8s.kube_pod_init_container_resource_requests
+        experimental_match_labels: { "resource": "memory" }
+        action: insert
+        new_name: k8s.initcontainer.spec.memory.requests_temp
+      - include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
+        match_type: regexp
+        action: combine
+        new_name: k8s.container.spec.memory.requests
+
       - include: k8s.kube_pod_container_resource_limits
         action: insert
         match_type: regexp
         experimental_match_labels: { "resource": "memory" }
         new_name: k8s.container.spec.memory.limit_temp
+      - include: k8s.kube_pod_init_container_resource_limits
+        action: insert
+        match_type: regexp
+        experimental_match_labels: { "resource": "memory" }
+        new_name: k8s.initcontainer.spec.memory.limit_temp
+      - include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+        match_type: regexp
+        action: combine
+        new_name: k8s.container.spec.memory.limit
+
+      - include: k8s.container_fs_reads_total
+        action: insert
+        new_name: k8s.container_fs_reads_total_temp
+      - include: k8s.container_fs_writes_total
+        action: insert
+        new_name: k8s.container_fs_writes_total_temp
+      - include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+        match_type: regexp
+        action: combine
+        submatch_case: lower
+        new_name: k8s.container.fs.iops
+        operations:
+          - action: aggregate_labels
+            label_set:  [container, pod]
+            aggregation_type: sum
+
+      - include: k8s.container_fs_reads_bytes_total
+        action: insert
+        new_name: k8s.container_fs_reads_bytes_total_temp
+      - include: k8s.container_fs_writes_bytes_total
+        action: insert
+        new_name: k8s.container_fs_writes_bytes_total_temp
+      - include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+        match_type: regexp
+        action: combine
+        submatch_case: lower
+        new_name: k8s.container.fs.throughput
+        operations:
+          - action: aggregate_labels
+            label_set:  [container, pod]
+            aggregation_type: sum
+
+      - include: k8s.container_network_receive_bytes_total
+        action: insert        
+        new_name: k8s.container.network.bytes_received
+      - include: k8s.container_network_transmit_bytes_total
+        action: insert        
+        new_name: k8s.container.network.bytes_transmitted
+
+      - include: k8s.kube_pod_container_status_waiting
+        action: insert
+        new_name: k8s.kube_pod_container_status_waiting_only_temp
+      - include: k8s.kube_pod_container_status_running
+        action: insert
+        new_name: k8s.kube_pod_container_status_running_only_temp
+      - include: k8s.kube_pod_container_status_terminated
+        action: insert
+        new_name: k8s.kube_pod_container_status_terminated_only_temp
+      - include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
+        match_type: regexp
+        action: combine
+        new_name: k8s.container.status_temp
+        submatch_case: lower
+        operations:
+          - action: update_label
+            label: status
+            new_label: sw.k8s.container.status
+      - include: k8s.kube_pod_init_container_status_waiting
+        action: insert
+        new_name: k8s.kube_pod_init_container_status_waiting_only_temp
+      - include: k8s.kube_pod_init_container_status_running
+        action: insert
+        new_name: k8s.kube_pod_init_container_status_running_only_temp
+      - include: k8s.kube_pod_init_container_status_terminated
+        action: insert
+        new_name: k8s.kube_pod_init_container_status_terminated_only_temp
+      - include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
+        match_type: regexp
+        action: combine
+        new_name: k8s.initcontainer.status_temp
+        submatch_case: lower
+        operations:
+          - action: update_label
+            label: status
+            new_label: sw.k8s.container.status
+      - include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
+        match_type: regexp
+        action: combine
+        submatch_case: lower
+        new_name: k8s.container.status
 
       # Pod resource metrics
       - include: k8s.kube_pod_container_status_running
@@ -418,24 +569,6 @@ processors:
             label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
         new_name: k8s.pod.network.transmit_packets_dropped
-      - include: k8s.kube_pod_container_status_waiting
-        action: insert
-        new_name: k8s.kube_pod_container_status_waiting_only_temp
-      - include: k8s.kube_pod_container_status_running
-        action: insert
-        new_name: k8s.kube_pod_container_status_running_only_temp
-      - include: k8s.kube_pod_container_status_terminated
-        action: insert
-        new_name: k8s.kube_pod_container_status_terminated_only_temp
-      - include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.status
-        submatch_case: lower
-        operations:
-          - action: update_label
-            label: status
-            new_label: sw.k8s.container.status
       - include: k8s.kube_pod_owner
         experimental_match_labels: { "owner_kind": "DaemonSet", "owner_is_controller": "true" }
         action: insert
@@ -775,13 +908,6 @@ processors:
           - action: aggregate_labels
             label_set: []
             aggregation_type: sum
-      - include: k8s.node.memory.working_set
-        action: insert
-        new_name: k8s.cluster.memory.working_set_temp
-        operations:
-          - action: aggregate_labels
-            label_set: []
-            aggregation_type: sum
       - include: k8s.kubernetes_build_info
         action: insert
         match_type: regexp
@@ -838,7 +964,11 @@ processors:
       metrics:
         - k8s.node.cpu.usage.seconds.rate
         - k8s.pod.cpu.usage.seconds.rate
+        - k8s.container.fs.iops
+        - k8s.container.fs.throughput
         - k8s.container.cpu.usage.seconds.rate
+        - k8s.container.network.bytes_received
+        - k8s.container.network.bytes_transmitted
         - apiserver_request_not_failed_temp
         - apiserver_request_total_temp
         - k8s.pod.fs.iops
@@ -866,7 +996,11 @@ processors:
     metrics:
       - k8s.node.cpu.usage.seconds.rate
       - k8s.pod.cpu.usage.seconds.rate
+      - k8s.container.fs.iops
+      - k8s.container.fs.throughput
       - k8s.container.cpu.usage.seconds.rate
+      - k8s.container.network.bytes_received
+      - k8s.container.network.bytes_transmitted
       - k8s.pod.fs.iops
       - k8s.pod.fs.throughput
       - k8s.pod.fs.reads.rate
@@ -887,29 +1021,8 @@ processors:
       - k8s.node.network.packets_transmitted
       - k8s.node.network.receive_packets_dropped
       - k8s.node.network.transmit_packets_dropped
-  metricstransform/aggregate_rate:
-    transforms:
-      - include: k8s.node.cpu.usage.seconds.rate
-        action: insert
-        new_name: k8s.cluster.cpu.usage.seconds.rate_temp
-        operations:
-          - action: aggregate_labels
-            label_set: []
-            aggregation_type: sum
   experimental_metricsgeneration/cluster:
     rules:
-      - name: k8s.cluster.memory.utilization
-        unit: Percent
-        type: calculate
-        metric1: k8s.cluster.memory.working_set_temp
-        metric2: k8s.cluster.memory.allocatable
-        operation: percent
-      - name: k8s.cluster.cpu.utilization
-        unit: Percent
-        type: calculate
-        metric1: k8s.cluster.cpu.usage.seconds.rate_temp
-        metric2: k8s.cluster.cpu.allocatable
-        operation: percent
       - name: k8s.apiserver.request.successrate
         unit: Percent
         type: calculate
@@ -922,13 +1035,6 @@ processors:
         type: calculate
         metric1: k8s.pod.spec.cpu.quota_temp
         metric2: k8s.pod.spec.cpu.period_temp
-        operation: divide
-  experimental_metricsgeneration/container:
-    rules:
-      - name: k8s.container.spec.cpu.limit
-        type: calculate
-        metric1: k8s.container_spec_cpu_quota
-        metric2: k8s.container_spec_cpu_period
         operation: divide
   groupbyattrs/node:
     keys:
@@ -980,6 +1086,7 @@ processors:
       - sw.k8s.namespace.status
       - sw.k8s.node.status
       - sw.k8s.container.status
+      - sw.k8s.container.init
       - daemonset
       - statefulset
       - deployment
@@ -1273,6 +1380,22 @@ receivers:
               - "container_network_transmit_packets_total"
               - "container_network_receive_packets_dropped_total"
               - "container_network_transmit_packets_dropped_total"
+              - "apiserver_request_total"
+              - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
+{{- if .Values.otel.metrics.extra_scrape_metrics }}
+{{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
+{{- end }}
+          static_configs:
+            - targets:
+                - ${PROMETHEUS_URL}
+        - job_name: kube-state-metrics
+          scheme: {{ (index .Values.otel.metrics "kube-state-metrics").scheme | default "http" | quote }}
+          scrape_interval: {{ quote (index .Values.otel.metrics "kube-state-metrics").scrape_interval }}
+          metrics_path: "/metrics"
+          honor_timestamps: true
+          honor_labels: true
+          params:
+            "match[]":
               - "kube_deployment_created"
               - "kube_daemonset_created"
               - "kube_namespace_created"
@@ -1289,6 +1412,7 @@ receivers:
               - "kube_pod_status_reason"
               - "kube_pod_start_time"
               - '{__name__=~"kube_pod_container_.*"}'
+              - '{__name__=~"kube_pod_init_container_.*"}'
               - "kube_namespace_status_phase"
               - "kube_deployment_labels"
               - "kube_deployment_spec_replicas"
@@ -1321,7 +1445,6 @@ receivers:
               - "kube_resourcequota"
               - "kube_node_status_allocatable"
               - "kube_node_spec_unschedulable"
-              - "apiserver_request_total"
               - "kube_job_info"
               - "kube_job_owner"
               - "kube_job_created"
@@ -1334,13 +1457,9 @@ receivers:
               - "kube_job_status_completion_time"
               - "kube_job_spec_completions"
               - "kube_job_spec_parallelism"
-              - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
-{{- if .Values.otel.metrics.extra_scrape_metrics }}
-{{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
-{{- end }}
           static_configs:
             - targets:
-                - ${PROMETHEUS_URL}
+                - ${KUBE_STATE_METRICS_URL}
 service:
   extensions:
     - health_check
@@ -1361,17 +1480,18 @@ service:
         - attributes/remove_container
         - attributes/remove_service
         - attributes/remove_other
+        - attributes/identify_init_container
+        - attributes/identify_standard_container
         - metricstransform/rename
         - swmetricstransform/preprocessing
         - metricstransform/preprocessing
         - swmetricstransform/postprocessing
         - filter/remove_internal_postprocessing
+        - attributes/remove_temp
         - cumulativetodelta
         - deltatorate
-        - metricstransform/aggregate_rate
         - experimental_metricsgeneration/cluster
         - experimental_metricsgeneration/pod
-        - experimental_metricsgeneration/container
         - groupbyattrs/node
         - metricstransform/aggregate_node_level
         - groupbyattrs/pod

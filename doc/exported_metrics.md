@@ -8,10 +8,8 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | ---    | ---  | ---  | ---         | ---           |
 | k8s.cluster.cpu.allocatable | Gauge | cores | The allocatable of CPU on cluster that are available for scheduling | custom |
 | k8s.cluster.cpu.capacity | Gauge | cores | The cluster CPU capacity | custom |
-| k8s.cluster.cpu.utilization | Gauge | percent | The cluster CPU utilization | custom |
 | k8s.cluster.memory.allocatable | Gauge | bytes | The allocatable of memory on cluster that are available for scheduling | custom |
 | k8s.cluster.memory.capacity | Gauge | bytes | The cluster memory capacity | custom |
-| k8s.cluster.memory.utilization | Gauge | percent | The cluster memory utilization | custom |
 | k8s.cluster.nodes | Gauge |  | The count of nodes on cluster | custom |
 | k8s.cluster.nodes.ready | Gauge |  | The count of nodes with status condition ready | custom |
 | k8s.cluster.nodes.ready.avg | Gauge | percent | The percentage of nodes with status condition ready | custom |
@@ -120,6 +118,10 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.container.cpu.usage.seconds.rate | Gauge | cores | The rate of pod cumulative CPU time consumed | custom |
 | k8s.container.spec.memory.requests | Gauge | bytes | The number of requested memory by a container | custom |
 | k8s.container.status | Gauge |  | Describes the status of the container (waiting/running/terminated) | custom |
+| k8s.container.fs.iops | Gauge |  | Rate of reads and writes on container | custom |
+| k8s.container.fs.throughput | Gauge |  | Rate of bytes read and written on container | custom |
+| k8s.container.network.bytes_received | Gauge |  | Rate of bytes received on container | custom |
+| k8s.container.network.bytes_transmitted | Gauge |  | Rate of bytes transmitted on container | custom |
 | k8s.kube_pod_container_info | Gauge |  | Information about a container in a pod | native |
 | k8s.kube_pod_container_resource_limits | Gauge | cpu=\<cores\><br>memory=\<bytes\> | The number of requested limit resource by a container | native |
 | k8s.kube_pod_container_resource_requests | Gauge | cpu=\<cores\><br>memory=\<bytes\> | The number of requested request resource by a container | native |
@@ -133,6 +135,17 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_pod_container_status_terminated_reason | Gauge |  | Describes the reason the container is currently in terminated state | native |
 | k8s.kube_pod_container_status_waiting | Gauge |  | Describes whether the container is currently in waiting state | native |
 | k8s.kube_pod_container_status_waiting_reason | Gauge |  | Describes the reason the container is currently in waiting state | native |
+| k8s.kube_pod_init_container_info | Gauge |  | Information about an init container in a pod | native |
+| k8s.kube_pod_init_container_status_waiting | Gauge |  | Describes whether the init container is currently in waiting state | native |
+| k8s.kube_pod_init_container_status_waiting_reason | Gauge |  | Describes the reason the init container is currently in waiting state | native |
+| k8s.kube_pod_init_container_status_running | Gauge |  | Describes whether the init container is currently in running state | native |
+| k8s.kube_pod_init_container_status_terminated | Gauge |  | Describes whether the init container is currently in terminated state | native |
+| k8s.kube_pod_init_container_status_terminated_reason | Gauge |  | Describes the reason the init container is currently in terminated state | native |
+| k8s.kube_pod_init_container_status_last_terminated_reason | Gauge |  | Describes the last reason the init container was in terminated state | native |
+| k8s.kube_pod_init_container_status_ready | Gauge |  | Describes whether the init containers readiness check succeeded | native |
+| k8s.kube_pod_init_container_status_restarts_total | Gauge |  | The number of restarts for the init container | native |
+| k8s.kube_pod_init_container_resource_limits | Gauge |  | The number of CPU cores requested limit by an init container | native |
+| k8s.kube_pod_init_container_resource_requests | Gauge |  | The number of CPU cores requested by an init container | native |
 
 ## Deployment metrics
 

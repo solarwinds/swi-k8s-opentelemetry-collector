@@ -42,6 +42,16 @@ otel:
       # How often the metrics are scraped from Prometheus
       scrape_interval: 60s
 
+    kube-state-metrics:
+      # URL of kube-state-metrics where to scrape
+      url: ""
+      
+      # Prometheus URL scheme. It can take the values `http` or `https`
+      scheme: http
+
+      # How often the metrics are scraped from Prometheus
+      scrape_interval: 60s
+
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     filter:
@@ -356,12 +366,18 @@ prometheus:
     enabled: false
   prometheus-pushgateway:
     enabled: false
+  kube-state-metrics:
+    enabled: false
   server:
     # Disabling persistent volume to make the chart compatible with new EKS clusters
     # (this matches the behavior of `kube-prometheus-stack` chart).
     persistentVolume:
       enabled: false
 
+kube-state-metrics:
+  enabled: true
+
+  prometheusScrape: false
 
 swoagent:
   # Whether the SWO Agent should be deployed as part of this chart.

@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### [2.4.0-alpha.3] - 2023-04-25
+
+### Changed
+- Updated metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput` to be correctly bind by swo processing pipeline
+
+
+### [2.4.0-alpha.2] - 2023-04-24
+
+### Added
+- kube-state-metrics is now bundled with the Helm chart so that its metrics are predictable
+
+### Changed
+- `k8s.cluster.memory.utilization` and `k8s.cluster.cpu.utilization` are no longer calculated. They are replaced by composite metric calculated by the platform
+- `k8s.container.spec.cpu.limit`, `k8s.container.spec.cpu.requests`, `k8s.container.spec.memory.requests`, `k8s.container.spec.memory.limit` and `k8s.container.status` now includes datapoints for both init and non-init containers
+
+### [2.4.0-alpha.1] - 2023-04-19
+
+### Added
+- Added new container metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput`, `k8s.container.network.bytes_received`, `k8s.container.network.bytes_transmitted`
+- Added scraping of `kube_pod_init_container_*` metrics
+
+### [2.3.0] - 2023-04-13
+
+### Added
+- Added automatic extraction of Kubernetes labels and annotations from resources (Pods, Namespaces, Deployment, StatefulSet, ReplicaSet, DaemonSet, Job, CronJob, Node) and sent using resource attributes with metrics end events.
+- A new option to deploy `prometheus` as part of the k8s collector chart installation, controlled by setting `prometheus.enabled: true` in `values.yaml`.
+- New StatefulSet with light weight SWO Agent optionally deployed by default
+- Added syslog attributes for log entry so that logs are properly displayed by LogViewer (`syslog.facility`, `syslog.version`, `syslog.procid`, `syslog.msgid`)
+  - Added resource level attributes: `host.hostname` contains name of the pod (represented as System in LogViewer), `service.name` contains name of the container (represented as Program in LogViewer).
+- New metrics are scraped from Prometheus: `k8s.kube_replicaset_spec_replicas`, `k8s.kube_replicaset_status_ready_replicas`, `k8s.kube_replicaset_status_replicas`
+- Added metrics `k8s.cluster.version` which extract version from `kubernetes_build_info`. Metric `kubernetes_build_info` is no longer published
+
+### Fixed
+- Enabled `honor_labels` option to keep scraped labels unchanged
+- Fixed `k8s.job.condition` resource attribute to handle Failed state
+- Fixed calculation of `k8s.pod.spec.memory.limit` on newer container runtime (no longer use `container_spec_memory_limit_bytes`, but `kube_pod_container_resource_limits`)
+- Fix grouping conditions for `container_network_*` and `container_fs_*` metrics to not rely on container attribute
+
 ### [2.3.0-alpha.7] - 2023-04-12
 - Added automatic extraction of Kubernetes labels and annotations from events.
 

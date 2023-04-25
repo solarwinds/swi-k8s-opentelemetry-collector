@@ -12,4 +12,10 @@ data:
 {{- else }}
   PROMETHEUS_URL: {{ quote .Values.otel.metrics.prometheus.url }}
 {{- end }}
+{{- if (index .Values "kube-state-metrics").enabled }}
+  KUBE_STATE_METRICS_URL: "{{ .Release.Name }}-kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080"
+{{- else }}
+  KUBE_STATE_METRICS_URL: {{ quote (index .Values.otel.metrics "kube-state-metrics").url }}
+{{- end }}
+  
 {{- end}}
