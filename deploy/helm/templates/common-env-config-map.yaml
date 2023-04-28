@@ -10,6 +10,7 @@ data:
   CLUSTER_UID: {{ quote .Values.cluster.uid }}
   OTEL_ENVOY_ADDRESS: {{ quote .Values.otel.endpoint }}
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: {{ quote .Values.otel.tls_insecure }}
+  COLLECTOR_ADDRESS: {{ include "common.fullname" . }}-collector:4317
   MANIFEST_VERSION: {{ quote .Chart.Version }}
   APP_VERSION: {{ quote .Chart.AppVersion }}
 {{ if .Values.otel.https_proxy_url }}

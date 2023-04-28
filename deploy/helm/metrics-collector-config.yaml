@@ -1352,6 +1352,10 @@ processors:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
 receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
   k8s_events:
   prometheus:
     config:
@@ -1462,47 +1466,64 @@ receivers:
           static_configs:
             - targets:
                 - ${KUBE_STATE_METRICS_URL}
+connectors:
+  forward/metrics:
+
 service:
   extensions:
     - health_check
     - memory_ballast
   pipelines:
-    metrics:
+    metrics/agents:
       exporters:
-        - otlp
+        - forward/metrics
       processors:
         - memory_limiter
-        - filter/receiver
-        - transform
-        - filter/remove_internal
-        - attributes/remove_instance
-        - attributes/unify_node_attribute
-        - attributes/remove_node
-        - attributes/remove_pod
-        - attributes/remove_container
-        - attributes/remove_service
-        - attributes/remove_other
-        - attributes/identify_init_container
-        - attributes/identify_standard_container
-        - metricstransform/rename
-        - swmetricstransform/preprocessing
-        - metricstransform/preprocessing
-        - swmetricstransform/postprocessing
-        - filter/remove_internal_postprocessing
-        - attributes/remove_temp
-        - cumulativetodelta
-        - deltatorate
-        - experimental_metricsgeneration/cluster
-        - experimental_metricsgeneration/pod
-        - groupbyattrs/node
-        - metricstransform/aggregate_node_level
-        - groupbyattrs/pod
-        - metricstransform/aggregate_pod_level
-        - groupbyattrs/all
-{{- if .Values.otel.metrics.filter }}
-        - filter
-{{- end }}
-        - resource/metrics
+      receivers:
+        - otlp
+#     metrics/prometheus:
+#       exporters:
+#         - forward/metrics
+#       processors:
+#         - memory_limiter
+#         - filter/receiver
+#         - transform
+#         - filter/remove_internal
+#         - attributes/remove_instance
+#         - attributes/unify_node_attribute
+#         - attributes/remove_node
+#         - attributes/remove_pod
+#         - attributes/remove_container
+#         - attributes/remove_service
+#         - attributes/remove_other
+#         - attributes/identify_init_container
+#         - attributes/identify_standard_container
+#         - metricstransform/rename
+#         - swmetricstransform/preprocessing
+#         - metricstransform/preprocessing
+#         - swmetricstransform/postprocessing
+#         - filter/remove_internal_postprocessing
+#         - attributes/remove_temp
+#         - cumulativetodelta
+#         - deltatorate
+#         - experimental_metricsgeneration/cluster
+#         - experimental_metricsgeneration/pod
+#         - groupbyattrs/node
+#         - metricstransform/aggregate_node_level
+#         - groupbyattrs/pod
+#         - metricstransform/aggregate_pod_level
+#         - groupbyattrs/all
+# {{- if .Values.otel.metrics.filter }}
+#         - filter
+# {{- end }}
+#         - resource/metrics
+#       receivers:
+#         - prometheus
+    metrics:
+      receivers: 
+        - forward/metrics
+      processors:
+        - memory_limiter
         - k8sattributes
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
         - resource/k8sattributes_labels_filter
@@ -1511,8 +1532,8 @@ service:
         - resource/k8sattributes_annotations_filter
 {{- end }}
         - batch
-      receivers:
-        - prometheus
+      exporters:
+        - otlp
   telemetry:
 {{- if .Values.otel.metrics.telemetry.logs.enabled }}
     logs:
