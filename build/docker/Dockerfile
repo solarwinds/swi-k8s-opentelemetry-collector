@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.19.8-bullseye@sha256:dd9ad81920b63c7f9f18823d888d5fdcc7e7516086fd16654d07bc437f0e2427 as base
+FROM docker.io/library/golang:1.20.3-bullseye@sha256:595c9af0430dd84bad33020e7e9e328af4bd1a1aabd46a03b5bf6f252cdbecf3 as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
