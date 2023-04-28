@@ -30,7 +30,7 @@ data:
     if [ "$latest_version" != "$current_version" ]; then
         # Upgrade the release with the new version of the chart
         echo "Upgrading $release in namespace $namespace to $swo_k8s_collector $latest_version"
-        helm upgrade $release $swo_k8s_collector --namespace $namespace --repo $swo_repo $devel_flag
+        helm upgrade $release $swo_k8s_collector --namespace $namespace --repo $swo_repo --cleanup-on-fail --atomic $devel_flag
     else
         echo "No upgrade needed for $release in namespace $namespace"
     fi
