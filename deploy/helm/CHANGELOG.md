@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Fixed Autoupdate
+  - Adjusted permissions to be able to update clusterroles for future increments
+  - The update is now atomic, so in case it fails it will rollback (it will not leave Helm release in Failed state).
+
 ### [2.4.0-alpha.4] - 2023-04-25
 
 ### Changed
