@@ -6,7 +6,7 @@ FROM base as builder
 
 COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
 RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.73.0
-RUN CGO_ENABLED=0 /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
+RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
 
 # create vendor folder (for mend scanning)
 SHELL ["/bin/bash", "-c"]
