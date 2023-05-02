@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### [2.4.0-alpha.5] - 2023-05-02
+
+### Added
+- FIPS compliance
+
 ### Fixed
+- Updated docker image to [0.5.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.5.1) which contains security fixes
 - Fixed Autoupdate
   - Adjusted permissions to be able to update clusterroles for future increments
   - The update is now atomic, so in case it fails it will rollback (it will not leave Helm release in Failed state).
