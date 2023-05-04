@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### [2.4.0-alpha.5] - 2023-05-02
+## [2.4.0-alpha.6] - 2023-05-04
+
+### Fixed
+- `k8s.kube_pod_status_phase` should not send values with 0 anymore
+
+## [2.4.0-alpha.5] - 2023-05-02
 
 ### Added
 - FIPS compliance
@@ -18,19 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Adjusted permissions to be able to update clusterroles for future increments
   - The update is now atomic, so in case it fails it will rollback (it will not leave Helm release in Failed state).
 
-### [2.4.0-alpha.4] - 2023-04-25
+## [2.4.0-alpha.4] - 2023-04-25
 
 ### Changed
 - Updated metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput` to be correctly bind by swo processing pipeline
 
 
-### [2.4.0-alpha.3] - 2023-04-25
+## [2.4.0-alpha.3] - 2023-04-25
 
 ### Changed
 - Updated metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput` to be correctly bind by swo processing pipeline
 
 
-### [2.4.0-alpha.2] - 2023-04-24
+## [2.4.0-alpha.2] - 2023-04-24
 
 ### Added
 - kube-state-metrics is now bundled with the Helm chart so that its metrics are predictable
@@ -39,13 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `k8s.cluster.memory.utilization` and `k8s.cluster.cpu.utilization` are no longer calculated. They are replaced by composite metric calculated by the platform
 - `k8s.container.spec.cpu.limit`, `k8s.container.spec.cpu.requests`, `k8s.container.spec.memory.requests`, `k8s.container.spec.memory.limit` and `k8s.container.status` now includes datapoints for both init and non-init containers
 
-### [2.4.0-alpha.1] - 2023-04-19
+## [2.4.0-alpha.1] - 2023-04-19
 
 ### Added
 - Added new container metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput`, `k8s.container.network.bytes_received`, `k8s.container.network.bytes_transmitted`
 - Added scraping of `kube_pod_init_container_*` metrics
 
-### [2.3.0] - 2023-04-13
+## [2.3.0] - 2023-04-13
 
 ### Added
 - Added automatic extraction of Kubernetes labels and annotations from resources (Pods, Namespaces, Deployment, StatefulSet, ReplicaSet, DaemonSet, Job, CronJob, Node) and sent using resource attributes with metrics end events.
@@ -62,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed calculation of `k8s.pod.spec.memory.limit` on newer container runtime (no longer use `container_spec_memory_limit_bytes`, but `kube_pod_container_resource_limits`)
 - Fix grouping conditions for `container_network_*` and `container_fs_*` metrics to not rely on container attribute
 
-### [2.3.0-alpha.7] - 2023-04-12
+## [2.3.0-alpha.7] - 2023-04-12
 - Added automatic extraction of Kubernetes labels and annotations from events.
 
 ## [2.3.0-alpha.6] - 2023-04-06
