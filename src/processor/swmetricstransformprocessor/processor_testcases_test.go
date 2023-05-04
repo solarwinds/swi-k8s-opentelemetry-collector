@@ -742,6 +742,29 @@ var (
 			},
 		},
 		{
+			name: "filter_datapoints_include_flag_datapoints",
+			transforms: []internalTransform{
+				{
+					MetricIncludeFilter: internalFilterStrict{include: "metric"},
+					Action:              Update,
+					Operations: []internalOperation{
+						{
+							configOperation: Operation{
+								Action:               FilterDataPoints,
+								DataPointValue:       1,
+								DataPointValueAction: Include,
+							},
+						},
+					},
+				},
+			},
+			in: []pmetric.Metric{
+				metricBuilder(pmetric.MetricTypeGauge, "metric", "label1", "label2").
+					addFlagDatapoint(1, 2, 1, "label1value2", "label2value").build(),
+			},
+			out: []pmetric.Metric{},
+		},
+		{
 			name: "filter_datapoints_exclude",
 			transforms: []internalTransform{
 				{
@@ -766,6 +789,32 @@ var (
 			out: []pmetric.Metric{
 				metricBuilder(pmetric.MetricTypeGauge, "metric", "label1", "label2").
 					addIntDatapoint(1, 2, 0, "label1value2", "label2value").build(),
+			},
+		},
+		{
+			name: "filter_datapoints_exclude_flag_datapoints",
+			transforms: []internalTransform{
+				{
+					MetricIncludeFilter: internalFilterStrict{include: "metric"},
+					Action:              Update,
+					Operations: []internalOperation{
+						{
+							configOperation: Operation{
+								Action:               FilterDataPoints,
+								DataPointValue:       1,
+								DataPointValueAction: Exclude,
+							},
+						},
+					},
+				},
+			},
+			in: []pmetric.Metric{
+				metricBuilder(pmetric.MetricTypeGauge, "metric", "label1", "label2").
+					addFlagDatapoint(1, 2, 1, "label1value2", "label2value").build(),
+			},
+			out: []pmetric.Metric{
+				metricBuilder(pmetric.MetricTypeGauge, "metric", "label1", "label2").
+					addFlagDatapoint(1, 2, 1, "label1value2", "label2value").build(),
 			},
 		},
 	}

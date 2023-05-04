@@ -39,7 +39,8 @@ func filterDataPoints(metric pmetric.Metric, mtpOp internalOperation) {
 				return !includeDataPoint(dp.DoubleValue(), mtpOp.configOperation.DataPointValue, action)
 			}
 
-			return false
+			// if double or int value is not found, consider value to be zero
+			return !includeDataPoint(0, mtpOp.configOperation.DataPointValue, action)
 		})
 	}
 }
