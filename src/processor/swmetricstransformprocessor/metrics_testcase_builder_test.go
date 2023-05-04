@@ -52,6 +52,12 @@ func metricBuilder(metricType pmetric.MetricType, name string, attrs ...string) 
 	}
 }
 
+func (b builder) addFlagDatapoint(start, ts pcommon.Timestamp, val pmetric.DataPointFlags, attrValues ...string) builder {
+	dp := b.addNumberDatapoint(start, ts, attrValues)
+	dp.SetFlags(val)
+	return b
+}
+
 func (b builder) addIntDatapoint(start, ts pcommon.Timestamp, val int64, attrValues ...string) builder {
 	dp := b.addNumberDatapoint(start, ts, attrValues)
 	dp.SetIntValue(val)
