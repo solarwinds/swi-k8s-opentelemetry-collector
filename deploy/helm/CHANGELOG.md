@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.4.0] - 2023-05-16
+
+### Added
+- Added new container metrics `k8s.container.fs.iops`, `k8s.container.fs.throughput`, `k8s.container.network.bytes_received` and `k8s.container.network.bytes_transmitted`
+- Added scraping of `kube_pod_init_container_*` metrics
+- Merics `k8s.container.spec.cpu.limit`, `k8s.container.spec.cpu.requests`, `k8s.container.spec.memory.requests`, `k8s.container.spec.memory.limit` and `k8s.container.status` now include datapoints for both init and non-init containers
+- `kube-state-metrics` is now bundled with the Helm chart so that its metrics are predictable
+- FIPS compliance
+
+### Changed
+- Upgraded OTEL collector image to [0.5.2](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.5.2) which brings following changes
+  - FIPS support
+  - Updated build dependencies (security fixes)
+
+### Removed
+- Removed metrics `k8s.cluster.memory.utilization` and `k8s.cluster.cpu.utilization` - they are replaced by composite metrics calculated by the SWO platform
+
+### Fixed
+- Fixed Autoupdate
+  - Adjusted permissions to be able to update ClusterRoles for future increments
+  - The update is now atomic, so in case it fails, it will rollback (it will not leave Helm release in Failed state)
+- Metric `k8s.kube_pod_status_phase` should not send values with 0 anymore
+
 ## [2.4.0-alpha.6] - 2023-05-04
 
 ### Fixed
