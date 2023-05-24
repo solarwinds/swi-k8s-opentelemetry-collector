@@ -271,3 +271,71 @@ func nodeInformerWatchFuncWithSelectors(client kubernetes.Interface, ls labels.S
 		return client.CoreV1().Nodes().Watch(context.Background(), opts)
 	}
 }
+
+// Add this new function for Persistent volume
+func newPersistentVolumeSharedInformer(
+	client kubernetes.Interface,
+	namespace string,
+	ls labels.Selector,
+	fs fields.Selector,
+) cache.SharedInformer {
+	informer := cache.NewSharedInformer(
+		&cache.ListWatch{
+			ListFunc:  persistentVolumeInformerListFuncWithSelectors(client, ls, fs),
+			WatchFunc: persistentVolumeInformerWatchFuncWithSelectors(client, ls, fs),
+		},
+		&corev1.PersistentVolume{},
+		watchSyncPeriod,
+	)
+	return informer
+}
+
+func persistentVolumeInformerListFuncWithSelectors(client kubernetes.Interface, ls labels.Selector, fs fields.Selector) cache.ListFunc {
+	return func(opts metav1.ListOptions) (runtime.Object, error) {
+		opts.LabelSelector = ls.String()
+		opts.FieldSelector = fs.String()
+		return client.CoreV1().PersistentVolumes().List(context.Background(), opts)
+	}
+}
+
+func persistentVolumeInformerWatchFuncWithSelectors(client kubernetes.Interface, ls labels.Selector, fs fields.Selector) cache.WatchFunc {
+	return func(opts metav1.ListOptions) (watch.Interface, error) {
+		opts.LabelSelector = ls.String()
+		opts.FieldSelector = fs.String()
+		return client.CoreV1().PersistentVolumes().Watch(context.Background(), opts)
+	}
+}
+
+// Add this new function for Persistent volume
+func newPersistentVolumeClaimSharedInformer(
+	client kubernetes.Interface,
+	namespace string,
+	ls labels.Selector,
+	fs fields.Selector,
+) cache.SharedInformer {
+	informer := cache.NewSharedInformer(
+		&cache.ListWatch{
+			ListFunc:  persistentVolumeClaimInformerListFuncWithSelectors(client, namespace, ls, fs),
+			WatchFunc: persistentVolumeClaimInformerWatchFuncWithSelectors(client, namespace, ls, fs),
+		},
+		&corev1.PersistentVolumeClaim{},
+		watchSyncPeriod,
+	)
+	return informer
+}
+
+func persistentVolumeClaimInformerListFuncWithSelectors(client kubernetes.Interface, namespace string, ls labels.Selector, fs fields.Selector) cache.ListFunc {
+	return func(opts metav1.ListOptions) (runtime.Object, error) {
+		opts.LabelSelector = ls.String()
+		opts.FieldSelector = fs.String()
+		return client.CoreV1().PersistentVolumeClaims(namespace).List(context.Background(), opts)
+	}
+}
+
+func persistentVolumeClaimInformerWatchFuncWithSelectors(client kubernetes.Interface, namespace string, ls labels.Selector, fs fields.Selector) cache.WatchFunc {
+	return func(opts metav1.ListOptions) (watch.Interface, error) {
+		opts.LabelSelector = ls.String()
+		opts.FieldSelector = fs.String()
+		return client.CoreV1().PersistentVolumeClaims(namespace).Watch(context.Background(), opts)
+	}
+}

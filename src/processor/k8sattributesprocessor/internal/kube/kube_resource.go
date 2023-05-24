@@ -36,6 +36,10 @@ const (
 	MetadataFromCronJob = "cronjob"
 	// MetadataFromNode is used to specify to extract metadata/labels/annotations from node
 	MetadataFromNode = "node"
+	// MetadataFromPersistentVolume is used to specify to extract metadata/labels/annotations from persistent volume
+	MetadataFromPersistentVolume = "persistentvolume"
+	// MetadataFromPersistentVolumeClaim is used to specify to extract metadata/labels/annotations from persistent volume claim
+	MetadataFromPersistentVolumeClaim = "persistentvolumeclaim"
 )
 
 // ClientResource is a generic client for Kubernetes resources

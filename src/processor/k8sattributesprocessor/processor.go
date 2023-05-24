@@ -67,13 +67,15 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 			nil,
 			nil,
 			map[string]*kube.ClientResource{
-				kube.MetadataFromDeployment:  kp.getClientResource(kp.resources[kube.MetadataFromDeployment]),
-				kube.MetadataFromStatefulSet: kp.getClientResource(kp.resources[kube.MetadataFromStatefulSet]),
-				kube.MetadataFromReplicaSet:  kp.getClientResource(kp.resources[kube.MetadataFromReplicaSet]),
-				kube.MetadataFromDaemonSet:   kp.getClientResource(kp.resources[kube.MetadataFromDaemonSet]),
-				kube.MetadataFromJob:         kp.getClientResource(kp.resources[kube.MetadataFromJob]),
-				kube.MetadataFromCronJob:     kp.getClientResource(kp.resources[kube.MetadataFromCronJob]),
-				kube.MetadataFromNode:        kp.getClientResource(kp.resources[kube.MetadataFromNode]),
+				kube.MetadataFromDeployment:            kp.getClientResource(kp.resources[kube.MetadataFromDeployment]),
+				kube.MetadataFromStatefulSet:           kp.getClientResource(kp.resources[kube.MetadataFromStatefulSet]),
+				kube.MetadataFromReplicaSet:            kp.getClientResource(kp.resources[kube.MetadataFromReplicaSet]),
+				kube.MetadataFromDaemonSet:             kp.getClientResource(kp.resources[kube.MetadataFromDaemonSet]),
+				kube.MetadataFromJob:                   kp.getClientResource(kp.resources[kube.MetadataFromJob]),
+				kube.MetadataFromCronJob:               kp.getClientResource(kp.resources[kube.MetadataFromCronJob]),
+				kube.MetadataFromNode:                  kp.getClientResource(kp.resources[kube.MetadataFromNode]),
+				kube.MetadataFromPersistentVolume:      kp.getClientResource(kp.resources[kube.MetadataFromPersistentVolume]),
+				kube.MetadataFromPersistentVolumeClaim: kp.getClientResource(kp.resources[kube.MetadataFromPersistentVolumeClaim]),
 			})
 		if err != nil {
 			return err

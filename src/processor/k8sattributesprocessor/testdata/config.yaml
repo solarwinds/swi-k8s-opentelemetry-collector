@@ -196,6 +196,42 @@ k8sattributes/2:
       - sources:
           - from: resource_attribute
             name: k8s.node.name
+  
+  persistentvolume:
+      extract:
+        metadata:
+          - k8s.persistentvolume.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.persistentvolume.annotations.$$1
+            from: persistentvolume
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.persistentvolume.labels.$$1
+            from: persistentvolume
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.persistentvolume.name
+
+  persistentvolumeclaim:
+      extract:
+        metadata:
+          - k8s.persistentvolumeclaim.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.persistentvolumeclaim.annotations.$$1
+            from: persistentvolumeclaim
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.persistentvolumeclaim.labels.$$1
+            from: persistentvolumeclaim
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.persistentvolumeclaim.name
+          - from: resource_attribute
+            name: k8s.namespace.name
 
   exclude:
     pods:
