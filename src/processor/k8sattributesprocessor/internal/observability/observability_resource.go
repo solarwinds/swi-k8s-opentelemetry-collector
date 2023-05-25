@@ -63,6 +63,18 @@ var (
 	mNodesAdded    = stats.Int64("otelsvc/k8s/node_added", "Number of node add events received", "1")
 	mNodesDeleted  = stats.Int64("otelsvc/k8s/node_deleted", "Number of node delete events received", "1")
 	mNodeTableSize = stats.Int64("otelsvc/k8s/node_table_size", "Size of table containing node info", "1")
+
+	// Persistent volume metrics
+	mPersistentVolumesUpdated  = stats.Int64("otelsvc/k8s/persistentvolume_updated", "Number of persistentvolume update events received", "1")
+	mPersistentVolumesAdded    = stats.Int64("otelsvc/k8s/persistentvolume_added", "Number of persistentvolume add events received", "1")
+	mPersistentVolumesDeleted  = stats.Int64("otelsvc/k8s/persistentvolume_deleted", "Number of persistentvolume delete events received", "1")
+	mPersistentVolumeTableSize = stats.Int64("otelsvc/k8s/persistentvolume_table_size", "Size of table containing persistentvolume info", "1")
+
+	// Persistent volume claim metrics
+	mPersistentVolumeClaimsUpdated  = stats.Int64("otelsvc/k8s/persistentvolumeclaim_updated", "Number of persistentvolumeclaim update events received", "1")
+	mPersistentVolumeClaimsAdded    = stats.Int64("otelsvc/k8s/persistentvolumeclaim_added", "Number of persistentvolumeclaim add events received", "1")
+	mPersistentVolumeClaimsDeleted  = stats.Int64("otelsvc/k8s/persistentvolumeclaim_deleted", "Number of persistentvolumeclaim delete events received", "1")
+	mPersistentVolumeClaimTableSize = stats.Int64("otelsvc/k8s/persistentvolumeclaim_table_size", "Size of table containing persistentvolumeclaim info", "1")
 )
 
 // RecordDeploymentUpdated increments the metric that records deployment update events received.
@@ -203,6 +215,46 @@ func RecordNodeDeleted() {
 // RecordNodeTableSize stores the size of the node table field in WatchClient
 func RecordNodeTableSize(nodeTableSize int64) {
 	stats.Record(context.Background(), mNodeTableSize.M(nodeTableSize))
+}
+
+// RecordPersistentVolumeUpdated increments the metric that records persistent volume update events received.
+func RecordPersistentVolumeUpdated() {
+	stats.Record(context.Background(), mPersistentVolumesUpdated.M(int64(1)))
+}
+
+// RecordPersistentVolumeAdded increments the metric that records persistent volume add events received.
+func RecordPersistentVolumeAdded() {
+	stats.Record(context.Background(), mPersistentVolumesAdded.M(int64(1)))
+}
+
+// RecordPersistentVolumeDeleted increments the metric that records persistent volume delete events received.
+func RecordPersistentVolumeDeleted() {
+	stats.Record(context.Background(), mPersistentVolumesDeleted.M(int64(1)))
+}
+
+// RecordPersistentVolumeTableSize stores the size of the persistent volume table field in WatchClient
+func RecordPersistentVolumeTableSize(persistentVolumeTableSize int64) {
+	stats.Record(context.Background(), mPersistentVolumeTableSize.M(persistentVolumeTableSize))
+}
+
+// RecordPersistentVolumeClaimUpdated increments the metric that records persistent volume update events received.
+func RecordPersistentVolumeClaimUpdated() {
+	stats.Record(context.Background(), mPersistentVolumeClaimsUpdated.M(int64(1)))
+}
+
+// RecordPersistentVolumeClaimAdded increments the metric that records persistent volume add events received.
+func RecordPersistentVolumeClaimAdded() {
+	stats.Record(context.Background(), mPersistentVolumeClaimsAdded.M(int64(1)))
+}
+
+// RecordPersistentVolumeClaimDeleted increments the metric that records persistent volume delete events received.
+func RecordPersistentVolumeClaimDeleted() {
+	stats.Record(context.Background(), mPersistentVolumeClaimsDeleted.M(int64(1)))
+}
+
+// RecordPersistentVolumeClaimTableSize stores the size of the persistent volume table field in WatchClient
+func RecordPersistentVolumeClaimTableSize(persistentVolumeClaimTableSize int64) {
+	stats.Record(context.Background(), mPersistentVolumeTableSize.M(persistentVolumeClaimTableSize))
 }
 
 // Create views for each metric
@@ -399,5 +451,61 @@ var viewNodeTableSize = &view.View{
 	Name:        mNodeTableSize.Name(),
 	Description: mNodeTableSize.Description(),
 	Measure:     mNodeTableSize,
+	Aggregation: view.LastValue(),
+}
+
+var viewPersistentVolumesUpdated = &view.View{
+	Name:        mPersistentVolumesUpdated.Name(),
+	Description: mPersistentVolumesUpdated.Description(),
+	Measure:     mPersistentVolumesUpdated,
+	Aggregation: view.Sum(),
+}
+
+var viewPersistentVolumesAdded = &view.View{
+	Name:        mPersistentVolumesAdded.Name(),
+	Description: mPersistentVolumesAdded.Description(),
+	Measure:     mPersistentVolumesAdded,
+	Aggregation: view.Sum(),
+}
+
+var viewPersistentVolumesDeleted = &view.View{
+	Name:        mPersistentVolumesDeleted.Name(),
+	Description: mPersistentVolumesDeleted.Description(),
+	Measure:     mPersistentVolumesDeleted,
+	Aggregation: view.Sum(),
+}
+
+var viewPersistentVolumeTableSize = &view.View{
+	Name:        mPersistentVolumeTableSize.Name(),
+	Description: mPersistentVolumeTableSize.Description(),
+	Measure:     mPersistentVolumeTableSize,
+	Aggregation: view.LastValue(),
+}
+
+var viewPersistentVolumeClaimsUpdated = &view.View{
+	Name:        mPersistentVolumeClaimsUpdated.Name(),
+	Description: mPersistentVolumeClaimsUpdated.Description(),
+	Measure:     mPersistentVolumeClaimsUpdated,
+	Aggregation: view.Sum(),
+}
+
+var viewPersistentVolumeClaimsAdded = &view.View{
+	Name:        mPersistentVolumeClaimsAdded.Name(),
+	Description: mPersistentVolumeClaimsAdded.Description(),
+	Measure:     mPersistentVolumeClaimsAdded,
+	Aggregation: view.Sum(),
+}
+
+var viewPersistentVolumeClaimsDeleted = &view.View{
+	Name:        mPersistentVolumeClaimsDeleted.Name(),
+	Description: mPersistentVolumeClaimsDeleted.Description(),
+	Measure:     mPersistentVolumeClaimsDeleted,
+	Aggregation: view.Sum(),
+}
+
+var viewPersistentVolumeClaimTableSize = &view.View{
+	Name:        mPersistentVolumeClaimTableSize.Name(),
+	Description: mPersistentVolumeClaimTableSize.Description(),
+	Measure:     mPersistentVolumeClaimTableSize,
 	Aggregation: view.LastValue(),
 }

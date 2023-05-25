@@ -223,6 +223,8 @@ func createProcessorOpts(cfg component.Config) []option {
 	opts = append(opts, createJobProcessorOpts(oCfg.Job)...)
 	opts = append(opts, createCronJobProcessorOpts(oCfg.CronJob)...)
 	opts = append(opts, createNodeProcessorOpts(oCfg.Node)...)
+	opts = append(opts, createPersistentVolumeProcessorOpts(oCfg.PersistentVolume)...)
+	opts = append(opts, createPersistentVolumeClaimProcessorOpts(oCfg.PersistentVolumeClaim)...)
 	return opts
 }
 

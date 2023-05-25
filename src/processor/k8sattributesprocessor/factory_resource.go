@@ -127,3 +127,35 @@ func createNodeProcessorOpts(nodeConfig NodeConfig) []option {
 
 	return opts
 }
+
+func createPersistentVolumeProcessorOpts(persistentVolumeConfig PersistentVolumeConfig) []option {
+	var opts []option
+
+	opts = append(opts, withResource(kube.MetadataFromPersistentVolume))
+	opts = append(opts, withExtractMetadataPersistentVolumes(persistentVolumeConfig.Extract.Metadata...))
+	opts = append(opts, withExtractLabelsGeneric(kube.MetadataFromPersistentVolume, persistentVolumeConfig.Extract.Labels...))
+	opts = append(opts, withExtractAnnotationsGeneric(kube.MetadataFromPersistentVolume, persistentVolumeConfig.Extract.Annotations...))
+	opts = append(opts, withFilterNamespaceGeneric(kube.MetadataFromPersistentVolume, persistentVolumeConfig.Filter.Namespace))
+	opts = append(opts, withFilterLabelsGeneric(kube.MetadataFromPersistentVolume, persistentVolumeConfig.Filter.Labels...))
+	opts = append(opts, withFilterFieldsGeneric(kube.MetadataFromPersistentVolume, persistentVolumeConfig.Filter.Fields...))
+	opts = append(opts, withExtractAssociationsGeneric(kube.MetadataFromPersistentVolume, persistentVolumeConfig.Association...))
+	opts = append(opts, withExcludesResource(kube.MetadataFromPersistentVolume, persistentVolumeConfig.Exclude.PVs))
+
+	return opts
+}
+
+func createPersistentVolumeClaimProcessorOpts(persistentVolumeClaimConfig PersistentVolumeClaimConfig) []option {
+	var opts []option
+
+	opts = append(opts, withResource(kube.MetadataFromPersistentVolumeClaim))
+	opts = append(opts, withExtractMetadataPersistentVolumeClaims(persistentVolumeClaimConfig.Extract.Metadata...))
+	opts = append(opts, withExtractLabelsGeneric(kube.MetadataFromPersistentVolumeClaim, persistentVolumeClaimConfig.Extract.Labels...))
+	opts = append(opts, withExtractAnnotationsGeneric(kube.MetadataFromPersistentVolumeClaim, persistentVolumeClaimConfig.Extract.Annotations...))
+	opts = append(opts, withFilterNamespaceGeneric(kube.MetadataFromPersistentVolumeClaim, persistentVolumeClaimConfig.Filter.Namespace))
+	opts = append(opts, withFilterLabelsGeneric(kube.MetadataFromPersistentVolumeClaim, persistentVolumeClaimConfig.Filter.Labels...))
+	opts = append(opts, withFilterFieldsGeneric(kube.MetadataFromPersistentVolumeClaim, persistentVolumeClaimConfig.Filter.Fields...))
+	opts = append(opts, withExtractAssociationsGeneric(kube.MetadataFromPersistentVolumeClaim, persistentVolumeClaimConfig.Association...))
+	opts = append(opts, withExcludesResource(kube.MetadataFromPersistentVolumeClaim, persistentVolumeClaimConfig.Exclude.PVCs))
+
+	return opts
+}

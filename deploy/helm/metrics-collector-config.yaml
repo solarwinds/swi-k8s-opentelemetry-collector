@@ -83,6 +83,24 @@ processors:
         from_attribute: instance
         action: insert
 
+  attributes/unify_volume_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_persistentvolumeclaim_.*
+        - kube_persistentvolume_claim_ref
+    actions:
+      - key: persistentvolume
+        from_attribute: volumename
+        action: insert
+      # for kube_persistentvolume_claim_ref
+      - key: persistentvolumeclaim
+        from_attribute: name
+        action: insert
+      - key: namespace
+        from_attribute: claim_namespace
+        action: upsert
+
   # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
   #   where kube-state-metric is deployed on
   attributes/remove_node:
@@ -260,6 +278,26 @@ processors:
           - action: filter_datapoints
             datapoint_value: 0
             datapoint_value_action: exclude
+      - include: k8s.kube_persistentvolume_status_phase
+        action: insert
+        new_name: k8s.persistentvolume.status.phase
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 1
+            datapoint_value_action: include
+          - action: update_label
+            label: phase
+            new_label: sw.k8s.persistentvolume.status
+      - include: k8s.kube_persistentvolumeclaim_status_phase
+        action: insert
+        new_name: k8s.persistentvolumeclaim.status.phase
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 1
+            datapoint_value_action: include
+          - action: update_label
+            label: phase
+            new_label: sw.k8s.persistentvolumeclaim.status
       - include: k8s.kube_node_created
         action: update
         operations:
@@ -1098,6 +1136,11 @@ processors:
       - git_version
       - internal_ip
       - job_condition
+      - persistentvolumeclaim
+      - persistentvolume
+      - sw.k8s.persistentvolumeclaim.status
+      - sw.k8s.persistentvolume.status
+      - storageclass
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1325,6 +1368,20 @@ processors:
       - key: cronjob
         action: delete
 
+      # PersistentVolume
+      - key: k8s.persistentvolume.name
+        from_attribute: persistentvolume
+        action: insert
+      - key: persistentvolume
+        action: delete
+
+      # PersistentVolumeClaim
+      - key: k8s.persistentvolumeclaim.name
+        from_attribute: persistentvolumeclaim
+        action: insert
+      - key: persistentvolumeclaim
+        action: delete
+
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -1417,6 +1474,16 @@ processors:
           - "^kube_job_status_completion_time$"
           - "^kube_job_spec_completions$"
           - "^kube_job_spec_parallelism$"
+          - "^kube_persistentvolume_capacity_bytes$"
+          - "^kube_persistentvolume_info$"
+          - "^kube_persistentvolume_status_phase$"
+          - "^kube_persistentvolume_claim_ref$"
+          - "^kube_persistentvolume_created$"
+          - "^kube_persistentvolumeclaim_info$"
+          - "^kube_persistentvolumeclaim_access_mode$"
+          - "^kube_persistentvolumeclaim_status_phase$"
+          - "^kube_persistentvolumeclaim_resource_requests_storage_bytes$"
+          - "^kube_persistentvolumeclaim_created$"
 
 connectors:
   forward/prometheus:
@@ -1453,6 +1520,7 @@ receivers:
               - "container_network_receive_packets_dropped_total"
               - "container_network_transmit_packets_dropped_total"
               - "apiserver_request_total"
+              - "kubelet_volume_stats_available_percent"
               - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
 {{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
@@ -1502,6 +1570,7 @@ service:
         - filter/remove_internal
         - attributes/remove_instance
         - attributes/unify_node_attribute
+        - attributes/unify_volume_attribute
         - attributes/remove_node
         - attributes/remove_pod
         - attributes/remove_container

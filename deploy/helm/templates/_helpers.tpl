@@ -89,7 +89,7 @@ attributes["k8s.event.reason"] == "ProbeWarning"
 or attributes["k8s.event.reason"] == "Unhealthy" 
 {{- end -}}
 
-{{- define "common.k8s-instrumentation.resource" -}}
+{{- define "common.k8s-instrumentation.resource.namespaced" -}}
 {{ index . 1 }}:
   extract:
 {{- if index . 2 }}
@@ -110,6 +110,27 @@ or attributes["k8s.event.reason"] == "Unhealthy"
         name: k8s.{{ index . 1 }}.name
       - from: resource_attribute
         name: k8s.namespace.name
+{{- end -}}
+
+{{- define "common.k8s-instrumentation.resource" -}}
+{{ index . 1 }}:
+  extract:
+{{- if index . 2 }}
+    annotations:
+      - key_regex: (.*)
+        tag_name: k8s.{{ index . 1 }}.annotations.$$1
+        from: {{ index . 1 }}
+{{- end }}
+{{- if index . 3 }}
+    labels:
+      - key_regex: (.*)
+        tag_name: k8s.{{ index . 1 }}.labels.$$1
+        from: {{ index . 1 }}
+{{- end }}
+  association:
+  - sources:
+      - from: resource_attribute
+        name: k8s.{{ index . 1 }}.name
 {{- end -}}
 
 {{- define "common.k8s-instrumentation" -}}
@@ -147,28 +168,13 @@ pod_association:
         name: k8s.pod.name
       - from: resource_attribute
         name: k8s.namespace.name
-{{ include "common.k8s-instrumentation.resource" (tuple . "deployment" (index . 1) (index . 2)) }}
-{{ include "common.k8s-instrumentation.resource" (tuple . "statefulset" (index . 1) (index . 2)) }}
-{{ include "common.k8s-instrumentation.resource" (tuple . "replicaset" (index . 1) (index . 2)) }}
-{{ include "common.k8s-instrumentation.resource" (tuple . "daemonset" (index . 1) (index . 2)) }}
-{{ include "common.k8s-instrumentation.resource" (tuple . "job" (index . 1) (index . 2)) }}
-{{ include "common.k8s-instrumentation.resource" (tuple . "cronjob" (index . 1) (index . 2)) }}
-node:
-  extract:
-{{- if index . 1 }}
-    annotations:
-      - key_regex: (.*)
-        tag_name: k8s.node.annotations.$$1
-        from: node
-{{- end }}
-{{- if index . 2 }}
-    labels:
-      - key_regex: (.*)
-        tag_name: k8s.node.labels.$$1
-        from: node
-{{- end }}
-  association:
-  - sources:
-      - from: resource_attribute
-        name: k8s.node.name
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "deployment" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "statefulset" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "replicaset" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "daemonset" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "job" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "cronjob" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource" (tuple . "persistentvolume" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "persistentvolumeclaim" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource" (tuple . "node" (index . 1) (index . 2)) }}
 {{- end -}}

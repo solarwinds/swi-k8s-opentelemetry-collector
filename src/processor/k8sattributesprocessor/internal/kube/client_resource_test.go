@@ -1024,6 +1024,264 @@ func TestNodeExtractionRules(t *testing.T) {
 	}
 }
 
+// Persistent volume tests
+func TestPersistentVolumeAdd(t *testing.T) {
+	c, _ := newTestClient(t)
+	persistentVolume := &corev1.PersistentVolume{}
+	resourceAddAndUpdateTest(t, MetadataFromPersistentVolume, persistentVolume, c.PersistentVolumeClient, c.PersistentVolumeClient.handleResourceAdd)
+}
+
+// TestPersistentVolumeCreate tests that a new PersistentVolume
+func TestPersistentVolumeCreate(t *testing.T) {
+	c, _ := newTestClient(t)
+	assert.Equal(t, 0, len(c.PersistentVolumeClient.Resources))
+
+	// PersistentVolume is created in Pending phase. At this point it has a UID but no start time
+	persistentVolume := &corev1.PersistentVolume{}
+	persistentVolume.Name = "persistentVolume1"
+	persistentVolume.UID = "11111111-2222-3333-4444-555555555555"
+	c.PersistentVolumeClient.handleResourceAdd(persistentVolume)
+	assert.Equal(t, 1, len(c.PersistentVolumeClient.Resources))
+	got := c.PersistentVolumeClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolume.uid", "11111111-2222-3333-4444-555555555555")]
+	assert.Equal(t, "persistentVolume1", got.GetName())
+	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
+
+	startTime := meta_v1.NewTime(time.Now())
+	persistentVolume.CreationTimestamp = startTime
+	c.PersistentVolumeClient.handleResourceUpdate(&corev1.PersistentVolume{}, persistentVolume)
+	assert.Equal(t, 1, len(c.PersistentVolumeClient.Resources))
+	got = c.PersistentVolumeClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolume.uid", "11111111-2222-3333-4444-555555555555")]
+	assert.Equal(t, "persistentVolume1", got.GetName())
+	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
+}
+
+func TestPersistentVolumeUpdate(t *testing.T) {
+	c, _ := newTestClient(t)
+	persistentVolume := &corev1.PersistentVolume{}
+	resourceAddAndUpdateTest(t, MetadataFromPersistentVolume, persistentVolume, c.PersistentVolumeClient, func(obj interface{}) {
+		c.PersistentVolumeClient.handleResourceUpdate(&corev1.PersistentVolume{}, obj)
+	})
+}
+
+func TestPersistentVolumeExtractionRules(t *testing.T) {
+	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+
+	persistentVolume := &corev1.PersistentVolume{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "persistentVolume1",
+			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+			CreationTimestamp: meta_v1.Now(),
+			Labels: map[string]string{
+				"label1": "lv1",
+			},
+			Annotations: map[string]string{
+				"annotation1": "av1",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name       string
+		rules      ExtractionRulesResource
+		attributes map[string]string
+	}{{
+		name:       "no-rules",
+		rules:      ExtractionRulesResource{},
+		attributes: nil,
+	}, {
+		name: "labels",
+		rules: ExtractionRulesResource{
+			Labels: []FieldExtractionRule{{
+				Name: "l1",
+				Key:  "label1",
+				From: MetadataFromPersistentVolume,
+			},
+			},
+			Annotations: []FieldExtractionRule{{
+				Name: "a1",
+				Key:  "annotation1",
+				From: MetadataFromPersistentVolume,
+			},
+			},
+		},
+		attributes: map[string]string{
+			"l1": "lv1",
+			"a1": "av1",
+		},
+	},
+		{
+			name: "all-labels",
+			rules: ExtractionRulesResource{
+				Labels: []FieldExtractionRule{{
+					KeyRegex: regexp.MustCompile("^(?:la.*)$"),
+					From:     MetadataFromPersistentVolume,
+				},
+				},
+			},
+			attributes: map[string]string{
+				"k8s.persistentvolume.labels.label1": "lv1",
+			},
+		},
+		{
+			name: "all-annotations",
+			rules: ExtractionRulesResource{
+				Annotations: []FieldExtractionRule{{
+					KeyRegex: regexp.MustCompile("^(?:an.*)$"),
+					From:     MetadataFromPersistentVolume,
+				},
+				},
+			},
+			attributes: map[string]string{
+				"k8s.persistentvolume.annotations.annotation1": "av1",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c.PersistentVolumeClient.Rules = tc.rules
+			c.PersistentVolumeClient.handleResourceAdd(persistentVolume)
+			p, ok := c.GetResource(MetadataFromPersistentVolume, newResourceIdentifier("resource_attribute", "k8s.persistentvolume.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+			require.True(t, ok)
+
+			assert.Equal(t, len(tc.attributes), len(p.GetAttributes()))
+			for k, v := range tc.attributes {
+				got, ok := p.GetAttributes()[k]
+				assert.True(t, ok)
+				assert.Equal(t, v, got)
+			}
+		})
+	}
+}
+
+// Persistent volume claim tests
+func TestPersistentVolumeClaimAdd(t *testing.T) {
+	c, _ := newTestClient(t)
+	persistentVolumeClaim := &corev1.PersistentVolumeClaim{}
+	resourceAddAndUpdateTest(t, MetadataFromPersistentVolumeClaim, persistentVolumeClaim, c.PersistentVolumeClaimClient, c.PersistentVolumeClaimClient.handleResourceAdd)
+}
+
+// TestPersistentVolumeClaimCreate tests that a new PersistentVolumeClaim
+func TestPersistentVolumeClaimCreate(t *testing.T) {
+	c, _ := newTestClient(t)
+	assert.Equal(t, 0, len(c.PersistentVolumeClaimClient.Resources))
+
+	// PersistentVolumeClaim is created in Pending phase. At this point it has a UID but no start time
+	persistentVolumeClaim := &corev1.PersistentVolumeClaim{}
+	persistentVolumeClaim.Name = "persistentVolumeClaim1"
+	persistentVolumeClaim.UID = "11111111-2222-3333-4444-555555555555"
+	c.PersistentVolumeClaimClient.handleResourceAdd(persistentVolumeClaim)
+	assert.Equal(t, 1, len(c.PersistentVolumeClaimClient.Resources))
+	got := c.PersistentVolumeClaimClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolumeclaim.uid", "11111111-2222-3333-4444-555555555555")]
+	assert.Equal(t, "persistentVolumeClaim1", got.GetName())
+	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
+
+	startTime := meta_v1.NewTime(time.Now())
+	persistentVolumeClaim.CreationTimestamp = startTime
+	c.PersistentVolumeClaimClient.handleResourceUpdate(&corev1.PersistentVolumeClaim{}, persistentVolumeClaim)
+	assert.Equal(t, 1, len(c.PersistentVolumeClaimClient.Resources))
+	got = c.PersistentVolumeClaimClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolumeclaim.uid", "11111111-2222-3333-4444-555555555555")]
+	assert.Equal(t, "persistentVolumeClaim1", got.GetName())
+	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
+}
+
+func TestPersistentVolumeClaimUpdate(t *testing.T) {
+	c, _ := newTestClient(t)
+	persistentVolumeClaim := &corev1.PersistentVolumeClaim{}
+	resourceAddAndUpdateTest(t, MetadataFromPersistentVolumeClaim, persistentVolumeClaim, c.PersistentVolumeClaimClient, func(obj interface{}) {
+		c.PersistentVolumeClaimClient.handleResourceUpdate(&corev1.PersistentVolumeClaim{}, obj)
+	})
+}
+
+func TestPersistentVolumeClaimExtractionRules(t *testing.T) {
+	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+
+	persistentVolumeClaim := &corev1.PersistentVolumeClaim{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "persistentVolumeClaim1",
+			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+			CreationTimestamp: meta_v1.Now(),
+			Labels: map[string]string{
+				"label1": "lv1",
+			},
+			Annotations: map[string]string{
+				"annotation1": "av1",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name       string
+		rules      ExtractionRulesResource
+		attributes map[string]string
+	}{{
+		name:       "no-rules",
+		rules:      ExtractionRulesResource{},
+		attributes: nil,
+	}, {
+		name: "labels",
+		rules: ExtractionRulesResource{
+			Labels: []FieldExtractionRule{{
+				Name: "l1",
+				Key:  "label1",
+				From: MetadataFromPersistentVolumeClaim,
+			},
+			},
+			Annotations: []FieldExtractionRule{{
+				Name: "a1",
+				Key:  "annotation1",
+				From: MetadataFromPersistentVolumeClaim,
+			},
+			},
+		},
+		attributes: map[string]string{
+			"l1": "lv1",
+			"a1": "av1",
+		},
+	},
+		{
+			name: "all-labels",
+			rules: ExtractionRulesResource{
+				Labels: []FieldExtractionRule{{
+					KeyRegex: regexp.MustCompile("^(?:la.*)$"),
+					From:     MetadataFromPersistentVolumeClaim,
+				},
+				},
+			},
+			attributes: map[string]string{
+				"k8s.persistentvolumeclaim.labels.label1": "lv1",
+			},
+		},
+		{
+			name: "all-annotations",
+			rules: ExtractionRulesResource{
+				Annotations: []FieldExtractionRule{{
+					KeyRegex: regexp.MustCompile("^(?:an.*)$"),
+					From:     MetadataFromPersistentVolumeClaim,
+				},
+				},
+			},
+			attributes: map[string]string{
+				"k8s.persistentvolumeclaim.annotations.annotation1": "av1",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c.PersistentVolumeClaimClient.Rules = tc.rules
+			c.PersistentVolumeClaimClient.handleResourceAdd(persistentVolumeClaim)
+			p, ok := c.GetResource(MetadataFromPersistentVolumeClaim, newResourceIdentifier("resource_attribute", "k8s.persistentvolumeclaim.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+			require.True(t, ok)
+
+			assert.Equal(t, len(tc.attributes), len(p.GetAttributes()))
+			for k, v := range tc.attributes {
+				got, ok := p.GetAttributes()[k]
+				assert.True(t, ok)
+				assert.Equal(t, v, got)
+			}
+		})
+	}
+}
+
 func TestResourceDeleteLoop(t *testing.T) {
 	c, _ := newTestClient(t)
 

@@ -157,6 +157,44 @@ func withExtractMetadataNode(fields ...string) option {
 	}
 }
 
+// withExtractMetadataPersistentVolumes allows specifying options to control extraction of persistent volume metadata.
+// If no fields explicitly provided, all metadata extracted by default.
+func withExtractMetadataPersistentVolumes(fields ...string) option {
+	return func(p *kubernetesprocessor) error {
+		if len(fields) == 0 {
+			fields = []string{}
+		}
+		for _, field := range fields {
+			switch field {
+			case "k8s.persistentvolume.uid":
+				p.resources[kube.MetadataFromPersistentVolume].rules.UID = true
+			default:
+				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
+			}
+		}
+		return nil
+	}
+}
+
+// withExtractMetadataPersistentVolumeClaims allows specifying options to control extraction of persistent volume claim metadata.
+// If no fields explicitly provided, all metadata extracted by default.
+func withExtractMetadataPersistentVolumeClaims(fields ...string) option {
+	return func(p *kubernetesprocessor) error {
+		if len(fields) == 0 {
+			fields = []string{}
+		}
+		for _, field := range fields {
+			switch field {
+			case "k8s.persistentvolumeclaim.uid":
+				p.resources[kube.MetadataFromPersistentVolumeClaim].rules.UID = true
+			default:
+				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
+			}
+		}
+		return nil
+	}
+}
+
 // withExtractResourceAssociations allows specifying options to associate pod metadata with incoming resource
 func withExtractResourceAssociations(resourceType string, resourceAssociations ...AssociationConfig) option {
 	return func(p *kubernetesprocessor) error {

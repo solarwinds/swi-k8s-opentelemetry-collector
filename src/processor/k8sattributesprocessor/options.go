@@ -188,8 +188,12 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 			a.From = kube.MetadataFromCronJob
 		case kube.MetadataFromNode:
 			a.From = kube.MetadataFromNode
+		case kube.MetadataFromPersistentVolume:
+			a.From = kube.MetadataFromPersistentVolume
+		case kube.MetadataFromPersistentVolumeClaim:
+			a.From = kube.MetadataFromPersistentVolumeClaim
 		default:
-			return rules, fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, deployment, statefulset, replicaset, daemonset, job, cronjob, node, namespace", a.From)
+			return rules, fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, deployment, statefulset, replicaset, daemonset, job, cronjob, node, namespace, persistentvolume, persistentvolumeclaim", a.From)
 		}
 
 		if name == "" && a.Key != "" {
@@ -212,6 +216,10 @@ func extractFieldRules(fieldType string, fields ...FieldExtractConfig) ([]kube.F
 				name = fmt.Sprintf("k8s.cronjob.%s.%s", fieldType, a.Key)
 			} else if a.From == kube.MetadataFromNode {
 				name = fmt.Sprintf("k8s.node.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromPersistentVolume {
+				name = fmt.Sprintf("k8s.persistentvolume.%s.%s", fieldType, a.Key)
+			} else if a.From == kube.MetadataFromPersistentVolumeClaim {
+				name = fmt.Sprintf("k8s.persistentvolumeclaim.%s.%s", fieldType, a.Key)
 			}
 		}
 

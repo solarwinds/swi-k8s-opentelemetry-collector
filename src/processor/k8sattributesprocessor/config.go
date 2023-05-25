@@ -70,6 +70,12 @@ type Config struct {
 
 	// Section allows to define rules for extracting annotations and labels from Node
 	Node NodeConfig `mapstructure:"node"`
+
+	// Section allows to define rules for extracting annotations and labels from Persistent Volumes
+	PersistentVolume PersistentVolumeConfig `mapstructure:"persistentvolume"`
+
+	// Section allows to define rules for extracting annotations and labels from Persistent Volume Claims
+	PersistentVolumeClaim PersistentVolumeClaimConfig `mapstructure:"persistentvolumeclaim"`
 }
 
 func (cfg *Config) Validate() error {
@@ -108,6 +114,14 @@ func (cfg *Config) Validate() error {
 	}
 
 	if err := cfg.Node.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.PersistentVolume.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.PersistentVolumeClaim.Validate(); err != nil {
 		return err
 	}
 
@@ -209,6 +223,30 @@ type NodeConfig struct {
 }
 
 func (cfg *NodeConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+// PersistentVolumeConfig defines configuration for Persistent Volume.
+type PersistentVolumeConfig struct {
+	Extract     ExtractConfig                 `mapstructure:"extract"`
+	Filter      FilterConfig                  `mapstructure:"filter"`
+	Exclude     ExcludePersistentVolumeConfig `mapstructure:"exclude"`
+	Association []AssociationConfig           `mapstructure:"association"`
+}
+
+func (cfg *PersistentVolumeConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+// PersistentVolumeClaimConfig defines configuration for Persistent Volume Claim.
+type PersistentVolumeClaimConfig struct {
+	Extract     ExtractConfig                      `mapstructure:"extract"`
+	Filter      FilterConfig                       `mapstructure:"filter"`
+	Exclude     ExcludePersistentVolumeClaimConfig `mapstructure:"exclude"`
+	Association []AssociationConfig                `mapstructure:"association"`
+}
+
+func (cfg *PersistentVolumeClaimConfig) Validate() error {
 	return validateAssociation(cfg.Association)
 }
 
@@ -456,6 +494,14 @@ type ExcludeCronJobConfig struct {
 // ExcludeNodeConfig represent a list of Node to exclude
 type ExcludeNodeConfig struct {
 	Nodes []ExcludePodConfig `mapstructure:"nodes"`
+}
+
+type ExcludePersistentVolumeConfig struct {
+	PVs []ExcludePodConfig `mapstructure:"pvs"`
+}
+
+type ExcludePersistentVolumeClaimConfig struct {
+	PVCs []ExcludePodConfig `mapstructure:"pvcs"`
 }
 
 // ExcludePodConfig represent a Pod name to ignore

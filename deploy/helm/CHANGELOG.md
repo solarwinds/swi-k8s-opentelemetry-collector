@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.5.0-alpha.1] - 2023-05-25
+### Added
+- Added PV and PVC metrics
+
+### Changed
+- Updating docker image to `0.7.0` (which is capable of instrumenting PV and PVC with labels/annotations)
+
 ## [2.4.1] - 2023-05-25
 
 ### Changed

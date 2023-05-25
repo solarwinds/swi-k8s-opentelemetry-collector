@@ -1385,13 +1385,15 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 		NewFakeInformer,
 		NewFakeNamespaceInformer,
 		map[string]*ClientResource{
-			MetadataFromDeployment:  newClientResource("k8s.deployment.uid"),
-			MetadataFromStatefulSet: newClientResource("k8s.statefulset.uid"),
-			MetadataFromReplicaSet:  newClientResource("k8s.replicaset.uid"),
-			MetadataFromDaemonSet:   newClientResource("k8s.daemonset.uid"),
-			MetadataFromJob:         newClientResource("k8s.job.uid"),
-			MetadataFromCronJob:     newClientResource("k8s.cronjob.uid"),
-			MetadataFromNode:        newClientResource("k8s.node.uid"),
+			MetadataFromDeployment:            newClientResource("k8s.deployment.uid"),
+			MetadataFromStatefulSet:           newClientResource("k8s.statefulset.uid"),
+			MetadataFromReplicaSet:            newClientResource("k8s.replicaset.uid"),
+			MetadataFromDaemonSet:             newClientResource("k8s.daemonset.uid"),
+			MetadataFromJob:                   newClientResource("k8s.job.uid"),
+			MetadataFromCronJob:               newClientResource("k8s.cronjob.uid"),
+			MetadataFromNode:                  newClientResource("k8s.node.uid"),
+			MetadataFromPersistentVolume:      newClientResource("k8s.persistentvolume.uid"),
+			MetadataFromPersistentVolumeClaim: newClientResource("k8s.persistentvolumeclaim.uid"),
 		})
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
