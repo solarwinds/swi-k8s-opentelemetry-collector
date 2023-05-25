@@ -1098,6 +1098,8 @@ processors:
       - git_version
       - internal_ip
       - job_condition
+      - persistentvolumeclaim
+      - persistentvolume
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1325,6 +1327,20 @@ processors:
       - key: cronjob
         action: delete
 
+      # PersistentVolume
+      - key: k8s.persistentvolume.name
+        from_attribute: persistentvolume
+        action: insert
+      - key: persistentvolume
+        action: delete
+
+      # PersistentVolumeClaim
+      - key: k8s.persistentvolumeclaim.name
+        from_attribute: persistentvolumeclaim
+        action: insert
+      - key: persistentvolumeclaim
+        action: delete
+
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -1417,6 +1433,8 @@ processors:
           - "^kube_job_status_completion_time$"
           - "^kube_job_spec_completions$"
           - "^kube_job_spec_parallelism$"
+          - "^kube_persistentvolume_info$"
+          - "^kube_persistentvolumeclaim_info$"
 
 connectors:
   forward/prometheus:

@@ -152,3 +152,48 @@ spec:
             image: busybox
             command: ["sh", "-c", "sleep 10"]
           restartPolicy: Never
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: test-pv
+  labels:
+    type: local
+    example.com/label: "example-label"
+  annotations:
+    example.com/annotation: "example-annotation"
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: test-storage-class
+  hostPath:
+    path: "/tmp/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc
+  namespace: test-namespace
+  labels:
+    example.com/label: "example-label"
+  annotations:
+    example.com/annotation: "example-annotation"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: test-storage-class
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: test-storage-class
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+
