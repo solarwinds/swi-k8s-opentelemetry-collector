@@ -1351,9 +1351,79 @@ processors:
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
+  filter/kube-state-metrics:
+    metrics:
+      include:
+        match_type: regexp
+        metric_names:
+          - "^kube_deployment_created$"
+          - "^kube_daemonset_created$"
+          - "^kube_namespace_created$"
+          - "^kube_node_info$"
+          - "^kube_node_created$"
+          - "^kube_node_status_capacity$"
+          - "^kube_node_status_condition$"
+          - "^kube_pod_created$"
+          - "^kube_pod_info$"
+          - "^kube_pod_owner$"
+          - "^kube_pod_completion_time$"
+          - "^kube_pod_status_phase$"
+          - "^kube_pod_status_ready$"
+          - "^kube_pod_status_reason$"
+          - "^kube_pod_start_time$"
+          - "^kube_pod_container_.*$"
+          - "^kube_pod_init_container_.*$"
+          - "^kube_namespace_status_phase$"
+          - "^kube_deployment_labels$"
+          - "^kube_deployment_spec_replicas$"
+          - "^kube_deployment_spec_paused$"
+          - "^kube_deployment_status_replicas$"
+          - "^kube_deployment_status_replicas_ready$"
+          - "^kube_deployment_status_replicas_available$"
+          - "^kube_deployment_status_replicas_updated$"
+          - "^kube_deployment_status_replicas_unavailable$"
+          - "^kube_deployment_status_condition$"
+          - "^kube_replicaset_owner$"
+          - "^kube_replicaset_created$"
+          - "^kube_replicaset_spec_replicas$"
+          - "^kube_replicaset_status_ready_replicas$"
+          - "^kube_replicaset_status_replicas$"
+          - "^kube_statefulset_labels$"
+          - "^kube_statefulset_replicas$"
+          - "^kube_statefulset_status_replicas_ready$"
+          - "^kube_statefulset_status_replicas_current$"
+          - "^kube_statefulset_status_replicas_updated$"
+          - "^kube_statefulset_created$"
+          - "^kube_daemonset_labels$"
+          - "^kube_daemonset_status_current_number_scheduled$"
+          - "^kube_daemonset_status_desired_number_scheduled$"
+          - "^kube_daemonset_status_updated_number_scheduled$"
+          - "^kube_daemonset_status_number_available$"
+          - "^kube_daemonset_status_number_misscheduled$"
+          - "^kube_daemonset_status_number_ready$"
+          - "^kube_daemonset_status_number_unavailable$"
+          - "^kube_resourcequota$"
+          - "^kube_node_status_allocatable$"
+          - "^kube_node_spec_unschedulable$"
+          - "^kube_job_info$"
+          - "^kube_job_owner$"
+          - "^kube_job_created$"
+          - "^kube_job_complete$"
+          - "^kube_job_failed$"
+          - "^kube_job_status_active$"
+          - "^kube_job_status_succeeded$"
+          - "^kube_job_status_failed$"
+          - "^kube_job_status_start_time$"
+          - "^kube_job_status_completion_time$"
+          - "^kube_job_spec_completions$"
+          - "^kube_job_spec_parallelism$"
+
+connectors:
+  forward/prometheus:
+
 receivers:
   k8s_events:
-  prometheus:
+  prometheus/prometheus-server:
     config:
       scrape_configs:
         - job_name: prometheus
@@ -1390,75 +1460,15 @@ receivers:
           static_configs:
             - targets:
                 - ${PROMETHEUS_URL}
+  prometheus/kube-state-metrics:
+    config:
+      scrape_configs:
         - job_name: kube-state-metrics
           scheme: {{ (index .Values.otel.metrics "kube-state-metrics").scheme | default "http" | quote }}
           scrape_interval: {{ quote (index .Values.otel.metrics "kube-state-metrics").scrape_interval }}
           metrics_path: "/metrics"
           honor_timestamps: true
           honor_labels: true
-          params:
-            "match[]":
-              - "kube_deployment_created"
-              - "kube_daemonset_created"
-              - "kube_namespace_created"
-              - "kube_node_info"
-              - "kube_node_created"
-              - "kube_node_status_capacity"
-              - "kube_node_status_condition"
-              - "kube_pod_created"
-              - "kube_pod_info"
-              - "kube_pod_owner"
-              - "kube_pod_completion_time"
-              - "kube_pod_status_phase"
-              - "kube_pod_status_ready"
-              - "kube_pod_status_reason"
-              - "kube_pod_start_time"
-              - '{__name__=~"kube_pod_container_.*"}'
-              - '{__name__=~"kube_pod_init_container_.*"}'
-              - "kube_namespace_status_phase"
-              - "kube_deployment_labels"
-              - "kube_deployment_spec_replicas"
-              - "kube_deployment_spec_paused"
-              - "kube_deployment_status_replicas"
-              - "kube_deployment_status_replicas_ready"
-              - "kube_deployment_status_replicas_available"
-              - "kube_deployment_status_replicas_updated"
-              - "kube_deployment_status_replicas_unavailable"
-              - "kube_deployment_status_condition"
-              - "kube_replicaset_owner"
-              - "kube_replicaset_created"
-              - "kube_replicaset_spec_replicas"
-              - "kube_replicaset_status_ready_replicas"
-              - "kube_replicaset_status_replicas"
-              - "kube_statefulset_labels"
-              - "kube_statefulset_replicas"
-              - "kube_statefulset_status_replicas_ready"
-              - "kube_statefulset_status_replicas_current"
-              - "kube_statefulset_status_replicas_updated"
-              - "kube_statefulset_created"
-              - "kube_daemonset_labels"
-              - "kube_daemonset_status_current_number_scheduled"
-              - "kube_daemonset_status_desired_number_scheduled"
-              - "kube_daemonset_status_updated_number_scheduled"
-              - "kube_daemonset_status_number_available"
-              - "kube_daemonset_status_number_misscheduled"
-              - "kube_daemonset_status_number_ready"
-              - "kube_daemonset_status_number_unavailable"
-              - "kube_resourcequota"
-              - "kube_node_status_allocatable"
-              - "kube_node_spec_unschedulable"
-              - "kube_job_info"
-              - "kube_job_owner"
-              - "kube_job_created"
-              - "kube_job_complete"
-              - "kube_job_failed"
-              - "kube_job_status_active"
-              - "kube_job_status_succeeded"
-              - "kube_job_status_failed"
-              - "kube_job_status_start_time"
-              - "kube_job_status_completion_time"
-              - "kube_job_spec_completions"
-              - "kube_job_spec_parallelism"
           static_configs:
             - targets:
                 - ${KUBE_STATE_METRICS_URL}
@@ -1467,6 +1477,21 @@ service:
     - health_check
     - memory_ballast
   pipelines:
+    metrics/prometheus:
+      exporters:
+        - forward/prometheus
+      processors:
+        - memory_limiter
+      receivers:
+        - prometheus/prometheus-server
+    metrics/kubestatemetrics:
+      exporters:
+        - forward/prometheus
+      processors:
+        - memory_limiter
+        - filter/kube-state-metrics
+      receivers:
+        - prometheus/kube-state-metrics
     metrics:
       exporters:
         - otlp
@@ -1512,7 +1537,7 @@ service:
 {{- end }}
         - batch
       receivers:
-        - prometheus
+        - forward/prometheus
   telemetry:
 {{- if .Values.otel.metrics.telemetry.logs.enabled }}
     logs:

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.4.1] - 2023-05-25
+
+### Changed
+- Updating docker image to `0.6.0` (which includes some security fixes and add forwardconnector OTEL component)
+
+### Fixed
+- Fixed filter on kube-state-metrics so that only specific metrics are sent 
+
 ## [2.4.0] - 2023-05-16
 
 ### Added
