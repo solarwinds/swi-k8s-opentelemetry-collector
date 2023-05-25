@@ -45,6 +45,41 @@ func init() {
 		viewStatefulSetsAdded,
 		viewStatefulSetsDeleted,
 		viewStatefulSetTableSize,
+
+		viewReplicaSetsUpdated,
+		viewReplicaSetsAdded,
+		viewReplicaSetsDeleted,
+		viewReplicaSetTableSize,
+
+		viewDaemonSetsUpdated,
+		viewDaemonSetsAdded,
+		viewDaemonSetsDeleted,
+		viewDaemonSetTableSize,
+
+		viewJobsUpdated,
+		viewJobsAdded,
+		viewJobsDeleted,
+		viewJobTableSize,
+
+		viewCronJobsUpdated,
+		viewCronJobsAdded,
+		viewCronJobsDeleted,
+		viewCronJobTableSize,
+
+		viewNodesUpdated,
+		viewNodesAdded,
+		viewNodesDeleted,
+		viewNodeTableSize,
+
+		viewPersistentVolumesUpdated,
+		viewPersistentVolumesAdded,
+		viewPersistentVolumesDeleted,
+		viewPersistentVolumeTableSize,
+
+		viewPersistentVolumeClaimsUpdated,
+		viewPersistentVolumeClaimsAdded,
+		viewPersistentVolumeClaimsDeleted,
+		viewPersistentVolumeClaimTableSize,
 	)
 }
 

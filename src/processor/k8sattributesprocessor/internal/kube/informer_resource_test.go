@@ -274,6 +274,72 @@ func Test_NodeInformerWatchFuncWithSelectors(t *testing.T) {
 	assert.NotNil(t, obj)
 }
 
+func Test_newPersistentVolumeSharedInformer(t *testing.T) {
+	labelSelector, fieldSelector, err := selectorsFromFilters(Filters{})
+	require.NoError(t, err)
+	client, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+	informer := newPersistentVolumeSharedInformer(client, "testns", labelSelector, fieldSelector)
+	assert.NotNil(t, informer)
+}
+
+func Test_PersistentVolumeInformerListFuncWithSelectors(t *testing.T) {
+	ls, fs, err := newTestSelectors()
+	assert.NoError(t, err)
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	assert.NoError(t, err)
+	listFunc := persistentVolumeInformerListFuncWithSelectors(c, ls, fs)
+	opts := metav1.ListOptions{}
+	obj, err := listFunc(opts)
+	assert.NoError(t, err)
+	assert.NotNil(t, obj)
+}
+
+func Test_PersistentVolumeInformerWatchFuncWithSelectors(t *testing.T) {
+	ls, fs, err := newTestSelectors()
+	assert.NoError(t, err)
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	assert.NoError(t, err)
+	watchFunc := persistentVolumeInformerWatchFuncWithSelectors(c, ls, fs)
+	opts := metav1.ListOptions{}
+	obj, err := watchFunc(opts)
+	assert.NoError(t, err)
+	assert.NotNil(t, obj)
+}
+
+func Test_newPersistentVolumeClaimSharedInformer(t *testing.T) {
+	labelSelector, fieldSelector, err := selectorsFromFilters(Filters{})
+	require.NoError(t, err)
+	client, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	require.NoError(t, err)
+	informer := newPersistentVolumeClaimSharedInformer(client, "testns", labelSelector, fieldSelector)
+	assert.NotNil(t, informer)
+}
+
+func Test_PersistentVolumeClaimInformerListFuncWithSelectors(t *testing.T) {
+	ls, fs, err := newTestSelectors()
+	assert.NoError(t, err)
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	assert.NoError(t, err)
+	listFunc := persistentVolumeClaimInformerListFuncWithSelectors(c, "testns", ls, fs)
+	opts := metav1.ListOptions{}
+	obj, err := listFunc(opts)
+	assert.NoError(t, err)
+	assert.NotNil(t, obj)
+}
+
+func Test_PersistentVolumeClaimInformerWatchFuncWithSelectors(t *testing.T) {
+	ls, fs, err := newTestSelectors()
+	assert.NoError(t, err)
+	c, err := newFakeAPIClientset(k8sconfig.APIConfig{})
+	assert.NoError(t, err)
+	watchFunc := persistentVolumeClaimInformerWatchFuncWithSelectors(c, "testns", ls, fs)
+	opts := metav1.ListOptions{}
+	obj, err := watchFunc(opts)
+	assert.NoError(t, err)
+	assert.NotNil(t, obj)
+}
+
 func newTestSelectors() (labels.Selector, fields.Selector, error) {
 	ls, fs, err := selectorsFromFilters(Filters{
 		Fields: []FieldFilter{

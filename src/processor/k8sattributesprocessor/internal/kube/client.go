@@ -62,13 +62,15 @@ type WatchClient struct {
 	// Key is namespace name
 	Namespaces map[string]*Namespace
 
-	DeploymentClient  *WatchResourceClient[KubernetesResource]
-	StatefulSetClient *WatchResourceClient[KubernetesResource]
-	ReplicaSetClient  *WatchResourceClient[KubernetesResource]
-	DaemonSetClient   *WatchResourceClient[KubernetesResource]
-	JobClient         *WatchResourceClient[KubernetesResource]
-	CronJobClient     *WatchResourceClient[KubernetesResource]
-	NodeClient        *WatchResourceClient[KubernetesResource]
+	DeploymentClient            *WatchResourceClient[KubernetesResource]
+	StatefulSetClient           *WatchResourceClient[KubernetesResource]
+	ReplicaSetClient            *WatchResourceClient[KubernetesResource]
+	DaemonSetClient             *WatchResourceClient[KubernetesResource]
+	JobClient                   *WatchResourceClient[KubernetesResource]
+	CronJobClient               *WatchResourceClient[KubernetesResource]
+	NodeClient                  *WatchResourceClient[KubernetesResource]
+	PersistentVolumeClient      *WatchResourceClient[KubernetesResource]
+	PersistentVolumeClaimClient *WatchResourceClient[KubernetesResource]
 }
 
 // Extract replicaset name from the pod name. Pod name is created using
@@ -222,6 +224,30 @@ func New(
 
 		c.NodeClient = nodeClient
 	}
+
+	if clientResources[MetadataFromPersistentVolume] != nil {
+		persistentVolumeClient, err := NewWatchPersistentVolumeClient(
+			c,
+			clientResources[MetadataFromPersistentVolume],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.PersistentVolumeClient = persistentVolumeClient
+	}
+
+	if clientResources[MetadataFromPersistentVolumeClaim] != nil {
+		persistentVolumeClaimClient, err := NewWatchPersistentVolumeClaimClient(
+			c,
+			clientResources[MetadataFromPersistentVolumeClaim],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.PersistentVolumeClaimClient = persistentVolumeClaimClient
+	}
 	return c, err
 }
 
@@ -273,6 +299,14 @@ func (c *WatchClient) Start() {
 
 	if c.NodeClient != nil {
 		c.NodeClient.Start()
+	}
+
+	if c.PersistentVolumeClient != nil {
+		c.PersistentVolumeClient.Start()
+	}
+
+	if c.PersistentVolumeClaimClient != nil {
+		c.PersistentVolumeClaimClient.Start()
 	}
 }
 
@@ -421,6 +455,10 @@ func (c *WatchClient) GetResource(resourceType string, identifier ResourceIdenti
 		return c.CronJobClient.GetResource(identifier)
 	case MetadataFromNode:
 		return c.NodeClient.GetResource(identifier)
+	case MetadataFromPersistentVolume:
+		return c.PersistentVolumeClient.GetResource(identifier)
+	case MetadataFromPersistentVolumeClaim:
+		return c.PersistentVolumeClaimClient.GetResource(identifier)
 	}
 
 	return nil, false

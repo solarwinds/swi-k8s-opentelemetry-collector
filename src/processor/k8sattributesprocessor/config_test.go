@@ -284,6 +284,52 @@ func TestLoadConfig(t *testing.T) {
 						},
 					},
 				},
+				PersistentVolume: PersistentVolumeConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.persistentvolume.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.persistentvolume.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromPersistentVolume},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.persistentvolume.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromPersistentVolume},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.persistentvolume.name",
+								},
+							},
+						},
+					},
+				},
+				PersistentVolumeClaim: PersistentVolumeClaimConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.persistentvolumeclaim.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.persistentvolumeclaim.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromPersistentVolumeClaim},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.persistentvolumeclaim.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromPersistentVolumeClaim},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.persistentvolumeclaim.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
 				Exclude: ExcludeConfig{
 					Pods: []ExcludePodConfig{
 						{Name: "jaeger-agent"},

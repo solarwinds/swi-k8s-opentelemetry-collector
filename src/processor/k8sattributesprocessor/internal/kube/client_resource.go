@@ -167,6 +167,40 @@ func NewWatchNodeClient(
 	)
 }
 
+func NewWatchPersistentVolumeClient(
+	client *WatchClient,
+	clientResource *ClientResource) (*WatchResourceClient[KubernetesResource], error) {
+	return NewWatchResourceClient[KubernetesResource](
+		client,
+		clientResource,
+		MetadataFromPersistentVolume,
+		"k8s.persistentvolume.name",
+		"k8s.persistentvolume.uid",
+		observability.RecordPersistentVolumeTableSize,
+		observability.RecordPersistentVolumeAdded,
+		observability.RecordPersistentVolumeUpdated,
+		observability.RecordPersistentVolumeDeleted,
+		newPersistentVolumeSharedInformer,
+	)
+}
+
+func NewWatchPersistentVolumeClaimClient(
+	client *WatchClient,
+	clientResource *ClientResource) (*WatchResourceClient[KubernetesResource], error) {
+	return NewWatchResourceClient[KubernetesResource](
+		client,
+		clientResource,
+		MetadataFromPersistentVolumeClaim,
+		"k8s.persistentvolumeclaim.name",
+		"k8s.persistentvolumeclaim.uid",
+		observability.RecordPersistentVolumeClaimTableSize,
+		observability.RecordPersistentVolumeClaimAdded,
+		observability.RecordPersistentVolumeClaimUpdated,
+		observability.RecordPersistentVolumeClaimDeleted,
+		newPersistentVolumeClaimSharedInformer,
+	)
+}
+
 // New initializes a new k8s Client.
 func NewWatchResourceClient[T KubernetesResource](
 	client *WatchClient,
