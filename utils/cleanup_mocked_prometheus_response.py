@@ -30,6 +30,8 @@ def replace_values(lines):
         ('container', 'test-container', '(?!POD)[^"]+'),
         ('job', 'test-job', None),
         ('job_name', 'test-job-name', None),
+        ('persistentvolume', 'test-pv', None),
+        ('persistentvolumeclaim', 'test-pvc', None),
     ]
     for line in lines:
         for replacement in replacements:
@@ -86,10 +88,9 @@ if prometheushost is None:
 
 # Modify these to match your setup
 urlPrometheusQueries = 'match%5B%5D=container_cpu_usage_seconds_total&match%5B%5D=container_spec_cpu_quota&match%5B%5D=container_spec_cpu_period&match%5B%5D=container_memory_working_set_bytes&match%5B%5D=container_spec_memory_limit_bytes&match%5B%5D=container_cpu_cfs_throttled_periods_total&match%5B%5D=container_cpu_cfs_periods_total&match%5B%5D=container_fs_reads_total&match%5B%5D=container_fs_writes_total&match%5B%5D=container_fs_reads_bytes_total&match%5B%5D=container_fs_writes_bytes_total&match%5B%5D=container_fs_usage_bytes&match%5B%5D=container_network_receive_bytes_total&match%5B%5D=container_network_transmit_bytes_total&match%5B%5D=container_network_receive_packets_total&match%5B%5D=container_network_transmit_packets_total&match%5B%5D=container_network_receive_packets_dropped_total&match%5B%5D=container_network_transmit_packets_dropped_total&match%5B%5D=apiserver_request_total&match%5B%5D=%7B__name__%3D%22kubernetes_build_info%22%2C+job%3D~%22.%2Aapiserver.%2A%22%7D'
-urlKubeStateMetricsQueries = 'match%5B%5D=kube_deployment_created&match%5B%5D=kube_daemonset_created&match%5B%5D=kube_namespace_created&match%5B%5D=kube_node_info&match%5B%5D=kube_node_created&match%5B%5D=kube_node_status_capacity&match%5B%5D=kube_node_status_condition&match%5B%5D=kube_pod_created&match%5B%5D=kube_pod_info&match%5B%5D=kube_pod_owner&match%5B%5D=kube_pod_completion_time&match%5B%5D=kube_pod_status_phase&match%5B%5D=kube_pod_status_ready&match%5B%5D=kube_pod_status_reason&match%5B%5D=kube_pod_start_time&match%5B%5D=%7B__name__%3D~%22kube_pod_container_.%2A%22%7D&match%5B%5D=%7B__name__%3D~%22kube_pod_init_container_.%2A%22%7D&match%5B%5D=kube_namespace_status_phase&match%5B%5D=kube_deployment_labels&match%5B%5D=kube_deployment_spec_replicas&match%5B%5D=kube_deployment_spec_paused&match%5B%5D=kube_deployment_status_replicas&match%5B%5D=kube_deployment_status_replicas_ready&match%5B%5D=kube_deployment_status_replicas_available&match%5B%5D=kube_deployment_status_replicas_updated&match%5B%5D=kube_deployment_status_replicas_unavailable&match%5B%5D=kube_deployment_status_condition&match%5B%5D=kube_replicaset_owner&match%5B%5D=kube_replicaset_created&match%5B%5D=kube_replicaset_spec_replicas&match%5B%5D=kube_replicaset_status_ready_replicas&match%5B%5D=kube_replicaset_status_replicas&match%5B%5D=kube_statefulset_labels&match%5B%5D=kube_statefulset_replicas&match%5B%5D=kube_statefulset_status_replicas_ready&match%5B%5D=kube_statefulset_status_replicas_current&match%5B%5D=kube_statefulset_status_replicas_updated&match%5B%5D=kube_statefulset_created&match%5B%5D=kube_daemonset_labels&match%5B%5D=kube_daemonset_status_current_number_scheduled&match%5B%5D=kube_daemonset_status_desired_number_scheduled&match%5B%5D=kube_daemonset_status_updated_number_scheduled&match%5B%5D=kube_daemonset_status_number_available&match%5B%5D=kube_daemonset_status_number_misscheduled&match%5B%5D=kube_daemonset_status_number_ready&match%5B%5D=kube_daemonset_status_number_unavailable&match%5B%5D=kube_resourcequota&match%5B%5D=kube_node_status_allocatable&match%5B%5D=kube_node_spec_unschedulable&match%5B%5D=kube_job_info&match%5B%5D=kube_job_owner&match%5B%5D=kube_job_created&match%5B%5D=kube_job_complete&match%5B%5D=kube_job_failed&match%5B%5D=kube_job_status_active&match%5B%5D=kube_job_status_succeeded&match%5B%5D=kube_job_status_failed&match%5B%5D=kube_job_status_start_time&match%5B%5D=kube_job_status_completion_time&match%5B%5D=kube_job_spec_completions&match%5B%5D=kube_job_spec_parallelism'
+urlKubeStateMetricsQueries = 'match[]={__name__=~"kube_.*"}'
 
 urlPrometheus = f'/federate?{urlPrometheusQueries}'
-urlKubeStateMetrics = f'/metrics?{urlKubeStateMetricsQueries}'
 
 # Prometheus response
 url = f'https://{prometheushost}{urlPrometheus}'
@@ -156,7 +157,7 @@ if response.status_code == 200:
         content = f"""{{
   "request": {{
     "method": "GET",
-    "url": "/metrics?{urlKubeStateMetricsQueries}"
+    "url": "/metrics"
   }},
   "response": {{
     "status": 200,
