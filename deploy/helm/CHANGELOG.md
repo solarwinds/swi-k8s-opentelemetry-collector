@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.5.0-alpha.2] - 2023-05-31
+
+### Changed
+- `access_mode` is now published as resource attribute
+- `kubelet_*` metrics are published to SWO with prefix `k8s` (to be consistent with other kubernetes related metrics)
+
 ## [2.5.0-alpha.1] - 2023-05-25
 ### Added
 - Added PV and PVC metrics
