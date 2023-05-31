@@ -190,7 +190,7 @@ processors:
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_)(.*)$$
+      - include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -1141,6 +1141,7 @@ processors:
       - sw.k8s.persistentvolumeclaim.status
       - sw.k8s.persistentvolume.status
       - storageclass
+      - access_mode
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
