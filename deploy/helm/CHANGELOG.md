@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.5.0-alpha.3] - 2023-06-02
+### Added
+- Added `k8s.kube_pod_spec_volumes_persistentvolumeclaims_info` metric to connect Pod and PVC
+
 ## [2.5.0-alpha.2] - 2023-05-31
 
 ### Changed
