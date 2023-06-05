@@ -1,18 +1,27 @@
+from prometheus_client import Gauge, Metric
 import pytest
 import os
 import json
-from test_utils import retry_until_ok, get_merged_json
+from test_utils import retry_until_ok, get_merged_json, datapoint_value
+from prometheus_client.parser import text_string_to_metric_families
 import difflib
 
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
 url = f'http://{endpoint}/metrics.json'
 
+
+endpointPrometheus = os.getenv("PROMETHEUS_MOCK_ENDPOINT", "localhost:8080")
+urlMetrics = [f'http://{endpointPrometheus}/metrics',f'http://{endpointPrometheus}/all']
+
 with open('expected_metric_names.txt', "r", newline='\n') as file_with_expected_metric_names:
     expected_metric_names = file_with_expected_metric_names.read().splitlines()
 
 def test_expected_metric_names_are_generated():
-    retry_until_ok(url, assert_test_metric_names_found,
+    retry_until_ok(url, assert_test_metric_names_found,                   
                    print_failure_metric_names)
+    
+def test_original_metrics_are_not_modified():     
+        retry_until_ok(url, assert_test_original_metrics, lambda content:print(f'Metrics were modified'))
 
 
 def test_expected_otel_message_content_is_generated():
@@ -24,6 +33,63 @@ def test_no_metric_datapoints_for_internal_containers():
     retry_until_ok(url, assert_test_no_metric_datapoints_for_internal_containers,
                    print_failure_internal_containers)
 
+def assert_test_original_metrics(otelContent):     
+    merged_json = get_merged_json(otelContent)
+
+    #transpose otel to metrics again so we can compare
+    # it will be record "name"-[metrics]
+    metrics = {}
+    for resource in merged_json['resourceMetrics']:
+        resAttributes={}
+        for attr in resource['resource']['attributes']: 
+            resAttributes[attr['key']] = attr['value']['stringValue']
+        for metric in resource['scopeMetrics'][0]['metrics']:        
+            metricName = metric['name'].replace('k8s.', '')
+            if( '.' in metricName):
+                continue
+            m = Metric(metricName, '', 'gauge')
+            list = metrics.setdefault(m.name, [])
+            list.append(m)
+            dataPoints = {}
+            if( 'gauge' in metric ):
+                dataPoints = metric['gauge']['dataPoints']
+            elif ('sum' in metric) :
+                dataPoints = metric['sum']['dataPoints']                                        
+            else :
+                raise Exception('unknown data')
+        
+            for dataPoint in dataPoints:
+                attributes = resAttributes.copy()
+                for attr in dataPoint['attributes']:                    
+                    attributes[attr['key']] = attr['value']['stringValue']
+                m.add_sample(m.name, attributes, datapoint_value(dataPoint), dataPoint['timeUnixNano'])            
+
+
+    for url in urlMetrics :
+        retry_until_ok(url, lambda metricsContent: assert_test_original_metrics2(metricsContent, metrics), '')
+
+def assert_test_original_metrics2(metricsContent, metrics):     
+    ok = True
+    for family in text_string_to_metric_families(metricsContent.decode('utf-8')):
+        if( family.name in metrics):
+            list = metrics[family.name]
+            for sample in family.samples:
+                # try to find metric which has same labels
+                found = False
+                missing_items={}
+                for m in list: 
+                    for s in m.samples:
+                        missing_items = {key: sample.labels[key] for key in set(sample.labels) - set(s.labels) if sample.labels[key] != s.labels.get(key)}
+                        if sample.labels.items() <= s.labels.items():
+                            found = True
+                if not found :                    
+                    ok = False
+                    print (f'Metric {sample.name} is missing following attributes:')
+                    for key in missing_items:
+                        print (f"\t{key}:{missing_items[key]}");
+                    
+    if not ok: 
+        raise ValueError('Some metrics were not found in original form')
 
 def assert_test_metric_names_found(content):
     merged_json = get_merged_json(content)
