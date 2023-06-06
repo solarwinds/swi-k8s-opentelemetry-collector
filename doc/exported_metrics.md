@@ -39,12 +39,12 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.node.memory.allocatable | Gauge |  | The allocatable of memory on node that are available for scheduling | custom |
 | k8s.node.memory.capacity | Gauge |  | The node memory capacity | custom |
 | k8s.node.memory.working_set | Gauge |  | Current working set on node | custom |
-| k8s.node.network.bytes_received | Gauge |  | Rate of bytes received of all containers on node | custom |
-| k8s.node.network.bytes_transmitted | Gauge |  | Rate of bytes transmitted of all containers on node | custom |
-| k8s.node.network.packets_received | Gauge |  | Rate  of packets received of all containers on node | custom |
-| k8s.node.network.packets_transmitted | Gauge |  | Rate of packets transmitted of all containers on node | custom |
-| k8s.node.network.receive_packets_dropped | Gauge |  | Rate of packets dropped while receiving of all containers on node | custom |
-| k8s.node.network.transmit_packets_dropped | Gauge |  | Rate of packets dropped while transmitting of all containers on node | custom |
+| k8s.node.network.bytes_received | Gauge |  | Rate of bytes received on node | custom |
+| k8s.node.network.bytes_transmitted | Gauge |  | Rate of bytes transmitted on node | custom |
+| k8s.node.network.packets_received | Gauge |  | Rate  of packets received on node | custom |
+| k8s.node.network.packets_transmitted | Gauge |  | Rate of packets transmitted on node | custom |
+| k8s.node.network.receive_packets_dropped | Gauge |  | Rate of packets dropped while receiving on node | custom |
+| k8s.node.network.transmit_packets_dropped | Gauge |  | Rate of packets dropped while transmitting on node | custom |
 | k8s.node.pods | Gauge |  | The count of pods on node | custom |
 | k8s.node.status.condition.diskpressure | Gauge |  | The condition diskpressure of a cluster node (1 when true, 0 when false or unknown) | custom |
 | k8s.node.status.condition.memorypressure | Gauge |  | The condition memorypressure of a cluster node (1 when true, 0 when false or unknown) | custom |
