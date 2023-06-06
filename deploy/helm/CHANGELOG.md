@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.5.0-alpha.4] - 2023-06-05
 ### Fixed
+- Fixed node level network metrics for environments where pod level network metrics are not available (for example Docker runtime)
+
+## [2.5.0-alpha.4] - 2023-06-05
+### Fixed
 - Fixed CPU/Memory usage Pod metrics on latest cAdvisor/containerd (not relying on Pod level datapoints, but doing SUM of container datapoints)
 
 ## [2.5.0-alpha.3] - 2023-06-02
