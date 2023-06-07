@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [2.5.0-alpha.4] - 2023-06-05
+## [2.5.0-alpha.5] - 2023-06-05
 ### Fixed
 - Fixed node level network metrics for environments where pod level network metrics are not available (for example Docker runtime)
 
