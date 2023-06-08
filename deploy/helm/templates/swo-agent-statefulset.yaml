@@ -29,7 +29,7 @@ spec:
       securityContext: {}
       containers:
         - name: swo-agent
-          image: {{ printf "%s:%s" .Values.swoagent.image.repository .Values.swoagent.image.tag }}
+          image: "{{ .Values.swoagent.image.repository }}:{{ .Values.swoagent.image.tag | default "v2.3.16@sha256:c42c9ca134db54341dc88c3e0c35b1a04db4629b1d97bfde524dfc5d2b8722e5" }}"
           imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
