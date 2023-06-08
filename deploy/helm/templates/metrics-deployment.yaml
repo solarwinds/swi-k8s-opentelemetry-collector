@@ -34,7 +34,7 @@ spec:
       initContainers:
         {{- if .Values.otel.metrics.prometheus_check }}
         - name: prometheus-check
-          image: busybox
+          image: busybox:1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43
           command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done']
           envFrom:
             - configMapRef:
@@ -42,7 +42,7 @@ spec:
         {{- end }}
         {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
-          image: fullstorydev/grpcurl
+          image: fullstorydev/grpcurl:v1.8.7@sha256:ee1a84e31a5f99af12e0767314c59f05a578c01d28404049a3964d67a15b3580
           command: ['/bin/grpcurl', '-expand-headers',
                     '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
                     '-H', 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}',
