@@ -50,15 +50,6 @@ processors:
       datapoint:
       - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*") == true'
 
-  # removing instance attribute on kube_ metrics as it doesn't represent k8s.node.name
-  attributes/remove_instance:
-    include:
-        match_type: regexp
-        metric_names:
-          - kube_.*
-    actions:
-      - key: instance
-        action: delete
 
   # unify attributes
   attributes/unify_node_attribute:
@@ -101,64 +92,6 @@ processors:
         from_attribute: claim_namespace
         action: upsert
 
-  # removing attributes of kube-state-metrics on those metrics where it does not identify resource, but identify the source
-  #   where kube-state-metric is deployed on
-  attributes/remove_node:
-    actions:
-      - key: node
-        action: delete
-      - key: instance
-        action: delete
-      - key: kubernetes_io_hostname
-        action: delete
-
-  attributes/remove_pod:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_.*
-    exclude:
-      match_type: regexp
-      metric_names:
-        - kube_pod_.*
-    actions:
-      - key: pod
-        action: delete
-  attributes/remove_container:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_.*
-    exclude:
-      match_type: regexp
-      metric_names:
-        - kube_pod_container_.*
-        - kube_pod_init_container_.*
-    actions:
-      - key: container
-        action: delete
-  attributes/remove_service:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_.*
-    exclude:
-      match_type: regexp
-      metric_names:
-        - kube_service_.*
-    actions:
-      - key: service
-        action: delete
-  attributes/remove_other:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_.*
-    actions:
-      - key: job
-        action: delete
-      - key: instance
-        action: delete
   attributes/identify_init_container:
     include:
       match_type: regexp
@@ -263,9 +196,6 @@ processors:
           - action: filter_datapoints
             datapoint_value: 1
             datapoint_value_action: include
-          - action: update_label
-            label: phase
-            new_label: sw.k8s.pod.status
       - include: k8s.kube_pod_start_time
         action: update
         operations:
@@ -353,14 +283,7 @@ processors:
             datapoint_value: 0
             datapoint_value_action: exclude
   metricstransform/preprocessing:
-    transforms:
-      - include: k8s.kube_namespace_status_phase
-        action: update
-        operations:
-          - action: update_label
-            label: phase
-            new_label: sw.k8s.namespace.status
-
+    transforms:  
       # Container metrics
       - include: k8s.kube_pod_container_resource_limits
         experimental_match_labels: { "resource": "cpu" }
@@ -770,7 +693,7 @@ processors:
         action: insert
         new_name: k8s.node.status.condition.diskpressure
       - include: k8s.kube_pod_status_phase
-        experimental_match_labels: { "sw.k8s.pod.status": "Running" }
+        experimental_match_labels: { "phase": "Running" }
         action: insert
         new_name: k8s.pod.status.phase.running_temp
       - include: k8s.pod.network.bytes_received
@@ -1079,6 +1002,8 @@ processors:
   groupbyattrs/node:
     keys:
       - k8s.node.name
+      - instance
+      - node
   # Transformations done after grouping per k8s.node.name
   metricstransform/aggregate_node_level:
     transforms:
@@ -1122,6 +1047,8 @@ processors:
       - image
       - image_id
       - k8s.node.name
+      - instance
+      - node
       - sw.k8s.pod.status
       - sw.k8s.namespace.status
       - sw.k8s.node.status
@@ -1158,22 +1085,28 @@ processors:
           - scrape_samples_scraped
           - scrape_series_added
           - up
+  attributes/attributes_namespace_status:
+    include:
+      match_type: regexp
+      metric_names:
+        - k8s.kube_namespace_status_phase
+    actions:
+      - key: sw.k8s.namespace.status
+        from_attribute: phase
+        action: insert
+
+  attributes/attributes_pod_status:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_pod_status_phase
+    actions:
+      - key: sw.k8s.pod.status
+        from_attribute: phase
+        action: insert
 
   resource/metrics:
-    attributes:
-      # Remove useless attributes
-      - key: service.name
-        action: delete
-
-      - key: host.name
-        action: delete
-
-      - key: port
-        action: delete
-
-      - key: scheme
-        action: delete
-
+    attributes:      
       # Collector and Manifest version
       - key: sw.k8s.agent.manifest.version
         value: ${MANIFEST_VERSION}
@@ -1195,95 +1128,64 @@ processors:
       - key: sw.k8s.cluster.version
         from_attribute: git_version
         action: insert
-      - key: git_version
-        action: delete
 
       # k8s.node.name
       - key: sw.k8s.node.version
         from_attribute: kubelet_version
-        action: insert
-      - key: kubelet_version
-        action: delete
+        action: insert      
 
       - key: sw.k8s.node.container.runtime.version
         from_attribute: container_runtime_version
-        action: insert
-      - key: container_runtime_version
-        action: delete
+        action: insert      
 
       - key: sw.k8s.node.provider.id
         from_attribute: provider_id
-        action: insert
-      - key: provider_id
-        action: delete
+        action: insert      
 
       - key: sw.k8s.node.os.image
         from_attribute: os_image
         action: insert
-      - key: os_image
-        action: delete
-
+      
       - key: sw.k8s.node.ip.internal
         from_attribute: internal_ip
-        action: insert
-      - key: internal_ip
-        action: delete
+        action: insert      
 
       # Namespace
       - key: k8s.namespace.name
         from_attribute: namespace
-        action: insert
-      - key: namespace
-        action: delete
-
+        action: insert      
       # Pod
       - key: k8s.pod.name
         from_attribute: pod
         action: insert
-      - key: pod
-        action: delete
 
       - key: k8s.pod.uid
         from_attribute: uid
         action: insert
-      - key: uid
-        action: delete
 
       - key: sw.k8s.pod.ip
         from_attribute: pod_ip
         action: insert
-      - key: pod_ip
-        action: delete
 
       - key: sw.k8s.pod.host.ip
         from_attribute: host_ip
-        action: insert
-      - key: host_ip
-        action: delete
+        action: insert      
 
       - key: sw.k8s.pod.createdby.kind
         from_attribute: created_by_kind
-        action: insert
-      - key: created_by_kind
-        action: delete
+        action: insert      
 
       - key: sw.k8s.pod.createdby.name
         from_attribute: created_by_name
-        action: insert
-      - key: created_by_name
-        action: delete
+        action: insert      
 
       - key: sw.k8s.pod.host.network
         from_attribute: host_network
-        action: insert
-      - key: host_network
-        action: delete
+        action: insert      
 
       - key: sw.k8s.pod.priority_class
         from_attribute: priority_class
-        action: insert
-      - key: priority_class
-        action: delete
+        action: insert      
 
       # Container
       - key: container_id
@@ -1291,96 +1193,66 @@ processors:
         pattern: ^(?P<extracted_container_runtime>[^:]+)://(?P<extracted_container_id>[^/]+)$
       - key: container.id
         from_attribute: extracted_container_id
-        action: insert
-      - key: extracted_container_id
-        action: delete
+        action: insert      
       - key: container.runtime
         from_attribute: extracted_container_runtime
-        action: insert
-      - key: extracted_container_runtime
-        action: delete
-      - key: container_id
-        action: delete
+        action: insert      
 
       - key: k8s.container.name
         from_attribute: container
-        action: insert
-      - key: container
-        action: delete
+        action: insert      
 
       - key: k8s.container.image.id
         from_attribute: image_id
-        action: insert
-      - key: image_id
-        action: delete
+        action: insert      
 
       - key: k8s.container.image.name
         from_attribute: image
-        action: insert
-      - key: image
-        action: delete
+        action: insert      
 
       # ReplicaSet
       - key: k8s.replicaset.name
         from_attribute: replicaset
-        action: insert
-      - key: replicaset
-        action: delete
+        action: insert      
 
       # Deployment
       - key: k8s.deployment.name
         from_attribute: deployment
-        action: insert
-      - key: deployment
-        action: delete
+        action: insert      
 
       # StatefulSet
       - key: k8s.statefulset.name
         from_attribute: statefulset
         action: insert
-      - key: statefulset
-        action: delete
 
       # DaemonSet
       - key: k8s.daemonset.name
         from_attribute: daemonset
-        action: insert
-      - key: daemonset
-        action: delete
+        action: insert      
 
       # Job
       - key: k8s.job.name
         from_attribute: job_name
-        action: insert
-      - key: job_name
-        action: delete
+        action: insert      
 
       - key: k8s.job.condition
         from_attribute: job_condition
-        action: insert
-      - key: job_condition
-        action: delete
+        action: insert      
 
       # CronJob
       - key: k8s.cronjob.name
         from_attribute: cronjob
-        action: insert
-      - key: cronjob
-        action: delete
+        action: insert      
 
       # PersistentVolume
       - key: k8s.persistentvolume.name
         from_attribute: persistentvolume
-        action: insert
-      - key: persistentvolume
-        action: delete
+        action: insert      
 
       # PersistentVolumeClaim
       - key: k8s.persistentvolumeclaim.name
         from_attribute: persistentvolumeclaim
-        action: insert
-      - key: persistentvolumeclaim
-        action: delete
+        action: insert      
 
   resource/events:
     attributes:
@@ -1567,15 +1439,12 @@ service:
         - memory_limiter
         - filter/receiver
         - transform
-        - filter/remove_internal
-        - attributes/remove_instance
+        - filter/remove_internal        
         - attributes/unify_node_attribute
         - attributes/unify_volume_attribute
-        - attributes/remove_node
-        - attributes/remove_pod
-        - attributes/remove_container
-        - attributes/remove_service
-        - attributes/remove_other
+        #- attributes/remove_node
+        #- attributes/remove_pod        
+        #- attributes/remove_service
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
@@ -1584,6 +1453,8 @@ service:
         - swmetricstransform/postprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
+        - attributes/attributes_pod_status
+        - attributes/attributes_namespace_status
         - cumulativetodelta
         - deltatorate
         - experimental_metricsgeneration/cluster

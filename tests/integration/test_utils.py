@@ -59,7 +59,7 @@ def retry_until_ok(url, func, print_failure):
         
         if is_ok:
             print(f'Succesfully passed assert')
-            break
+            return True
         else:
             print('Retrying...')
             time.sleep(2)
