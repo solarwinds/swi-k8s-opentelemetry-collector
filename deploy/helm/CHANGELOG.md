@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.5.0-alpha.7] - 2023-06-08
+
+### Changed
+- We don't modify original prometheus metrics anymore. 
+
+
 ## [2.5.0-alpha.6] - 2023-06-08
 
 ### Changed
