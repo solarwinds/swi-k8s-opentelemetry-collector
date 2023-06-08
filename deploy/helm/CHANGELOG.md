@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.5.0-alpha.5] - 2023-06-05
+### Fixed
+- Fixed node level network metrics for environments where pod level network metrics are not available (for example Docker runtime)
+
+## [2.5.0-alpha.4] - 2023-06-05
+### Fixed
+- Fixed CPU/Memory usage Pod metrics on latest cAdvisor/containerd (not relying on Pod level datapoints, but doing SUM of container datapoints)
+
+## [2.5.0-alpha.3] - 2023-06-02
+### Added
+- Added `k8s.kube_pod_spec_volumes_persistentvolumeclaims_info` metric to connect Pod and PVC
+
+## [2.5.0-alpha.2] - 2023-05-31
+
+### Changed
+- `access_mode` is now published as resource attribute
+- `kubelet_*` metrics are published to SWO with prefix `k8s` (to be consistent with other kubernetes related metrics)
+
 ## [2.5.0-alpha.1] - 2023-05-25
 ### Added
 - Added PV and PVC metrics
