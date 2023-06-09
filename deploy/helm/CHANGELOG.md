@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.5.0] - 2023-06-12
+
+### Added
+- Added PV and PVC metrics
+  - Updating docker image to `0.7.0` (which is capable of instrumenting PV and PVC with labels/annotations)
+
+### Changed
+- Updating docker images `solarwinds/swo-agent`, `busybox`, `fullstorydev/grpcurl` and `alpine/k8s` to latest available versions
+
+### Fixed
+- Fixed CPU/Memory usage Pod metrics on latest cAdvisor/containerd (not relying on Pod level datapoints, but doing SUM of container datapoints)
+- Fixed node level network metrics for environments where pod level network metrics are not available (for example Docker runtime)
+
 ## [2.5.0-alpha.6] - 2023-06-08
 
 ### Changed
