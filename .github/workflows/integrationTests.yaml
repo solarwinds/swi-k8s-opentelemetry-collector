@@ -27,6 +27,11 @@ jobs:
           sed -i '' 's/\$subnet ||= "172.18.8"/\$subnet ||= "192.168.56"/g' Vagrantfile
         working-directory: tests/integration/kubespray
 
+      - name: Install python requirements
+        run: |
+          pip3 install -r requirements.txt
+        working-directory: tests/integration/kubespray
+        
       - name: Run vagrant up
         run: vagrant up
         working-directory: tests/integration/kubespray
