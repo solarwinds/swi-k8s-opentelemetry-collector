@@ -12,30 +12,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          submodules: true
+          path: repo
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: kubernetes-sigs/kubespray
+          path: kubespray
 
       - name: Cache Vagrant boxes
         uses: actions/cache@v2
         with:
           path: ~/.vagrant.d/boxes
-          key: ${{ runner.os }}-vagrant-${{ hashFiles('tests/integration/kubespray/Vagrantfile') }}
+          key: ${{ runner.os }}-vagrant-${{ hashFiles('kubespray/Vagrantfile') }}
           restore-keys: |
             ${{ runner.os }}-vagrant-
   
       - name: Replace subnet in Vagrantfile
         run: |
           sed -i '' 's/\$subnet ||= "172.18.8"/\$subnet ||= "192.168.56"/g' Vagrantfile
-        working-directory: tests/integration/kubespray
+        working-directory: kubespray
 
       - name: Install python requirements
         run: |
           pip3 install -r requirements.txt
-        working-directory: tests/integration/kubespray
+        working-directory: kubespray
         
       - name: Run vagrant up
         run: vagrant up
-        working-directory: tests/integration/kubespray
+        working-directory: kubespray
   
-      - name: ssh into box after boot
-        run: vagrant ssh -c "echo 'hello world!'"
-        working-directory: tests/integration/kubespray
+      - name: Get kubernetes nodes
+        run: kubectl get nodes
+        env:
+          KUBECONFIG: kubespray/inventory/sample/artifacts/admin.conf
+        
