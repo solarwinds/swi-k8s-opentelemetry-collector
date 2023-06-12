@@ -1,7 +1,9 @@
 name: Integration tests
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - feature/NH-40615-test-kubespray
 
 jobs:
   vagrant-up:
@@ -24,3 +26,4 @@ jobs:
   
       - name: ssh into box after boot
         run: vagrant ssh -c "echo 'hello world!'"
+        working-directory: tests/integration/kubespray
