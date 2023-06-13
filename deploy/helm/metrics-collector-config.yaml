@@ -1101,7 +1101,7 @@ processors:
           - scrape_samples_post_metric_relabeling
           - scrape_samples_scraped
           - scrape_series_added
-          - up
+          - up      
   attributes/attributes_namespace_status:
     include:
       match_type: regexp
@@ -1124,6 +1124,22 @@ processors:
 
   resource/metrics:
     attributes:      
+      # Remove useless attributes
+      - key: service.name
+        action: delete
+
+      - key: service.instance.id
+        action: delete
+
+      - key: host.name
+        action: delete
+
+      - key: port
+        action: delete
+
+      - key: scheme
+        action: delete 
+
       # Collector and Manifest version
       - key: sw.k8s.agent.manifest.version
         value: ${MANIFEST_VERSION}
@@ -1459,10 +1475,7 @@ service:
         - transform
         - filter/remove_internal        
         - attributes/unify_node_attribute
-        - attributes/unify_volume_attribute
-        #- attributes/remove_node
-        #- attributes/remove_pod        
-        #- attributes/remove_service
+        - attributes/unify_volume_attribute        
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
