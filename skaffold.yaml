@@ -94,8 +94,12 @@ profiles:
     - op: replace
       path: "/deploy/helm/releases/0/setValues/kube-state-metrics.enabled"
       value: false
-    - op: remove
-      path: /portForward/1
+    - op: replace
+      path: /portForward/1/resourceName
+      value: wiremock
+    - op: replace
+      path: /portForward/1/port
+      value: 8080
   # Useful to develop against remote prometheus instance (mounted locally on host.docker.internal:9090)
   - name: remote-prometheus
     patches:
