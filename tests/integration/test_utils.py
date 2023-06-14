@@ -36,29 +36,30 @@ def retry_until_ok(url, func, print_failure):
     last_exception = None
     while time.time() - start_time < timeout:
         is_ok = False
-        try: 
-            response = None
+        response = None
+        try:
             try: 
                 response = requests.get(url)
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
                 print(f"An error occurred while making the request: {e}")
-
-            if response is not None and response.status_code == 200:
-                print("Successfully downloaded!")
-                is_ok = func(response.content)
-            else:
-                if response is not None:
-                    print('Failed to download otel messages. Response code:',
-                        response.status_code)
-
-                print('Failed to download otel messages')
         except Exception as e:
             last_exception = e
             print(e, traceback.format_exc())
+
+        if response is not None and response.status_code == 200:
+            print("Successfully downloaded!")
+            is_ok = func(response.content)
+        else:
+            if response is not None:
+                print('Failed to download otel messages. Response code:',
+                    response.status_code)
+
+            print('Failed to download otel messages')
+        
         if is_ok:
             print(f'Succesfully passed assert')
-            break
+            return True
         else:
             print('Retrying...')
             time.sleep(2)
@@ -91,6 +92,16 @@ def datapoint_sorting_key(datapoint):
         return datapoint["asString"]
     else:
         return datapoint
+    
+def datapoint_value(datapoint):    
+    if "asDouble" in datapoint:
+        return datapoint["asDouble"]
+    elif "asInt" in datapoint:
+        return datapoint["asInt"]
+    elif "asString" in datapoint:
+        return datapoint["asString"]
+    else:
+        raise Exception('Unknown data point value')
 
 def remove_time_in_datapoint(datapoint):
     if "timeUnixNano" in datapoint:
