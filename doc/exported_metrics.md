@@ -228,6 +228,30 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_job_spec_completions | Gauge |   | Job completions | native |
 | k8s.kube_job_spec_parallelism | Gauge |   | Job parallelism | native |
 
+## Persistent Volume metrics
+
+| Metric | Type | Unit | Description | native/custom |
+| ---    | ---  | ---  | ---         | ---           |
+| k8s.kube_persistentvolume_capacity_bytes | Gauge |  | Information about Persistent Volume's capacity | native |
+| k8s.kube_persistentvolume_info | Gauge |  | Information about Persistent Volume | native |
+| k8s.kube_persistentvolume_status_phase | Gauge |  | Status of Persistent Volume | native |
+| k8s.kube_persistentvolume_claim_ref | Gauge |  | Information about connected Persistent Volume Claim's | native |
+| k8s.kube_persistentvolume_created | Gauge |  | Unix creation timestamp | native |
+| k8s.persistentvolume.status.phase | Gauge |  | Describes the status of the Persistent Volume | custom |
+| k8s.kubelet_volume_stats_available_percent | Gauge |  | The capacity in percent of the volume | native |
+
+## Persistent Volume Claim metrics
+
+| Metric | Type | Unit | Description | native/custom |
+| ---    | ---  | ---  | ---         | ---           |
+| k8s.kube_persistentvolumeclaim_info | Gauge |  | Information about Persistent Volume Claim | native |
+| k8s.kube_persistentvolumeclaim_access_mode | Gauge |  | Information about Persistent Volume Claim's access mode | native |
+| k8s.kube_persistentvolumeclaim_status_phase | Gauge |  | Status of Persistent Volume Claim | native |
+| k8s.kube_persistentvolumeclaim_resource_requests_storage_bytes | Gauge |  | Information about Persistent Volume Claim's requested storage | native |
+| k8s.kube_persistentvolumeclaim_created | Gauge |  | Unix creation timestamp | native |
+| k8s.kube_pod_spec_volumes_persistentvolumeclaims_info | Gauge |  | Information about which Pod is assigned to which Persistent Volume Claim | native |
+| k8s.persistentvolumeclaim.status.phase | Gauge |  | Determine whether job succeeded | native |
+
 ## Other metrics
 
 | Metric | Type | Unit | Description | native/custom |
