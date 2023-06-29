@@ -435,21 +435,28 @@ processors:
         new_name: k8s.pod.spec.cpu.requests
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace]
+            label_set: [pod, namespace, k8s.node.name]
+            aggregation_type: sum
+      - include: k8s.container.spec.cpu.limit_temp
+        action: insert
+        new_name: k8s.pod.spec.cpu.limit
+        operations:
+          - action: aggregate_labels
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
       - include: k8s.container.spec.memory.limit_temp
         action: insert
         new_name: k8s.pod.spec.memory.limit
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
       - include: k8s.container.spec.memory.requests
         action: insert
         new_name: k8s.pod.spec.memory.requests
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
@@ -472,20 +479,6 @@ processors:
           - action: aggregate_labels
             label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
-      - include: k8s.container_spec_cpu_quota
-        action: insert
-        match_type: regexp
-        experimental_match_labels: { "container": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
-        new_name: k8s.pod.spec.cpu.quota_temp
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace, k8s.node.name]
-            aggregation_type: sum
-      - include: k8s.container_spec_cpu_period
-        action: insert
-        match_type: regexp
-        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
-        new_name: k8s.pod.spec.cpu.period_temp
       - include: k8s.container_network_receive_bytes_total
         action: insert
         match_type: regexp
@@ -1012,13 +1005,6 @@ processors:
         metric1: apiserver_request_not_failed_temp
         metric2: apiserver_request_total_temp
         operation: percent
-  experimental_metricsgeneration/pod:
-    rules:
-      - name: k8s.pod.spec.cpu.limit
-        type: calculate
-        metric1: k8s.pod.spec.cpu.quota_temp
-        metric2: k8s.pod.spec.cpu.period_temp
-        operation: divide
   groupbyattrs/node:
     keys:
       - k8s.node.name
@@ -1489,7 +1475,6 @@ service:
         - cumulativetodelta
         - deltatorate
         - experimental_metricsgeneration/cluster
-        - experimental_metricsgeneration/pod
         - groupbyattrs/node
         - metricstransform/aggregate_node_level
         - groupbyattrs/pod
