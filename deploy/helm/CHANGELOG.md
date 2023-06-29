@@ -6,11 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-
+- Updated https://github.com/hashicorp/consul library to fix vulnerability issue.
 ## [2.6.0-alpha.1] - 2023-06-08
 
 ### Changed
-- We don't modify original prometheus metrics anymore. 
+- We don't modify original prometheus metrics anymore.
 
 ## [2.5.0] - 2023-06-12
 
@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updating docker image to `0.6.0` (which includes some security fixes and add forwardconnector OTEL component)
 
 ### Fixed
-- Fixed filter on kube-state-metrics so that only specific metrics are sent 
+- Fixed filter on kube-state-metrics so that only specific metrics are sent
 
 ## [2.4.0] - 2023-05-16
 
