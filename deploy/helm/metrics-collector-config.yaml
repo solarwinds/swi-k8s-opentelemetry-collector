@@ -252,6 +252,12 @@ processors:
           - action: filter_datapoints
             datapoint_value: 0
             datapoint_value_action: exclude
+      - include: k8s.kube_namespace_status_phase
+        action: update
+        operations:
+          - action: filter_datapoints
+            datapoint_value: 1
+            datapoint_value_action: include
       - include: k8s.kube_namespace_created
         action: update
         operations:
