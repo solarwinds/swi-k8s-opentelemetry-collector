@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.20.4-bullseye@sha256:918857f4064db0fff49799ce5e7c4d43e394f452111cd89cca9af539c18a76a8 as base
+FROM docker.io/library/golang:1.20.5-bullseye@sha256:d9f75197f484a4d7e008a0a8f7d1e68344ea1c1ba030273d5ab1567e129eed55 as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
@@ -16,7 +16,7 @@ RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else 
 FROM base as tests
 RUN cd src/processor/swmetricstransformprocessor && go test ./...
 
-FROM alpine:3.18@sha256:02bb6f428431fbc2809c5d1b41eab5a68350194fb508869a33cb1af4444c9b11 as prep
+FROM alpine:3.18@sha256:82d1e9d7ed48a7523bdebc18cf6290bdb97b82302a8a9c27d4fe885949ea94d1 as prep
 RUN apk --update add ca-certificates
 
 FROM debian:11.7@sha256:432f545c6ba13b79e2681f4cc4858788b0ab099fc1cca799cc0fae4687c69070 as journal
