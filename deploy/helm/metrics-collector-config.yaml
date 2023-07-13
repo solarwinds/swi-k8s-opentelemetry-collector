@@ -299,10 +299,6 @@ processors:
         experimental_match_labels: { "resource": "cpu" }
         action: insert
         new_name: k8s.initcontainer.spec.cpu.limit_temp
-      - include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.spec.cpu.limit
 
       - include: k8s.kube_pod_container_resource_requests
         experimental_match_labels: { "resource": "cpu" }
@@ -340,10 +336,6 @@ processors:
         match_type: regexp
         experimental_match_labels: { "resource": "memory" }
         new_name: k8s.initcontainer.spec.memory.limit_temp
-      - include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.spec.memory.limit
 
       - include: k8s.container_fs_reads_total
         action: insert
@@ -429,6 +421,29 @@ processors:
         new_name: k8s.container.status
 
       # Pod resource metrics
+      - include: k8s.container.spec.cpu.limit_temp
+        action: insert
+        new_name: k8s.pod.spec.cpu.limit
+        operations:
+          - action: aggregate_labels
+            label_set: [pod, namespace, k8s.node.name]
+            aggregation_type: sum
+      - include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+        match_type: regexp
+        action: combine
+        new_name: k8s.container.spec.cpu.limit
+      - include: k8s.container.spec.memory.limit_temp
+        action: insert
+        new_name: k8s.pod.spec.memory.limit
+        operations:
+          - action: aggregate_labels
+            label_set: [pod, namespace, k8s.node.name]
+            aggregation_type: sum
+      - include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+        match_type: regexp
+        action: combine
+        new_name: k8s.container.spec.memory.limit
+
       - include: k8s.kube_pod_container_status_running
         action: insert
         new_name: k8s.pod.containers.running
@@ -441,21 +456,14 @@ processors:
         new_name: k8s.pod.spec.cpu.requests
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace]
-            aggregation_type: sum
-      - include: k8s.container.spec.memory.limit_temp
-        action: insert
-        new_name: k8s.pod.spec.memory.limit
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
       - include: k8s.container.spec.memory.requests
         action: insert
         new_name: k8s.pod.spec.memory.requests
         operations:
           - action: aggregate_labels
-            label_set: [pod, namespace]
+            label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
       - include: k8s.container_cpu_usage_seconds_total
         action: insert
@@ -478,20 +486,6 @@ processors:
           - action: aggregate_labels
             label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
-      - include: k8s.container_spec_cpu_quota
-        action: insert
-        match_type: regexp
-        experimental_match_labels: { "container": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
-        new_name: k8s.pod.spec.cpu.quota_temp
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace, k8s.node.name]
-            aggregation_type: sum
-      - include: k8s.container_spec_cpu_period
-        action: insert
-        match_type: regexp
-        experimental_match_labels: { "image": "^$", "pod": "\\S+", "namespace": "\\S+" }
-        new_name: k8s.pod.spec.cpu.period_temp
       - include: k8s.container_network_receive_bytes_total
         action: insert
         match_type: regexp
@@ -1018,13 +1012,6 @@ processors:
         metric1: apiserver_request_not_failed_temp
         metric2: apiserver_request_total_temp
         operation: percent
-  experimental_metricsgeneration/pod:
-    rules:
-      - name: k8s.pod.spec.cpu.limit
-        type: calculate
-        metric1: k8s.pod.spec.cpu.quota_temp
-        metric2: k8s.pod.spec.cpu.period_temp
-        operation: divide
   groupbyattrs/node:
     keys:
       - k8s.node.name
@@ -1495,7 +1482,6 @@ service:
         - cumulativetodelta
         - deltatorate
         - experimental_metricsgeneration/cluster
-        - experimental_metricsgeneration/pod
         - groupbyattrs/node
         - metricstransform/aggregate_node_level
         - groupbyattrs/pod
