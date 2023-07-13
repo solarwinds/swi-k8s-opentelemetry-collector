@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.6.0] - 2023-07-17
+
+### Changed
+- `k8s.pod.spec.cpu.limit` is calculated from kube-state-metrics (Kubernetes describe) and not from container runtime metrics. This should make the metric more reliable.
+- We don't modify original prometheus metrics anymore. 
+
+### Fixed
+- Fixed filter on kube_namespace_status_phase, only values with 1 are sent
+
 ## [2.6.0-alpha.2] - 2023-07-11
 
 ### Fixed
