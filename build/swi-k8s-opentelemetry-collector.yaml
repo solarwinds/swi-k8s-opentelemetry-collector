@@ -1,46 +1,53 @@
 dist:
   name: swi-k8s-opentelemetry-collector
   description: "SolarWinds distribution for OpenTelemetry"
-  otelcol_version: "0.73.0"
+  otelcol_version: "0.77.0"
   version: "0.7.1"
 exporters:
-  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.73.0
+  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.77.0
 
 connectors:
-  - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.73.0
+  - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.77.0
 
 receivers:
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8seventsreceiver v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/journaldreceiver v0.73.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8seventsreceiver v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/journaldreceiver v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver v0.77.0
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.77.0
   
 processors:
-  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.73.0
-  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricsgenerationprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.73.0
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.77.0
+  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/cumulativetodeltaprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricsgenerationprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.77.0
     path: "./src/processor/k8sattributesprocessor"
   - gomod: github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor v0.0.1
     path: "./src/processor/swmetricstransformprocessor"
 
 extensions:
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.73.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.73.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.77.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage v0.77.0
     import: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
-  - gomod: go.opentelemetry.io/collector/extension/ballastextension v0.73.0
+  # - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer v0.77.0
+  #   import: "github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/k8sobserver"
+  - gomod: go.opentelemetry.io/collector/extension/ballastextension v0.77.0
 
-replaces:
-  - github.com/docker/docker => github.com/docker/docker v23.0.4+incompatible
-  - github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.44.249
-  - github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
-  - google.golang.org/protobuf => google.golang.org/protobuf v1.29.1
-  - github.com/docker/distribution => github.com/docker/distribution v2.8.2+incompatible
+# replaces:
+#   - github.com/docker/docker => github.com/docker/docker v23.0.4+incompatible
+#   - github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.44.249
+#   - github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
+#   - google.golang.org/protobuf => google.golang.org/protobuf v1.29.1
+#   - github.com/docker/distribution => github.com/docker/distribution v2.8.2+incompatible

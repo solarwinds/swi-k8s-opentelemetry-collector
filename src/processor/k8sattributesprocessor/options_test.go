@@ -720,43 +720,6 @@ func TestWithExtractPodAssociation(t *testing.T) {
 			},
 		},
 		{
-			"deprecated",
-			[]AssociationConfig{
-				{
-					From: "label",
-					Name: "ip",
-				},
-			},
-			[]kube.Association{
-				{
-					Sources: []kube.AssociationSource{
-						{
-							From: "label",
-							Name: "ip",
-						},
-					},
-				},
-			},
-		},
-		{
-			"connection deprecated",
-			[]AssociationConfig{
-				{
-					From: "connection",
-					Name: "ip",
-				},
-			},
-			[]kube.Association{
-				{
-					Sources: []kube.AssociationSource{
-						{
-							From: "connection",
-						},
-					},
-				},
-			},
-		},
-		{
 			"connection",
 			[]AssociationConfig{
 				{
