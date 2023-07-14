@@ -802,7 +802,11 @@ func TestExtractionRules(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			c.Rules = tc.rules
-			c.handlePodAdd(pod)
+
+			// manually call the data removal functions here
+			// normally the informer does this, but fully emulating the informer in this test is annoying
+			transformedPod := removeUnnecessaryPodData(pod, c.Rules)
+			c.handlePodAdd(transformedPod)
 			p, ok := c.GetPod(newPodIdentifier("connection", "", pod.Status.PodIP))
 			require.True(t, ok)
 
@@ -1267,7 +1271,10 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := WatchClient{Rules: tt.rules}
-			assert.Equal(t, tt.want, c.extractPodContainersAttributes(&tt.pod))
+			// manually call the data removal function here
+			// normally the informer does this, but fully emulating the informer in this test is annoying
+			transformedPod := removeUnnecessaryPodData(&tt.pod, c.Rules)
+			assert.Equal(t, tt.want, c.extractPodContainersAttributes(transformedPod))
 		})
 	}
 }

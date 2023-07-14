@@ -232,6 +232,28 @@ type ExtractionRules struct {
 	Labels      []FieldExtractionRule
 }
 
+// IncludesOwnerMetadata determines whether the ExtractionRules include metadata about Pod Owners
+func (rules *ExtractionRules) IncludesOwnerMetadata() bool {
+	rulesNeedingOwnerMetadata := []bool{
+		rules.CronJobName,
+		rules.Deployment,
+		rules.DaemonSetUID,
+		rules.DaemonSetName,
+		rules.JobName,
+		rules.JobUID,
+		rules.ReplicaSetID,
+		rules.ReplicaSetName,
+		rules.StatefulSetUID,
+		rules.StatefulSetName,
+	}
+	for _, ruleEnabled := range rulesNeedingOwnerMetadata {
+		if ruleEnabled {
+			return true
+		}
+	}
+	return false
+}
+
 // FieldExtractionRule is used to specify which fields to extract from pod fields
 // and inject into spans as attributes.
 type FieldExtractionRule struct {
