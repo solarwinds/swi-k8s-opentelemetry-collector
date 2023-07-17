@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0-alpha.1] - 2023-07-17
+
 ### Changed
 - `k8s.pod.spec.cpu.limit` is calculated from kube-state-metrics (Kubernetes describe) and not from container runtime metrics. This should make the metric more reliable.
+- Updating docker image to `0.7.1` (which contain security fix for high vulnerability)
 
 ## [2.6.0-alpha.2] - 2023-07-11
 
