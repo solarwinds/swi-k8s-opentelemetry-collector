@@ -27,6 +27,7 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -135,6 +136,20 @@ func New(
 	}
 
 	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
+	err = c.informer.SetTransform(
+		func(object interface{}) (interface{}, error) {
+			originalPod, success := object.(*api_v1.Pod)
+			if !success { // means this is a cache.DeletedFinalStateUnknown, in which case we do nothing
+				return object, nil
+			}
+
+			return removeUnnecessaryPodData(originalPod, c.Rules), nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	if c.extractNamespaceLabelsAnnotations() {
 		c.namespaceInformer = newNamespaceInformer(c.kc)
 	} else {
@@ -326,7 +341,7 @@ func (c *WatchClient) handlePodAdd(obj interface{}) {
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) handlePodUpdate(old, new interface{}) {
+func (c *WatchClient) handlePodUpdate(_, new interface{}) {
 	observability.RecordPodUpdated()
 	if pod, ok := new.(*api_v1.Pod); ok {
 		// TODO: update or remove based on whether container is ready/unready?.
@@ -358,7 +373,7 @@ func (c *WatchClient) handleNamespaceAdd(obj interface{}) {
 	}
 }
 
-func (c *WatchClient) handleNamespaceUpdate(old, new interface{}) {
+func (c *WatchClient) handleNamespaceUpdate(_, new interface{}) {
 	observability.RecordNamespaceUpdated()
 	if namespace, ok := new.(*api_v1.Namespace); ok {
 		c.addOrUpdateNamespace(namespace)
@@ -567,42 +582,145 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	return tags
 }
 
-func (c *WatchClient) extractPodContainersAttributes(pod *api_v1.Pod) map[string]*Container {
-	containers := map[string]*Container{}
+// This function removes all data from the Pod except what is required by extraction rules and pod association
+func removeUnnecessaryPodData(pod *api_v1.Pod, rules ExtractionRules) *api_v1.Pod {
 
-	if c.Rules.ContainerImageName || c.Rules.ContainerImageTag {
-		for _, spec := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
-			container := &Container{}
-			imageParts := strings.Split(spec.Image, ":")
-			if c.Rules.ContainerImageName {
-				container.ImageName = imageParts[0]
+	// name, namespace, uid, start time and ip are needed for identifying Pods
+	// there's room to optimize this further, it's kept this way for simplicity
+	transformedPod := api_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      pod.GetName(),
+			Namespace: pod.GetNamespace(),
+			UID:       pod.GetUID(),
+		},
+		Status: api_v1.PodStatus{
+			PodIP:     pod.Status.PodIP,
+			StartTime: pod.Status.StartTime,
+		},
+		Spec: api_v1.PodSpec{
+			HostNetwork: pod.Spec.HostNetwork,
+		},
+	}
+
+	if rules.StartTime {
+		transformedPod.SetCreationTimestamp(pod.GetCreationTimestamp())
+	}
+
+	if rules.PodUID {
+		transformedPod.SetUID(pod.GetUID())
+	}
+
+	if rules.Node {
+		transformedPod.Spec.NodeName = pod.Spec.NodeName
+	}
+
+	if rules.PodHostName {
+		transformedPod.Spec.Hostname = pod.Spec.Hostname
+	}
+
+	if needContainerAttributes(rules) {
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			transformedPod.Status.ContainerStatuses = append(
+				transformedPod.Status.ContainerStatuses,
+				api_v1.ContainerStatus{
+					Name:         containerStatus.Name,
+					ContainerID:  containerStatus.ContainerID,
+					RestartCount: containerStatus.RestartCount,
+				},
+			)
+		}
+		for _, containerStatus := range pod.Status.InitContainerStatuses {
+			transformedPod.Status.InitContainerStatuses = append(
+				transformedPod.Status.InitContainerStatuses,
+				api_v1.ContainerStatus{
+					Name:         containerStatus.Name,
+					ContainerID:  containerStatus.ContainerID,
+					RestartCount: containerStatus.RestartCount,
+				},
+			)
+		}
+
+		removeUnnecessaryContainerData := func(c api_v1.Container) api_v1.Container {
+			transformedContainer := api_v1.Container{}
+			transformedContainer.Name = c.Name // we always need the name, it's used for identification
+			if rules.ContainerImageName || rules.ContainerImageTag {
+				transformedContainer.Image = c.Image
 			}
-			if c.Rules.ContainerImageTag && len(imageParts) > 1 {
-				container.ImageTag = imageParts[1]
-			}
-			containers[spec.Name] = container
+			return transformedContainer
+		}
+
+		for _, container := range pod.Spec.Containers {
+			transformedPod.Spec.Containers = append(
+				transformedPod.Spec.Containers, removeUnnecessaryContainerData(container),
+			)
+		}
+		for _, container := range pod.Spec.InitContainers {
+			transformedPod.Spec.InitContainers = append(
+				transformedPod.Spec.InitContainers, removeUnnecessaryContainerData(container),
+			)
 		}
 	}
 
-	if c.Rules.ContainerID {
-		for _, apiStatus := range append(pod.Status.ContainerStatuses, pod.Status.InitContainerStatuses...) {
-			container, ok := containers[apiStatus.Name]
-			if !ok {
-				container = &Container{}
-				containers[apiStatus.Name] = container
+	if len(rules.Labels) > 0 {
+		transformedPod.Labels = pod.Labels
+	}
+
+	if len(rules.Annotations) > 0 {
+		transformedPod.Annotations = pod.Annotations
+	}
+
+	if rules.IncludesOwnerMetadata() {
+		transformedPod.SetOwnerReferences(pod.GetOwnerReferences())
+	}
+
+	return &transformedPod
+}
+
+func (c *WatchClient) extractPodContainersAttributes(pod *api_v1.Pod) PodContainers {
+	containers := PodContainers{
+		ByID:   map[string]*Container{},
+		ByName: map[string]*Container{},
+	}
+	if !needContainerAttributes(c.Rules) {
+		return containers
+	}
+	if c.Rules.ContainerImageName || c.Rules.ContainerImageTag {
+		for _, spec := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
+			container := &Container{}
+			nameTagSep := strings.LastIndex(spec.Image, ":")
+			if c.Rules.ContainerImageName {
+				if nameTagSep > 0 {
+					container.ImageName = spec.Image[:nameTagSep]
+				} else {
+					container.ImageName = spec.Image
+				}
 			}
+			if c.Rules.ContainerImageTag && nameTagSep > 0 {
+				container.ImageTag = spec.Image[nameTagSep+1:]
+			}
+			containers.ByName[spec.Name] = container
+		}
+	}
+	for _, apiStatus := range append(pod.Status.ContainerStatuses, pod.Status.InitContainerStatuses...) {
+		container, ok := containers.ByName[apiStatus.Name]
+		if !ok {
+			container = &Container{}
+			containers.ByName[apiStatus.Name] = container
+		}
+		if c.Rules.ContainerName {
+			container.Name = apiStatus.Name
+		}
+		containerID := apiStatus.ContainerID
+		// Remove container runtime prefix
+		parts := strings.Split(containerID, "://")
+		if len(parts) == 2 {
+			containerID = parts[1]
+		}
+		containers.ByID[containerID] = container
+		if c.Rules.ContainerID {
 			if container.Statuses == nil {
 				container.Statuses = map[int]ContainerStatus{}
 			}
-
-			containerID := apiStatus.ContainerID
-
-			// Remove container runtime prefix
-			idParts := strings.Split(containerID, "://")
-			if len(idParts) == 2 {
-				containerID = idParts[1]
-			}
-
 			container.Statuses[int(apiStatus.RestartCount)] = ContainerStatus{containerID}
 		}
 	}
@@ -840,5 +958,8 @@ func (c *WatchClient) extractNamespaceLabelsAnnotations() bool {
 }
 
 func needContainerAttributes(rules ExtractionRules) bool {
-	return rules.ContainerImageName || rules.ContainerImageTag || rules.ContainerID
+	return rules.ContainerImageName ||
+		rules.ContainerName ||
+		rules.ContainerImageTag ||
+		rules.ContainerID
 }
