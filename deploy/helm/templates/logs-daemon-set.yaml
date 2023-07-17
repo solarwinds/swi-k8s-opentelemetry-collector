@@ -27,6 +27,7 @@ spec:
 {{- end}}
     spec:
       terminationGracePeriodSeconds: 30
+      serviceAccountName: {{ include "common.fullname" . }}
       securityContext:
         ## In order to reliably read logs from mounted node logging paths, we need to run as root
         fsGroup: 0
@@ -52,6 +53,11 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -62,6 +68,18 @@ spec:
                   name: solarwinds-api-token
                   key: SOLARWINDS_API_TOKEN
                   optional: true
+            - name: HOST_PROC
+              value: /hostfs/proc
+            - name: HOST_SYS
+              value: /hostfs/sys
+            - name: HOST_ETC
+              value: /hostfs/etc
+            - name: HOST_VAR
+              value: /hostfs/var
+            - name: HOST_RUN
+              value: /hostfs/run
+            - name: HOST_DEV
+              value: /hostfs/dev
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" . }}-common-env
@@ -99,6 +117,24 @@ spec:
               readOnly: true
             - name: logcheckpoints
               mountPath: {{ .Values.otel.logs.filestorage.directory }}
+            - mountPath: /hostfs/dev
+              name: host-dev
+              readOnly: true
+            - mountPath: /hostfs/etc
+              name: host-etc
+              readOnly: true
+            - mountPath: /hostfs/proc
+              name: host-proc
+              readOnly: true
+            - mountPath: /hostfs/run/udev/data
+              name: host-run-udev-data
+              readOnly: true
+            - mountPath: /hostfs/sys
+              name: host-sys
+              readOnly: true
+            - mountPath: /hostfs/var/run/utmp
+              name: host-var-run-utmp
+              readOnly: true
       volumes:
         - name: varlogpods
           hostPath:
@@ -122,4 +158,22 @@ spec:
             items:
               - key: logs.config
                 path: relay.yaml
+        - name: host-dev
+          hostPath:
+            path: /dev
+        - name: host-etc
+          hostPath:
+            path: /etc
+        - name: host-proc
+          hostPath:
+            path: /proc
+        - name: host-run-udev-data
+          hostPath:
+            path: /run/udev/data
+        - name: host-sys
+          hostPath:
+            path: /sys
+        - name: host-var-run-utmp
+          hostPath:
+            path: /var/run/utmp
 {{- end }}

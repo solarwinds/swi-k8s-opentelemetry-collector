@@ -1389,44 +1389,44 @@ connectors:
 
 receivers:
   k8s_events:
-  prometheus/prometheus-server:
+  prometheus/cadvisor:
     config:
       scrape_configs:
-        - job_name: prometheus
-          scheme: {{ .Values.otel.metrics.prometheus.scheme | default "http" | quote }}
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          metrics_path: "/federate"
-          honor_timestamps: false
-          honor_labels: true
-          params:
-            "match[]":
-              - "container_cpu_usage_seconds_total"
-              - "container_spec_cpu_quota"
-              - "container_spec_cpu_period"
-              - "container_memory_working_set_bytes"
-              - "container_spec_memory_limit_bytes"
-              - "container_cpu_cfs_throttled_periods_total"
-              - "container_cpu_cfs_periods_total"
-              - "container_fs_reads_total"
-              - "container_fs_writes_total"
-              - "container_fs_reads_bytes_total"
-              - "container_fs_writes_bytes_total"
-              - "container_fs_usage_bytes"
-              - "container_network_receive_bytes_total"
-              - "container_network_transmit_bytes_total"
-              - "container_network_receive_packets_total"
-              - "container_network_transmit_packets_total"
-              - "container_network_receive_packets_dropped_total"
-              - "container_network_transmit_packets_dropped_total"
-              - "apiserver_request_total"
-              - "kubelet_volume_stats_available_percent"
-              - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
-{{- if .Values.otel.metrics.extra_scrape_metrics }}
-{{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
-{{- end }}
-          static_configs:
-            - targets:
-                - ${PROMETHEUS_URL}
+        - job_name: 'kubernetes-nodes-cadvisor'
+          honor_timestamps: true
+          scrape_interval: 60s
+          scrape_timeout: 10s
+          metrics_path: /metrics
+          scheme: https
+          authorization:
+            type: Bearer
+            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          tls_config:
+            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+            insecure_skip_verify: true
+          follow_redirects: true
+          enable_http2: true
+          relabel_configs:
+          - separator: ;
+            regex: __meta_kubernetes_node_label_(.+)
+            replacement: $$1
+            action: labelmap
+          - separator: ;
+            regex: (.*)
+            target_label: __address__
+            replacement: kubernetes.default.svc:443
+            action: replace
+          - source_labels: [__meta_kubernetes_node_name]
+            separator: ;
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/$$1/proxy/metrics/cadvisor
+            action: replace
+          kubernetes_sd_configs:
+          - role: node
+            kubeconfig_file: ""
+            follow_redirects: true
+            enable_http2: true
   prometheus/kube-state-metrics:
     config:
       scrape_configs:
@@ -1450,7 +1450,7 @@ service:
       processors:
         - memory_limiter
       receivers:
-        - prometheus/prometheus-server
+        - prometheus/cadvisor
     metrics/kubestatemetrics:
       exporters:
         - forward/prometheus
