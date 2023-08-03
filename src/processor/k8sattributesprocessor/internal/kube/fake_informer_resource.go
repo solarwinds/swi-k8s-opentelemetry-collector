@@ -50,7 +50,7 @@ func (f *FakeResourceInformer) AddEventHandler(handler cache.ResourceEventHandle
 }
 
 func (f *FakeResourceInformer) AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, resyncPeriod time.Duration) (cache.ResourceEventHandlerRegistration, error) {
-	return handler, nil
+	return nil, nil
 }
 
 func (f *FakeResourceInformer) RemoveEventHandler(handle cache.ResourceEventHandlerRegistration) error {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0-alpha.2] - 2023-07-18
+
+### Changed
+- Upgraded OTEL collector image to [0.8.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.0) which brings following changes
+  - OTEL upgraded to v0.81.0
+
 ## [2.7.0-alpha.1] - 2023-07-17
 
 ## [2.6.0] - 2023-07-17

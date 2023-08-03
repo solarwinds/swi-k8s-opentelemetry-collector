@@ -70,6 +70,21 @@ func TestWithPassthrough(t *testing.T) {
 	assert.True(t, p.passthroughMode)
 }
 
+func TestEnabledAttributes(t *testing.T) {
+	// This list needs to be updated when the defaults in metadata.yaml are updated.
+	expected := []string{
+		conventions.AttributeK8SNamespaceName,
+		conventions.AttributeK8SPodName,
+		conventions.AttributeK8SPodUID,
+		metadataPodStartTime,
+		conventions.AttributeK8SDeploymentName,
+		conventions.AttributeK8SNodeName,
+		conventions.AttributeContainerImageName,
+		conventions.AttributeContainerImageTag,
+	}
+	assert.ElementsMatch(t, expected, enabledAttributes())
+}
+
 func TestWithExtractAnnotations(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -714,43 +729,6 @@ func TestWithExtractPodAssociation(t *testing.T) {
 						{
 							From: "label",
 							Name: "ip",
-						},
-					},
-				},
-			},
-		},
-		{
-			"deprecated",
-			[]AssociationConfig{
-				{
-					From: "label",
-					Name: "ip",
-				},
-			},
-			[]kube.Association{
-				{
-					Sources: []kube.AssociationSource{
-						{
-							From: "label",
-							Name: "ip",
-						},
-					},
-				},
-			},
-		},
-		{
-			"connection deprecated",
-			[]AssociationConfig{
-				{
-					From: "connection",
-					Name: "ip",
-				},
-			},
-			[]kube.Association{
-				{
-					Sources: []kube.AssociationSource{
-						{
-							From: "connection",
 						},
 					},
 				},
