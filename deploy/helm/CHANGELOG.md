@@ -18,11 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded OTEL collector image to [0.8.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.0) which brings following changes
   - OTEL upgraded to v0.81.0
 
-## [2.7.0-alpha.1] - 2023-07-17
+## [2.6.0] - 2023-07-17
 
 ### Changed
 - `k8s.pod.spec.cpu.limit` is calculated from kube-state-metrics (Kubernetes describe) and not from container runtime metrics. This should make the metric more reliable.
-- Updating docker image to `0.7.1` (which contain security fix for high vulnerability)
+- We don't modify original prometheus metrics anymore. 
+
+### Fixed
+- Fixed filter on kube_namespace_status_phase, only values with 1 are sent
 
 ## [2.6.0-alpha.2] - 2023-07-11
 
