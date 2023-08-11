@@ -29,7 +29,7 @@ runs:
         if [[ $job_result -eq 1 ]]; then
             echo "Tests failed"
 
-            pods=$(kubectl get pods -n monitoring -l app.kubernetes.io/instance=swi-k8s-opentelemetry-collector -o=jsonpath='{.items[*].metadata.name}')
+            pods=$(kubectl get pods -n monitoring -o=jsonpath='{.items[*].metadata.name}')
             for pod in $pods; do
               containers=$(kubectl get pod $pod -n monitoring -o=jsonpath='{.spec.containers[*].name}')
               for container in $containers; do
@@ -38,7 +38,7 @@ runs:
                 echo -e "\n\n"
               done
             done
-            
+
             exit 1
         fi
 
