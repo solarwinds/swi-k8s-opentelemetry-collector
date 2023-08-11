@@ -32,11 +32,17 @@ spec:
         fsGroup: 0
         runAsUser: 0
         runAsGroup: 0
-      {{- with .Values.otel.logs.tolerations }}
       tolerations:
-        {{ toYaml . | nindent 8 }}
+      {{- if .Values.otel.logs.tolerations }}
+      {{ toYaml .Values.otel.logs.tolerations | nindent 8 }}
+      {{- else }}
+        - operator: Exists
+          effect: NoSchedule
       {{- end }}
       affinity:
+      {{- if .Values.otel.logs.affinity }}
+      {{- toYaml .Values.otel.logs.affinity | nindent 8 }}
+      {{- else }}
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
@@ -53,6 +59,11 @@ spec:
                 operator: NotIn
                 values:
                 - fargate
+      {{- end }}
+      {{- if .Values.otel.logs.nodeSelector }}
+      nodeSelector:
+        {{ toYaml .Values.otel.logs.nodeSelector | nindent 8 }}
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"

@@ -113,6 +113,12 @@ jobs:
       - name: Lint helm
         run: helm lint deploy/helm
 
+      - name: Install Unit test plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+      
+      - name: Run unit tests
+        run: helm unittest deploy/helm
+
   helm_test_auto_update_against_last_published:
     runs-on: ubuntu-latest
 
