@@ -139,6 +139,12 @@ otel:
 
           # Timeout if metrics can't be retrieved in given time interval
           scrapeTimeout: 25s
+    
+    # Scheduling configurations
+    # By default: set to run on linux amd64 nodes
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
 
   # Configuration for Events collection
   events:
@@ -221,6 +227,12 @@ otel:
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
         excludePattern:
+
+    # Scheduling configurations
+    # By default: set to run on linux amd64 nodes
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
 
   # Configuration for Logs collection
   logs:
@@ -316,10 +328,12 @@ otel:
       limits:
         memory: 700Mi
 
-    # This default tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
-    tolerations:
-      - operator: Exists
-        effect: NoSchedule
+    # Scheduling configurations
+    nodeSelector: {}
+    # By default: tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
+    tolerations: []
+    # By default: affinity is set to run the DaemonSet on linux amd64.
+    affinity: {}
 
     # Properties that can be configured on filelog reciever. For full description of properties
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver

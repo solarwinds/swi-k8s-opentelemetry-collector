@@ -30,6 +30,21 @@ spec:
     spec:
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
+      nodeSelector:
+      {{- if .Values.otel.metrics.nodeSelector }}
+      {{ toYaml .Values.otel.metrics.nodeSelector | nindent 8 }}
+      {{- else }}
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      {{- end }}
+      {{- if .Values.otel.metrics.tolerations }}
+      tolerations:
+        {{ toYaml .Values.otel.metrics.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.otel.metrics.affinity }}
+      affinity:
+        {{- toYaml .Values.otel.metrics.affinity | nindent 8 }}
+      {{- end }}
       {{- if or .Values.otel.metrics.prometheus_check .Values.otel.metrics.swi_endpoint_check }}
       initContainers:
         {{- if .Values.otel.metrics.prometheus_check }}
