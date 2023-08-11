@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for events-collector-deployment
+templates:
+  - events-collector-deployment.yaml
+  - events-collector-config-map.yaml
+  - common-env-config-map.yaml
+tests:
+  - it: Events collector spec should match snapshot when using default values
+    template: events-collector-deployment.yaml
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
