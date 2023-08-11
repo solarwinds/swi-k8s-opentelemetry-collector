@@ -108,8 +108,14 @@ processors:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
 
 receivers:
-  journald:
+  journald/runlogs:
     directory: /run/log/journal
+    units:
+      - kubelet
+      - docker
+      - containerd
+  journald/varlogs:
+    directory: /var/log/journal
     units:
       - kubelet
       - docker
@@ -260,7 +266,8 @@ service:
         - resource/journal
         - batch
       receivers:
-        - journald
+        - journald/runlogs
+        - journald/varlogs
 {{- end }}
   telemetry:
 {{- if .Values.otel.logs.telemetry.logs.enabled }}
