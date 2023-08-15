@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Changed
+ ### Changed
 - Log collection DaemonSet now restrict where it runs:
   - Fargate nodes are excluded
   - Only linux nodes with amd64 architecture are included
