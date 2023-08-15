@@ -12,7 +12,7 @@ def get_all_log_resources(log_bulk):
     return result
 
 def get_all_bodies(log_bulk):
-    result = [records["body"]["stringValue"]
+    result = [records["body"]["stringValue"] if "stringValue" in records["body"] else records["body"]
               for resource in log_bulk["resourceLogs"]
               for scope in resource["scopeLogs"]
               for records in scope["logRecords"]

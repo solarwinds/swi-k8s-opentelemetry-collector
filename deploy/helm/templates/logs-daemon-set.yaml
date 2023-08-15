@@ -125,6 +125,9 @@ spec:
             - mountPath: /run/log/journal
               name: runlogjournal
               readOnly: true
+            - mountPath: /var/log/journal
+              name: varlogjournal
+              readOnly: true
             - name: logcheckpoints
               mountPath: {{ .Values.otel.logs.filestorage.directory }}
       volumes:
@@ -140,6 +143,9 @@ spec:
         - name: runlogjournal
           hostPath:
             path: /run/log/journal
+        - name: varlogjournal
+          hostPath:
+            path: /var/log/journal
         - name: logcheckpoints
           hostPath:
             path: {{ printf "%s/%s" .Values.otel.logs.filestorage.directory .Values.cluster.uid }}

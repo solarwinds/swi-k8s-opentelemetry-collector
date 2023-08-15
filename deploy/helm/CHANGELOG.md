@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fargate nodes are excluded
   - Only linux nodes with amd64 architecture are included
 
+### Fixed
+- Fixed Journal log collection on EKS (and other environment where journal logs are stored in `/var/log/journal`)
+
 ## [2.7.0-alpha.2] - 2023-07-18
 
 ### Changed
