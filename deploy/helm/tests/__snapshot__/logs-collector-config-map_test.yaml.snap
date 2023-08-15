@@ -192,8 +192,14 @@ Logs config should match snapshot when using default values:
           poll_interval: 200ms
           start_at: end
           storage: file_storage
-        journald:
+        journald/runlogs:
           directory: /run/log/journal
+          units:
+          - kubelet
+          - docker
+          - containerd
+        journald/varlogs:
+          directory: /var/log/journal
           units:
           - kubelet
           - docker
@@ -225,7 +231,8 @@ Logs config should match snapshot when using default values:
             - resource/journal
             - batch
             receivers:
-            - journald
+            - journald/runlogs
+            - journald/varlogs
         telemetry:
           logs:
             level: info
