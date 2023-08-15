@@ -1,0 +1,236 @@
+Logs config should match snapshot when using default values:
+  1: |
+    common.proto: ""
+    logs.config: |
+      exporters:
+        otlp:
+          endpoint: ${OTEL_ENVOY_ADDRESS}
+          headers:
+            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          tls:
+            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      extensions:
+        file_storage:
+          directory: /var/lib/swo/checkpoints
+          timeout: 5s
+        health_check: {}
+        memory_ballast:
+          size_mib: 200
+      processors:
+        batch:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
+          timeout: 1s
+        filter:
+          logs:
+            include:
+              match_type: regexp
+              record_attributes:
+              - key: k8s.namespace.name
+                value: ^kube-.*$
+        groupbyattrs/all:
+          keys:
+          - k8s.container.name
+          - k8s.namespace.name
+          - k8s.pod.name
+          - k8s.pod.uid
+          - host.hostname
+          - service.name
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 550
+          spike_limit_mib: 300
+        resource/container:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: container
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: k8s.node.name
+            value: ${NODE_NAME}
+        resource/journal:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: journal
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: k8s.node.name
+            value: ${NODE_NAME}
+        transform/syslogify:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set( attributes["syslog.facility"], 1 )
+            - set( attributes["syslog.version"], 1 )
+            - set( attributes["host.hostname"], attributes["k8s.pod.name"])
+            - set( attributes["service.name"], attributes["k8s.container.name"])
+            - set( attributes["syslog.procid"], attributes["run_id"])
+            - set( attributes["syslog.msgid"], attributes["stream"])
+      receivers:
+        filelog:
+          encoding: utf-8
+          exclude:
+          - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
+          fingerprint_size: 1kb
+          include:
+          - /var/log/pods/*/*/*.log
+          include_file_name: false
+          include_file_path: true
+          max_concurrent_files: 10
+          max_log_size: 1MiB
+          operators:
+          - id: get-format
+            routes:
+            - expr: body matches "^\\{"
+              output: parser-docker
+            - expr: body matches "^[^ Z]+ "
+              output: parser-crio
+            - expr: body matches "^[^ Z]+Z"
+              output: parser-containerd
+            type: router
+          - id: parser-crio
+            output: merge-cri-lines
+            parse_to: body
+            regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
+            timestamp:
+              layout: "2006-01-02T15:04:05.999999999-07:00"
+              layout_type: gotime
+              parse_from: body.time
+            type: regex_parser
+          - id: parser-containerd
+            output: merge-cri-lines
+            parse_to: body
+            regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
+            timestamp:
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+              parse_from: body.time
+            type: regex_parser
+          - id: parser-docker
+            output: merge-docker-lines
+            parse_to: body
+            timestamp:
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+              parse_from: body.time
+            type: json_parser
+          - combine_field: body.log
+            combine_with: ""
+            id: merge-docker-lines
+            is_last_entry: body.log matches "\n$"
+            output: merge-multiline-logs
+            source_identifier: attributes["log.file.path"]
+            type: recombine
+          - combine_field: body.log
+            combine_with: ""
+            id: merge-cri-lines
+            is_last_entry: body.logtag == "F"
+            output: merge-multiline-logs
+            overwrite_with: newest
+            source_identifier: attributes["log.file.path"]
+            type: recombine
+          - combine_field: body.log
+            combine_with: ""
+            id: merge-multiline-logs
+            is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
+            output: extract-metadata-from-filepath
+            source_identifier: attributes["log.file.path"]
+            type: recombine
+          - id: extract-metadata-from-filepath
+            parse_from: attributes["log.file.path"]
+            regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$
+            type: regex_parser
+          - from: body.stream
+            id: move-attributes
+            to: attributes["stream"]
+            type: move
+          - from: attributes.container_name
+            to: attributes["k8s.container.name"]
+            type: move
+          - from: attributes.namespace
+            to: attributes["k8s.namespace.name"]
+            type: move
+          - from: attributes.pod_name
+            to: attributes["k8s.pod.name"]
+            type: move
+          - from: attributes.run_id
+            to: attributes["run_id"]
+            type: move
+          - from: attributes.uid
+            to: attributes["k8s.pod.uid"]
+            type: move
+          - field: attributes["log.file.path"]
+            type: remove
+          - field: body.time
+            type: remove
+          - from: body.log
+            to: body
+            type: move
+          poll_interval: 200ms
+          start_at: end
+          storage: file_storage
+        journald:
+          directory: /run/log/journal
+          units:
+          - kubelet
+          - docker
+          - containerd
+      service:
+        extensions:
+        - file_storage
+        - health_check
+        - memory_ballast
+        pipelines:
+          logs:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - filter
+            - transform/syslogify
+            - groupbyattrs/all
+            - resource/container
+            - batch
+            receivers:
+            - filelog
+          logs/2:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - groupbyattrs/all
+            - resource/journal
+            - batch
+            receivers:
+            - journald
+        telemetry:
+          logs:
+            level: info
+          metrics:
+            address: 0.0.0.0:8888
+    logs.proto: ""
+    logs_service.proto: ""
+    resource.proto: ""

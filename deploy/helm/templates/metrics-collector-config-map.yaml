@@ -8,7 +8,7 @@ metadata:
 {{ include "common.labels" . | indent 4 }}
 data:
   metrics.config: |
-{{ tpl (.Files.Get "metrics-collector-config.yaml") . | indent 8 }}
+{{ tpl (.Files.Get "metrics-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
 
   logs_service.proto: |
 {{ tpl (.Files.Get "proto/collector/logs/v1/logs_service.proto") . | indent 8 }}
