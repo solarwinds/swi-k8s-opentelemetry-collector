@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0-alpha.3] - 2023-08-17
+
 ### Added
 - There are new Helm settings `aws_fargate.enabled` and `aws_fargate.logs.enabled` that allow the k8s collector Helm chart to setup AWS EKS Fargate logging ConfigMap
 
