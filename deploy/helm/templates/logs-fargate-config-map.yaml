@@ -34,12 +34,13 @@ data:
         Match *
         Add sw.k8s.cluster.uid {{ .Values.cluster.uid }}
         Add sw.k8s.log.type container
+        Add sw.k8s.agent.manifest.version {{ quote .Chart.Version }}
   output.conf: |
     [OUTPUT]
         Name cloudwatch_logs
         Match kube.*
         region {{ required "A valid value for aws_fargate.logs.region is required!" .Values.aws_fargate.logs.region }}
-        log_group_name aws/eks/{{ $name }}/application
+        log_group_name /swo/fargate/{{ $name }}
         log_stream_prefix from-fluent-bit-
         log_retention_days 30
         auto_create_group true
