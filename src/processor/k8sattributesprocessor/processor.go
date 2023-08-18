@@ -39,14 +39,15 @@ const (
 )
 
 type kubernetesprocessor struct {
-	logger          *zap.Logger
-	apiConfig       k8sconfig.APIConfig
-	kc              kube.Client
-	passthroughMode bool
-	rules           kube.ExtractionRules
-	filters         kube.Filters
-	podAssociations []kube.Association
-	podIgnore       kube.Excludes
+	logger             *zap.Logger
+	apiConfig          k8sconfig.APIConfig
+	kc                 kube.Client
+	passthroughMode    bool
+	setObjectExistence bool
+	rules              kube.ExtractionRules
+	filters            kube.Filters
+	podAssociations    []kube.Association
+	podIgnore          kube.Excludes
 
 	resources map[string]*kubernetesProcessorResource
 }
