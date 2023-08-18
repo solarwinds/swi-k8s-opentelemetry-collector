@@ -34,6 +34,10 @@ type Config struct {
 	// directly from services to be able to correctly detect the pod IPs.
 	Passthrough bool `mapstructure:"passthrough"`
 
+	// Indicates that it will instrument `sw.k8s.<object type>.found` attributes 
+	// that will be set to true when the object is found in the cluster and false otherwise
+	SetObjectExistence bool `mapstructure:"set_object_existence"`
+
 	// Extract section allows specifying extraction rules to extract
 	// data from k8s pod specs
 	Extract ExtractConfig `mapstructure:"extract"`
