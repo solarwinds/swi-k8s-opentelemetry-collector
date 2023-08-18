@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Adjusted Log group name used for Fargate logs
+- Adjusted Events collection to not produce resource attributes for entities that does not exists in Kubernetes
 
 ## [2.7.0-alpha.3] - 2023-08-17
 

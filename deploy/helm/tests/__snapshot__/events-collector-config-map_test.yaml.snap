@@ -133,6 +133,7 @@ Events config should match snapshot when using default values:
               - from: replicaset
                 key_regex: (.*)
                 tag_name: k8s.replicaset.labels.$$1
+          set_object_existence: true
           statefulset:
             association:
             - sources:
@@ -166,6 +167,26 @@ Events config should match snapshot when using default values:
           - action: insert
             key: sw.k8s.log.type
             value: event
+        transform/cleanup_attributes_for_nonexisting_entities:
+          log_statements:
+          - context: log
+            statements:
+            - delete(resource.attributes["k8s.pod.name"]) where resource.attributes["sw.k8s.pod.exists"]
+              == "false"
+            - delete(resource.attributes["k8s.deployment.name"]) where resource.attributes["sw.k8s.deployment.exists"]
+              == "false"
+            - delete(resource.attributes["k8s.statefulset.name"]) where resource.attributes["sw.k8s.statefulset.exists"]
+              == "false"
+            - delete(resource.attributes["k8s.replicaset.name"]) where resource.attributes["sw.k8s.replicaset.exists"]
+              == "false"
+            - delete(resource.attributes["k8s.daemonset.name"]) where resource.attributes["sw.k8s.daemonset.exists"]
+              == "false"
+            - delete(resource.attributes["k8s.job.name"]) where resource.attributes["sw.k8s.job.exists"]
+              == "false"
+            - delete(resource.attributes["k8s.cronjob.name"]) where resource.attributes["sw.k8s.cronjob.exists"]
+              == "false"
+            - delete(resource.attributes["k8s.node.name"]) where resource.attributes["sw.k8s.node.exists"]
+              == "false"
         transform/entity_attributes:
           log_statements:
           - context: log
@@ -258,6 +279,7 @@ Events config should match snapshot when using default values:
             - transform/entity_attributes
             - resource/events
             - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
             - batch
             receivers:
             - k8s_events
