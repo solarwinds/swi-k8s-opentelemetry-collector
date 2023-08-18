@@ -185,6 +185,7 @@ def get_merged_json(content):
     for resource in result["resourceMetrics"]:
         sort_attributes(resource["resource"])
         for scope in resource["scopeMetrics"]:
+            scope["scope"] = {}
             scope["metrics"] = sorted(
                 scope["metrics"], key=lambda m: m["name"])
             for metric in scope["metrics"]:
