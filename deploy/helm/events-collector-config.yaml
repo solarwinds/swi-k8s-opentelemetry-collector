@@ -55,22 +55,22 @@ processors:
     log_statements:
       - context: log
         statements:
-          - delete(resource.attributes["k8s.pod.name"]) where resource.attributes["sw.k8s.pod.exists"] == "false"
-          - delete(resource.attributes["k8s.deployment.name"]) where resource.attributes["sw.k8s.deployment.exists"] == "false"
-          - delete(resource.attributes["k8s.statefulset.name"]) where resource.attributes["sw.k8s.statefulset.exists"] == "false"
-          - delete(resource.attributes["k8s.replicaset.name"]) where resource.attributes["sw.k8s.replicaset.exists"] == "false"
-          - delete(resource.attributes["k8s.daemonset.name"]) where resource.attributes["sw.k8s.daemonset.exists"] == "false"
-          - delete(resource.attributes["k8s.job.name"]) where resource.attributes["sw.k8s.job.exists"] == "false"
-          - delete(resource.attributes["k8s.cronjob.name"]) where resource.attributes["sw.k8s.cronjob.exists"] == "false"
-          - delete(resource.attributes["k8s.node.name"]) where resource.attributes["sw.k8s.node.exists"] == "false"
-          - delete(resource.attributes["sw.k8s.pod.exists"])
-          - delete(resource.attributes["sw.k8s.deployment.exists"])
-          - delete(resource.attributes["sw.k8s.statefulset.exists"])
-          - delete(resource.attributes["sw.k8s.replicaset.exists"])
-          - delete(resource.attributes["sw.k8s.daemonset.exists"])
-          - delete(resource.attributes["sw.k8s.job.exists"])
-          - delete(resource.attributes["sw.k8s.cronjob.exists"])
-          - delete(resource.attributes["sw.k8s.node.exists"])
+          - delete_key(resource.attributes, "k8s.pod.name") where resource.attributes["sw.k8s.pod.found"] == "false"
+          - delete_key(resource.attributes, "k8s.deployment.name") where resource.attributes["sw.k8s.deployment.found"] == "false"
+          - delete_key(resource.attributes, "k8s.statefulset.name") where resource.attributes["sw.k8s.statefulset.found"] == "false"
+          - delete_key(resource.attributes, "k8s.replicaset.name") where resource.attributes["sw.k8s.replicaset.found"] == "false"
+          - delete_key(resource.attributes, "k8s.daemonset.name") where resource.attributes["sw.k8s.daemonset.found"] == "false"
+          - delete_key(resource.attributes, "k8s.job.name") where resource.attributes["sw.k8s.job.found"] == "false"
+          - delete_key(resource.attributes, "k8s.cronjob.name") where resource.attributes["sw.k8s.cronjob.found"] == "false"
+          - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"] == "false"
+          - delete_key(resource.attributes, "sw.k8s.pod.found")
+          - delete_key(resource.attributes, "sw.k8s.deployment.found")
+          - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+          - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+          - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+          - delete_key(resource.attributes, "sw.k8s.job.found")
+          - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+          - delete_key(resource.attributes, "sw.k8s.node.found")
   resource/events:
     attributes:
       # Collector and Manifest version
