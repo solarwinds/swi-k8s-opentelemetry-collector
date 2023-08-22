@@ -24,13 +24,14 @@ Fargate logging ConfigMap spec should include additional filters when they are c
           Match *
           Add sw.k8s.cluster.uid <CLUSTER_UID>
           Add sw.k8s.log.type container
+          Add sw.k8s.agent.manifest.version "2.7.0-alpha.4"
     flb_log_cw: "false"
     output.conf: |
       [OUTPUT]
           Name cloudwatch_logs
           Match kube.*
           region test-region
-          log_group_name aws/eks/cluster_name/application
+          log_group_name /swo/fargate/cluster_name
           log_stream_prefix from-fluent-bit-
           log_retention_days 30
           auto_create_group true
@@ -63,13 +64,14 @@ Fargate logging ConfigMap spec should match snapshot when Fargate logging is ena
           Match *
           Add sw.k8s.cluster.uid <CLUSTER_UID>
           Add sw.k8s.log.type container
+          Add sw.k8s.agent.manifest.version "2.7.0-alpha.4"
     flb_log_cw: "false"
     output.conf: |
       [OUTPUT]
           Name cloudwatch_logs
           Match kube.*
           region test-region
-          log_group_name aws/eks/cluster_name/application
+          log_group_name /swo/fargate/cluster_name
           log_stream_prefix from-fluent-bit-
           log_retention_days 30
           auto_create_group true

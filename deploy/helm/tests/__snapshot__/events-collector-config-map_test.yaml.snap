@@ -133,6 +133,7 @@ Events config should match snapshot when using default values:
               - from: replicaset
                 key_regex: (.*)
                 tag_name: k8s.replicaset.labels.$$1
+          set_object_existence: true
           statefulset:
             association:
             - sources:
@@ -166,6 +167,34 @@ Events config should match snapshot when using default values:
           - action: insert
             key: sw.k8s.log.type
             value: event
+        transform/cleanup_attributes_for_nonexisting_entities:
+          log_statements:
+          - context: log
+            statements:
+            - delete_key(resource.attributes, "k8s.pod.name") where resource.attributes["sw.k8s.pod.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.deployment.name") where resource.attributes["sw.k8s.deployment.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.statefulset.name") where resource.attributes["sw.k8s.statefulset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.replicaset.name") where resource.attributes["sw.k8s.replicaset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.daemonset.name") where resource.attributes["sw.k8s.daemonset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.job.name") where resource.attributes["sw.k8s.job.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.cronjob.name") where resource.attributes["sw.k8s.cronjob.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
+              == "false"
+            - delete_key(resource.attributes, "sw.k8s.pod.found")
+            - delete_key(resource.attributes, "sw.k8s.deployment.found")
+            - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+            - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+            - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+            - delete_key(resource.attributes, "sw.k8s.job.found")
+            - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+            - delete_key(resource.attributes, "sw.k8s.node.found")
         transform/entity_attributes:
           log_statements:
           - context: log
@@ -258,6 +287,7 @@ Events config should match snapshot when using default values:
             - transform/entity_attributes
             - resource/events
             - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
             - batch
             receivers:
             - k8s_events

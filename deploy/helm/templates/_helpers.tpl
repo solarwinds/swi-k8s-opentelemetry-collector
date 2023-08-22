@@ -136,6 +136,7 @@ or attributes["k8s.event.reason"] == "Unhealthy"
 {{- define "common.k8s-instrumentation" -}}
 auth_type: "serviceAccount"
 passthrough: false
+set_object_existence: {{ index . 3 }}
 extract:
   metadata:
     - k8s.deployment.name
