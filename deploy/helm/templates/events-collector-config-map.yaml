@@ -8,5 +8,5 @@ metadata:
 {{ include "common.labels" . | indent 4 }}
 data:
   events.config: |
-{{ tpl (.Files.Get "events-collector-config.yaml") . | indent 8 }}
+{{ tpl (.Files.Get "events-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
 {{- end }}

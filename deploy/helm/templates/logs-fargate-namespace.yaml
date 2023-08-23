@@ -1,0 +1,9 @@
+{{- if and .Values.aws_fargate.enabled .Values.aws_fargate.logs.enabled }}
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: aws-observability
+  labels:
+    aws-observability: enabled
+{{ include "common.labels" . | indent 4 }}
+{{- end }}

@@ -52,7 +52,7 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 Event which are considered as error
 */}}
 {{- define "common.events-error-conditions" -}}
-attributes["k8s.event.reason"] == "Failed" 
+attributes["k8s.event.reason"] == "Failed"
 or attributes["k8s.event.reason"] == "BackOff"
 or attributes["k8s.event.reason"] == "FailedKillPod"
 or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
@@ -85,8 +85,8 @@ or attributes["k8s.event.reason"] == "FailedPreStopHook"
 Event which are considered as warning
 */}}
 {{- define "common.events-warning-conditions" -}}
-attributes["k8s.event.reason"] == "ProbeWarning" 
-or attributes["k8s.event.reason"] == "Unhealthy" 
+attributes["k8s.event.reason"] == "ProbeWarning"
+or attributes["k8s.event.reason"] == "Unhealthy"
 {{- end -}}
 
 {{- define "common.k8s-instrumentation.resource.namespaced" -}}
@@ -136,6 +136,7 @@ or attributes["k8s.event.reason"] == "Unhealthy"
 {{- define "common.k8s-instrumentation" -}}
 auth_type: "serviceAccount"
 passthrough: false
+set_object_existence: {{ index . 3 }}
 extract:
   metadata:
     - k8s.deployment.name

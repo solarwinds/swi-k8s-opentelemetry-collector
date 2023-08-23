@@ -51,6 +51,26 @@ processors:
           - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Node"
           - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"]) where attributes["k8s.namespace.name"] != nil
           - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"] != nil
+  transform/cleanup_attributes_for_nonexisting_entities:
+    log_statements:
+      - context: log
+        statements:
+          - delete_key(resource.attributes, "k8s.pod.name") where resource.attributes["sw.k8s.pod.found"] == "false"
+          - delete_key(resource.attributes, "k8s.deployment.name") where resource.attributes["sw.k8s.deployment.found"] == "false"
+          - delete_key(resource.attributes, "k8s.statefulset.name") where resource.attributes["sw.k8s.statefulset.found"] == "false"
+          - delete_key(resource.attributes, "k8s.replicaset.name") where resource.attributes["sw.k8s.replicaset.found"] == "false"
+          - delete_key(resource.attributes, "k8s.daemonset.name") where resource.attributes["sw.k8s.daemonset.found"] == "false"
+          - delete_key(resource.attributes, "k8s.job.name") where resource.attributes["sw.k8s.job.found"] == "false"
+          - delete_key(resource.attributes, "k8s.cronjob.name") where resource.attributes["sw.k8s.cronjob.found"] == "false"
+          - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"] == "false"
+          - delete_key(resource.attributes, "sw.k8s.pod.found")
+          - delete_key(resource.attributes, "sw.k8s.deployment.found")
+          - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+          - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+          - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+          - delete_key(resource.attributes, "sw.k8s.job.found")
+          - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+          - delete_key(resource.attributes, "sw.k8s.node.found")
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -77,7 +97,7 @@ processors:
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   k8sattributes:
-{{ include "common.k8s-instrumentation" (tuple . .Values.otel.events.k8s_instrumentation.annotations.enabled .Values.otel.events.k8s_instrumentation.labels.enabled) | indent 4 }}
+{{ include "common.k8s-instrumentation" (tuple . .Values.otel.events.k8s_instrumentation.annotations.enabled .Values.otel.events.k8s_instrumentation.labels.enabled "true") | indent 4 }}
 {{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
   resource/k8sattributes_labels_filter:
     attributes:
@@ -119,6 +139,7 @@ service:
 {{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
         - resource/k8sattributes_annotations_filter
 {{- end }}
+        - transform/cleanup_attributes_for_nonexisting_entities
         - batch
       receivers:
         - k8s_events

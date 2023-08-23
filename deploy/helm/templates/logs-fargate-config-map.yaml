@@ -1,0 +1,54 @@
+{{- if and .Values.aws_fargate.enabled .Values.aws_fargate.logs.enabled }}
+{{- $pattern := "[^a-zA-Z0-9\\.\\-_/#]" -}}
+{{- $replacement := "" -}}
+{{- $name := regexReplaceAll $pattern .Values.cluster.name $replacement | default .Values.cluster.uid | lower | trunc 512 -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-logging
+  namespace: aws-observability
+  labels:
+{{ include "common.labels" . | indent 4 }}
+data:
+  flb_log_cw: "false"  # Set to true to ship Fluent Bit process logs to CloudWatch.
+  filters.conf: |
+    [FILTER]
+        Name parser
+        Match *
+        Key_name log
+        Parser crio
+    [FILTER]
+        Name kubernetes
+        Match kube.*
+        Merge_Log On
+        Keep_Log Off
+        Buffer_Size 0
+        Kube_Meta_Cache_TTL 300s
+        Labels Off
+        Annotations Off
+{{- if .Values.aws_fargate.logs.filters }}
+{{ toString .Values.aws_fargate.logs.filters | indent 4 }}
+{{- end }}
+    [FILTER]
+        Name modify
+        Match *
+        Add sw.k8s.cluster.uid {{ .Values.cluster.uid }}
+        Add sw.k8s.log.type container
+        Add sw.k8s.agent.manifest.version {{ quote .Chart.Version }}
+  output.conf: |
+    [OUTPUT]
+        Name cloudwatch_logs
+        Match kube.*
+        region {{ required "A valid value for aws_fargate.logs.region is required!" .Values.aws_fargate.logs.region }}
+        log_group_name /swo/fargate/{{ $name }}
+        log_stream_prefix from-fluent-bit-
+        log_retention_days 30
+        auto_create_group true
+  parsers.conf: |
+    [PARSER]
+        Name crio
+        Format Regex
+        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>P|F) (?<log>.*)$
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+{{- end }}

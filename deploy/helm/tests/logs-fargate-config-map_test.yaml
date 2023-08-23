@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for logs-fargate-config-map
+templates:
+  - logs-fargate-config-map.yaml
+tests:
+  - it: Fargate logging ConfigMap spec should match snapshot when Fargate logging is enabled
+    template: logs-fargate-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+      aws_fargate.logs.enabled: true
+      aws_fargate.logs.region: test-region
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Fargate logging ConfigMap should not be generated when using default values
+    template: logs-fargate-config-map.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: Fargate logging ConfigMap spec should include additional filters when they are configured in values.yaml
+    template: logs-fargate-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+      aws_fargate.logs.enabled: true
+      aws_fargate.logs.region: test-region
+      aws_fargate.logs.filters: |
+        [FILTER]
+            Name filter_name
+            Match *
+    asserts:
+      - matchSnapshot:
+          path: data

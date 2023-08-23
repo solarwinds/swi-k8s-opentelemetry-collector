@@ -1,0 +1,58 @@
+Events collector spec should match snapshot when using default values:
+  1: |
+    containers:
+      - command:
+          - /swi-otelcol
+          - --config=/conf/relay.yaml
+        env:
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:0.8.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 13133
+        name: swi-opentelemetry-collector
+        ports:
+          - containerPort: 8888
+            name: http
+            protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 13133
+        resources:
+          limits:
+            memory: 1000Mi
+          requests:
+            memory: 1000Mi
+        securityContext: {}
+        volumeMounts:
+          - mountPath: /conf
+            name: opentelemetry-collector-configmap
+            readOnly: true
+    nodeSelector:
+      kubernetes.io/arch: amd64
+      kubernetes.io/os: linux
+    securityContext: {}
+    serviceAccountName: RELEASE-NAME-swo-k8s-collector
+    volumes:
+      - configMap:
+          items:
+            - key: events.config
+              path: relay.yaml
+          name: RELEASE-NAME-swo-k8s-collector-events-config
+        name: opentelemetry-collector-configmap

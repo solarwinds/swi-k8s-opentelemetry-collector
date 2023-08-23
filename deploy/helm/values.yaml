@@ -45,7 +45,7 @@ otel:
     kube-state-metrics:
       # URL of kube-state-metrics where to scrape
       url: ""
-      
+
       # Prometheus URL scheme. It can take the values `http` or `https`
       scheme: http
 
@@ -113,7 +113,6 @@ otel:
         # excludePattern: ".*internal.*|.*private.*"
         excludePattern:
 
-
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
     telemetry:
@@ -139,6 +138,12 @@ otel:
 
           # Timeout if metrics can't be retrieved in given time interval
           scrapeTimeout: 25s
+
+    # Scheduling configurations
+    # By default: set to run on linux amd64 nodes
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
 
   # Configuration for Events collection
   events:
@@ -200,7 +205,7 @@ otel:
 
           # Timeout if metrics can't be retrieved in given time interval
           scrapeTimeout: 25s
-    
+
     # k8s_instrumentation controls the automatic extraction of Kubernetes metadata from resources.
     # It instruments OpenTelemetry (OTEL) resources being sent.
     k8s_instrumentation:
@@ -221,6 +226,12 @@ otel:
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
         excludePattern:
+
+    # Scheduling configurations
+    # By default: set to run on linux amd64 nodes
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
 
   # Configuration for Logs collection
   logs:
@@ -252,7 +263,7 @@ otel:
     #   * k8s.pod.uid - pod's uid
     container: true
 
-    # This filter is applied after metric processing, it is the place where metrics could be filtered out
+    # This filter is applied after initial log processing, it is the place where logs could be filtered out
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     filter:
       include:
@@ -316,10 +327,12 @@ otel:
       limits:
         memory: 700Mi
 
-    # This default tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
-    tolerations:
-      - operator: Exists
-        effect: NoSchedule
+    # Scheduling configurations
+    nodeSelector: {}
+    # By default: tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
+    tolerations: []
+    # By default: affinity is set to run the DaemonSet on linux amd64.
+    affinity: {}
 
     # Properties that can be configured on filelog reciever. For full description of properties
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
@@ -394,3 +407,20 @@ swoagent:
     requests:
       memory: 800Mi
       cpu: 100m
+
+aws_fargate:
+  # Enable support for AWS EKS Fargate environment
+  enabled: false
+
+  # Configuration for Logs collection
+  logs:
+    # Enable deployment of AWS FluentBit to the Fargate cluster
+    enabled: false
+
+    # AWS region where the Fargate cluster is running
+    region:
+
+    # Include additional FluentBit filters
+    # see https://docs.fluentbit.io/manual/pipeline/filters
+    # NOTE: The FluentBit configuration expects four spaces as indentation within sections
+    filters:
