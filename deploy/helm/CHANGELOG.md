@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0-alpha.5] - 2023-08-22
+
+### Changed
+- Adjusted bundled prometheus to not run on Fargate nodes by default
+- Allowed use of `prometheus.forceNamespace` option of bundled prometheus, to force namespace where prometheus is deployed
+
 ## [2.7.0-alpha.4] - 2023-08-17
 
 ### Changed
