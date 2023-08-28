@@ -196,6 +196,10 @@ func createProcessorOpts(cfg component.Config) []option {
 		opts = append(opts, withPassthrough())
 	}
 
+	if oCfg.SetObjectExistence {
+		opts = append(opts, withSetObjectExistence())
+	}
+
 	// extraction rules
 	opts = append(opts, withExtractMetadata(oCfg.Extract.Metadata...))
 	opts = append(opts, withExtractLabels(oCfg.Extract.Labels...))

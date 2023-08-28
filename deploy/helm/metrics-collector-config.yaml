@@ -12,7 +12,7 @@ extensions:
 
 processors:
   k8sattributes:
-{{ include "common.k8s-instrumentation" (tuple . .Values.otel.metrics.k8s_instrumentation.annotations.enabled .Values.otel.metrics.k8s_instrumentation.labels.enabled) | indent 4 }}
+{{ include "common.k8s-instrumentation" (tuple . .Values.otel.metrics.k8s_instrumentation.annotations.enabled .Values.otel.metrics.k8s_instrumentation.labels.enabled "false") | indent 4 }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
   resource/k8sattributes_labels_filter:
     attributes:

@@ -7,10 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0-alpha.5] - 2023-08-22
+
+### Changed
+- Adjusted bundled prometheus to not run on Fargate nodes by default
+- Allowed use of `prometheus.forceNamespace` option of bundled prometheus, to force namespace where prometheus is deployed
+
+## [2.7.0-alpha.4] - 2023-08-17
+
+### Changed
+- Adjusted Log group name used for Fargate logs
+- Adjusted Events collection to not produce resource attributes for entities that does not exists in Kubernetes
+
+## [2.7.0-alpha.3] - 2023-08-17
+
+### Added
+- There are new Helm settings `aws_fargate.enabled` and `aws_fargate.logs.enabled` that allow the k8s collector Helm chart to setup AWS EKS Fargate logging ConfigMap
+
 ### Changed
 - Log collection DaemonSet now restrict where it runs:
   - Fargate nodes are excluded
   - Only linux nodes with amd64 architecture are included
+
+### Fixed
+- Fixed Journal log collection on EKS (and other environment where journal logs are stored in `/var/log/journal`)
 
 ## [2.7.0-alpha.2] - 2023-07-18
 

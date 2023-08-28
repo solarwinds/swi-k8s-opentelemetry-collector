@@ -114,6 +114,30 @@ In order to change Prometheus endpoint that is hosted on HTTPS you can adjust sk
 - add `otel.metrics.prometheus.scheme: https`
 - update `otel.metrics.prometheus.url: <remote prometheus>`
 
+## Helm Unit tests
+
+Helm Unit tests are located in `deploy/helm/tests` and are supposed to verify how Helm chart is rendered.
+
+### Setup
+
+Run in bash (or Git Bash):
+
+```shell
+helm plugin install https://github.com/helm-unittest/helm-unittest.git
+```
+
+### Run tests locally
+
+```shell
+helm unittest deploy/helm
+```
+
+### Refresh snapshot tests
+
+```shell
+helm unittest -u deploy/helm
+```
+
 ## Integration tests
 Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
 

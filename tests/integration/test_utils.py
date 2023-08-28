@@ -12,7 +12,7 @@ def get_all_log_resources(log_bulk):
     return result
 
 def get_all_bodies(log_bulk):
-    result = [records["body"]["stringValue"]
+    result = [records["body"]["stringValue"] if "stringValue" in records["body"] else records["body"]
               for resource in log_bulk["resourceLogs"]
               for scope in resource["scopeLogs"]
               for records in scope["logRecords"]
@@ -185,6 +185,7 @@ def get_merged_json(content):
     for resource in result["resourceMetrics"]:
         sort_attributes(resource["resource"])
         for scope in resource["scopeMetrics"]:
+            scope["scope"] = {}
             scope["metrics"] = sorted(
                 scope["metrics"], key=lambda m: m["name"])
             for metric in scope["metrics"]:

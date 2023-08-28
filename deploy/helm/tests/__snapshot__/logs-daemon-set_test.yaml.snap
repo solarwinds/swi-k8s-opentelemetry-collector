@@ -43,7 +43,7 @@ DaemonSet spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:0.8.0
+        image: solarwinds/swi-opentelemetry-collector:0.8.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -79,6 +79,9 @@ DaemonSet spec should match snapshot when using default values:
           - mountPath: /run/log/journal
             name: runlogjournal
             readOnly: true
+          - mountPath: /var/log/journal
+            name: varlogjournal
+            readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
     securityContext:
@@ -102,6 +105,9 @@ DaemonSet spec should match snapshot when using default values:
       - hostPath:
           path: /run/log/journal
         name: runlogjournal
+      - hostPath:
+          path: /var/log/journal
+        name: varlogjournal
       - hostPath:
           path: /var/lib/swo/checkpoints/<CLUSTER_UID>
           type: DirectoryOrCreate

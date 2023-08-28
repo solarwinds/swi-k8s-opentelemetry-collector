@@ -58,6 +58,16 @@ func processGenericResource(
 					resource.Attributes().PutStr(key, val)
 				}
 			}
+
+			if kp.setObjectExistence {
+				// add attribute indicating that the resource was found
+				resource.Attributes().PutStr(fmt.Sprintf("sw.k8s.%s.found", resourceType), "true")
+			}
+		} else {
+			if kp.setObjectExistence {
+				// add attribute indicating that the resource was not found
+				resource.Attributes().PutStr(fmt.Sprintf("sw.k8s.%s.found", resourceType), "false")
+			}
 		}
 	}
 }
