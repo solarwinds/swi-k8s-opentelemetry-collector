@@ -340,9 +340,6 @@ Metrics config should match snapshot when using default values:
             from_attribute: node
             key: k8s.node.name
           - action: insert
-            from_attribute: kubernetes_io_hostname
-            key: k8s.node.name
-          - action: insert
             from_attribute: instance
             key: k8s.node.name
           include:
@@ -667,6 +664,7 @@ Metrics config should match snapshot when using default values:
             - k8s.job.name
             - k8s.cronjob.name
             - k8s.statefulset.name
+            - k8s.node.name
           job:
             association:
             - sources:
@@ -750,7 +748,7 @@ Metrics config should match snapshot when using default values:
               - from: replicaset
                 key_regex: (.*)
                 tag_name: k8s.replicaset.labels.$$1
-          set_object_existence: false
+          set_object_existence: true
           statefulset:
             association:
             - sources:
@@ -1914,6 +1912,20 @@ Metrics config should match snapshot when using default values:
             - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
               == true and IsMatch(attributes["condition"], "^true$") == true and value_double
               > 0
+        transform/cleanup_attributes_for_nonexisting_entities:
+          metric_statements:
+          - context: metric
+            statements:
+            - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
+              == "false"
+            - delete_key(resource.attributes, "sw.k8s.pod.found")
+            - delete_key(resource.attributes, "sw.k8s.deployment.found")
+            - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+            - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+            - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+            - delete_key(resource.attributes, "sw.k8s.job.found")
+            - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+            - delete_key(resource.attributes, "sw.k8s.node.found")
       receivers:
         k8s_events: null
         prometheus/kube-state-metrics:
@@ -1999,6 +2011,7 @@ Metrics config should match snapshot when using default values:
             - filter
             - resource/metrics
             - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
             - batch
             receivers:
             - forward/prometheus
