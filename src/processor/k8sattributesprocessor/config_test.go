@@ -49,6 +49,7 @@ func TestLoadConfig(t *testing.T) {
 			expected: &Config{
 				APIConfig:   k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
 				Passthrough: false,
+				SetObjectExistence: true,
 				Extract: ExtractConfig{
 					Metadata: []string{"k8s.pod.name", "k8s.pod.uid", "k8s.deployment.name", "k8s.namespace.name", "k8s.node.name", "k8s.pod.start_time"},
 					Annotations: []FieldExtractConfig{

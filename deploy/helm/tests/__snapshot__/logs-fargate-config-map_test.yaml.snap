@@ -1,0 +1,84 @@
+Fargate logging ConfigMap spec should include additional filters when they are configured in values.yaml:
+  1: |
+    filters.conf: |
+      [FILTER]
+          Name parser
+          Match *
+          Key_name log
+          Parser crio
+      [FILTER]
+          Name kubernetes
+          Match kube.*
+          Merge_Log On
+          Keep_Log Off
+          Buffer_Size 0
+          Kube_Meta_Cache_TTL 300s
+          Labels Off
+          Annotations Off
+      [FILTER]
+          Name filter_name
+          Match *
+
+      [FILTER]
+          Name modify
+          Match *
+          Add sw.k8s.cluster.uid <CLUSTER_UID>
+          Add sw.k8s.log.type container
+          Add sw.k8s.agent.manifest.version "2.7.0-alpha.5"
+    flb_log_cw: "false"
+    output.conf: |
+      [OUTPUT]
+          Name cloudwatch_logs
+          Match kube.*
+          region test-region
+          log_group_name /swo/fargate/cluster_name
+          log_stream_prefix from-fluent-bit-
+          log_retention_days 30
+          auto_create_group true
+    parsers.conf: |-
+      [PARSER]
+          Name crio
+          Format Regex
+          Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>P|F) (?<log>.*)$
+          Time_Key time
+          Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+Fargate logging ConfigMap spec should match snapshot when Fargate logging is enabled:
+  1: |
+    filters.conf: |
+      [FILTER]
+          Name parser
+          Match *
+          Key_name log
+          Parser crio
+      [FILTER]
+          Name kubernetes
+          Match kube.*
+          Merge_Log On
+          Keep_Log Off
+          Buffer_Size 0
+          Kube_Meta_Cache_TTL 300s
+          Labels Off
+          Annotations Off
+      [FILTER]
+          Name modify
+          Match *
+          Add sw.k8s.cluster.uid <CLUSTER_UID>
+          Add sw.k8s.log.type container
+          Add sw.k8s.agent.manifest.version "2.7.0-alpha.5"
+    flb_log_cw: "false"
+    output.conf: |
+      [OUTPUT]
+          Name cloudwatch_logs
+          Match kube.*
+          region test-region
+          log_group_name /swo/fargate/cluster_name
+          log_stream_prefix from-fluent-bit-
+          log_retention_days 30
+          auto_create_group true
+    parsers.conf: |-
+      [PARSER]
+          Name crio
+          Format Regex
+          Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>P|F) (?<log>.*)$
+          Time_Key time
+          Time_Format %Y-%m-%dT%H:%M:%S.%L%z

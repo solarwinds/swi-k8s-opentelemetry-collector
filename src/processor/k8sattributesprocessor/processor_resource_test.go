@@ -16,6 +16,7 @@ package k8sattributesprocessor
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,6 +38,7 @@ func testProcessorAddResourceLabels(t *testing.T, resourceType, resourceName, re
 		t,
 		NewFactory().CreateDefaultConfig(),
 		nil,
+		withSetObjectExistence(),
 	)
 
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
@@ -76,11 +78,12 @@ func testProcessorAddResourceLabels(t *testing.T, resourceType, resourceName, re
 
 	m.assertBatchesLen(i + 1)
 	m.assertResourceObjectLen(i)
-	m.assertResourceAttributesLen(0, 4)
+	m.assertResourceAttributesLen(0, 5)
 	m.assertResource(i, func(res pcommon.Resource) {
 		len := res.Attributes().Len()
 		require.Greater(t, len, 0)
 		assertResourceHasStringAttribute(t, res, resourceName, "test-2323")
+		assertResourceHasStringAttribute(t, res, fmt.Sprintf("sw.k8s.%s.found", resourceName), "true")
 	})
 }
 

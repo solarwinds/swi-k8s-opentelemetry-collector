@@ -61,6 +61,14 @@ func withPassthrough() option {
 	}
 }
 
+// withSetObjectExistence enables mode where `sw.k8s.<object type>.found` attributes will be instrumented
+func withSetObjectExistence() option {
+	return func(p *kubernetesprocessor) error {
+		p.setObjectExistence = true
+		return nil
+	}
+}
+
 // enabledAttributes returns the list of resource attributes enabled by default.
 func enabledAttributes() (attributes []string) {
 	defaultConfig := metadata.DefaultResourceAttributesConfig()
