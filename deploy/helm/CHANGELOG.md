@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0-alpha.6] - 2023-08-28
+
+### Changed
+- Metrics will no longer send `k8s.node.name` resource attribute if node does not exists in Kubernetes (for example in case of Fargate nodes)
+
 ## [2.7.0-alpha.5] - 2023-08-22
 
 ### Changed
