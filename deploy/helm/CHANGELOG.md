@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Detection of Node name for Fargate Nodes
+
 ## [2.8.0-alpha.1] - 2023-09-11
 
 ### Added
