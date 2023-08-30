@@ -67,8 +67,13 @@ processors:
       - key: k8s.node.name
         from_attribute: node
         action: insert
+{{- if not .Values.aws_fargate.enabled }}
       - key: k8s.node.name
-        from_attribute: instance
+        from_attribute: kubernetes_io_hostname
+        action: insert
+{{- end }}
+      - key: k8s.node.name
+        from_attribute: service.instance.id
         action: insert
 
   attributes/unify_volume_attribute:
