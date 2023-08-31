@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0-alpha.8] - 2023-08-31
+
+### Changed
+- Upgraded OTEL collector image to [0.8.2](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.2) which brings following changes
+  - Bump library/golang from 1.20.7-bullseye to 1.21.0-bullseye and update some 3rd party dependencies
+
 ## [2.7.0-alpha.7] - 2023-08-30
 
 ### Fixed
@@ -27,7 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Adjusted Log group name used for Fargate logs
-- Adjusted Events collection to not produce resource attributes for entities that does not exists in Kubernetes
+- Adjusted Events collection to not produce resource attributes for entities that do not exists in Kubernetes
+- Upgraded OTEL collector image to [0.8.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.1) which brings following changes
+  - Bump library/golang from 1.20.6-bullseye to 1.20.7-bullseye and update some 3rd party dependencies
+  - Updating `k8sattributes` to instrument attribute indicating that object exists
 
 ## [2.7.0-alpha.3] - 2023-08-17
 
