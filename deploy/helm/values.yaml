@@ -386,6 +386,15 @@ prometheus:
     # (this matches the behavior of `kube-prometheus-stack` chart).
     persistentVolume:
       enabled: false
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: eks.amazonaws.com/compute-type
+              operator: NotIn
+              values:
+              - fargate
 
 kube-state-metrics:
   enabled: true

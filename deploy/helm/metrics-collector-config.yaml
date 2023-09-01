@@ -12,7 +12,7 @@ extensions:
 
 processors:
   k8sattributes:
-{{ include "common.k8s-instrumentation" (tuple . .Values.otel.metrics.k8s_instrumentation.annotations.enabled .Values.otel.metrics.k8s_instrumentation.labels.enabled "false") | indent 4 }}
+{{ include "common.k8s-instrumentation" (tuple . .Values.otel.metrics.k8s_instrumentation.annotations.enabled .Values.otel.metrics.k8s_instrumentation.labels.enabled "true") | indent 4 }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
   resource/k8sattributes_labels_filter:
     attributes:
@@ -67,11 +67,13 @@ processors:
       - key: k8s.node.name
         from_attribute: node
         action: insert
+{{- if not .Values.aws_fargate.enabled }}
       - key: k8s.node.name
         from_attribute: kubernetes_io_hostname
         action: insert
+{{- end }}
       - key: k8s.node.name
-        from_attribute: instance
+        from_attribute: service.instance.id
         action: insert
 
   attributes/unify_volume_attribute:
@@ -1280,6 +1282,20 @@ processors:
         from_attribute: persistentvolumeclaim
         action: insert      
 
+  transform/cleanup_attributes_for_nonexisting_entities:
+    metric_statements:
+      - context: metric
+        statements:
+          - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"] == "false"
+          - delete_key(resource.attributes, "sw.k8s.pod.found")
+          - delete_key(resource.attributes, "sw.k8s.deployment.found")
+          - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+          - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+          - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+          - delete_key(resource.attributes, "sw.k8s.job.found")
+          - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+          - delete_key(resource.attributes, "sw.k8s.node.found")
+
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -1498,6 +1514,7 @@ service:
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
         - resource/k8sattributes_annotations_filter
 {{- end }}
+        - transform/cleanup_attributes_for_nonexisting_entities
         - batch
       receivers:
         - forward/prometheus
