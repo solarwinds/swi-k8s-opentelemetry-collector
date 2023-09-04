@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.7.0] - 2023-09-04
+
+### Added
+
+- Added new Helm settings `aws_fargate.enabled` and `aws_fargate.logs.*` that allow the k8s collector Helm chart to setup AWS EKS Fargate logging ConfigMap
+  - Setting `prometheus.forceNamespace` can be used to force deployment of the bundled Prometheus to a specific non-Fargate namespace
+
+### Changed
+
+- Upgraded OTEL collector image to [0.8.2](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.2) which brings following changes
+  - Bump library/golang from 1.20.7-bullseye to 1.21.0-bullseye and update some 3rd party dependencies
+  - OTEL upgraded to v0.81.0
+  - Updating `k8sattributes` to instrument attribute indicating that object exists
+- Metrics no longer send `k8s.node.name` resource attribute if node does not exists in Kubernetes (for example in case of Fargate nodes)
+- Adjusted Events collection to not produce resource attributes for entities that do not exists in Kubernetes
+- DaemonSet for Log collection now restricts where it runs:
+  - Fargate nodes are excluded
+  - Only linux nodes with amd64 architecture are included
+
+### Fixed
+- Fixed Journal log collection on EKS (and other environment where journal logs are stored in `/var/log/journal`)
+
 ## [2.7.0-alpha.8] - 2023-08-31
 
 ### Changed
