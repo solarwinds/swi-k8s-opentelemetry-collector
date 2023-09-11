@@ -1,0 +1,21 @@
+FROM docker.io/library/golang:1.21.0-nanoserver-ltsc2022@sha256:d08dfe442c8d0dbd180c883198dbcf881e47f8a48ecd301c2d015b64c665da69 as base
+WORKDIR /src
+COPY ["./src/", "./src/"]
+
+FROM base as builder
+
+COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
+RUN go install go.opentelemetry.io/collector/cmd/builder@v0.81.0
+
+ARG CGO_ENABLED=0
+ARG GOEXPERIMENT=boringcrypto
+
+RUN /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
+
+FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
+
+COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol.exe
+ENTRYPOINT ["swi-otelcol.exe"]
+CMD ["--config=c:/config/default-config.yaml"]
+
+
