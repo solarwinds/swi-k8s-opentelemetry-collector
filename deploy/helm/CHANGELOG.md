@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.8.0-alpha.1] - 2023-09-11
+
+### Added
+
+- Added windows container for logs monitoring
+
 ## [2.7.0] - 2023-09-04
 
 ### Added
