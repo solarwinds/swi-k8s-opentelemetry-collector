@@ -1,0 +1,143 @@
+{{- if .Values.otel.logs.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "common.fullname" . }}-logs-windows
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" . }}-logs-windows
+  template:
+    metadata:
+      labels:
+        app: {{ include "common.fullname" . }}-logs-windows
+{{ include "common.labels" . | indent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
+        checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+        checksum/values: {{ toJson .Values | sha256sum }}
+{{- if .Values.otel.logs.telemetry.metrics.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ (split ":" .Values.otel.logs.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+{{- end}}
+    spec:
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      {{- if .Values.otel.logs.tolerations }}
+      {{ toYaml .Values.otel.logs.tolerations | nindent 8 }}
+      {{- else }}
+        - operator: Exists
+          effect: NoSchedule
+      {{- end }}
+      affinity:
+      {{- if .Values.otel.logs.affinity }}
+      {{- toYaml .Values.otel.logs.affinity | nindent 8 }}
+      {{- else }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - windows
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+              - key: eks.amazonaws.com/compute-type
+                operator: NotIn
+                values:
+                - fargate
+      {{- end }}
+      nodeSelector:
+         kubernetes.io/os: windows
+      {{- if .Values.otel.logs.nodeSelector }}
+        {{ toYaml .Values.otel.logs.nodeSelector | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: swi-opentelemetry-collector
+          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}-nanoserver-ltsc2022"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          command:
+            - c:\swi-otelcol.exe
+            - --config=c:\conf\relay.yaml
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: solarwinds-api-token
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" . }}-common-env
+{{- if .Values.otel.logs.telemetry.metrics.enabled }}
+          ports:
+            - name: http
+              containerPort: {{ (split ":" .Values.otel.logs.telemetry.metrics.address)._1 }}
+              protocol: TCP
+{{- end}}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+{{ toYaml .Values.otel.logs.resources | indent 12 }}
+          volumeMounts:
+            - mountPath: c:\var\log\pods
+              name: varlogpods
+              readOnly: true
+            - mountPath: c:\var\log\containers
+              name: varlogcontainers
+              readOnly: true
+            - mountPath: c:\var\lib\docker\containers
+              name: varlibdockercontainers
+              readOnly: true
+            - mountPath: c:\conf
+              name: opentelemetry-collector-configmap
+              readOnly: true
+            - name: logcheckpoints
+              mountPath: c:{{ .Values.otel.logs.filestorage.directory }}
+      volumes:
+        - name: varlogpods
+          hostPath:
+            path: c:\var\log\pods
+        - name: varlogcontainers
+          hostPath:
+            path: c:\var\log\containers
+        - name: varlibdockercontainers
+          hostPath:
+            path: c:\varc\lib\docker\containers
+        - name: logcheckpoints
+          hostPath:
+            path: c:{{ printf "%s/%s" .Values.otel.logs.filestorage.directory .Values.cluster.uid }}
+            type: DirectoryOrCreate
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: {{ include "common.fullname" . }}-logs-config-windows
+            items:
+              - key: logs.config
+                path: relay.yaml
+{{- end }}
