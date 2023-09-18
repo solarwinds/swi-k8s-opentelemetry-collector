@@ -16,7 +16,7 @@ spec:
         app: {{ include "common.fullname" . }}-logs-windows
 {{ include "common.labels" . | indent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
+        checksum/config: {{ tpl (.Files.Get "logs-collector-config-map-windows.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
