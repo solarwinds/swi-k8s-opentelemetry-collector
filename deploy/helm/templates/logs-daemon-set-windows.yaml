@@ -42,24 +42,17 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                - windows
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                - amd64
               - key: eks.amazonaws.com/compute-type
                 operator: NotIn
                 values:
                 - fargate
       {{- end }}
       nodeSelector:
-         kubernetes.io/os: windows
       {{- if .Values.otel.logs.nodeSelector }}
-        {{ toYaml .Values.otel.logs.nodeSelector | nindent 8 }}
+      {{ toYaml .Values.otel.logs.nodeSelector | nindent 8 }}
       {{- end }}
+        kubernetes.io/os: windows
+        kubernetes.io/arch: amd64
       containers:
         - name: swi-opentelemetry-collector
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}-nanoserver-ltsc2022"
@@ -129,10 +122,10 @@ spec:
             path: c:\var\log\containers
         - name: varlibdockercontainers
           hostPath:
-            path: c:\varc\lib\docker\containers
+            path: c:\var\lib\docker\containers
         - name: logcheckpoints
           hostPath:
-            path: c:{{ printf "%s/%s" .Values.otel.logs.filestorage.directory .Values.cluster.uid }}
+            path: c:{{ printf "%s/%s" .Values.otel.logs.filestorage.directory (sha256sum .Values.cluster.uid) }}
             type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
