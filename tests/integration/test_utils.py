@@ -31,9 +31,10 @@ def get_all_resources_for_all_sent_content(content):
 
 
 def retry_until_ok(url, func, print_failure):
-    timeout = 120  # set the timeout in seconds
+    timeout = 240  # set the timeout in seconds
     start_time = time.time()
     last_exception = None
+    last_error = ''
     while time.time() - start_time < timeout:
         is_ok = False
         response = None
@@ -48,8 +49,16 @@ def retry_until_ok(url, func, print_failure):
             print(e, traceback.format_exc())
 
         if response is not None and response.status_code == 200:
-            print("Successfully downloaded!")
-            is_ok = func(response.content)
+            if( last_error == ''): 
+                print("Successfully downloaded!")
+            result = func(response.content)
+            if( type(result) != tuple):
+                is_ok = result
+            else:
+                is_ok = result[0]
+                if( last_error != result[1]):
+                    last_error = result[1]
+                    print(last_error)            
         else:
             if response is not None:
                 print('Failed to download otel messages. Response code:',
@@ -62,7 +71,7 @@ def retry_until_ok(url, func, print_failure):
             return True
         else:
             print('Retrying...')
-            time.sleep(2)
+            time.sleep(10)
 
     if time.time() - start_time >= timeout:
         if last_exception is not None:
