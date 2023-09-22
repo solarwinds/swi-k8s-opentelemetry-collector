@@ -62,7 +62,7 @@ processors:
       - key: k8s.node.name
         value: ${NODE_NAME}
         action: insert
-
+{{- if and (not .isWindows) .Values.otel.logs.journal }}
   resource/journal:
     attributes:
 
@@ -92,6 +92,7 @@ processors:
       - key: k8s.node.name
         value: ${NODE_NAME}
         action: insert
+{{- end }}
   transform/syslogify:
     error_mode: ignore
     log_statements:
@@ -108,6 +109,7 @@ processors:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
 
 receivers:
+{{- if and (not .isWindows) .Values.otel.logs.journal }}
   journald/runlogs:
     directory: /run/log/journal
     units:
@@ -120,10 +122,16 @@ receivers:
       - kubelet
       - docker
       - containerd
+{{- end}}
   filelog:
-    include: [ /var/log/pods/*/*/*.log ]
-    # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
+{{- if (.isWindows) }}
+    include: [ "\\var\\log\\pods\\*\\*\\*.log" ]
+    exclude: [ "\\var\\log\\pods\\${POD_NAMESPACE}_${POD_NAME}*_*\\swi-opentelemetry-collector\\*.log" ]
+{{- else }}
+    include: [ "/var/log/pods/*/*/*.log" ]
+    # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log    
     exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
+{{- end }}
     start_at: {{ .Values.otel.logs.receiver.start_at }}
     include_file_path: true
     include_file_name: false
@@ -203,7 +211,11 @@ receivers:
       # Extract metadata from file path
       - type: regex_parser
         id: extract-metadata-from-filepath
-        regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$'
+{{- if (.isWindows) }}
+        regex: '^.*\\(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\\(?P<container_name>[^\._]+)\\(?P<run_id>\d+)\.log$'
+{{- else }}
+        regex:  '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$'
+{{- end }}
         parse_from: attributes["log.file.path"]
 
       # Rename attributes
@@ -256,7 +268,7 @@ service:
       receivers:
         - filelog
 {{- end }}
-{{- if .Values.otel.logs.journal }}
+{{- if and (not .isWindows) .Values.otel.logs.journal }}
     logs/2:
       exporters:
         - otlp
