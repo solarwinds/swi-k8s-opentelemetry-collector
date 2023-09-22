@@ -18,7 +18,7 @@ with open('expected_metric_names.txt', "r", newline='\n') as file_with_expected_
     expected_metric_names = file_with_expected_metric_names.read().splitlines()
 
 def test_expected_metric_names_are_generated():
-    retry_until_ok(url, assert_test_metric_names_found,                   
+    retry_until_ok(url, assert_test_metric_names_found,
                    print_failure_metric_names)
     
 def test_expected_otel_message_content_is_generated():
@@ -137,9 +137,12 @@ def print_failure_metric_names(content):
     print(expected_metric_names)
 
 
-def assert_test_expected_otel_message_content_is_generated(content):
+def assert_test_expected_otel_message_content_is_generated(content):    
     with open('expected_output.json', "r", newline='\n') as file_with_expected:
         expected_json_raw = json.load(file_with_expected)
+
+    # do to problems with delayed annotations of pvc we evaluate only last X records    
+    content = '\n'.join(content.splitlines()[-5:])    
 
     merged_json = get_merged_json(content)
 
