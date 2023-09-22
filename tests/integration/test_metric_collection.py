@@ -142,7 +142,7 @@ def assert_test_expected_otel_message_content_is_generated(content):
         expected_json_raw = json.load(file_with_expected)
 
     # do to problems with delayed annotations of pvc we evaluate only last X records    
-    content = '\n'.join(content.splitlines()[-5:])    
+    content = '\n'.join(content.decode('utf-8').splitlines()[-5:])    
 
     merged_json = get_merged_json(content)
 
