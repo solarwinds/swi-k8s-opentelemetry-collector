@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "common.fullname" . }}-network-k8s-collector-role
+  labels:
+{{ include "common.labels" . | indent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch

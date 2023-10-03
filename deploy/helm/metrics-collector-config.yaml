@@ -1404,6 +1404,10 @@ connectors:
   forward/prometheus:
 
 receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
   k8s_events:
   prometheus/prometheus-server:
     config:
@@ -1460,6 +1464,13 @@ service:
     - health_check
     - memory_ballast
   pipelines:
+    metrics/otlp:
+      exporters:
+        - forward/prometheus
+      processors:
+        - memory_limiter
+      receivers:
+        - otlp
     metrics/prometheus:
       exporters:
         - forward/prometheus
