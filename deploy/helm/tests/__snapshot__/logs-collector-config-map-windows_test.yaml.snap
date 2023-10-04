@@ -34,7 +34,7 @@ Logs config for windows nodes should match snapshot when using default values:
           - k8s.namespace.name
           - k8s.pod.name
           - k8s.pod.uid
-          - host.hostname
+          - host.name
           - service.name
         memory_limiter:
           check_interval: 1s
@@ -65,12 +65,8 @@ Logs config for windows nodes should match snapshot when using default values:
           log_statements:
           - context: log
             statements:
-            - set( attributes["syslog.facility"], 1 )
-            - set( attributes["syslog.version"], 1 )
-            - set( attributes["host.hostname"], attributes["k8s.pod.name"])
+            - set( attributes["host.name"], attributes["k8s.pod.name"])
             - set( attributes["service.name"], attributes["k8s.container.name"])
-            - set( attributes["syslog.procid"], attributes["run_id"])
-            - set( attributes["syslog.msgid"], attributes["stream"])
       receivers:
         filelog:
           encoding: utf-8
@@ -156,9 +152,8 @@ Logs config for windows nodes should match snapshot when using default values:
           - from: attributes.pod_name
             to: attributes["k8s.pod.name"]
             type: move
-          - from: attributes.run_id
-            to: attributes["run_id"]
-            type: move
+          - field: attributes.run_id
+            type: remove
           - from: attributes.uid
             to: attributes["k8s.pod.uid"]
             type: move
