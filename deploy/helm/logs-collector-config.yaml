@@ -29,7 +29,7 @@ processors:
       - k8s.namespace.name
       - k8s.pod.name
       - k8s.pod.uid
-      - host.hostname
+      - host.name
       - service.name
 
 
@@ -98,12 +98,8 @@ processors:
     log_statements:
       - context: log
         statements:
-          - set( attributes["syslog.facility"], 1 )
-          - set( attributes["syslog.version"], 1 )
-          - set( attributes["host.hostname"], attributes["k8s.pod.name"])
+          - set( attributes["host.name"], attributes["k8s.pod.name"])
           - set( attributes["service.name"], attributes["k8s.container.name"])
-          - set( attributes["syslog.procid"], attributes["run_id"])
-          - set( attributes["syslog.msgid"], attributes["stream"])
 
   batch:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
@@ -232,9 +228,8 @@ receivers:
       - type: move
         from: attributes.pod_name
         to: attributes["k8s.pod.name"]
-      - type: move
-        from: attributes.run_id
-        to: attributes["run_id"]
+      - type: remove
+        field: attributes.run_id
       - type: move
         from: attributes.uid
         to: attributes["k8s.pod.uid"]
