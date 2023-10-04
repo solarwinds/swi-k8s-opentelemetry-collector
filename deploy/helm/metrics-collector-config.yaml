@@ -50,31 +50,16 @@ processors:
       datapoint:
       - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*") == true'
 
-
-  # unify attributes
-  attributes/unify_node_attribute:
-    include:
-      match_type: regexp
-      metric_names:
-        - container_.*
-        - kube_node_.*
-        - kube_pod_info
-        - kube_pod_container_resource_requests
-        - kube_pod_container_resource_limits
-        - kube_pod_init_container_resource_requests
-        - kube_pod_init_container_resource_limits
-    actions:
-      - key: k8s.node.name
-        from_attribute: node
-        action: insert
-{{- if not .Values.aws_fargate.enabled }}
-      - key: k8s.node.name
-        from_attribute: kubernetes_io_hostname
-        action: insert
-{{- end }}
-      - key: k8s.node.name
-        from_attribute: service.instance.id
-        action: insert
+  transform/unify_node_attribute:
+    metric_statements:
+      - context: datapoint
+        statements:
+          # when available, use "node" attribute for Node name
+          - set(attributes["k8s.node.name"], attributes["node"]) where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$") == true and attributes["k8s.node.name"] == nil
+          # "kubernetes_io_hostname", unlike "service.instance.id", provides a nice Node name in environments like local Docker, but for Fargate, its value is different from the other attributes
+          - set(attributes["k8s.node.name"], attributes["kubernetes_io_hostname"]) where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$") == true and attributes["eks_amazonaws_com_compute_type"] != "fargate" and attributes["k8s.node.name"] == nil
+          # use "service.instance.id" for Node name when the above attributes are not available
+          - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"]) where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$") == true and attributes["k8s.node.name"] == nil
 
   attributes/unify_volume_attribute:
     include:
@@ -1483,7 +1468,7 @@ service:
         - filter/receiver
         - transform
         - filter/remove_internal        
-        - attributes/unify_node_attribute
+        - transform/unify_node_attribute
         - attributes/unify_volume_attribute        
         - attributes/identify_init_container
         - attributes/identify_standard_container

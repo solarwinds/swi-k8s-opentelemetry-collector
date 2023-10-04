@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [2.8.0-alpha.2] - 2023-09-14
+## [2.8.0-alpha.2] - 2023-09-22
 
 ### Added
 
 - Add monitoring windows node logs
 
+### Fixed
 
+- Detection of Node name for Fargate Nodes's metrics
 
 ## [2.8.0-alpha.1] - 2023-09-11
 
