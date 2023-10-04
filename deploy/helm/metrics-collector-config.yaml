@@ -103,6 +103,12 @@ processors:
       - key: servicename
         from_attribute: service
         action: insert
+      - key: servicetype
+        from_attribute: type
+        action: insert
+      - key: clusterip
+        from_attribute: cluster_ip
+        action: insert
 
   attributes/identify_init_container:
     include:
@@ -1091,6 +1097,8 @@ processors:
       - storageclass
       - access_mode
       - servicename
+      - servicetype
+      - clusterip
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1296,7 +1304,13 @@ processors:
       # Service
       - key: k8s.service.name
         from_attribute: servicename
-        action: insert              
+        action: insert
+      - key: k8s.service.type
+        from_attribute: servicetype
+        action: insert   
+      - key: k8s.cluster.ip
+        from_attribute: clusterip
+        action: insert                             
 
   transform/cleanup_attributes_for_nonexisting_entities:
     metric_statements:
