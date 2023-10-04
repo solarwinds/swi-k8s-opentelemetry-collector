@@ -94,6 +94,16 @@ processors:
         from_attribute: claim_namespace
         action: upsert
 
+  attributes/unify_service_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_service_.*
+    actions:
+      - key: servicename
+        from_attribute: service
+        action: insert
+
   attributes/identify_init_container:
     include:
       match_type: regexp
@@ -1080,6 +1090,7 @@ processors:
       - sw.k8s.persistentvolume.status
       - storageclass
       - access_mode
+      - servicename
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1280,7 +1291,12 @@ processors:
       # PersistentVolumeClaim
       - key: k8s.persistentvolumeclaim.name
         from_attribute: persistentvolumeclaim
-        action: insert      
+        action: insert  
+
+      # Service
+      - key: k8s.service.name
+        from_attribute: servicename
+        action: insert              
 
   transform/cleanup_attributes_for_nonexisting_entities:
     metric_statements:
@@ -1491,7 +1507,8 @@ service:
         - transform
         - filter/remove_internal        
         - attributes/unify_node_attribute
-        - attributes/unify_volume_attribute        
+        - attributes/unify_volume_attribute
+        - attributes/unify_service_attribute       
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
