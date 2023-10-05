@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+    spec:
+      containers:
+      - image: "otel/opentelemetry-ebpf-k8s-watcher:v0.10.0"
+        imagePullPolicy: Always
+        name: k8s-watcher
+        args:
+          - --log-console
+          - --log-level=warning
+      - image: "otel/opentelemetry-ebpf-k8s-relay:v0.10.0"
+        imagePullPolicy: Always
+        name: k8s-relay
+        args:
+          - --config-file=/etc/network-explorer/config.yaml
+          - --warning
+        env:
+          - name: "EBPF_NET_CLUSTER_NAME"
+            value: {{ quote .Values.cluster.name }}
+          - name: "EBPF_NET_INTAKE_HOST"
+            value: "{{ include "common.fullname" (tuple . "-network-k8s-reducer") }}"
+          - name: "EBPF_NET_INTAKE_PORT"
+            value: "7000"
+          - name: "EBPF_NET_CRASH_METRIC_HOST"
+            value: "{{ include "common.fullname" (tuple . "-network-k8s-collector") }}"
+          - name: "EBPF_NET_CRASH_METRIC_PORT"
+            value: "4317"
+        volumeMounts:
+        - mountPath: /etc/network-explorer
+          name: k8s-relay-config
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: k8s-relay-config
+        projected:
+          sources:
+            - configMap:
+                name: {{ include "common.fullname" (tuple . "-network-otel-collector-config") }}
+                items:
+                - key: config.yaml
+                  path: config.yaml
+      securityContext: {}
+      serviceAccountName: {{ include "common.fullname" . }}

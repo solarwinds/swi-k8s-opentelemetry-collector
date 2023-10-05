@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "7010"
+        prometheus.io/path: "/"
+        prometheus.io/scheme: "http"
+    spec:
+      containers:
+        - name: reducer
+          image: "otel/opentelemetry-ebpf-reducer:v0.10.0"
+          imagePullPolicy: Always
+          args:
+            - --port=7000
+            - --log-console
+            - --no-log-file
+            - --warning
+            - --enable-aws-enrichment
+            - --prom=0.0.0.0:7010
+            - --enable-id-id
+            #- --disable-prometheus-metrics
+            #- --enable-otlp-grpc-metrics
+            #- --otlp-grpc-metrics-host={{ include "common.fullname" . }}-collector
+            #- --otlp-grpc-metrics-port=4317
+            - --num-ingest-shards=1
+            - --num-matching-shards=1
+            - --num-aggregation-shards=1
+          env:
+            - name: "EBPF_NET_CRASH_METRIC_HOST"
+              value: "{{ include "common.fullname" . }}-collector"
+            - name: "EBPF_NET_CRASH_METRIC_PORT"
+              value: "4317"
+          ports:
+            - name: telemetry
+              containerPort: 7000
+              protocol: TCP
+            - name: prom
+              containerPort: 7010
+              protocol: TCP
+          volumeMounts:
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 20
+            timeoutSeconds: 5
+            exec:
+              command: ['/srv/health_check.sh', 'readiness_probe', 'localhost', "7000"]
+          resources:
+            null
+      volumes:
