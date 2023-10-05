@@ -12,10 +12,20 @@ ARG GOEXPERIMENT=boringcrypto
 
 RUN /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
 
+FROM base as wrapper
+WORKDIR /src/src/wrapper
+
+ARG CGO_ENABLED=0
+ARG GOEXPERIMENT=boringcrypto
+
+RUN go build -a -o /wrapper.exe
+
 FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 
 COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol.exe
-ENTRYPOINT ["swi-otelcol.exe"]
-CMD ["--config=c:/config/default-config.yaml"]
+COPY --from=wrapper /wrapper.exe /wrapper.exe
+
+ENTRYPOINT ["wrapper.exe"]
+CMD ["swi-otelcol.exe", "--config=/opt/default-config.yaml"]
 
 
