@@ -63,9 +63,12 @@ spec:
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
+            - /wrapper
             - /swi-otelcol
             - --config=/conf/relay.yaml
           env:
+            - name: CHECKPOINT_DIR
+              value: {{ .Values.otel.logs.filestorage.directory }}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
