@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Changing log message attributes to respect OTEL log format
+
 ## [2.8.0-alpha.2] - 2023-09-14
 
 ### Added
