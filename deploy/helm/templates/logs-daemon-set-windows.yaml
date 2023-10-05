@@ -58,9 +58,12 @@ spec:
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}-nanoserver-ltsc2022"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
+            - c:\wrapper.exe
             - c:\swi-otelcol.exe
             - --config=c:\conf\relay.yaml
           env:
+            - name: CHECKPOINT_DIR
+              value: c:{{ .Values.otel.logs.filestorage.directory }}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
