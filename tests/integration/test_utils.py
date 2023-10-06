@@ -177,10 +177,6 @@ def merge_datapoints(existing_datapoints, new_datapoints):
     existing_datapoints.extend(dp for _, dp in merged_datapoints)
     
 def merge_metrics(existing_metric, new_metric):
-    if new_metric["name"] == "k8s.cluster.nodes.ready":
-        print("Skipping merge of scrape_duration_seconds metric")
-        return
-
     metric_types = ["sum", "gauge", "histogram"]
 
     for metric_type in metric_types:
@@ -224,7 +220,7 @@ def custom_json_merge(result, new_json):
 
 def get_merged_json(content):
     result = {"resourceMetrics": []}
-    for line in content.splitlines()[:5]: # take only last 5 lines to make it more reliable
+    for line in content.splitlines():
         custom_json_merge(result, json.loads(line))
 
     # Sort the result and set timeStamps to 0 to make it easier to compare
