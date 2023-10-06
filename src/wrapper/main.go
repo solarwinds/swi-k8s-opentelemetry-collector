@@ -8,6 +8,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,65 +22,63 @@ const (
 
 func main() {
 	checkpointDir := os.Getenv("CHECKPOINT_DIR")
-	if checkpointDir == "" {
-		fmt.Println("Error: CHECKPOINT_DIR environment variable not set")
-		os.Exit(1)
-	}
 
 	if len(os.Args) < 2 {
-		fmt.Println("Error: Missing command arguments")
+		fmt.Fprintln(os.Stderr, "Error: Missing command arguments")
 		os.Exit(1)
 	}
 
 	cmd := exec.Command(os.Args[1], os.Args[2:]...)
+	cmd.Stdout = os.Stdout  // Redirect stdout of cmd to stdout of wrapper
 
-	// Setup stderr pipe to capture output
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
-
-	// Start the command
-	err = cmd.Start()
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
+	r, w := io.Pipe()
+	cmd.Stderr = w  // Redirect stderr of cmd to the writer end of the pipe
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	// Goroutine to monitor the output
+	// Goroutine to monitor the stderr output for panic message
 	go func() {
 		defer wg.Done()
-		scanner := bufio.NewScanner(stderr)
+		scanner := bufio.NewScanner(r)  // Read from the reader end of the pipe
 		for scanner.Scan() {
 			line := scanner.Text()
-			fmt.Println(line)  // Forward the output to stdout
+			fmt.Fprintln(os.Stderr, line)  // Forward the stderr output to stderr of wrapper
 			if strings.Contains(line, panicMessage) {
-				fmt.Println("Specific panic detected, deleting all files in checkpoint folder...")
-				err := filepath.Walk(checkpointDir, func(path string, info os.FileInfo, err error) error {
+				fmt.Fprintln(os.Stderr, "Specific panic detected, deleting all files in checkpoint folder...")
+				if checkpointDir != "" {
+					err := filepath.Walk(checkpointDir, func(path string, info os.FileInfo, err error) error {
+						if err != nil {
+							return err
+						}
+						if path != checkpointDir {  // Skip the root directory
+							return os.RemoveAll(path)
+						}
+						return nil
+					})
 					if err != nil {
-						return err
+						fmt.Fprintln(os.Stderr, "Error:", err)
 					}
-					if path != checkpointDir {  // Skip the root directory
-						return os.RemoveAll(path)
-					}
-					return nil
-				})
-				if err != nil {
-					fmt.Println("Error:", err)
 				}
 			}
 		}
 	}()
 
+	// Start the command
+	err := cmd.Start()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(1)
+	}
+
 	// Wait for the command to exit
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 	}
+
+	// Close the writer end of the pipe to signal the end of data
+	w.Close()
 
 	// Wait for the output monitoring goroutine to finish
 	wg.Wait()
