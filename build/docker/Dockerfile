@@ -27,14 +27,7 @@ FROM base as wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-FROM scratch
-
-ARG USER_UID=10001
-USER ${USER_UID}
-
-COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
-COPY --from=wrapper /bin/wrapper /wrapper
+FROM scratch as journalbinaries
 
 # dynamically linked libraries that are required for journalctl and the journalctl binary itself
 #   use `ldd /bin/journalctl` to get dynamically linked libraries from the binary
@@ -64,6 +57,16 @@ COPY --from=journal /lib/x86_64-linux-gnu/libaudit.so.1 /lib/x86_64-linux-gnu/li
 COPY --from=journal /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0 /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0
 COPY --from=journal /lib/x86_64-linux-gnu/libcap-ng.so.0 /lib/x86_64-linux-gnu/libcap-ng.so.0
 COPY --from=journal /bin/journalctl /bin/journalctl
+
+FROM scratch
+
+ARG USER_UID=10001
+USER ${USER_UID}
+
+COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
+COPY --from=wrapper /bin/wrapper /wrapper
+COPY --from=journalbinaries / /
 
 ENTRYPOINT ["/wrapper"]
 CMD ["/swi-otelcol", "--config=/opt/default-config.yaml"]
