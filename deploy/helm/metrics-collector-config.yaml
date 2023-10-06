@@ -103,11 +103,26 @@ processors:
       - key: servicename
         from_attribute: service
         action: insert
+      - key: serviceexternalname
+        from_attribute: external_name
+        action: insert
       - key: servicetype
         from_attribute: type
         action: insert
       - key: clusterip
         from_attribute: cluster_ip
+        action: insert
+      - key: uid
+        action: delete
+
+  attributes/unify_endpoint_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_endpoint_.*
+    actions:
+      - key: servicename
+        from_attribute: endpoint
         action: insert
 
   attributes/identify_init_container:
@@ -1097,6 +1112,7 @@ processors:
       - storageclass
       - access_mode
       - servicename
+      - serviceexternalname
       - servicetype
       - clusterip
 {{- if .Values.otel.metrics.filter }}
@@ -1305,6 +1321,9 @@ processors:
       - key: k8s.service.name
         from_attribute: servicename
         action: insert
+      - key: k8s.service.external_name
+        from_attribute: serviceexternalname
+        action: insert
       - key: k8s.service.type
         from_attribute: servicetype
         action: insert   
@@ -1436,6 +1455,14 @@ processors:
           - "^kube_service_spec_type$"
           - "^kube_service_spec_external_ip$"
           - "^kube_service_status_load_balancer_ingress$"
+          - "^kube_endpoint_annotations$"
+          - "^kube_endpoint_address_not_ready$"
+          - "^kube_endpoint_address_available$"
+          - "^kube_endpoint_info$"
+          - "^kube_endpoint_labels$"
+          - "^kube_endpoint_created$"
+          - "^kube_endpoint_ports$"
+          - "^kube_endpoint_address$"
 
 connectors:
   forward/prometheus:
@@ -1522,7 +1549,8 @@ service:
         - filter/remove_internal        
         - attributes/unify_node_attribute
         - attributes/unify_volume_attribute
-        - attributes/unify_service_attribute       
+        - attributes/unify_service_attribute
+        - attributes/unify_endpoint_attribute       
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
