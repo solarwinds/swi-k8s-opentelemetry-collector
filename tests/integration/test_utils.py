@@ -208,7 +208,7 @@ def custom_json_merge(result, new_json):
 
 def get_merged_json(content):
     result = {"resourceMetrics": []}
-    for line in content.splitlines():
+    for line in content.splitlines()[:5]: # take only last 5 lines to make it more reliable
         custom_json_merge(result, json.loads(line))
 
     # Sort the result and set timeStamps to 0 to make it easier to compare
