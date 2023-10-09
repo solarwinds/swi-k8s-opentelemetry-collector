@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.20.7-bullseye@sha256:74b09b3b6fa5aa542df8ef974cb745eb477be72f6fcf821517fb410aff532b00 as base
+FROM docker.io/library/golang:1.21.0-bullseye@sha256:316fa84a843ee467ff08a7bba40472f7004f9f9bcf002cd9bc8fd3d385bfe89d as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
@@ -23,13 +23,7 @@ FROM debian:12.1@sha256:9f76a008888da28c6490bedf7bdaa919bac9b2be827afd58d6eb1b91
 RUN apt update
 RUN apt install -y systemd
 
-FROM scratch
-
-ARG USER_UID=10001
-USER ${USER_UID}
-
-COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
+FROM scratch as journalbinaries
 
 # dynamically linked libraries that are required for journalctl and the journalctl binary itself
 #   use `ldd /bin/journalctl` to get dynamically linked libraries from the binary
@@ -59,6 +53,15 @@ COPY --from=journal /lib/x86_64-linux-gnu/libaudit.so.1 /lib/x86_64-linux-gnu/li
 COPY --from=journal /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0 /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0
 COPY --from=journal /lib/x86_64-linux-gnu/libcap-ng.so.0 /lib/x86_64-linux-gnu/libcap-ng.so.0
 COPY --from=journal /bin/journalctl /bin/journalctl
+
+FROM scratch
+
+ARG USER_UID=10001
+USER ${USER_UID}
+
+COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
+COPY --from=journalbinaries / /
 
 ENTRYPOINT ["/swi-otelcol"]
 CMD ["--config=/opt/default-config.yaml"]

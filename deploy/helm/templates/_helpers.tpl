@@ -145,6 +145,7 @@ extract:
     - k8s.job.name
     - k8s.cronjob.name
     - k8s.statefulset.name
+    - k8s.node.name
 {{- if index . 1 }}
   annotations:
     - key_regex: (.*)

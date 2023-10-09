@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for logs-collector-config-map-windows
+skip: true # Unresolved problem with backslash 
+templates:
+  - logs-collector-config-map-windows.yaml
+tests:
+  - it: Logs config for windows nodes should match snapshot when using default values
+    template: logs-collector-config-map-windows.yaml
+    asserts:
+      - matchSnapshot:
+          path: data
