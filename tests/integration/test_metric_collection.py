@@ -126,7 +126,7 @@ def assert_test_metric_names_found(content):
         missing_metric_names = [
             name for name in expected_metric_names if name not in metric_names]
 
-        error = f'Some specific metric names are not found in the response\
+        error = f'Some specific metric names are not found in the response. \
 Missing metrics: {missing_metric_names}'        
 
     return (metric_matches, error)
