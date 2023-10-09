@@ -18,12 +18,12 @@ WORKDIR /src/src/wrapper
 ARG CGO_ENABLED=0
 ARG GOEXPERIMENT=boringcrypto
 
-RUN go build -a -o /wrapper.exe
+RUN go build -a -o ./wrapper.exe
 
 FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 
 COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol.exe
-COPY --from=wrapper /wrapper.exe /wrapper.exe
+COPY --from=wrapper /src/src/wrapper/wrapper.exe /wrapper.exe
 
 ENTRYPOINT ["wrapper.exe"]
 CMD ["swi-otelcol.exe", "--config=/opt/default-config.yaml"]
