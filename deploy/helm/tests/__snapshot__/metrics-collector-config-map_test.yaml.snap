@@ -335,14 +335,14 @@ Metrics config should match snapshot when using default values:
             metric_names:
             - .*
         attributes/unify_endpoint_attribute:
-				  actions:
-				  - action: insert
-				    from_attribute: endpoint
-				    key: k8s.service.name
-				  include:
-				    match_type: regexp
-				    metric_names:
-				    - kube_endpoint_.*
+          actions:
+          - action: insert
+            from_attribute: endpoint
+            key: k8s.service.name
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_endpoint_.*
         attributes/unify_node_attribute:
           actions:
           - action: insert
@@ -362,32 +362,32 @@ Metrics config should match snapshot when using default values:
             - kube_pod_init_container_resource_requests
             - kube_pod_init_container_resource_limits
         attributes/unify_pod_attribute:
-				  actions:
-				  - action: insert
-				    from_attribute: uid
-				    key: k8s.pod.uid
-				  include:
-				    match_type: regexp
-				    metric_names:
-				    - kube_pod_.*
-				attributes/unify_service_attribute:
-				  actions:
-				  - action: insert
-				    from_attribute: service
-				    key: k8s.service.name
-				  - action: insert
-				    from_attribute: external_name
-				    key: sw.k8s.service.external_name
-				  - action: insert
-				    from_attribute: type
-				    key: sw.k8s.service.type
-				  - action: insert
-				    from_attribute: cluster_ip
-				    key: sw.k8s.cluster.ip
-				  include:
-				    match_type: regexp
-				    metric_names:
-				    - kube_service_.*
+          actions:
+          - action: insert
+              from_attribute: uid
+              key: k8s.pod.uid
+          include:
+              match_type: regexp
+              metric_names:
+              - kube_pod_.*
+          attributes/unify_service_attribute:
+          actions:
+          - action: insert
+              from_attribute: service
+              key: k8s.service.name
+          - action: insert
+              from_attribute: external_name
+              key: sw.k8s.service.external_name
+          - action: insert
+              from_attribute: type
+              key: sw.k8s.service.type
+          - action: insert
+              from_attribute: cluster_ip
+              key: sw.k8s.cluster.ip
+          include:
+              match_type: regexp
+              metric_names:
+              - kube_service_.*
         attributes/unify_volume_attribute:
           actions:
           - action: insert
@@ -570,13 +570,13 @@ Metrics config should match snapshot when using default values:
               - ^kube_service_spec_external_ip$
               - ^kube_service_status_load_balancer_ingress$
               - ^kube_endpoint_annotations$
-				      - ^kube_endpoint_address_not_ready$
-				      - ^kube_endpoint_address_available$
-				      - ^kube_endpoint_info$
-				      - ^kube_endpoint_labels$
-				      - ^kube_endpoint_created$
-				      - ^kube_endpoint_ports$
-				      - ^kube_endpoint_address$
+              - ^kube_endpoint_address_not_ready$
+              - ^kube_endpoint_address_available$
+              - ^kube_endpoint_info$
+              - ^kube_endpoint_labels$
+              - ^kube_endpoint_created$
+              - ^kube_endpoint_ports$
+              - ^kube_endpoint_address$
         filter/receiver:
           metrics:
             exclude:
@@ -637,9 +637,9 @@ Metrics config should match snapshot when using default values:
           - sw.k8s.persistentvolume.status
           - storageclass
           - k8s.service.name
-				  - sw.k8s.service.external_name
-				  - sw.k8s.service.type
-				  - sw.k8s.cluster.ip
+          - sw.k8s.service.external_name
+          - sw.k8s.service.type
+          - sw.k8s.cluster.ip
         groupbyattrs/node:
           keys:
           - k8s.node.name
