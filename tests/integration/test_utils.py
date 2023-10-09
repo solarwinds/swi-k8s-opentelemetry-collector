@@ -220,7 +220,7 @@ def custom_json_merge(result, new_json):
 
 def get_merged_json(content):
     result = {"resourceMetrics": []}
-    for line in content.splitlines():
+    for line in content.splitlines()[-10:]: # only process the last 10 json lines
         custom_json_merge(result, json.loads(line))
 
     # Sort the result and set timeStamps to 0 to make it easier to compare
