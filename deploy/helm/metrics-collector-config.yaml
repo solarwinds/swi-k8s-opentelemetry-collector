@@ -1299,6 +1299,15 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
 
+  attributes/remove_prometheus_attributes:
+    actions:
+      - key: endpoint
+        action: delete
+      - key: prometheus
+        action: delete
+      - key: prometheus_replica
+        action: delete
+
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -1486,6 +1495,7 @@ service:
         - filter/receiver
         - transform
         - filter/remove_internal        
+        - attributes/remove_prometheus_attributes
         - attributes/unify_node_attribute
         - transform/unify_node_attribute
         - attributes/unify_volume_attribute        
