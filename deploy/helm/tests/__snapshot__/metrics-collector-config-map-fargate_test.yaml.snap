@@ -339,9 +339,6 @@ Metrics config should match snapshot when using default values:
           - action: insert
             from_attribute: node
             key: k8s.node.name
-          - action: insert
-            from_attribute: service.instance.id
-            key: k8s.node.name
           include:
             match_type: regexp
             metric_names:
@@ -1932,6 +1929,13 @@ Metrics config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+        transform/unify_node_attribute:
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$")
+              == true and attributes["k8s.node.name"] == nil
       receivers:
         k8s_events: null
         prometheus/kube-state-metrics:
@@ -1995,6 +1999,7 @@ Metrics config should match snapshot when using default values:
             - transform
             - filter/remove_internal
             - attributes/unify_node_attribute
+            - transform/unify_node_attribute
             - attributes/unify_volume_attribute
             - attributes/identify_init_container
             - attributes/identify_standard_container
