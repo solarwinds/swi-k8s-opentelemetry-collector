@@ -100,20 +100,18 @@ processors:
       metric_names:
         - kube_service_.*
     actions:
-      - key: servicename
+      - key: k8s.service.name
         from_attribute: service
         action: insert
-      - key: serviceexternalname
+      - key: sw.k8s.service.external_name
         from_attribute: external_name
         action: insert
-      - key: servicetype
+      - key: sw.k8s.service.type
         from_attribute: type
         action: insert
-      - key: clusterip
+      - key: sw.k8s.cluster.ip
         from_attribute: cluster_ip
         action: insert
-      - key: uid
-        action: delete
 
   attributes/unify_endpoint_attribute:
     include:
@@ -121,8 +119,17 @@ processors:
       metric_names:
         - kube_endpoint_.*
     actions:
-      - key: servicename
+      - key: sw.k8s.service.name
         from_attribute: endpoint
+        action: insert
+  attributes/unify_pod_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_pod_.*
+    actions:
+      - key: k8s.pod.uid
+        from_attribute: uid
         action: insert
 
   attributes/identify_init_container:
@@ -1080,6 +1087,7 @@ processors:
       - os_image
       - namespace
       - uid
+      - k8s.pod.uid
       - pod_ip
       - host_ip
       - created_by_kind
@@ -1111,10 +1119,10 @@ processors:
       - sw.k8s.persistentvolume.status
       - storageclass
       - access_mode
-      - servicename
-      - serviceexternalname
-      - servicetype
-      - clusterip
+      - k8s.service.name
+      - sw.k8s.service.external_name
+      - sw.k8s.service.type
+      - sw.k8s.cluster.ip
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1222,10 +1230,6 @@ processors:
         from_attribute: pod
         action: insert
 
-      - key: k8s.pod.uid
-        from_attribute: uid
-        action: insert
-
       - key: sw.k8s.pod.ip
         from_attribute: pod_ip
         action: insert
@@ -1315,21 +1319,7 @@ processors:
       # PersistentVolumeClaim
       - key: k8s.persistentvolumeclaim.name
         from_attribute: persistentvolumeclaim
-        action: insert  
-
-      # Service
-      - key: k8s.service.name
-        from_attribute: servicename
         action: insert
-      - key: k8s.service.external_name
-        from_attribute: serviceexternalname
-        action: insert
-      - key: k8s.service.type
-        from_attribute: servicetype
-        action: insert   
-      - key: k8s.cluster.ip
-        from_attribute: clusterip
-        action: insert                             
 
   transform/cleanup_attributes_for_nonexisting_entities:
     metric_statements:
@@ -1550,7 +1540,8 @@ service:
         - attributes/unify_node_attribute
         - attributes/unify_volume_attribute
         - attributes/unify_service_attribute
-        - attributes/unify_endpoint_attribute       
+        - attributes/unify_endpoint_attribute
+        - attributes/unify_pod_attribute
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
