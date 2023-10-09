@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+* Updated labels so that resources can be identified more easily
+  * `app.kubernetes.io/name` changed to container application name (e.q. `swo-k8s-collector` for SWO k8s collector, `swo-agent` for SWO agent)
+  * `app.kubernetes.io/part-of` always set to `swo-k8s-collector`
+
 ### Fixed
 
 - Detection of Node name for Fargate Nodes's metrics

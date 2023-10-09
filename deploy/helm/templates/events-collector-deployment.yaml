@@ -5,6 +5,7 @@ metadata:
   name: {{ include "common.fullname" . }}-events
   namespace: {{ .Release.Namespace }}
   labels:
+    app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.labels" . | indent 4 }}
 spec:
   replicas: 1
@@ -24,6 +25,7 @@ spec:
         prometheus.io/scheme: "http"
 {{- end}}
       labels:
+        app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" . }}-events
     spec:
