@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Detection of Node name for Fargate Nodes's metrics
 
+### Removed
+
+- Removed attributes `net.host.name`, `net.host.port`, `http.scheme`, `prometheus`, `prometheus_replica` and `endpoint` from exported metrics
+
 ## [2.8.0-alpha.3] - 2023-10-06
 
 ### Changed
