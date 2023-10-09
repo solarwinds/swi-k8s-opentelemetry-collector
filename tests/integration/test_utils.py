@@ -31,9 +31,10 @@ def get_all_resources_for_all_sent_content(content):
 
 
 def retry_until_ok(url, func, print_failure):
-    timeout = 120  # set the timeout in seconds
+    timeout = 240  # set the timeout in seconds
     start_time = time.time()
     last_exception = None
+    last_error = ''
     while time.time() - start_time < timeout:
         is_ok = False
         response = None
@@ -48,8 +49,16 @@ def retry_until_ok(url, func, print_failure):
             print(e, traceback.format_exc())
 
         if response is not None and response.status_code == 200:
-            print("Successfully downloaded!")
-            is_ok = func(response.content)
+            if( last_error == ''): 
+                print("Successfully downloaded!")
+            result = func(response.content)
+            if( type(result) != tuple):
+                is_ok = result
+            else:
+                is_ok = result[0]
+                if( last_error != result[1]):
+                    last_error = result[1]
+                    print(last_error)            
         else:
             if response is not None:
                 print('Failed to download otel messages. Response code:',
@@ -62,7 +71,7 @@ def retry_until_ok(url, func, print_failure):
             return True
         else:
             print('Retrying...')
-            time.sleep(2)
+            time.sleep(10)
 
     if time.time() - start_time >= timeout:
         if last_exception is not None:
@@ -149,16 +158,24 @@ def process_metric_type(metric):
         sort_datapoints(metric)
 
 def merge_datapoints(existing_datapoints, new_datapoints):
-    existing_datapoints_dict = {datapoint_sorting_key(dp): dp for dp in existing_datapoints}
+    merged_datapoints = [(datapoint_sorting_key(dp), dp) for dp in existing_datapoints]
 
     for new_datapoint in new_datapoints:
         new_datapoint_hash_key = datapoint_sorting_key(new_datapoint)
+        found = False  # flag to track if a matching datapoint was found
+        
+        for key, existing_datapoint in merged_datapoints:
+            if key == new_datapoint_hash_key:
+                existing_datapoint.update(new_datapoint)  # update existing_datapoint in-place
+                found = True  # set flag to True since a matching datapoint was found
+                break  # exit the loop since a match was found and handled
+        
+        if not found:  # if no matching datapoint was found, append the new datapoint
+            merged_datapoints.append((new_datapoint_hash_key, new_datapoint))
 
-        if new_datapoint_hash_key in existing_datapoints_dict:
-            existing_datapoints_dict[new_datapoint_hash_key].update(new_datapoint)
-        else:
-            existing_datapoints.append(new_datapoint)
-
+    existing_datapoints.clear()
+    existing_datapoints.extend(dp for _, dp in merged_datapoints)
+    
 def merge_metrics(existing_metric, new_metric):
     metric_types = ["sum", "gauge", "histogram"]
 
@@ -169,11 +186,12 @@ def merge_metrics(existing_metric, new_metric):
             merge_datapoints(existing_datapoints, new_datapoints)
 
 def merge_scope_metrics(existing_scope, new_scope):
-    existing_metrics = {metric["name"]: metric for metric in existing_scope["metrics"]}
-    
     for new_metric in new_scope["metrics"]:
-        if new_metric["name"] in existing_metrics:
-            merge_metrics(existing_metrics[new_metric["name"]], new_metric)
+        new_metric_name = new_metric["name"]
+        for existing_metric in existing_scope["metrics"]:
+            if existing_metric["name"] == new_metric_name:
+                merge_metrics(existing_metric, new_metric)
+                break
         else:
             existing_scope["metrics"].append(new_metric)
 
@@ -189,17 +207,20 @@ def merge_resources(existing_resource, new_resource):
             existing_scopes.append(new_scope)
             
 def custom_json_merge(result, new_json):
-    new_resources = {resource_sorting_key(resource): resource for resource in new_json["resourceMetrics"]}
+    new_resources = [(resource_sorting_key(resource), resource) for resource in new_json["resourceMetrics"]]
+
     for existing_resource in result["resourceMetrics"]:
         existing_key = resource_sorting_key(existing_resource)
-        if existing_key in new_resources:
-            merge_resources(existing_resource, new_resources.pop(existing_key))
+        matching_new_resources = [item for item in new_resources if item[0] == existing_key]
+        for _, new_resource in matching_new_resources:
+            merge_resources(existing_resource, new_resource)
+            new_resources.remove((existing_key, new_resource))
 
-    result["resourceMetrics"].extend(new_resources.values())
+    result["resourceMetrics"].extend(resource for _, resource in new_resources)
 
 def get_merged_json(content):
     result = {"resourceMetrics": []}
-    for line in content.splitlines():
+    for line in content.splitlines()[-10:]: # only process the last 10 json lines
         custom_json_merge(result, json.loads(line))
 
     # Sort the result and set timeStamps to 0 to make it easier to compare

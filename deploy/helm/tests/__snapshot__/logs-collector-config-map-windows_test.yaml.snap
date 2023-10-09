@@ -1,4 +1,4 @@
-Logs config should match snapshot when using default values:
+Logs config for windows nodes should match snapshot when using default values:
   1: |
     common.proto: ""
     logs.config: |
@@ -60,26 +60,6 @@ Logs config should match snapshot when using default values:
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
-        resource/journal:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: journal
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
-            key: k8s.node.name
-            value: ${NODE_NAME}
         transform/syslogify:
           error_mode: ignore
           log_statements:
@@ -91,10 +71,10 @@ Logs config should match snapshot when using default values:
         filelog:
           encoding: utf-8
           exclude:
-          - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
+          - \var\log\pods\${POD_NAMESPACE}_${POD_NAME}*_*\swi-opentelemetry-collector\*.log
           fingerprint_size: 1kb
           include:
-          - /var/log/pods/*/*/*.log
+          - \var\log\pods\*\*\*.log
           include_file_name: false
           include_file_path: true
           max_concurrent_files: 10
@@ -157,7 +137,7 @@ Logs config should match snapshot when using default values:
             type: recombine
           - id: extract-metadata-from-filepath
             parse_from: attributes["log.file.path"]
-            regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$
+            regex: ^.*\\(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\\(?P<container_name>[^\._]+)\\(?P<run_id>\d+)\.log$
             type: regex_parser
           - from: body.stream
             id: move-attributes
@@ -187,18 +167,6 @@ Logs config should match snapshot when using default values:
           poll_interval: 200ms
           start_at: end
           storage: file_storage
-        journald/runlogs:
-          directory: /run/log/journal
-          units:
-          - kubelet
-          - docker
-          - containerd
-        journald/varlogs:
-          directory: /var/log/journal
-          units:
-          - kubelet
-          - docker
-          - containerd
       service:
         extensions:
         - file_storage
@@ -217,17 +185,6 @@ Logs config should match snapshot when using default values:
             - batch
             receivers:
             - filelog
-          logs/2:
-            exporters:
-            - otlp
-            processors:
-            - memory_limiter
-            - groupbyattrs/all
-            - resource/journal
-            - batch
-            receivers:
-            - journald/runlogs
-            - journald/varlogs
         telemetry:
           logs:
             level: info

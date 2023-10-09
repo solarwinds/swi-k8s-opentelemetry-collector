@@ -305,7 +305,7 @@ jobs:
 
       - name: Get image tag
         id: vars
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+        run: echo "tag=$env:GITHUB_REF_NAME" >> $ENV:GITHUB_OUTPUT
 
       - name: Load image
         run: |
@@ -313,13 +313,13 @@ jobs:
 
       - name: Tag images
         run: |
-          docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test.outputs.image_tag }}-nanoserver-ltsc2022 ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
+          docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test_windows.outputs.image_tag }}-nanoserver-ltsc2022 ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
 
       - name: Docker login
         env:
           DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
           DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
-        run: echo "$DOCKER_HUB_CI_PASSWORD" | docker login -u "$DOCKER_HUB_CI_USER" --password-stdin
+        run: echo "$env:DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:DOCKER_HUB_CI_USER" --password-stdin
 
       - name: Push as specific
         run: docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
