@@ -16,7 +16,7 @@ RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else 
 FROM base as tests
 RUN cd src/processor/swmetricstransformprocessor && go test ./...
 
-FROM alpine:3.18@sha256:7144f7bab3d4c2648d7e59409f15ec52a18006a128c733fcff20d3a4a54ba44a as prep
+FROM alpine:3.18@sha256:eece025e432126ce23f223450a0326fbebde39cdf496a85d8c016293fc851978 as prep
 RUN apk --update add ca-certificates
 
 FROM debian:11.7@sha256:432f545c6ba13b79e2681f4cc4858788b0ab099fc1cca799cc0fae4687c69070 as journal
