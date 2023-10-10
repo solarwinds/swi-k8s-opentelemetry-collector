@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed attributes `net.host.name`, `net.host.port`, `http.scheme`, `prometheus`, `prometheus_replica` and `endpoint` from exported metrics
 
+### Changed
+
+- Updated docker image to 0.8.5 (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.5))
+
 ## [2.8.0-alpha.3] - 2023-10-06
 
 ### Changed
