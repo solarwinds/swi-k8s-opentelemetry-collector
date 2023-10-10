@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Detection of Node name for Fargate Nodes's metrics
 
+### Added
+
+- Scrape kube_service_* and kube_endpoint_* metrics
+
 ### Removed
 
 - Removed attributes `net.host.name`, `net.host.port`, `http.scheme`, `prometheus`, `prometheus_replica` and `endpoint` from exported metrics
