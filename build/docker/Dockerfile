@@ -23,6 +23,10 @@ FROM debian:11.7@sha256:432f545c6ba13b79e2681f4cc4858788b0ab099fc1cca799cc0fae46
 RUN apt update
 RUN apt install -y systemd
 
+FROM base as wrapper
+WORKDIR /src/src/wrapper
+RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
+
 FROM scratch as journalbinaries
 
 # dynamically linked libraries that are required for journalctl and the journalctl binary itself
@@ -61,8 +65,9 @@ USER ${USER_UID}
 
 COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
+COPY --from=wrapper /bin/wrapper /wrapper
 COPY --from=journalbinaries / /
 
-ENTRYPOINT ["/swi-otelcol"]
-CMD ["--config=/opt/default-config.yaml"]
+ENTRYPOINT ["/wrapper"]
+CMD ["/swi-otelcol", "--config=/opt/default-config.yaml"]
 

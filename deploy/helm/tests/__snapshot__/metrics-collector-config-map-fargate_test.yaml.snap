@@ -325,6 +325,14 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - kube_pod_container_.*
+        attributes/remove_prometheus_attributes:
+          actions:
+          - action: delete
+            key: endpoint
+          - action: delete
+            key: prometheus
+          - action: delete
+            key: prometheus_replica
         attributes/remove_temp:
           actions:
           - action: delete
@@ -1672,11 +1680,11 @@ Metrics config should match snapshot when using default values:
           - action: delete
             key: service.instance.id
           - action: delete
-            key: host.name
+            key: net.host.name
           - action: delete
-            key: port
+            key: net.host.port
           - action: delete
-            key: scheme
+            key: http.scheme
           - action: insert
             key: sw.k8s.agent.manifest.version
             value: ${MANIFEST_VERSION}
@@ -2045,6 +2053,7 @@ Metrics config should match snapshot when using default values:
             - filter/receiver
             - transform
             - filter/remove_internal
+            - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
             - attributes/unify_volume_attribute
