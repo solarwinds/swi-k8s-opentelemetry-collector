@@ -1338,10 +1338,17 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
 
-  attributes/remove_prometheus_attributes:
+  attributes/remove_prometheus_attributes_endpoint:
+    exclude:
+      match_type: regexp
+      metric_names:
+        - kube_endpoint_.*
     actions:
       - key: endpoint
         action: delete
+
+  attributes/remove_prometheus_attributes:    
+    actions:
       - key: prometheus
         action: delete
       - key: prometheus_replica
@@ -1550,6 +1557,7 @@ service:
         - transform
         - filter/remove_internal        
         - attributes/remove_prometheus_attributes
+        - attributes/remove_prometheus_attributes_endpoint
         - attributes/unify_node_attribute
         - transform/unify_node_attribute
         - attributes/unify_volume_attribute        

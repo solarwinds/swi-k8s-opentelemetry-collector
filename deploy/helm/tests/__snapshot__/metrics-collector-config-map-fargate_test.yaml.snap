@@ -328,11 +328,17 @@ Metrics config should match snapshot when using default values:
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
-            key: endpoint
-          - action: delete
             key: prometheus
           - action: delete
             key: prometheus_replica
+        attributes/remove_prometheus_attributes_endpoint:
+          actions:
+          - action: delete
+            key: endpoint
+          exclude:
+            match_type: regexp
+            metric_names:
+            - kube_endpoint_.*
         attributes/remove_temp:
           actions:
           - action: delete
@@ -2054,6 +2060,7 @@ Metrics config should match snapshot when using default values:
             - transform
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
+            - attributes/remove_prometheus_attributes_endpoint
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
             - attributes/unify_volume_attribute
