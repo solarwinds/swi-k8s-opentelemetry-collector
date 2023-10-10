@@ -93,7 +93,7 @@ def assert_prometheus_metrics(metricsContent, metrics):
                         # we are removing these prometheus attributes from all datapoints
                         missing_items.pop('prometheus_replica')
                         missing_items.pop('prometheus')
-                        missing_items.pop('endpoint')
+                        missing_items.pop('endpoint', '')
 
                         #ignore instance,job as they are dropped by mock receiver
                         missing_items.pop('instance')
