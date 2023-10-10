@@ -1339,10 +1339,10 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.node.found")
 
   attributes/remove_prometheus_attributes_endpoint:
-    include:
+    exclude:
       match_type: regexp
       metric_names:
-        - ^(?!kube_endpoint_).*$
+        - kube_endpoint_.*
     actions:
       - key: endpoint
         action: delete
