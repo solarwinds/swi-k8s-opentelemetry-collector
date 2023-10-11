@@ -11,9 +11,12 @@ DaemonSet spec should match snapshot when using default values:
                     - fargate
     containers:
       - command:
+          - /wrapper
           - /swi-otelcol
           - --config=/conf/relay.yaml
         env:
+          - name: CHECKPOINT_DIR
+            value: /var/lib/swo/checkpoints
           - name: POD_NAME
             valueFrom:
               fieldRef:
