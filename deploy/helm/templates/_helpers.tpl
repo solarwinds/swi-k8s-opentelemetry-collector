@@ -28,8 +28,8 @@ If release name contains chart name it will be used as a full name.
 Common template labels
 */}}
 {{- define "common.template-labels" -}}
-app.kubernetes.io/name: {{ template "common.fullname" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/part-of: swo-k8s-collector
+app.kubernetes.io/instance: {{ template "common.fullname" . }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 

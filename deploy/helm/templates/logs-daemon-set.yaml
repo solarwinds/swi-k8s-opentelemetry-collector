@@ -5,6 +5,7 @@ metadata:
   name: {{ include "common.fullname" . }}-logs
   namespace: {{ .Release.Namespace }}
   labels:
+    app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.labels" . | indent 4 }}
 spec:
   selector:
@@ -13,6 +14,7 @@ spec:
   template:
     metadata:
       labels:
+        app.kubernetes.io/name: swo-k8s-collector
         app: {{ include "common.fullname" . }}-logs
 {{ include "common.labels" . | indent 8 }}
       annotations:

@@ -50,7 +50,7 @@ Metrics collector spec should match snapshot when using default values:
       - command:
           - sh
           - -c
-          - until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done
+          - until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-metrics-env-config
