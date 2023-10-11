@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.21.0-bullseye@sha256:316fa84a843ee467ff08a7bba40472f7004f9f9bcf002cd9bc8fd3d385bfe89d as base
+FROM docker.io/library/golang:1.21.2-bullseye@sha256:23ad9fe7915fab922c85c8ab34768c5fb58f10c20fdcce3c5b700cbffdb2ae78 as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
@@ -16,20 +16,18 @@ RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else 
 FROM base as tests
 RUN cd src/processor/swmetricstransformprocessor && go test ./...
 
-FROM alpine:3.18@sha256:7144f7bab3d4c2648d7e59409f15ec52a18006a128c733fcff20d3a4a54ba44a as prep
+FROM alpine:3.18@sha256:eece025e432126ce23f223450a0326fbebde39cdf496a85d8c016293fc851978 as prep
 RUN apk --update add ca-certificates
 
 FROM debian:11.7@sha256:432f545c6ba13b79e2681f4cc4858788b0ab099fc1cca799cc0fae4687c69070 as journal
 RUN apt update
 RUN apt install -y systemd
 
-FROM scratch
+FROM base as wrapper
+WORKDIR /src/src/wrapper
+RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-ARG USER_UID=10001
-USER ${USER_UID}
-
-COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
+FROM scratch as journalbinaries
 
 # dynamically linked libraries that are required for journalctl and the journalctl binary itself
 #   use `ldd /bin/journalctl` to get dynamically linked libraries from the binary
@@ -60,6 +58,16 @@ COPY --from=journal /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0 /usr/lib/x86_64-li
 COPY --from=journal /lib/x86_64-linux-gnu/libcap-ng.so.0 /lib/x86_64-linux-gnu/libcap-ng.so.0
 COPY --from=journal /bin/journalctl /bin/journalctl
 
-ENTRYPOINT ["/swi-otelcol"]
-CMD ["--config=/opt/default-config.yaml"]
+FROM scratch
+
+ARG USER_UID=10001
+USER ${USER_UID}
+
+COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
+COPY --from=wrapper /bin/wrapper /wrapper
+COPY --from=journalbinaries / /
+
+ENTRYPOINT ["/wrapper"]
+CMD ["/swi-otelcol", "--config=/opt/default-config.yaml"]
 

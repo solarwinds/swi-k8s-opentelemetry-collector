@@ -325,6 +325,20 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - kube_pod_container_.*
+        attributes/remove_prometheus_attributes:
+          actions:
+          - action: delete
+            key: prometheus
+          - action: delete
+            key: prometheus_replica
+        attributes/remove_prometheus_attributes_endpoint:
+          actions:
+          - action: delete
+            key: endpoint
+          exclude:
+            match_type: regexp
+            metric_names:
+            - kube_endpoint_.*
         attributes/remove_temp:
           actions:
           - action: delete
@@ -334,6 +348,15 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - .*
+        attributes/unify_endpoint_attribute:
+          actions:
+          - action: insert
+            from_attribute: endpoint
+            key: k8s.service.name
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_endpoint_.*
         attributes/unify_node_attribute:
           actions:
           - action: insert
@@ -341,9 +364,6 @@ Metrics config should match snapshot when using default values:
             key: k8s.node.name
           - action: insert
             from_attribute: kubernetes_io_hostname
-            key: k8s.node.name
-          - action: insert
-            from_attribute: service.instance.id
             key: k8s.node.name
           include:
             match_type: regexp
@@ -355,6 +375,33 @@ Metrics config should match snapshot when using default values:
             - kube_pod_container_resource_limits
             - kube_pod_init_container_resource_requests
             - kube_pod_init_container_resource_limits
+        attributes/unify_pod_attribute:
+          actions:
+          - action: insert
+            from_attribute: uid
+            key: k8s.pod.uid
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_pod_.*
+        attributes/unify_service_attribute:
+          actions:
+          - action: insert
+            from_attribute: service
+            key: k8s.service.name
+          - action: insert
+            from_attribute: external_name
+            key: sw.k8s.service.external_name
+          - action: insert
+            from_attribute: type
+            key: sw.k8s.service.type
+          - action: insert
+            from_attribute: cluster_ip
+            key: sw.k8s.cluster.ip
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_service_.*
         attributes/unify_volume_attribute:
           actions:
           - action: insert
@@ -529,6 +576,21 @@ Metrics config should match snapshot when using default values:
               - ^kube_persistentvolumeclaim_resource_requests_storage_bytes$
               - ^kube_persistentvolumeclaim_created$
               - ^kube_pod_spec_volumes_persistentvolumeclaims_info$
+              - ^kube_service_annotations$
+              - ^kube_service_info$
+              - ^kube_service_labels$
+              - ^kube_service_created$
+              - ^kube_service_spec_type$
+              - ^kube_service_spec_external_ip$
+              - ^kube_service_status_load_balancer_ingress$
+              - ^kube_endpoint_annotations$
+              - ^kube_endpoint_address_not_ready$
+              - ^kube_endpoint_address_available$
+              - ^kube_endpoint_info$
+              - ^kube_endpoint_labels$
+              - ^kube_endpoint_created$
+              - ^kube_endpoint_ports$
+              - ^kube_endpoint_address$
         filter/receiver:
           metrics:
             exclude:
@@ -557,6 +619,7 @@ Metrics config should match snapshot when using default values:
           - os_image
           - namespace
           - uid
+          - k8s.pod.uid
           - pod_ip
           - host_ip
           - created_by_kind
@@ -588,6 +651,10 @@ Metrics config should match snapshot when using default values:
           - sw.k8s.persistentvolume.status
           - storageclass
           - access_mode
+          - k8s.service.name
+          - sw.k8s.service.external_name
+          - sw.k8s.service.type
+          - sw.k8s.cluster.ip
         groupbyattrs/node:
           keys:
           - k8s.node.name
@@ -1622,11 +1689,11 @@ Metrics config should match snapshot when using default values:
           - action: delete
             key: service.instance.id
           - action: delete
-            key: host.name
+            key: net.host.name
           - action: delete
-            key: port
+            key: net.host.port
           - action: delete
-            key: scheme
+            key: http.scheme
           - action: insert
             key: sw.k8s.agent.manifest.version
             value: ${MANIFEST_VERSION}
@@ -1663,9 +1730,6 @@ Metrics config should match snapshot when using default values:
           - action: insert
             from_attribute: pod
             key: k8s.pod.name
-          - action: insert
-            from_attribute: uid
-            key: k8s.pod.uid
           - action: insert
             from_attribute: pod_ip
             key: sw.k8s.pod.ip
@@ -1929,6 +1993,13 @@ Metrics config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+        transform/unify_node_attribute:
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$")
+              == true and attributes["k8s.node.name"] == nil
       receivers:
         k8s_events: null
         prometheus/kube-state-metrics:
@@ -1991,8 +2062,14 @@ Metrics config should match snapshot when using default values:
             - filter/receiver
             - transform
             - filter/remove_internal
+            - attributes/remove_prometheus_attributes
+            - attributes/remove_prometheus_attributes_endpoint
             - attributes/unify_node_attribute
+            - transform/unify_node_attribute
             - attributes/unify_volume_attribute
+            - attributes/unify_service_attribute
+            - attributes/unify_endpoint_attribute
+            - attributes/unify_pod_attribute
             - attributes/identify_init_container
             - attributes/identify_standard_container
             - metricstransform/rename

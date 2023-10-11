@@ -1,4 +1,4 @@
-DaemonSet spec should match snapshot when using default values:
+DaemonSet spec for windows nodes should match snapshot when using default values:
   1: |
     affinity:
       nodeAffinity:
@@ -11,12 +11,12 @@ DaemonSet spec should match snapshot when using default values:
                     - fargate
     containers:
       - command:
-          - /wrapper
-          - /swi-otelcol
-          - --config=/conf/relay.yaml
+          - c:\wrapper.exe
+          - c:\swi-otelcol.exe
+          - --config=c:\conf\relay.yaml
         env:
           - name: CHECKPOINT_DIR
-            value: /var/lib/swo/checkpoints
+            value: c:/var/lib/swo/checkpoints
           - name: POD_NAME
             valueFrom:
               fieldRef:
@@ -38,7 +38,7 @@ DaemonSet spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:0.8.5
+        image: solarwinds/swi-opentelemetry-collector:0.8.5-nanoserver-ltsc2022
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -59,60 +59,44 @@ DaemonSet spec should match snapshot when using default values:
           requests:
             memory: 700Mi
         volumeMounts:
-          - mountPath: /var/log/pods
+          - mountPath: c:\var\log\pods
             name: varlogpods
             readOnly: true
-          - mountPath: /var/log/containers
+          - mountPath: c:\var\log\containers
             name: varlogcontainers
             readOnly: true
-          - mountPath: /var/lib/docker/containers
+          - mountPath: c:\var\lib\docker\containers
             name: varlibdockercontainers
             readOnly: true
-          - mountPath: /conf
+          - mountPath: c:\conf
             name: opentelemetry-collector-configmap
             readOnly: true
-          - mountPath: /run/log/journal
-            name: runlogjournal
-            readOnly: true
-          - mountPath: /var/log/journal
-            name: varlogjournal
-            readOnly: true
-          - mountPath: /var/lib/swo/checkpoints
+          - mountPath: c:/var/lib/swo/checkpoints
             name: logcheckpoints
     nodeSelector:
       kubernetes.io/arch: amd64
-      kubernetes.io/os: linux
-    securityContext:
-      fsGroup: 0
-      runAsGroup: 0
-      runAsUser: 0
+      kubernetes.io/os: windows
     terminationGracePeriodSeconds: 30
     tolerations:
       - effect: NoSchedule
         operator: Exists
     volumes:
       - hostPath:
-          path: /var/log/pods
+          path: c:\var\log\pods
         name: varlogpods
       - hostPath:
-          path: /var/log/containers
+          path: c:\var\log\containers
         name: varlogcontainers
       - hostPath:
-          path: /var/lib/docker/containers
+          path: c:\var\lib\docker\containers
         name: varlibdockercontainers
       - hostPath:
-          path: /run/log/journal
-        name: runlogjournal
-      - hostPath:
-          path: /var/log/journal
-        name: varlogjournal
-      - hostPath:
-          path: /var/lib/swo/checkpoints/<CLUSTER_UID>
+          path: c:/var/lib/swo/checkpoints/4d51349fb86079745afe70b8333fd96ee2255b88b63eb2b37417c92aefa73fcb
           type: DirectoryOrCreate
         name: logcheckpoints
       - configMap:
           items:
             - key: logs.config
               path: relay.yaml
-          name: RELEASE-NAME-swo-k8s-collector-logs-config
+          name: RELEASE-NAME-swo-k8s-collector-logs-config-windows
         name: opentelemetry-collector-configmap

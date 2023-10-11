@@ -50,7 +50,6 @@ processors:
       datapoint:
       - 'attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*") == true'
 
-
   # unify attributes
   attributes/unify_node_attribute:
     include:
@@ -72,9 +71,13 @@ processors:
         from_attribute: kubernetes_io_hostname
         action: insert
 {{- end }}
-      - key: k8s.node.name
-        from_attribute: service.instance.id
-        action: insert
+
+  transform/unify_node_attribute:
+    metric_statements:
+      - context: datapoint
+        statements:
+          # use "service.instance.id" for Node name when the attributes/unify_node_attribute processor failed to provide it
+          - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"]) where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$") == true and attributes["k8s.node.name"] == nil
 
   attributes/unify_volume_attribute:
     include:
@@ -93,6 +96,44 @@ processors:
       - key: namespace
         from_attribute: claim_namespace
         action: upsert
+
+  attributes/unify_service_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_service_.*
+    actions:
+      - key: k8s.service.name
+        from_attribute: service
+        action: insert
+      - key: sw.k8s.service.external_name
+        from_attribute: external_name
+        action: insert
+      - key: sw.k8s.service.type
+        from_attribute: type
+        action: insert
+      - key: sw.k8s.cluster.ip
+        from_attribute: cluster_ip
+        action: insert
+
+  attributes/unify_endpoint_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_endpoint_.*
+    actions:
+      - key: k8s.service.name
+        from_attribute: endpoint
+        action: insert
+  attributes/unify_pod_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_pod_.*
+    actions:
+      - key: k8s.pod.uid
+        from_attribute: uid
+        action: insert
 
   attributes/identify_init_container:
     include:
@@ -1049,6 +1090,7 @@ processors:
       - os_image
       - namespace
       - uid
+      - k8s.pod.uid
       - pod_ip
       - host_ip
       - created_by_kind
@@ -1080,6 +1122,10 @@ processors:
       - sw.k8s.persistentvolume.status
       - storageclass
       - access_mode
+      - k8s.service.name
+      - sw.k8s.service.external_name
+      - sw.k8s.service.type
+      - sw.k8s.cluster.ip
 {{- if .Values.otel.metrics.filter }}
   filter:
     metrics:
@@ -1126,14 +1172,14 @@ processors:
       - key: service.instance.id
         action: delete
 
-      - key: host.name
+      - key: net.host.name
         action: delete
 
-      - key: port
+      - key: net.host.port
         action: delete
 
-      - key: scheme
-        action: delete 
+      - key: http.scheme
+        action: delete
 
       # Collector and Manifest version
       - key: sw.k8s.agent.manifest.version
@@ -1185,10 +1231,6 @@ processors:
       # Pod
       - key: k8s.pod.name
         from_attribute: pod
-        action: insert
-
-      - key: k8s.pod.uid
-        from_attribute: uid
         action: insert
 
       - key: sw.k8s.pod.ip
@@ -1280,7 +1322,7 @@ processors:
       # PersistentVolumeClaim
       - key: k8s.persistentvolumeclaim.name
         from_attribute: persistentvolumeclaim
-        action: insert      
+        action: insert
 
   transform/cleanup_attributes_for_nonexisting_entities:
     metric_statements:
@@ -1295,6 +1337,22 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.job.found")
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
+
+  attributes/remove_prometheus_attributes_endpoint:
+    exclude:
+      match_type: regexp
+      metric_names:
+        - kube_endpoint_.*
+    actions:
+      - key: endpoint
+        action: delete
+
+  attributes/remove_prometheus_attributes:    
+    actions:
+      - key: prometheus
+        action: delete
+      - key: prometheus_replica
+        action: delete
 
   resource/events:
     attributes:
@@ -1399,6 +1457,21 @@ processors:
           - "^kube_persistentvolumeclaim_resource_requests_storage_bytes$"
           - "^kube_persistentvolumeclaim_created$"
           - "^kube_pod_spec_volumes_persistentvolumeclaims_info$"
+          - "^kube_service_annotations$"
+          - "^kube_service_info$"
+          - "^kube_service_labels$"
+          - "^kube_service_created$"
+          - "^kube_service_spec_type$"
+          - "^kube_service_spec_external_ip$"
+          - "^kube_service_status_load_balancer_ingress$"
+          - "^kube_endpoint_annotations$"
+          - "^kube_endpoint_address_not_ready$"
+          - "^kube_endpoint_address_available$"
+          - "^kube_endpoint_info$"
+          - "^kube_endpoint_labels$"
+          - "^kube_endpoint_created$"
+          - "^kube_endpoint_ports$"
+          - "^kube_endpoint_address$"
 
 connectors:
   forward/prometheus:
@@ -1483,8 +1556,14 @@ service:
         - filter/receiver
         - transform
         - filter/remove_internal        
+        - attributes/remove_prometheus_attributes
+        - attributes/remove_prometheus_attributes_endpoint
         - attributes/unify_node_attribute
+        - transform/unify_node_attribute
         - attributes/unify_volume_attribute        
+        - attributes/unify_service_attribute
+        - attributes/unify_endpoint_attribute
+        - attributes/unify_pod_attribute
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename

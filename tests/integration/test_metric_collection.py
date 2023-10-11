@@ -18,7 +18,7 @@ with open('expected_metric_names.txt', "r", newline='\n') as file_with_expected_
     expected_metric_names = file_with_expected_metric_names.read().splitlines()
 
 def test_expected_metric_names_are_generated():
-    retry_until_ok(url, assert_test_metric_names_found,                   
+    retry_until_ok(url, assert_test_metric_names_found,
                    print_failure_metric_names)
     
 def test_expected_otel_message_content_is_generated():
@@ -68,10 +68,12 @@ def assert_test_original_metrics(otelContent):
     
     for url in urlMetrics :
         retry_until_ok(url, lambda metricsContent: assert_prometheus_metrics(metricsContent, metrics), '')
-    return True
+        
+    return (True, '')
 
 def assert_prometheus_metrics(metricsContent, metrics):     
     ok = True
+    error = ''
     for family in text_string_to_metric_families(metricsContent.decode('utf-8')):
         if( family.name in metrics):
             list = metrics[family.name]
@@ -87,7 +89,12 @@ def assert_prometheus_metrics(metricsContent, metrics):
                         if( missing_items.get('container') == 'POD'):
                             found = True
                             break
-                        
+
+                        # we are removing these prometheus attributes from all datapoints
+                        missing_items.pop('prometheus_replica')
+                        missing_items.pop('prometheus')
+                        missing_items.pop('endpoint', '')
+
                         #ignore instance,job as they are dropped by mock receiver
                         missing_items.pop('instance')
                         missing_items.pop('job')
@@ -97,14 +104,11 @@ def assert_prometheus_metrics(metricsContent, metrics):
                             break
                 if not found :                    
                     ok = False
-                    print (f'Metric {sample.name} is missing following attributes:')
+                    error = f'Metric {sample.name} is missing following attributes:'
                     for key in missing_items:
-                        print (f'\t{key}:{missing_items[key]}');
-                    
-    if not ok: 
-        raise ValueError('Some metrics were not found in original form')
+                        error += f'\n\t{key}:{missing_items[key]}'                        
     
-    return ok
+    return (ok, error)
 
 def assert_test_metric_names_found(content):
     merged_json = get_merged_json(content)
@@ -119,16 +123,18 @@ def assert_test_metric_names_found(content):
             f.write("\n".join(sorted(metric_names)))
 
     metric_matches = False
+    error = ''
     if all(name in metric_names for name in expected_metric_names):
         print("All specific metric names are found in the response.")
         metric_matches = True
     else:
         missing_metric_names = [
             name for name in expected_metric_names if name not in metric_names]
-        print('Some specific metric names are not found in the response')
-        print(f'Missing metrics: {missing_metric_names}')
 
-    return metric_matches
+        error = f'Some specific metric names are not found in the response. \
+Missing metrics: {missing_metric_names}'        
+
+    return (metric_matches, error)
 
 
 def print_failure_metric_names(content):
@@ -136,9 +142,12 @@ def print_failure_metric_names(content):
     print(expected_metric_names)
 
 
-def assert_test_expected_otel_message_content_is_generated(content):
+def assert_test_expected_otel_message_content_is_generated(content):    
     with open('expected_output.json', "r", newline='\n') as file_with_expected:
         expected_json_raw = json.load(file_with_expected)
+
+    # do to problems with delayed annotations of pvc we evaluate only last X records    
+    content = '\n'.join(content.decode('utf-8').splitlines()[-5:])    
 
     merged_json = get_merged_json(content)
 
@@ -151,18 +160,19 @@ def assert_test_expected_otel_message_content_is_generated(content):
             f.write(actual_json)
 
     length_matches = False
-
+    error = ''
     if actual_json == expected_json:
         print(
             f'Outputs matches, expected chars: {len(expected_json)}, actual chars: {len(actual_json)}')
         length_matches = True
     else:
-        print('Outputs does not match')
+        error = 'Outputs does not match'
         for line in difflib.unified_diff(
                 expected_json.splitlines(), actual_json.splitlines(), lineterm='\n'):
-            print(line)
+            error += '\n'
+            error += line
 
-    return length_matches
+    return (length_matches, error)
 
 
 def print_failure_otel_content(content):
@@ -183,11 +193,10 @@ def assert_test_no_metric_datapoints_for_internal_containers(content):
     merged_json = get_merged_json(content)
 
     container_names = get_unique_container_names(merged_json)
-    if "POD" in container_names:
-        print('The response contains datapoints for internal "POD" containers')
-        return False
+    if "POD" in container_names:        
+        return (False, 'The response contains datapoints for internal "POD" containers')
     else:
-        return True
+        return (True, '')
 
 
 def print_failure_internal_containers(content):

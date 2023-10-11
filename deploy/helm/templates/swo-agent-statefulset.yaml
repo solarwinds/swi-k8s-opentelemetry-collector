@@ -10,6 +10,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     solarwinds/swo-agent: "true"
+    app.kubernetes.io/name: swo-agent
 {{ include "common.labels" . | indent 4 }}
 spec:
   serviceName: {{ include "common.fullname" . }}-swo-agent
@@ -27,6 +28,8 @@ spec:
         solarwinds/swo-agent: "true"
     spec:
       securityContext: {}
+      nodeSelector:
+        kubernetes.io/os: linux
       containers:
         - name: swo-agent
           image: "{{ .Values.swoagent.image.repository }}:{{ .Values.swoagent.image.tag | default "v2.3.16@sha256:c42c9ca134db54341dc88c3e0c35b1a04db4629b1d97bfde524dfc5d2b8722e5" }}"

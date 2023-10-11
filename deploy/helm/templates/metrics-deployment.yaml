@@ -5,6 +5,7 @@ metadata:
   name: {{ include "common.fullname" . }}-metrics
   namespace: {{ .Release.Namespace }}
   labels:
+    app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.labels" . | indent 4 }}
 spec:
   replicas: 1
@@ -25,6 +26,7 @@ spec:
         prometheus.io/scheme: "http"
 {{- end}}
       labels:
+        app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" . }}-metrics
     spec:
@@ -50,7 +52,7 @@ spec:
         {{- if .Values.otel.metrics.prometheus_check }}
         - name: prometheus-check
           image: busybox:1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43
-          command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done']
+          command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"']
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" . }}-metrics-env-config

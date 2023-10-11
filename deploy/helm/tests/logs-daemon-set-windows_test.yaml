@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for logs-daemon-set-windows
+templates:
+  - logs-daemon-set-windows.yaml
+  - logs-collector-config-map-windows.yaml
+  - common-env-config-map.yaml
+tests:
+  - it: DaemonSet spec for windows nodes should match snapshot when using default values
+    template: logs-daemon-set-windows.yaml
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec

@@ -1,0 +1,21 @@
+{{- if .Values.otel.logs.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-logs-config-windows
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+data:
+  logs.config: |
+{{ tpl (.Files.Get "logs-collector-config.yaml") (merge . (dict "isWindows" 1)) | fromYaml | toYaml | indent 8 }}
+
+  logs_service.proto: |
+{{ tpl (.Files.Get "opentelemetry-proto/opentelemetry/proto/collector/logs/v1/logs_service.proto") . | indent 8 }}
+  logs.proto: |
+{{ tpl (.Files.Get "opentelemetry-proto/opentelemetry/proto/logs/v1/logs.proto") . | indent 8 }}
+  common.proto: |
+{{ tpl (.Files.Get "opentelemetry-proto/opentelemetry/proto/common/v1/common.proto") . | indent 8 }}
+  resource.proto: |
+{{ tpl (.Files.Get "opentelemetry-proto/opentelemetry/proto/resource/v1/resource.proto") . | indent 8 }}
+{{- end }}

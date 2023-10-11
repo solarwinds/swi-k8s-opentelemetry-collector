@@ -252,6 +252,32 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_pod_spec_volumes_persistentvolumeclaims_info | Gauge |  | Information about which Pod is assigned to which Persistent Volume Claim | native |
 | k8s.persistentvolumeclaim.status.phase | Gauge |  | Determine whether job succeeded | native |
 
+## Service metrics
+
+| Metric | Type | Unit | Description | native/custom |
+| ---    | ---  | ---  | ---         | ---           |
+| k8s.kube_service_annotations | Gauge |  | Kubernetes annotations converted to Prometheus labels | native |
+| k8s.kube_service_info | Gauge |  | Information about service | native |
+| k8s.kube_service_labels| Gauge |  | Kubernetes labels converted to Prometheus labels | native |
+| k8s.kube_service_created| Gauge |  | Unix creation timestamp | native |
+| k8s.kube_service_spec_type| Gauge |  | Type about service | native |
+| k8s.kube_service_spec_external_ip| Gauge |  | Service external ips. One series for each ip | native |
+| k8s.kube_service_status_load_balancer_ingress | Gauge |  | Service load balancer ingress status | native |
+
+## Endpoint metrics
+
+| Metric | Type | Unit | Description | native/custom |
+| ---    | ---  | ---  | ---         | ---           |
+| k8s.kube_endpoint_annotations| Gauge |  | Kubernetes annotations converted to Prometheus labels | native |
+| k8s.kube_endpoint_address_not_ready| Gauge |  |  | native |
+| k8s.kube_endpoint_address_available| Gauge |  |  | native |
+| k8s.kube_endpoint_info| Gauge |  | Information about Endpoint | native |
+| k8s.kube_endpoint_labels| Gauge |  | Kubernetes labels converted to Prometheus labels | native |
+| k8s.kube_endpoint_created| Gauge |  | Unix creation timestamp | native |
+| k8s.kube_endpoint_ports| Gauge |  | Endpoint port one for each series. | native |
+| k8s.kube_endpoint_address| Gauge |  | Endpoint address one for each series | native |
+
+
 ## Other metrics
 
 | Metric | Type | Unit | Description | native/custom |
