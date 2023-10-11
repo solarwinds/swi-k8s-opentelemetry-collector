@@ -13,9 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * `app.kubernetes.io/name` changed to container application name (e.q. `swo-k8s-collector` for SWO k8s collector, `swo-agent` for SWO agent)
   * `app.kubernetes.io/part-of` always set to `swo-k8s-collector`
 
+## [2.8.0-alpha.4] - 2023-10-09
+
 ### Fixed
 
 - Detection of Node name for Fargate Nodes's metrics
+
+### Added
+
+- Scrape kube_service_* and kube_endpoint_* metrics
+
+### Removed
+
+- Removed attributes `net.host.name`, `net.host.port`, `http.scheme`, `prometheus`, `prometheus_replica` and `endpoint` from exported metrics
+
+### Changed
+
+- Updated docker image to 0.8.5 (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.5))
 
 ## [2.8.0-alpha.3] - 2023-10-06
 
@@ -24,13 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changing log message attributes to respect OTEL log format
 
 ### Fixed
+
 - Fixing nodeselector for kube-state-metrics so that it is deployed on linux nodes only
 
-## [2.8.0-alpha.2] - 2023-09-14
+## [2.8.0-alpha.2] - 2023-10-04
 
 ### Added
 
 - Add monitoring windows node logs
+
 ## [2.8.0-alpha.1] - 2023-09-11
 
 ### Added

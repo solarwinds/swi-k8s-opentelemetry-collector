@@ -196,4 +196,22 @@ metadata:
 provisioner: kubernetes.io/no-provisioner
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-service
+  namespace: test-namespace
+  labels:
+    example.com/label: "example-label"
+  annotations:
+    example.com/annotation: "example-annotation"
+spec:
+  selector:
+    app: test-pod
+  ports:
+  - name: test-service-port
+    protocol: TCP
+    port: 80
+    targetPort: http-web-svc
 
