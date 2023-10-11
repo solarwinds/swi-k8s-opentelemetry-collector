@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Changed
-
 * Updated labels so that resources can be identified more easily
   * `app.kubernetes.io/name` changed to container application name (e.q. `swo-k8s-collector` for SWO k8s collector, `swo-agent` for SWO agent)
   * `app.kubernetes.io/part-of` always set to `swo-k8s-collector`
+
+## [2.8.0-alpha.5] - 2023-10-11
+
+### Fixed
+
+- Adding autofix from corrupted storage
 
 ## [2.8.0-alpha.4] - 2023-10-09
 
