@@ -9,8 +9,10 @@ extensions:
   file_storage:
 {{ toYaml .Values.otel.logs.filestorage | indent 4 }}
   health_check: {}
+{{- if .Values.otel.logs.memory_ballast }}
   memory_ballast:
 {{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
+{{- end }}
 
 processors:
   memory_limiter:
@@ -245,7 +247,9 @@ service:
   extensions:
     - file_storage
     - health_check
+{{- if .Values.otel.logs.memory_ballast }}
     - memory_ballast
+{{- end}}
   pipelines:
 {{- if .Values.otel.logs.container }}
     logs:
