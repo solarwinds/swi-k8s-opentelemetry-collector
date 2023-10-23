@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- Removed exported metrics `k8s.cluster.nodes`, `k8s.cluster.nodes.ready`, `k8s.cluster.spec.memory.requests`, `k8s.cluster.spec.cpu.requests`, `k8s.cluster.cpu.allocatable`, `k8s.cluster.memory.allocatable`, `k8s.cluster.nodes.ready.avg`, `k8s.cluster.cpu.capacity`, `k8s.cluster.memory.capacity`
+- Removed exported metrics `k8s.cluster.nodes`, `k8s.cluster.nodes.ready`, `k8s.cluster.spec.memory.requests`, `k8s.cluster.spec.cpu.requests`, `k8s.cluster.cpu.allocatable`, `k8s.cluster.memory.allocatable`, `k8s.cluster.nodes.ready.avg`, `k8s.cluster.cpu.capacity`, `k8s.cluster.memory.capacity`, `k8s.cluster.pods`, `k8s.cluster.pods.running`
 
 ## [2.8.0-alpha.6] - 2023-10-11
 

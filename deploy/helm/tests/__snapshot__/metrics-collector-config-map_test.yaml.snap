@@ -1403,11 +1403,6 @@ Metrics config should match snapshot when using default values:
             new_name: k8s.node.status.condition.diskpressure
           - action: insert
             experimental_match_labels:
-              phase: Running
-            include: k8s.kube_pod_status_phase
-            new_name: k8s.pod.status.phase.running_temp
-          - action: insert
-            experimental_match_labels:
               id: /
               k8s.node.name: \S+
             include: k8s.container_network_receive_bytes_total
@@ -1538,20 +1533,6 @@ Metrics config should match snapshot when using default values:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-          - action: insert
-            include: k8s.kube_pod_info
-            new_name: k8s.cluster.pods
-            operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set: []
-          - action: insert
-            include: k8s.pod.status.phase.running_temp
-            new_name: k8s.cluster.pods.running
-            operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set: []
           - action: insert
             experimental_match_labels:
               job: .*apiservers.*

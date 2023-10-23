@@ -743,10 +743,6 @@ processors:
         experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
         action: insert
         new_name: k8s.node.status.condition.diskpressure
-      - include: k8s.kube_pod_status_phase
-        experimental_match_labels: { "phase": "Running" }
-        action: insert
-        new_name: k8s.pod.status.phase.running_temp
       - include: k8s.container_network_receive_bytes_total
         action: insert
         match_type: regexp
@@ -857,20 +853,6 @@ processors:
 
 
       # Cluster metrics
-      - include: k8s.kube_pod_info
-        action: insert
-        new_name: k8s.cluster.pods
-        operations:
-          - action: aggregate_labels
-            label_set: []
-            aggregation_type: sum
-      - include: k8s.pod.status.phase.running_temp
-        action: insert
-        new_name: k8s.cluster.pods.running
-        operations:
-          - action: aggregate_labels
-            label_set: []
-            aggregation_type: sum
       - include: k8s.kubernetes_build_info
         action: insert
         match_type: regexp

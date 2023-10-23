@@ -6,8 +6,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
-| k8s.cluster.pods | Gauge |  | The count of pods on cluster | custom |
-| k8s.cluster.pods.running | Gauge |  | The count of pods in running phase | custom |
 | k8s.cluster.version | Gauge |  | Kubernetes cluster version| custom |
 
 ## Node metrics
