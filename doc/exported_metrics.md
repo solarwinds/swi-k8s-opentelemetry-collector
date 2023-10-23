@@ -6,17 +6,8 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
-| k8s.cluster.cpu.allocatable | Gauge | cores | The allocatable of CPU on cluster that are available for scheduling | custom |
-| k8s.cluster.cpu.capacity | Gauge | cores | The cluster CPU capacity | custom |
-| k8s.cluster.memory.allocatable | Gauge | bytes | The allocatable of memory on cluster that are available for scheduling | custom |
-| k8s.cluster.memory.capacity | Gauge | bytes | The cluster memory capacity | custom |
-| k8s.cluster.nodes | Gauge |  | The count of nodes on cluster | custom |
-| k8s.cluster.nodes.ready | Gauge |  | The count of nodes with status condition ready | custom |
-| k8s.cluster.nodes.ready.avg | Gauge | percent | The percentage of nodes with status condition ready | custom |
 | k8s.cluster.pods | Gauge |  | The count of pods on cluster | custom |
 | k8s.cluster.pods.running | Gauge |  | The count of pods in running phase | custom |
-| k8s.cluster.spec.cpu.requests | Gauge | cores | The total number of requested CPU by all containers in a cluster | custom |
-| k8s.cluster.spec.memory.requests | Gauge | bytes | The total number of requested memory by all containers in a cluster | custom |
 | k8s.cluster.version | Gauge |  | Kubernetes cluster version| custom |
 
 ## Node metrics
