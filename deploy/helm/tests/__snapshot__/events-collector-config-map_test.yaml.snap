@@ -134,6 +134,18 @@ Events config should match snapshot when using default values:
               - from: replicaset
                 key_regex: (.*)
                 tag_name: k8s.replicaset.labels.$$1
+          service:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.service.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.labels.$$1
           set_object_existence: true
           statefulset:
             association:
