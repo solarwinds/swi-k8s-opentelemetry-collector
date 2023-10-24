@@ -77,6 +77,7 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 				kube.MetadataFromNode:                  kp.getClientResource(kp.resources[kube.MetadataFromNode]),
 				kube.MetadataFromPersistentVolume:      kp.getClientResource(kp.resources[kube.MetadataFromPersistentVolume]),
 				kube.MetadataFromPersistentVolumeClaim: kp.getClientResource(kp.resources[kube.MetadataFromPersistentVolumeClaim]),
+				kube.MetadataFromService:			    kp.getClientResource(kp.resources[kube.MetadataFromService]),
 			})
 		if err != nil {
 			return err

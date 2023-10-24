@@ -80,6 +80,11 @@ func init() {
 		viewPersistentVolumeClaimsAdded,
 		viewPersistentVolumeClaimsDeleted,
 		viewPersistentVolumeClaimTableSize,
+
+		viewServicesUpdated,
+		viewServicesAdded,
+		viewServicesDeleted,
+		viewServiceTableSize,
 	)
 }
 
