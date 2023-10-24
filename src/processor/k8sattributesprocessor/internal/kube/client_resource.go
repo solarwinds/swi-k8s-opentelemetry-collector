@@ -201,6 +201,23 @@ func NewWatchPersistentVolumeClaimClient(
 	)
 }
 
+func NewWatchServiceClient(
+	client *WatchClient,
+	clientResource *ClientResource) (*WatchResourceClient[KubernetesResource], error) {
+	return NewWatchResourceClient[KubernetesResource](
+		client,
+		clientResource,
+		MetadataFromService,
+		"k8s.service.name",
+		"k8s.service.uid",
+		observability.RecordServiceTableSize,
+		observability.RecordServiceAdded,
+		observability.RecordServiceUpdated,
+		observability.RecordServiceDeleted,
+		newServiceSharedInformer,
+	)
+}
+
 // New initializes a new k8s Client.
 func NewWatchResourceClient[T KubernetesResource](
 	client *WatchClient,
