@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.8.0-alpha.8] - 2023-10-25
+
 * Removed memory request and ballast for logs daemonset
 
 ## [2.8.0-alpha.7] - 2023-10-24
