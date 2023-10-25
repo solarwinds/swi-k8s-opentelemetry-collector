@@ -195,6 +195,25 @@ func withExtractMetadataPersistentVolumeClaims(fields ...string) option {
 	}
 }
 
+// withExtractMetadataService allows specifying options to control extraction of service metadata.
+// If no fields explicitly provided, all metadata extracted by default.
+func withExtractMetadataService(fields ...string) option {
+	return func(p *kubernetesprocessor) error {
+		if len(fields) == 0 {
+			fields = []string{}
+		}
+		for _, field := range fields {
+			switch field {
+			case "k8s.service.uid":
+				p.resources[kube.MetadataFromService].rules.UID = true
+			default:
+				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
+			}
+		}
+		return nil
+	}
+}
+
 // withExtractResourceAssociations allows specifying options to associate pod metadata with incoming resource
 func withExtractResourceAssociations(resourceType string, resourceAssociations ...AssociationConfig) option {
 	return func(p *kubernetesprocessor) error {

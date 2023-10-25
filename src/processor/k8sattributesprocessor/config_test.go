@@ -326,6 +326,31 @@ func TestLoadConfig(t *testing.T) {
 						},
 					},
 				},
+				Service: ServiceConfig{
+					Extract: ExtractConfig{
+						Metadata: []string{"k8s.service.uid"},
+						Annotations: []FieldExtractConfig{
+							{TagName: "k8s.service.annotations.$$1", KeyRegex: "(.*)", From: kube.MetadataFromService},
+						},
+						Labels: []FieldExtractConfig{
+							{TagName: "k8s.service.labels.$$1", KeyRegex: "(.*)", From: kube.MetadataFromService},
+						},
+					},
+					Association: []AssociationConfig{
+						{
+							Sources: []AssociationSourceConfig{
+								{
+									From: "resource_attribute",
+									Name: "k8s.service.name",
+								},
+								{
+									From: "resource_attribute",
+									Name: "k8s.namespace.name",
+								},
+							},
+						},
+					},
+				},
 				Exclude: ExcludeConfig{
 					Pods: []ExcludePodConfig{
 						{Name: "jaeger-agent"},

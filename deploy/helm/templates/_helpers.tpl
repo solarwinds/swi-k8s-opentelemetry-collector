@@ -179,4 +179,5 @@ pod_association:
 {{ include "common.k8s-instrumentation.resource" (tuple . "persistentvolume" (index . 1) (index . 2)) }}
 {{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "persistentvolumeclaim" (index . 1) (index . 2)) }}
 {{ include "common.k8s-instrumentation.resource" (tuple . "node" (index . 1) (index . 2)) }}
+{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "service" (index . 1) (index . 2)) }}
 {{- end -}}

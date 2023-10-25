@@ -75,6 +75,12 @@ var (
 	mPersistentVolumeClaimsAdded    = stats.Int64("otelsvc/k8s/persistentvolumeclaim_added", "Number of persistentvolumeclaim add events received", "1")
 	mPersistentVolumeClaimsDeleted  = stats.Int64("otelsvc/k8s/persistentvolumeclaim_deleted", "Number of persistentvolumeclaim delete events received", "1")
 	mPersistentVolumeClaimTableSize = stats.Int64("otelsvc/k8s/persistentvolumeclaim_table_size", "Size of table containing persistentvolumeclaim info", "1")
+
+	// Service metrics
+	mServicesUpdated  = stats.Int64("otelsvc/k8s/service_updated", "Number of service update events received", "1")
+	mServicesAdded    = stats.Int64("otelsvc/k8s/service_added", "Number of service add events received", "1")
+	mServicesDeleted  = stats.Int64("otelsvc/k8s/service_deleted", "Number of service delete events received", "1")
+	mServiceTableSize = stats.Int64("otelsvc/k8s/service_table_size", "Size of table containing service info", "1")
 )
 
 // RecordDeploymentUpdated increments the metric that records deployment update events received.
@@ -255,6 +261,26 @@ func RecordPersistentVolumeClaimDeleted() {
 // RecordPersistentVolumeClaimTableSize stores the size of the persistent volume table field in WatchClient
 func RecordPersistentVolumeClaimTableSize(persistentVolumeClaimTableSize int64) {
 	stats.Record(context.Background(), mPersistentVolumeTableSize.M(persistentVolumeClaimTableSize))
+}
+
+// RecordServiceUpdated increments the metric that records persistent volume update events received.
+func RecordServiceUpdated() {
+	stats.Record(context.Background(), mServicesUpdated.M(int64(1)))
+}
+
+// RecordServiceAdded increments the metric that records persistent volume add events received.
+func RecordServiceAdded() {
+	stats.Record(context.Background(), mServicesAdded.M(int64(1)))
+}
+
+// RecordServiceDeleted increments the metric that records persistent volume delete events received.
+func RecordServiceDeleted() {
+	stats.Record(context.Background(), mServicesDeleted.M(int64(1)))
+}
+
+// RecordServiceTableSize stores the size of the persistent volume table field in WatchClient
+func RecordServiceTableSize(ServiceTableSize int64) {
+	stats.Record(context.Background(), mPersistentVolumeTableSize.M(ServiceTableSize))
 }
 
 // Create views for each metric
@@ -507,5 +533,33 @@ var viewPersistentVolumeClaimTableSize = &view.View{
 	Name:        mPersistentVolumeClaimTableSize.Name(),
 	Description: mPersistentVolumeClaimTableSize.Description(),
 	Measure:     mPersistentVolumeClaimTableSize,
+	Aggregation: view.LastValue(),
+}
+
+var viewServicesUpdated = &view.View{
+	Name:        mServicesUpdated.Name(),
+	Description: mServicesUpdated.Description(),
+	Measure:     mServicesUpdated,
+	Aggregation: view.Sum(),
+}
+
+var viewServicesAdded = &view.View{
+	Name:        mServicesAdded.Name(),
+	Description: mServicesAdded.Description(),
+	Measure:     mServicesAdded,
+	Aggregation: view.Sum(),
+}
+
+var viewServicesDeleted = &view.View{
+	Name:        mServicesDeleted.Name(),
+	Description: mServicesDeleted.Description(),
+	Measure:     mServicesDeleted,
+	Aggregation: view.Sum(),
+}
+
+var viewServiceTableSize = &view.View{
+	Name:        mServiceTableSize.Name(),
+	Description: mServiceTableSize.Description(),
+	Measure:     mServiceTableSize,
 	Aggregation: view.LastValue(),
 }
