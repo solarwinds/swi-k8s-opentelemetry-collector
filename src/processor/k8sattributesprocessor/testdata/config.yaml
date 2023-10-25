@@ -231,6 +231,25 @@ k8sattributes/2:
           - from: resource_attribute
             name: k8s.namespace.name
 
+  service:
+      extract:
+        metadata:
+          - k8s.service.uid
+        annotations:
+          - key_regex: (.*)
+            tag_name: k8s.service.annotations.$$1
+            from: service
+        labels:
+          - key_regex: (.*)
+            tag_name: k8s.service.labels.$$1
+            from: service
+      association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.service.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+
   exclude:
     pods:
       - name: jaeger-agent
