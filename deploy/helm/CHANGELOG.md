@@ -22,12 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `app.kubernetes.io/name` changed to container application name (e.q. `swo-k8s-collector` for SWO k8s collector, `swo-agent` for SWO agent)
   - `app.kubernetes.io/part-of` always set to `swo-k8s-collector`
 - Update logs daemon requests/limits
-- Removed useless metrics `kube_service_annotations`, `kube_service_labels`, `kube_endpoint_annotations`, `kube_endpoint_labels`
 - Removed attributes `net.host.name`, `net.host.port`, `http.scheme`, `prometheus`, `prometheus_replica` and `endpoint` from exported metrics
 
 ### Fixed
 
-- Fixing nodeselector for `kube-state-metrics` so that it is deployed on linux nodes only
+- Fixed nodeselector for `kube-state-metrics` so that it is deployed on linux nodes only
 - Detection of Node name for Fargate Nodes's metrics
 - Adding autofix from corrupted storage
 
