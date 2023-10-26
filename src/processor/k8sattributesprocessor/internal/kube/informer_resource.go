@@ -339,3 +339,37 @@ func persistentVolumeClaimInformerWatchFuncWithSelectors(client kubernetes.Inter
 		return client.CoreV1().PersistentVolumeClaims(namespace).Watch(context.Background(), opts)
 	}
 }
+
+// Add this new function for Service
+func newServiceSharedInformer(
+	client kubernetes.Interface,
+	namespace string,
+	ls labels.Selector,
+	fs fields.Selector,
+) cache.SharedInformer {
+	informer := cache.NewSharedInformer(
+		&cache.ListWatch{
+			ListFunc:  serviceInformerListFuncWithSelectors(client, namespace, ls, fs),
+			WatchFunc: serviceInformerWatchFuncWithSelectors(client, namespace, ls, fs),
+		},
+		&corev1.Service{},
+		watchSyncPeriod,
+	)
+	return informer
+}
+
+func serviceInformerListFuncWithSelectors(client kubernetes.Interface, namespace string, ls labels.Selector, fs fields.Selector) cache.ListFunc {
+	return func(opts metav1.ListOptions) (runtime.Object, error) {
+		opts.LabelSelector = ls.String()
+		opts.FieldSelector = fs.String()
+		return client.CoreV1().Services(namespace).List(context.Background(), opts)
+	}
+}
+
+func serviceInformerWatchFuncWithSelectors(client kubernetes.Interface, namespace string, ls labels.Selector, fs fields.Selector) cache.WatchFunc {
+	return func(opts metav1.ListOptions) (watch.Interface, error) {
+		opts.LabelSelector = ls.String()
+		opts.FieldSelector = fs.String()
+		return client.CoreV1().Services(namespace).Watch(context.Background(), opts)
+	}
+}

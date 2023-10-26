@@ -159,3 +159,19 @@ func createPersistentVolumeClaimProcessorOpts(persistentVolumeClaimConfig Persis
 
 	return opts
 }
+
+func createServiceProcessorOpts(serviceConfig ServiceConfig) []option {
+	var opts []option
+
+	opts = append(opts, withResource(kube.MetadataFromService))
+	opts = append(opts, withExtractMetadataService(serviceConfig.Extract.Metadata...))
+	opts = append(opts, withExtractLabelsGeneric(kube.MetadataFromService, serviceConfig.Extract.Labels...))
+	opts = append(opts, withExtractAnnotationsGeneric(kube.MetadataFromService, serviceConfig.Extract.Annotations...))
+	opts = append(opts, withFilterNamespaceGeneric(kube.MetadataFromService, serviceConfig.Filter.Namespace))
+	opts = append(opts, withFilterLabelsGeneric(kube.MetadataFromService, serviceConfig.Filter.Labels...))
+	opts = append(opts, withFilterFieldsGeneric(kube.MetadataFromService, serviceConfig.Filter.Fields...))
+	opts = append(opts, withExtractAssociationsGeneric(kube.MetadataFromService, serviceConfig.Association...))
+	opts = append(opts, withExcludesResource(kube.MetadataFromService, serviceConfig.Exclude.Services))
+
+	return opts
+}

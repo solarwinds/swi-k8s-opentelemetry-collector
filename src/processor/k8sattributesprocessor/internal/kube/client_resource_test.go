@@ -1282,6 +1282,135 @@ func TestPersistentVolumeClaimExtractionRules(t *testing.T) {
 	}
 }
 
+// Service tests
+func TestServiceAdd(t *testing.T) {
+	c, _ := newTestClient(t)
+	service := &corev1.Service{}
+	resourceAddAndUpdateTest(t, MetadataFromService, service, c.ServiceClient, c.ServiceClient.handleResourceAdd)
+}
+
+// TestServiceCreate tests that a new Service
+func TestServiceCreate(t *testing.T) {
+	c, _ := newTestClient(t)
+	assert.Equal(t, 0, len(c.ServiceClient.Resources))
+
+	// Service is created in Pending phase. At this point it has a UID but no start time
+	service := &corev1.Service{}
+	service.Name = "service1"
+	service.UID = "11111111-2222-3333-4444-555555555555"
+	c.ServiceClient.handleResourceAdd(service)
+	assert.Equal(t, 1, len(c.ServiceClient.Resources))
+	got := c.ServiceClient.Resources[newResourceIdentifier("resource_attribute", "k8s.service.uid", "11111111-2222-3333-4444-555555555555")]
+	assert.Equal(t, "service1", got.GetName())
+	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
+
+	startTime := meta_v1.NewTime(time.Now())
+	service.CreationTimestamp = startTime
+	c.ServiceClient.handleResourceUpdate(&corev1.Service{}, service)
+	assert.Equal(t, 1, len(c.ServiceClient.Resources))
+	got = c.ServiceClient.Resources[newResourceIdentifier("resource_attribute", "k8s.service.uid", "11111111-2222-3333-4444-555555555555")]
+	assert.Equal(t, "service1", got.GetName())
+	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
+}
+
+func TestServiceUpdate(t *testing.T) {
+	c, _ := newTestClient(t)
+	service := &corev1.Service{}
+	resourceAddAndUpdateTest(t, MetadataFromService, service, c.ServiceClient, func(obj interface{}) {
+		c.ServiceClient.handleResourceUpdate(&corev1.Service{}, obj)
+	})
+}
+
+func TestServiceExtractionRules(t *testing.T) {
+	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+
+	service := &corev1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "service1",
+			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+			CreationTimestamp: meta_v1.Now(),
+			Labels: map[string]string{
+				"label1": "lv1",
+			},
+			Annotations: map[string]string{
+				"annotation1": "av1",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name       string
+		rules      ExtractionRulesResource
+		attributes map[string]string
+	}{{
+		name:       "no-rules",
+		rules:      ExtractionRulesResource{},
+		attributes: nil,
+	}, {
+		name: "labels",
+		rules: ExtractionRulesResource{
+			Labels: []FieldExtractionRule{{
+				Name: "l1",
+				Key:  "label1",
+				From: MetadataFromService,
+			},
+			},
+			Annotations: []FieldExtractionRule{{
+				Name: "a1",
+				Key:  "annotation1",
+				From: MetadataFromService,
+			},
+			},
+		},
+		attributes: map[string]string{
+			"l1": "lv1",
+			"a1": "av1",
+		},
+	},
+		{
+			name: "all-labels",
+			rules: ExtractionRulesResource{
+				Labels: []FieldExtractionRule{{
+					KeyRegex: regexp.MustCompile("^(?:la.*)$"),
+					From:     MetadataFromService,
+				},
+				},
+			},
+			attributes: map[string]string{
+				"k8s.service.labels.label1": "lv1",
+			},
+		},
+		{
+			name: "all-annotations",
+			rules: ExtractionRulesResource{
+				Annotations: []FieldExtractionRule{{
+					KeyRegex: regexp.MustCompile("^(?:an.*)$"),
+					From:     MetadataFromService,
+				},
+				},
+			},
+			attributes: map[string]string{
+				"k8s.service.annotations.annotation1": "av1",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c.ServiceClient.Rules = tc.rules
+			c.ServiceClient.handleResourceAdd(service)
+			p, ok := c.GetResource(MetadataFromService, newResourceIdentifier("resource_attribute", "k8s.service.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+			require.True(t, ok)
+
+			assert.Equal(t, len(tc.attributes), len(p.GetAttributes()))
+			for k, v := range tc.attributes {
+				got, ok := p.GetAttributes()[k]
+				assert.True(t, ok)
+				assert.Equal(t, v, got)
+			}
+		})
+	}
+}
+
 func TestResourceDeleteLoop(t *testing.T) {
 	c, _ := newTestClient(t)
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [2.8.0-alpha.8] - 2023-10-25
+
+* Removed memory request and ballast for logs daemonset
+
+## [2.8.0-alpha.7] - 2023-10-24
+
+* Updated image to `0.8.6` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.6))
+* Scraping labels/annotations from Services
+* Removed useless metrics `kube_service_annotations`, `kube_service_labels`, `kube_endpoint_annotations`, `kube_endpoint_labels`
+
 ## [2.8.0-alpha.6] - 2023-10-11
 
 * Updated labels so that resources can be identified more easily

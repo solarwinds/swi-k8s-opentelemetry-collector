@@ -224,6 +224,7 @@ func createProcessorOpts(cfg component.Config) []option {
 	opts = append(opts, createNodeProcessorOpts(oCfg.Node)...)
 	opts = append(opts, createPersistentVolumeProcessorOpts(oCfg.PersistentVolume)...)
 	opts = append(opts, createPersistentVolumeClaimProcessorOpts(oCfg.PersistentVolumeClaim)...)
+	opts = append(opts, createServiceProcessorOpts(oCfg.Service)...)
 	return opts
 }
 

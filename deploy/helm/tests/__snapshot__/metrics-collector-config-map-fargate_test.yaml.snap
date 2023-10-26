@@ -573,18 +573,14 @@ Metrics config should match snapshot when using default values:
               - ^kube_persistentvolumeclaim_resource_requests_storage_bytes$
               - ^kube_persistentvolumeclaim_created$
               - ^kube_pod_spec_volumes_persistentvolumeclaims_info$
-              - ^kube_service_annotations$
               - ^kube_service_info$
-              - ^kube_service_labels$
               - ^kube_service_created$
               - ^kube_service_spec_type$
               - ^kube_service_spec_external_ip$
               - ^kube_service_status_load_balancer_ingress$
-              - ^kube_endpoint_annotations$
               - ^kube_endpoint_address_not_ready$
               - ^kube_endpoint_address_available$
               - ^kube_endpoint_info$
-              - ^kube_endpoint_labels$
               - ^kube_endpoint_created$
               - ^kube_endpoint_ports$
               - ^kube_endpoint_address$
@@ -815,6 +811,22 @@ Metrics config should match snapshot when using default values:
               - from: replicaset
                 key_regex: (.*)
                 tag_name: k8s.replicaset.labels.$$1
+          service:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.service.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.annotations.$$1
+              labels:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.labels.$$1
           set_object_existence: true
           statefulset:
             association:

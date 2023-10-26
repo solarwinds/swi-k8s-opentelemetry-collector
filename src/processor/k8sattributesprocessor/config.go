@@ -80,6 +80,9 @@ type Config struct {
 
 	// Section allows to define rules for extracting annotations and labels from Persistent Volume Claims
 	PersistentVolumeClaim PersistentVolumeClaimConfig `mapstructure:"persistentvolumeclaim"`
+
+	// Section allows to define rules for extracting annotations and labels from Services
+	Service ServiceConfig `mapstructure:"service"`
 }
 
 func (cfg *Config) Validate() error {
@@ -126,6 +129,10 @@ func (cfg *Config) Validate() error {
 	}
 
 	if err := cfg.PersistentVolumeClaim.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.Service.Validate(); err != nil {
 		return err
 	}
 
@@ -251,6 +258,17 @@ type PersistentVolumeClaimConfig struct {
 }
 
 func (cfg *PersistentVolumeClaimConfig) Validate() error {
+	return validateAssociation(cfg.Association)
+}
+
+type ServiceConfig struct {
+	Extract     ExtractConfig                      `mapstructure:"extract"`
+	Filter      FilterConfig                       `mapstructure:"filter"`
+	Exclude     ExcludeServiceConfig			   `mapstructure:"exclude"`
+	Association []AssociationConfig                `mapstructure:"association"`
+}
+
+func (cfg *ServiceConfig) Validate() error {
 	return validateAssociation(cfg.Association)
 }
 
@@ -485,6 +503,10 @@ type ExcludePersistentVolumeConfig struct {
 
 type ExcludePersistentVolumeClaimConfig struct {
 	PVCs []ExcludePodConfig `mapstructure:"pvcs"`
+}
+
+type ExcludeServiceConfig struct {
+	Services []ExcludePodConfig `mapstructure:"services"`
 }
 
 // ExcludePodConfig represent a Pod name to ignore

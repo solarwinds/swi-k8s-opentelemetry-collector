@@ -72,6 +72,7 @@ type WatchClient struct {
 	NodeClient                  *WatchResourceClient[KubernetesResource]
 	PersistentVolumeClient      *WatchResourceClient[KubernetesResource]
 	PersistentVolumeClaimClient *WatchResourceClient[KubernetesResource]
+	ServiceClient 				*WatchResourceClient[KubernetesResource]
 }
 
 // Extract replicaset name from the pod name. Pod name is created using
@@ -263,6 +264,18 @@ func New(
 
 		c.PersistentVolumeClaimClient = persistentVolumeClaimClient
 	}
+
+	if clientResources[MetadataFromService] != nil {
+		serviceClient, err := NewWatchServiceClient(
+			c,
+			clientResources[MetadataFromService],
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		c.ServiceClient = serviceClient
+	}
 	return c, err
 }
 
@@ -322,6 +335,10 @@ func (c *WatchClient) Start() {
 
 	if c.PersistentVolumeClaimClient != nil {
 		c.PersistentVolumeClaimClient.Start()
+	}
+
+	if c.ServiceClient != nil {
+		c.ServiceClient.Start()
 	}
 }
 
@@ -474,6 +491,8 @@ func (c *WatchClient) GetResource(resourceType string, identifier ResourceIdenti
 		return c.PersistentVolumeClient.GetResource(identifier)
 	case MetadataFromPersistentVolumeClaim:
 		return c.PersistentVolumeClaimClient.GetResource(identifier)
+	case MetadataFromService:
+		return c.ServiceClient.GetResource(identifier)
 	}
 
 	return nil, false

@@ -40,6 +40,8 @@ const (
 	MetadataFromPersistentVolume = "persistentvolume"
 	// MetadataFromPersistentVolumeClaim is used to specify to extract metadata/labels/annotations from persistent volume claim
 	MetadataFromPersistentVolumeClaim = "persistentvolumeclaim"
+	// MetadataFromService is used to specify to extract metadata/labels/annotations from service
+	MetadataFromService = "service"
 )
 
 // ClientResource is a generic client for Kubernetes resources

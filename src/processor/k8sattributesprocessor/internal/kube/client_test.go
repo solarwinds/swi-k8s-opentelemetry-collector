@@ -1455,6 +1455,7 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 			MetadataFromNode:                  newClientResource("k8s.node.uid"),
 			MetadataFromPersistentVolume:      newClientResource("k8s.persistentvolume.uid"),
 			MetadataFromPersistentVolumeClaim: newClientResource("k8s.persistentvolumeclaim.uid"),
+			MetadataFromService: 			   newClientResource("k8s.service.uid"),
 		})
 	require.NoError(t, err)
 	return c.(*WatchClient), logs
