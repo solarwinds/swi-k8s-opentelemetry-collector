@@ -1525,7 +1525,7 @@ receivers:
           scheme: {{ (index .Values.otel.metrics "kube-state-metrics").scheme | default "http" | quote }}
           scrape_interval: {{ quote (index .Values.otel.metrics "kube-state-metrics").scrape_interval }}
           metrics_path: "/metrics"
-          honor_timestamps: true
+          honor_timestamps: false
           honor_labels: true
           static_configs:
             - targets:
@@ -1534,7 +1534,7 @@ receivers:
     config:
       scrape_configs:
         - job_name: 'kubernetes-nodes-cadvisor'
-          honor_timestamps: true
+          honor_timestamps: false
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
           scrape_timeout: 10s
           metrics_path: /metrics
@@ -1573,7 +1573,7 @@ receivers:
             follow_redirects: true
             enable_http2: true
         - job_name: 'kubernetes-nodes'
-          honor_timestamps: true
+          honor_timestamps: false
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
           scrape_timeout: 10s
           metrics_path: /metrics
@@ -1612,7 +1612,7 @@ receivers:
             follow_redirects: true
             enable_http2: true
         - job_name: kubernetes-apiservers
-          honor_timestamps: true
+          honor_timestamps: false
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
           scrape_timeout: 10s
           metrics_path: /metrics
