@@ -1,3 +1,4 @@
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled  }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -79,3 +80,4 @@ spec:
           operator: Exists
         - effect: NoSchedule
           operator: Exists
+{{- end}}

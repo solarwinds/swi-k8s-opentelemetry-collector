@@ -1,3 +1,4 @@
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.k8sCollector.enabled  }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -57,3 +58,4 @@ spec:
                   path: config.yaml
       securityContext: {}
       serviceAccountName: {{ include "common.fullname" . }}
+{{- end}}

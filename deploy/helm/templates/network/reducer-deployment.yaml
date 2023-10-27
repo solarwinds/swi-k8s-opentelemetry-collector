@@ -1,3 +1,4 @@
+{{- if .Values.ebpfNetworkMonitoring.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,31 +27,33 @@ spec:
           image: "otel/opentelemetry-ebpf-reducer:v0.10.0"
           imagePullPolicy: Always
           args:
-            - --port=7000
+            - --port={{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}
             - --log-console
             - --no-log-file
             - --warning
             - --enable-aws-enrichment
-            - --prom=0.0.0.0:7010
             - --enable-id-id
-            #- --disable-prometheus-metrics
-            #- --enable-otlp-grpc-metrics
-            #- --otlp-grpc-metrics-host={{ include "common.fullname" . }}-collector
-            #- --otlp-grpc-metrics-port=4317
+            - --disable-prometheus-metrics
+            - --enable-otlp-grpc-metrics
+            - --otlp-grpc-metrics-host={{ include "common.fullname" (tuple . "-collector") }}
+            - --otlp-grpc-metrics-port=4317
             - --num-ingest-shards=1
             - --num-matching-shards=1
             - --num-aggregation-shards=1
+            {{- if .Values.ebpfNetworkMonitoring.reducer.disableMetrics }}
+            - --disable-metrics={{join "," .Values.ebpfNetworkMonitoring.reducer.disableMetrics}}
+            {{- end }}
+            {{- if .Values.ebpfNetworkMonitoring.reducer.enableMetrics }}
+            - --enable-metrics={{join "," .Values.ebpfNetworkMonitoring.reducer.enableMetrics}}
+            {{- end }}
           env:
             - name: "EBPF_NET_CRASH_METRIC_HOST"
-              value: "{{ include "common.fullname" . }}-collector"
+              value: "{{ include "common.fullname" (tuple . "-collector") }}"
             - name: "EBPF_NET_CRASH_METRIC_PORT"
               value: "4317"
           ports:
             - name: telemetry
-              containerPort: 7000
-              protocol: TCP
-            - name: prom
-              containerPort: 7010
+              containerPort: {{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}
               protocol: TCP
           volumeMounts:
           readinessProbe:
@@ -58,7 +61,8 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             exec:
-              command: ['/srv/health_check.sh', 'readiness_probe', 'localhost', "7000"]
+              command: ['/srv/health_check.sh', 'readiness_probe', 'localhost', "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"]
           resources:
             null
       volumes:
+{{- end}}
