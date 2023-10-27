@@ -48,7 +48,6 @@ deploy:
           otel.logs.filter.exclude.record_attributes[0].value: "monitoring"
           cluster.name: cluster name
           cluster.uid: cluster-uid-123456789
-          fullnameOverride: my-chart
           # excluded annotations:
           # * kubectl.kubernetes.io/last-applied-configuration - deployed by kubectl, contains full config for each resource
           # * cni.projectcalico.org/ - deployed in CI system (k3s)
@@ -69,6 +68,35 @@ portForward:
   port: 80
   localPort: 8080
 profiles:
+  - name: test-cluster
+    build:
+      artifacts:
+        - image: swi-k8s-opentelemetry-collector
+          docker:
+            dockerfile: build/docker/Dockerfile
+      local:
+        push: true
+    patches:
+    - op: replace
+      path: /deploy/helm/releases/0/namespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: replace
+      path: /deploy/helm/releases/0/name
+      value: "{{.TEST_CLUSTER_RELEASE_NAME}}"
+    - op: replace
+      path: /portForward/0/namespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: replace
+      path: /portForward/1/namespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: add
+      path: /deploy/kubectl/defaultNamespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: remove
+      path: /manifests/kustomize/paths/1
+    - op: replace
+      path: /deploy/kubeContext
+      value: "arn:aws:eks:us-east-2:125229878893:cluster/TestCluster"
   - name: builder-only
     build:
       artifacts:
