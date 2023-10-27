@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "common.fullname" . }}-logs-windows
+  name: {{ include "common.fullname" (tuple . "-node-collector-windows") }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: swo-k8s-collector
@@ -10,15 +10,15 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ include "common.fullname" . }}-logs-windows
+      app: {{ include "common.fullname" (tuple . "-node-collector-windows") }}
   template:
     metadata:
       labels:
         app.kubernetes.io/name: swo-k8s-collector
-        app: {{ include "common.fullname" . }}-logs-windows
+        app: {{ include "common.fullname" (tuple . "-node-collector-windows") }}
 {{ include "common.labels" . | indent 8 }}
       annotations:
-        checksum/config: {{ tpl (.Files.Get "logs-collector-config-map-windows.yaml") . | sha256sum }}
+        checksum/config: {{ tpl (.Files.Get "node-collector-config-map-windows.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
@@ -134,7 +134,7 @@ spec:
             type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
-            name: {{ include "common.fullname" . }}-logs-config-windows
+            name: {{ include "common.fullname" (tuple . "-node-collector-config-windows") }}
             items:
               - key: logs.config
                 path: relay.yaml

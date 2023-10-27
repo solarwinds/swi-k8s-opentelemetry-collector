@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "common.fullname" . }}-logs
+  name: {{ include "common.fullname" (tuple . "-node-collector") }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: swo-k8s-collector
@@ -10,15 +10,15 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ include "common.fullname" . }}-logs
+      app: {{ include "common.fullname" (tuple . "-node-collector") }}
   template:
     metadata:
       labels:
         app.kubernetes.io/name: swo-k8s-collector
-        app: {{ include "common.fullname" . }}-logs
+        app: {{ include "common.fullname" (tuple . "-node-collector") }}
 {{ include "common.labels" . | indent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/node-collector-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
@@ -151,7 +151,7 @@ spec:
             type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
-            name: {{ include "common.fullname" . }}-logs-config
+            name: {{ include "common.fullname" (tuple . "-node-collector-config") }}
             items:
               - key: logs.config
                 path: relay.yaml
