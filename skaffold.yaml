@@ -23,7 +23,8 @@ manifests:
     buildArgs:
       - --load-restrictor LoadRestrictionsNone
 deploy:
-  kubectl: {}
+  kubectl: 
+    defaultNamespace: monitoring
   helm:
     releases:
       - name: swi-k8s-opentelemetry-collector
@@ -55,6 +56,9 @@ deploy:
           # excluded labels:
           # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
           otel.metrics.k8s_instrumentation.labels.excludePattern: "skaffold\\.dev/.*"
+          ebpfNetworkMonitoring.enabled: true
+          otel.logs.enabled: false
+          otel.events.enabled: false
         upgradeOnChange: true
   kubeContext: docker-desktop
 portForward:
@@ -89,7 +93,7 @@ profiles:
     - op: replace
       path: /portForward/1/namespace
       value: "{{.TEST_CLUSTER_NAMESPACE}}"
-    - op: add
+    - op: replace
       path: /deploy/kubectl/defaultNamespace
       value: "{{.TEST_CLUSTER_NAMESPACE}}"
     - op: remove

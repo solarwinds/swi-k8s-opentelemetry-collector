@@ -1,4 +1,4 @@
-{{- if .Values.otel.logs.enabled }}
+{{- if or .Values.otel.logs.enabled (and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled) }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -61,6 +61,7 @@ spec:
         kubernetes.io/os: linux
         kubernetes.io/arch: amd64
       containers:
+{{- if .Values.otel.logs.enabled }}
         - name: swi-opentelemetry-collector
           image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
@@ -129,6 +130,51 @@ spec:
               readOnly: true
             - name: logcheckpoints
               mountPath: {{ .Values.otel.logs.filestorage.directory }}
+{{- end }}
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled }}
+        - name: swi-kernel-collector
+          image: "otel/opentelemetry-ebpf-kernel-collector:v0.10.0"
+          imagePullPolicy: Always
+          args:
+            - --config-file=/etc/network-explorer/config.yaml
+            - --disable-nomad-metadata
+            - --warning
+          env:
+            - name: "EBPF_NET_CLUSTER_NAME"
+              value: {{ quote .Values.cluster.name }}
+            - name: "EBPF_NET_DISABLE_HTTP_METRICS"
+              value: "false"
+            - name: "EBPF_NET_KERNEL_HEADERS_AUTO_FETCH"
+              value: "true"
+            - name: "EBPF_NET_INTAKE_HOST"
+              value: "{{ include "common.fullname" . }}-reducer"
+            - name: "EBPF_NET_INTAKE_PORT"
+              value: "7000"
+            - name: "EBPF_NET_HOST_DIR"
+              value: "/hostfs"
+            - name: "EBPF_NET_CRASH_METRIC_HOST"
+              value: "{{ include "common.fullname" . }}-collector"
+            - name: "EBPF_NET_CRASH_METRIC_PORT"
+              value: "4317"
+          resources:
+            {}
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - mountPath: /hostfs/
+            name: host-root
+            readOnly: true
+          - mountPath: /hostfs/var/cache
+            name: host-var-cache
+            readOnly: false
+          - mountPath: /etc/network-explorer
+            name: {{ include "common.fullname" (tuple . "-network-otel-collector-config") }}
+            readOnly: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      serviceAccountName: {{ include "common.fullname" . }}
+{{- end }}
       volumes:
         - name: varlogpods
           hostPath:
@@ -155,4 +201,22 @@ spec:
             items:
               - key: logs.config
                 path: relay.yaml
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled }}
+        - name: {{ include "common.fullname" (tuple . "-network-otel-collector-config") }}
+          projected:
+            sources:
+            - configMap:
+                name: {{ include "common.fullname" (tuple . "-network-otel-collector-config") }}
+                items:
+                - key: config.yaml
+                  path: config.yaml
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory
+        - name: host-var-cache
+          hostPath:
+            path: /var/cache
+            type: DirectoryOrCreate
+{{- end }}
 {{- end }}
