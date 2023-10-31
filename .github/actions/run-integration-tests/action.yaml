@@ -5,19 +5,19 @@ runs:
   steps:
     - name: Run Integration tests
       run: |
-        kubectl create job --from=cronjob/integration-test integration-test-manual
+        kubectl create job -n test-namespace --from=cronjob/integration-test integration-test-manual
 
-        kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual
-        kubetail -l job-name=integration-test-manual &  
+        kubectl wait -n test-namespace --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual
+        kubetail -n test-namespace -l job-name=integration-test-manual &  
 
         # Wait for either complete or failed -
         while true; do
-            if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual 2>/dev/null; then
+            if kubectl wait -n test-namespace --for=condition=complete --timeout=0 jobs/integration-test-manual 2>/dev/null; then
                 job_result=0
                 break
             fi
 
-            if kubectl wait --for=condition=failed --timeout=0 jobs/integration-test-manual 2>/dev/null; then
+            if kubectl wait -n test-namespace --for=condition=failed --timeout=0 jobs/integration-test-manual 2>/dev/null; then
                 job_result=1
                 break
             fi
@@ -30,12 +30,12 @@ runs:
             echo "Tests failed"
             mkdir pod-logs
             echo "Folder Created"
-            pods=$(kubectl get pods -n monitoring -o=jsonpath='{.items[*].metadata.name}')
+            pods=$(kubectl get pods -n test-namespace -o=jsonpath='{.items[*].metadata.name}')
             for pod in $pods; do
-              containers=$(kubectl get pod $pod -n monitoring -o=jsonpath='{.spec.containers[*].name}')
+              containers=$(kubectl get pod $pod -n test-namespace -o=jsonpath='{.spec.containers[*].name}')
               for container in $containers; do
                 echo "Logs for pod $pod, container $container:"               
-                kubectl logs -n monitoring $pod -c $container > pod-logs/$container.txt
+                kubectl logs -n test-namespace $pod -c $container > pod-logs/$container.txt
               done
             done
 
