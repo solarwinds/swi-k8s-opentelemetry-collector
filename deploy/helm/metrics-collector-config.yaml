@@ -170,6 +170,15 @@ processors:
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
+  
+  metricstransform/rename-ebpf:
+    transforms:
+      # add `k8s.` suffix to all metrics that are clearly provided by eBPF networking
+      - include: ^(tcp.|udp.|http.|dns.)(.*)$$
+        match_type: regexp
+        action: update
+        new_name: k8s.$${1}$${2}
+
   # Transformations done on all metrics before any grouping
   swmetricstransform/preprocessing:
     transforms:
@@ -1468,6 +1477,12 @@ processors:
           - "^kube_endpoint_created$"
           - "^kube_endpoint_ports$"
           - "^kube_endpoint_address$"
+  filter/ebpf:
+    metrics:
+      exclude:
+        match_type: regexp
+        metric_names:
+          - "^ebpf_net.*$"
 
 connectors:
   forward/prometheus:
@@ -1535,9 +1550,14 @@ service:
   pipelines:
     metrics/otlp:
       exporters:
-        - forward/prometheus
+        - otlp
       processors:
         - memory_limiter
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled  }}
+        - filter/ebpf
+{{- end }}
+        - metricstransform/rename-ebpf
+        - batch
       receivers:
         - otlp
     metrics/prometheus:

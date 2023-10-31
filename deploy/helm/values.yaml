@@ -395,6 +395,9 @@ prometheus:
               operator: NotIn
               values:
               - fargate
+    nodeSelector:
+      kubernetes.io/os: linux
+      kubernetes.io/arch: amd64
 
 kube-state-metrics:
   enabled: true
@@ -442,11 +445,27 @@ ebpfNetworkMonitoring:
   enabled: false
   kernelCollector:
     enabled: true
+
+    telemetry:
+      logs:
+        level: "warning"
   k8sCollector:
     enabled: true
+
+    telemetry:
+      logs:
+        level: "warning"
   reducer:
     disableMetrics: []
     enableMetrics: []
+
+    # Port on which the reducer will listen for metrics from kernelCollector and k8sCollector
     telemetryPort: 7000
+
+    telemetry:
+      logs:
+        level: "warning"
+      metrics:
+        enabled: false
   podSecurityAdminission:
     enabled: true

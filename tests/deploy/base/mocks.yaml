@@ -9,8 +9,6 @@ metadata:
 data:
   relay: |
     exporters:
-      logging:
-        loglevel: debug
       file/logs:
         path: /data/logs.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
@@ -62,7 +60,6 @@ data:
       pipelines:
         metrics:
           exporters:
-          - logging
           - file/metrics
           - prometheus
           processors:
@@ -70,7 +67,6 @@ data:
           - otlp
         logs/logs:
           exporters:
-          - logging
           - file/logs
           processors:
           - filter/events_out
@@ -78,7 +74,6 @@ data:
           - otlp
         logs/events:
           exporters:
-          - logging
           - file/events
           processors:
           - filter/events_in
@@ -123,6 +118,9 @@ spec:
     spec:
       securityContext:
         runAsUser: 0
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
       containers:
         - name: opentelemetry-collector
           command:
@@ -130,7 +128,7 @@ spec:
             - --config=/conf/relay.yaml
           securityContext:
             runAsUser: 0
-          image: "otel/opentelemetry-collector-contrib:0.73.0"
+          image: "otel/opentelemetry-collector-contrib:0.81.0"
           imagePullPolicy: IfNotPresent
           ports:
             - name: otlp

@@ -17,11 +17,11 @@ spec:
       labels:
         app: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "7010"
-        prometheus.io/path: "/"
-        prometheus.io/scheme: "http"
+        checksum/values: {{ toJson .Values | sha256sum }}
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
       containers:
         - name: reducer
           image: "otel/opentelemetry-ebpf-reducer:v0.10.0"
@@ -30,7 +30,7 @@ spec:
             - --port={{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}
             - --log-console
             - --no-log-file
-            - --warning
+            - --{{ .Values.ebpfNetworkMonitoring.reducer.telemetry.logs.level }}
             - --enable-aws-enrichment
             - --enable-id-id
             - --disable-prometheus-metrics

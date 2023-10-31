@@ -59,6 +59,8 @@ deploy:
           ebpfNetworkMonitoring.enabled: true
           otel.logs.enabled: false
           otel.events.enabled: false
+          otel.metrics.batch.send_batch_size: 1024
+          otel.metrics.batch.send_batch_max_size: 1024
         upgradeOnChange: true
   kubeContext: docker-desktop
 portForward:
@@ -93,6 +95,9 @@ profiles:
     - op: replace
       path: /portForward/1/namespace
       value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: replace
+      path: /portForward/1/resourceName
+      value: "{{.TEST_CLUSTER_RELEASE_NAME}}-prometheus-server"
     - op: replace
       path: /deploy/kubectl/defaultNamespace
       value: "{{.TEST_CLUSTER_NAMESPACE}}"

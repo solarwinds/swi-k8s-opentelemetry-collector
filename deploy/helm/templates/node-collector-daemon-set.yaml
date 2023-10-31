@@ -21,6 +21,9 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/node-collector-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled }}
+        checksum/network_config: {{ include (print $.Template.BasePath "/network/configmap.yaml") . | sha256sum }}
+{{- end}}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ (split ":" .Values.otel.logs.telemetry.metrics.address)._1 | quote }}
@@ -138,7 +141,7 @@ spec:
           args:
             - --config-file=/etc/network-explorer/config.yaml
             - --disable-nomad-metadata
-            - --warning
+            - --{{ .Values.ebpfNetworkMonitoring.kernelCollector.telemetry.logs.level }}
           env:
             - name: "EBPF_NET_CLUSTER_NAME"
               value: {{ quote .Values.cluster.name }}
@@ -147,15 +150,17 @@ spec:
             - name: "EBPF_NET_KERNEL_HEADERS_AUTO_FETCH"
               value: "true"
             - name: "EBPF_NET_INTAKE_HOST"
-              value: "{{ include "common.fullname" . }}-reducer"
+              value: "{{ include "common.fullname" (tuple . "-network-k8s-reducer") }}"
             - name: "EBPF_NET_INTAKE_PORT"
               value: "7000"
             - name: "EBPF_NET_HOST_DIR"
               value: "/hostfs"
             - name: "EBPF_NET_CRASH_METRIC_HOST"
-              value: "{{ include "common.fullname" . }}-collector"
+              value: "{{ include "common.fullname" (tuple . "-collector") }}"
             - name: "EBPF_NET_CRASH_METRIC_PORT"
               value: "4317"
+            - name: "BCC_PROBE_SUFFIX"
+              value: {{ quote .Values.cluster.name }}
           resources:
             {}
           securityContext:
@@ -176,6 +181,7 @@ spec:
       serviceAccountName: {{ include "common.fullname" . }}
 {{- end }}
       volumes:
+{{- if .Values.otel.logs.telemetry.metrics.enabled }}
         - name: varlogpods
           hostPath:
             path: /var/log/pods
@@ -201,6 +207,7 @@ spec:
             items:
               - key: logs.config
                 path: relay.yaml
+{{- end }}
 {{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled }}
         - name: {{ include "common.fullname" (tuple . "-network-otel-collector-config") }}
           projected:

@@ -499,6 +499,12 @@ Metrics config should match snapshot when using default values:
               metric_names:
               - .*_temp
               - apiserver_request_total
+        filter/ebpf:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - ^ebpf_net.*$
         filter/kube-state-metrics:
           metrics:
             include:
@@ -1677,6 +1683,12 @@ Metrics config should match snapshot when using default values:
             include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
+        metricstransform/rename-ebpf:
+          transforms:
+          - action: update
+            include: ^(tcp.|udp.|http.|dns.)(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}$${2}
         resource/events:
           attributes:
           - action: insert
@@ -2014,6 +2026,10 @@ Metrics config should match snapshot when using default values:
               == true and attributes["k8s.node.name"] == nil
       receivers:
         k8s_events: null
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
         prometheus/kube-state-metrics:
           config:
             scrape_configs:
@@ -2115,6 +2131,15 @@ Metrics config should match snapshot when using default values:
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
+          metrics/otlp:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - metricstransform/rename-ebpf
+            - batch
+            receivers:
+            - otlp
           metrics/prometheus:
             exporters:
             - forward/prometheus
