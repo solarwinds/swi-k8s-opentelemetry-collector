@@ -91,7 +91,7 @@ spec:
                   optional: true
           envFrom:
             - configMapRef:
-                name: {{ include "common.fullname" . }}-common-env
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
           ports:
             - name: http
