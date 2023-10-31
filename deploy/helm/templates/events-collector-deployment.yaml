@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.fullname" . }}-events
+  name: {{ include "common.fullname" (tuple . "-events") }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: swo-k8s-collector
@@ -11,7 +11,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "common.fullname" . }}-events
+      app: {{ include "common.fullname" (tuple . "-events") }}
   template:
     metadata:
       annotations:
@@ -27,7 +27,7 @@ spec:
       labels:
         app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.template-labels" . | indent 8 }}
-        app: {{ include "common.fullname" . }}-events
+        app: {{ include "common.fullname" (tuple . "-events") }}
     spec:
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
@@ -68,7 +68,7 @@ spec:
                   optional: true
           envFrom:
             - configMapRef:
-                name: {{ include "common.fullname" . }}-common-env
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
 {{- if .Values.otel.events.telemetry.metrics.enabled }}
           ports:
             - name: http
@@ -92,7 +92,7 @@ spec:
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
-            name: {{ include "common.fullname" . }}-events-config
+            name: {{ include "common.fullname" (tuple . "-events-config") }}
             items:
               - key: events.config
                 path: relay.yaml

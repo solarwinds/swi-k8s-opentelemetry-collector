@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "common.fullname" . }}-logs
+  name: {{ include "common.fullname" (tuple . "-node-collector-windows") }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: swo-k8s-collector
@@ -10,15 +10,15 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ include "common.fullname" . }}-logs
+      app: {{ include "common.fullname" (tuple . "-node-collector-windows") }}
   template:
     metadata:
       labels:
         app.kubernetes.io/name: swo-k8s-collector
-        app: {{ include "common.fullname" . }}-logs
+        app: {{ include "common.fullname" (tuple . "-node-collector-windows") }}
 {{ include "common.labels" . | indent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/logs-collector-config-map.yaml") . | sha256sum }}
+        checksum/config: {{ tpl (.Files.Get "node-collector-config-map-windows.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
@@ -29,11 +29,6 @@ spec:
 {{- end}}
     spec:
       terminationGracePeriodSeconds: 30
-      securityContext:
-        ## In order to reliably read logs from mounted node logging paths, we need to run as root
-        fsGroup: 0
-        runAsUser: 0
-        runAsGroup: 0
       tolerations:
       {{- if .Values.otel.logs.tolerations }}
       {{ toYaml .Values.otel.logs.tolerations | nindent 8 }}
@@ -58,19 +53,19 @@ spec:
       {{- if .Values.otel.logs.nodeSelector }}
       {{ toYaml .Values.otel.logs.nodeSelector | nindent 8 }}
       {{- end }}
-        kubernetes.io/os: linux
+        kubernetes.io/os: windows
         kubernetes.io/arch: amd64
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}-nanoserver-ltsc2022"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
-            - /wrapper
-            - /swi-otelcol
-            - --config=/conf/relay.yaml
+            - c:\wrapper.exe
+            - c:\swi-otelcol.exe
+            - --config=c:\conf\relay.yaml
           env:
             - name: CHECKPOINT_DIR
-              value: {{ .Values.otel.logs.filestorage.directory }}
+              value: c:{{ .Values.otel.logs.filestorage.directory }}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -91,7 +86,7 @@ spec:
                   optional: true
           envFrom:
             - configMapRef:
-                name: {{ include "common.fullname" . }}-common-env
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
           ports:
             - name: http
@@ -109,49 +104,37 @@ spec:
           resources:
 {{ toYaml .Values.otel.logs.resources | indent 12 }}
           volumeMounts:
-            - mountPath: /var/log/pods
+            - mountPath: c:\var\log\pods
               name: varlogpods
               readOnly: true
-            - mountPath: /var/log/containers
+            - mountPath: c:\var\log\containers
               name: varlogcontainers
               readOnly: true
-            - mountPath: /var/lib/docker/containers
+            - mountPath: c:\var\lib\docker\containers
               name: varlibdockercontainers
               readOnly: true
-            - mountPath: /conf
+            - mountPath: c:\conf
               name: opentelemetry-collector-configmap
               readOnly: true
-            - mountPath: /run/log/journal
-              name: runlogjournal
-              readOnly: true
-            - mountPath: /var/log/journal
-              name: varlogjournal
-              readOnly: true
             - name: logcheckpoints
-              mountPath: {{ .Values.otel.logs.filestorage.directory }}
+              mountPath: c:{{ .Values.otel.logs.filestorage.directory }}
       volumes:
         - name: varlogpods
           hostPath:
-            path: /var/log/pods
+            path: c:\var\log\pods
         - name: varlogcontainers
           hostPath:
-            path: /var/log/containers
+            path: c:\var\log\containers
         - name: varlibdockercontainers
           hostPath:
-            path: /var/lib/docker/containers
-        - name: runlogjournal
-          hostPath:
-            path: /run/log/journal
-        - name: varlogjournal
-          hostPath:
-            path: /var/log/journal
+            path: c:\var\lib\docker\containers
         - name: logcheckpoints
           hostPath:
-            path: {{ printf "%s/%s" .Values.otel.logs.filestorage.directory .Values.cluster.uid }}
+            path: c:{{ printf "%s/%s" .Values.otel.logs.filestorage.directory (sha256sum .Values.cluster.uid) }}
             type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
-            name: {{ include "common.fullname" . }}-logs-config
+            name: {{ include "common.fullname" (tuple . "-node-collector-config-windows") }}
             items:
               - key: logs.config
                 path: relay.yaml

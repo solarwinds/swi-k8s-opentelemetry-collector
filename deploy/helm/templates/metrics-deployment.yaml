@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.fullname" . }}-metrics
+  name: {{ include "common.fullname" (tuple . "-metrics") }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: swo-k8s-collector
@@ -11,7 +11,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "common.fullname" . }}-metrics
+      app: {{ include "common.fullname" (tuple . "-metrics") }}
   template:
     metadata:
       annotations:
@@ -28,7 +28,7 @@ spec:
       labels:
         app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.template-labels" . | indent 8 }}
-        app: {{ include "common.fullname" . }}-metrics
+        app: {{ include "common.fullname" (tuple . "-metrics") }}
     spec:
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
@@ -55,7 +55,7 @@ spec:
           command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"']
           envFrom:
             - configMapRef:
-                name: {{ include "common.fullname" . }}-metrics-env-config
+                name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
         {{- end }}
         {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
@@ -119,9 +119,9 @@ spec:
 {{- end}}
           envFrom:
             - configMapRef:
-                name: {{ include "common.fullname" . }}-common-env
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
             - configMapRef:
-                name: {{ include "common.fullname" . }}-metrics-env-config
+                name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
           livenessProbe:
             httpGet:
               path: /
@@ -139,7 +139,7 @@ spec:
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
-            name: {{ include "common.fullname" . }}-metrics-config
+            name: {{ include "common.fullname" (tuple . "-metrics-config") }}
             items:
               - key: metrics.config
                 path: relay.yaml

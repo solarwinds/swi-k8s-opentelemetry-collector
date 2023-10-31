@@ -2,7 +2,7 @@
 apiVersion: "monitoring.coreos.com/v1"
 kind: PodMonitor
 metadata:
-  name: {{ include "common.fullname" . }}-metrics
+  name: {{ include "common.fullname" (tuple . "-metrics") }}
   {{- if .Values.otel.metrics.telemetry.metrics.podMonitor.namespace }}
   namespace: {{ .Values.otel.metrics.telemetry.metrics.podMonitor.namespace }}
   {{- else }}
@@ -16,7 +16,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ include "common.fullname" . }}-metrics
+      app: {{ include "common.fullname" (tuple . "-metrics") }}
   namespaceSelector:
     matchNames:
     - {{ .Release.Namespace }}
