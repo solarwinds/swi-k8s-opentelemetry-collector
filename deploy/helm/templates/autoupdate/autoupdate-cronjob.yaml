@@ -12,7 +12,7 @@ spec:
     spec:
       template:
         spec:
-          serviceAccountName: {{ include "common.fullname" . }}-autoupdate
+          serviceAccountName: {{ include "common.fullname" (tuple . "-autoupdate") }}
           containers:
           - name: helm-upgrade
             image: alpine/k8s:1.27.2@sha256:bbdbcb2e799b50958beb278de4a309d60bd238c14bdaff50c4e5ae42e446f745
@@ -27,5 +27,5 @@ spec:
           volumes:
             - name: helm-upgrade-script
               configMap:
-                name: {{ include "common.fullname" . }}-autoupdate-script
+                name: {{ include "common.fullname" (tuple . "-autoupdate-script") }}
 {{- end }}
