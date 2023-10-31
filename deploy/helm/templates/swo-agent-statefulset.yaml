@@ -5,7 +5,7 @@ metadata:
 {{- if regexMatch "^[a-zA-Z]{1}[a-zA-Z0-9-\\ ]*[a-z0-9]{1}$" .Values.cluster.name }}
   name: {{ printf "%s-swo-agent" .Values.cluster.name | lower | replace " " "-" | trunc 63  }}
 {{ else }}
-  name: {{ include "common.fullname" . }}-swo-agent
+  name: {{ include "common.fullname" (tuple . "-swo-agent") }}
 {{ end }}
   namespace: {{ .Release.Namespace }}
   labels:
@@ -13,18 +13,18 @@ metadata:
     app.kubernetes.io/name: swo-agent
 {{ include "common.labels" . | indent 4 }}
 spec:
-  serviceName: {{ include "common.fullname" . }}-swo-agent
+  serviceName: {{ include "common.fullname" (tuple . "-swo-agent") }}
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "common.fullname" . }}-swo-agent
+      app: {{ include "common.fullname" (tuple . "-swo-agent") }}
   template:
     metadata:
       annotations:
         checksum/values: {{ toJson .Values | sha256sum }}
       labels:
 {{ include "common.template-labels" . | indent 8 }}
-        app: {{ include "common.fullname" . }}-swo-agent
+        app: {{ include "common.fullname" (tuple . "-swo-agent") }}
         solarwinds/swo-agent: "true"
     spec:
       securityContext: {}
