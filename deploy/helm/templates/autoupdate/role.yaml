@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "common.fullname" . }}-autoupdate-role
+  name: {{ include "common.fullname" (tuple . "-autoupdate-role") }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}

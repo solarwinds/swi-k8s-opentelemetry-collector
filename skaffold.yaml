@@ -19,16 +19,18 @@ manifests:
   kustomize:
     paths:
       - tests/deploy/base
+      - tests/deploy/wiremock
       - tests/deploy/tests
     buildArgs:
       - --load-restrictor LoadRestrictionsNone
 deploy:
-  kubectl: {}
+  kubectl: 
+    defaultNamespace: test-namespace
   helm:
     releases:
       - name: swi-k8s-opentelemetry-collector
         chartPath: deploy/helm
-        namespace: monitoring
+        namespace: test-namespace
         createNamespace: true
         setValues:
           prometheus.enabled: true
@@ -45,7 +47,7 @@ deploy:
           otel.logs.filter.include.record_attributes[0].value: "^.*$"
           otel.logs.filter.exclude.match_type: "strict"
           otel.logs.filter.exclude.record_attributes[0].key: "k8s.namespace.name"
-          otel.logs.filter.exclude.record_attributes[0].value: "monitoring"
+          otel.logs.filter.exclude.record_attributes[0].value: "test-namespace"
           cluster.name: cluster name
           cluster.uid: cluster-uid-123456789
           # excluded annotations:
@@ -60,14 +62,48 @@ deploy:
 portForward:
 - resourceType: service
   resourceName: timeseries-mock-service
-  namespace: monitoring
+  namespace: test-namespace
   port: 8088
 - resourceType: service
   resourceName: swi-k8s-opentelemetry-collector-prometheus-server
-  namespace: monitoring
+  namespace: test-namespace
   port: 80
   localPort: 8080
 profiles:
+  - name: test-cluster
+    build:
+      artifacts:
+        - image: swi-k8s-opentelemetry-collector
+          docker:
+            dockerfile: build/docker/Dockerfile
+      local:
+        push: true
+    patches:
+    - op: replace
+      path: /deploy/helm/releases/0/namespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: replace
+      path: /deploy/helm/releases/0/name
+      value: "{{.TEST_CLUSTER_RELEASE_NAME}}"
+    - op: replace
+      path: /portForward/0/namespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: replace
+      path: /portForward/1/namespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: replace
+      path: /portForward/1/resourceName
+      value: "{{.TEST_CLUSTER_RELEASE_NAME}}-prometheus-server"
+    - op: replace
+      path: /deploy/kubectl/defaultNamespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: remove
+      path: /manifests/kustomize/paths/2
+    - op: remove
+      path: /manifests/kustomize/paths/1
+    - op: replace
+      path: /deploy/kubeContext
+      value: "<your kube context here>"
   - name: builder-only
     build:
       artifacts:
@@ -84,13 +120,13 @@ profiles:
     patches:
     - op: add
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
-      value: wiremock.monitoring.svc.cluster.local:8080
+      value: wiremock.test-namespace.svc.cluster.local:8080
     - op: replace
       path: /deploy/helm/releases/0/setValues/prometheus.enabled
       value: false
     - op: add
       path: "/deploy/helm/releases/0/setValues/otel.metrics.kube-state-metrics.url"
-      value: wiremock.monitoring.svc.cluster.local:8080
+      value: wiremock.test-namespace.svc.cluster.local:8080
     - op: replace
       path: "/deploy/helm/releases/0/setValues/kube-state-metrics.enabled"
       value: false
@@ -132,13 +168,13 @@ profiles:
     patches:
     - op: add
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
-      value: wiremock.monitoring.svc.cluster.local:8080
+      value: wiremock.test-namespace.svc.cluster.local:8080
     - op: replace
       path: /deploy/helm/releases/0/setValues/prometheus.enabled
       value: false
     - op: add
       path: "/deploy/helm/releases/0/setValues/otel.metrics.kube-state-metrics.url"
-      value: wiremock.monitoring.svc.cluster.local:8080
+      value: wiremock.test-namespace.svc.cluster.local:8080
     - op: replace
       path: /deploy/helm/releases/0/setValues/kube-state-metrics.enabled
       value: false
@@ -156,13 +192,13 @@ profiles:
         path: /deploy/helm/releases/0/setValues/otel.image.tag
       - op: add
         path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
-        value: wiremock.monitoring.svc.cluster.local:8080
+        value: wiremock.test-namespace.svc.cluster.local:8080
       - op: replace
         path: /deploy/helm/releases/0/setValues/prometheus.enabled
         value: false
       - op: add
         path: "/deploy/helm/releases/0/setValues/otel.metrics.kube-state-metrics.url"
-        value: wiremock.monitoring.svc.cluster.local:8080
+        value: wiremock.test-namespace.svc.cluster.local:8080
       - op: replace
         path: /deploy/helm/releases/0/setValues/kube-state-metrics.enabled
         value: false

@@ -101,6 +101,30 @@ You can look at `http://localhost:8088/logs.json` (each line is JSON as bulk sen
 #### Events
 You can look at `http://localhost:8088/events.json` (each line is JSON as bulk sent by OTEL collector)
 
+## Develop against remote cluster
+* Make sure that you have working kubeContext, set this to `test-cluster` profile section in `skaffold.yaml`:
+```
+    - op: replace
+      path: /deploy/kubeContext
+      value: "<your kube context here>"
+```
+* Create `skaffold.env` file with two environment variables which indicates your private space in the cluster, e.q.:
+```
+TEST_CLUSTER_NAMESPACE=my-dev-namespace
+TEST_CLUSTER_RELEASE_NAME=swi-my-dev-release
+```
+* Make sure that you have ECR repository where image `swi-opentelemetry-collector` will be pushed
+* Login to ECR repository. E.q.: `aws ecr get-login-password --region us-east-1 --profile <your AWS profile> | docker login --username AWS --password-stdin <Your ECR repository>`
+* (optionally) setup skaffold values to better target what you intent to develop. E.q.:
+```
+ebpfNetworkMonitoring.enabled: true
+otel.logs.enabled: false
+otel.events.enabled: false
+otel.metrics.batch.send_batch_size: 1024
+otel.metrics.batch.send_batch_max_size: 1024
+```
+* Run `skaffold dev -p=test-cluster --default-repo=<Your ECR repository>`
+
 ## Develop against remote prometheus
 
 You can port forward Prometheus server to localhost:9090 and run
