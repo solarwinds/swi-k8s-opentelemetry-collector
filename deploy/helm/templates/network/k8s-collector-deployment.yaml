@@ -26,14 +26,14 @@ spec:
         kubernetes.io/os: linux
         kubernetes.io/arch: amd64
       containers:
-      - image: "otel/opentelemetry-ebpf-k8s-watcher:v0.10.0"
-        imagePullPolicy: Always
+      - image: "{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.repository | default "otel/opentelemetry-ebpf-k8s-watcher" }}:{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.tag | default "v0.10.0" }}"
+        imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
         name: k8s-watcher
         args:
           - --log-console
           - --log-level={{ .Values.ebpfNetworkMonitoring.k8sCollector.telemetry.logs.level }}
-      - image: "otel/opentelemetry-ebpf-k8s-relay:v0.10.0"
-        imagePullPolicy: Always
+      - image: "{{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.repository | default "otel/opentelemetry-ebpf-k8s-relay" }}:{{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.tag | default "v0.10.0" }}"
+        imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
         name: k8s-relay
         args:
           - --config-file=/etc/network-explorer/config.yaml

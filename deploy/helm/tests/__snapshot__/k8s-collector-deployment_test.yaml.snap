@@ -5,7 +5,7 @@ K8s Collector spec should match snapshot when using default values:
           - --log-console
           - --log-level=warning
         image: otel/opentelemetry-ebpf-k8s-watcher:v0.10.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: k8s-watcher
       - args:
           - --config-file=/etc/network-explorer/config.yaml
@@ -22,7 +22,7 @@ K8s Collector spec should match snapshot when using default values:
           - name: EBPF_NET_CRASH_METRIC_PORT
             value: "4317"
         image: otel/opentelemetry-ebpf-k8s-relay:v0.10.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: k8s-relay
         volumeMounts:
           - mountPath: /etc/network-explorer

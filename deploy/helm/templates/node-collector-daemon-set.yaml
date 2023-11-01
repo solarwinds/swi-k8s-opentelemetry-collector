@@ -136,8 +136,8 @@ spec:
 {{- end }}
 {{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled }}
         - name: swi-kernel-collector
-          image: "otel/opentelemetry-ebpf-kernel-collector:v0.10.0"
-          imagePullPolicy: Always
+          image: "{{ .Values.ebpfNetworkMonitoring.kernelCollector.image.repository | default "otel/opentelemetry-ebpf-kernel-collector" }}:{{ .Values.ebpfNetworkMonitoring.kernelCollector.image.tag | default "v0.10.0" }}"
+          imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.reducer.image.pullPolicy }}
           args:
             - --config-file=/etc/network-explorer/config.yaml
             - --disable-nomad-metadata
