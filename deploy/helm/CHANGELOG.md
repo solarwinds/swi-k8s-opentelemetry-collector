@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - it is disabled by default, to enable it set `ebpfNetworkMonitoring.enabled: true` in `values.yaml`
   - it is based on [opentelemetry-ebpf](https://github.com/open-telemetry/opentelemetry-ebpf)
   - see [exported_metrics.md](../../doc/exported_metrics.md) for list of metrics
+  - Updating docker image to `0.8.8`
 
 ## [2.8.0] - 2023-10-30
 
