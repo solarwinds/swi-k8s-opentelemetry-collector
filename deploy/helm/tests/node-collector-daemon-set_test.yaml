@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
-suite: Test for logs-daemon-set
+suite: Test for node-collector-daemon-set
 templates:
-  - logs-daemon-set.yaml
-  - logs-collector-config-map.yaml
+  - node-collector-daemon-set.yaml
+  - node-collector-config-map.yaml
   - common-env-config-map.yaml
 tests:
   - it: DaemonSet spec should match snapshot when using default values
-    template: logs-daemon-set.yaml
+    template: node-collector-daemon-set.yaml
     asserts:
       - matchSnapshot:
           path: spec.template.spec
