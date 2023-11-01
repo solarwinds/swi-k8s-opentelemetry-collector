@@ -156,9 +156,9 @@ spec:
             - name: "EBPF_NET_HOST_DIR"
               value: "/hostfs"
             - name: "EBPF_NET_CRASH_METRIC_HOST"
-              value: "{{ include "common.fullname" (tuple . "-collector") }}"
+              value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
             - name: "EBPF_NET_CRASH_METRIC_PORT"
-              value: "4317"
+              value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
             - name: "BCC_PROBE_SUFFIX"
               value: {{ quote .Values.cluster.name }}
           resources:

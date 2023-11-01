@@ -46,9 +46,9 @@ spec:
           - name: "EBPF_NET_INTAKE_PORT"
             value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
           - name: "EBPF_NET_CRASH_METRIC_HOST"
-            value: "{{ include "common.fullname" (tuple . "-network-k8s-collector") }}"
+            value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
           - name: "EBPF_NET_CRASH_METRIC_PORT"
-            value: "4317"
+            value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
         volumeMounts:
         - mountPath: /etc/network-explorer
           name: k8s-relay-config

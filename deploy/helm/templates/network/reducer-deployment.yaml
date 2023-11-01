@@ -35,8 +35,8 @@ spec:
             - --enable-id-id
             - --disable-prometheus-metrics
             - --enable-otlp-grpc-metrics
-            - --otlp-grpc-metrics-host={{ include "common.fullname" (tuple . "-collector") }}
-            - --otlp-grpc-metrics-port=4317
+            - --otlp-grpc-metrics-host={{ include "common.fullname" (tuple . "-metrics-collector") }}
+            - --otlp-grpc-metrics-port={{ .Values.otel.metrics.otlp_endpoint.port }}
             - --num-ingest-shards=1
             - --num-matching-shards=1
             - --num-aggregation-shards=1
@@ -48,9 +48,9 @@ spec:
             {{- end }}
           env:
             - name: "EBPF_NET_CRASH_METRIC_HOST"
-              value: "{{ include "common.fullname" (tuple . "-collector") }}"
+              value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
             - name: "EBPF_NET_CRASH_METRIC_PORT"
-              value: "4317"
+              value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
           ports:
             - name: telemetry
               containerPort: {{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}
