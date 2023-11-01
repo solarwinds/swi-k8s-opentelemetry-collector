@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.21.3-bookworm@sha256:be515baad267e31ab8e31e6f15ae0a914c5b635c3e1ee4e3791d00b03ab0b99a as base
+FROM docker.io/library/golang:1.21.3-bookworm@sha256:20f9ab52a8c3598ef13f86c9bc3b94db400e13df115ecacd8c3dfd0c0f060208 as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
