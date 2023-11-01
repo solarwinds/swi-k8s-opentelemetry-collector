@@ -277,9 +277,35 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_endpoint_ports| Gauge |  | Endpoint port one for each series. | native |
 | k8s.kube_endpoint_address| Gauge |  | Endpoint address one for each series | native |
 
-
 ## Other metrics
 
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
 | k8s.apiserver.request.successrate | Gauge | percent | Success rate of Kubernetes API server calls | custom |
+
+## Network usage metrics
+
+| Metric | Type | Unit | Description | native/custom |
+| ---    | ---  | ---  | ---         | ---           |
+| k8s.tcp.bytes | Counter | | The total number of TCP bytes between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.tcp.active | Gauge | | The number of TCP connections considered to be open and alive between the source and destination at the point the measurement was taken. | custom |
+| k8s.tcp.packets | Counter | | The total number of TCP packets between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.tcp.retrans | Counter | | The total number of TCP retransmission requests between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.tcp.syn.timeouts | Counter | | The total number of TCP SYN timeouts between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.tcp.new_sockets | Counter | | The total number of new TCP sockets opened between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.tcp.resets | Counter | | The total number of TCP resets sent between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.tcp.rtt.num_measurements | Gauge | | The number of measurements made in calculating the current RTT average value. | custom |
+| k8s.tcp.rtt.average | Gauge | | The computed average round trip time between the source and destination as measured in microseconds. | custom |
+| k8s.udp.bytes | Counter | | The total number of UDP bytes between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.udp.packets | Counter | | The total number of UDP packets between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.udp.active | Gauge | | The number of UDP connections considered to be open and alive between the source and destination at the point the measurement was taken. | custom |
+| k8s.udp.drops | Counter | | The total number of UDP connections dropped between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.http.status_code | Counter | | For a given class of response code (see 'response_code' dimension), the number of times an unencrypted server sent an HTTPv1 status code between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.http.active_sockets | Counter | | The number of unencrypted HTTPv1 connections for which measurements were taken in the prior thirty seconds. | custom |
+| k8s.http.client.duration_average | Counter | | This metric is the average duration in microseconds from when the client sends an HTTP request, until the response is received back from the server.  As such, it includes the communication round-trip times, plus the server processing latency.  Computed by summation of all times, divided by http.active_sockets. | custom |
+| k8s.http.server.duration_average | Counter | | This metric is the average duration in microseconds for the server to respond to a request received locally.  Thus, it does not include the network latency from or to the client.  Computed by summation of all times, divided by http.active_sockets. | custom |
+| k8s.dns.active_sockets | Gauge | | The number of DNS connections for which measurements were taken in the prior thirty seconds. | custom |
+| k8s.dns.responses | Counter | | The total number of DNS responses sent between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.dns.timeouts | Counter | | The total number of	DNS timeouts between the source and destination measured for the prior thirty seconds. | custom |
+| k8s.dns.client.duration_average | Counter | | This metric is the average duration in microseconds from when the client sends a DNS request, until the response is received back from the server.  As such, it includes the communication round-trip times, plus the server processing latency.  Computed by the summation of all times, divided by dns.responses. | custom |
+| k8s.dns.server.duration_average | Counter | | This metric is the average duration in microseconds for the server to respond to a request received locally.  Thus, it does not include the network latency from or to the client.  Computed by the summation of all times, divided by dns.responses. | custom |
