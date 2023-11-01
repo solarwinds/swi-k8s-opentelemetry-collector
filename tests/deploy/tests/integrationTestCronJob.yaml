@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: integration-test
-  namespace: default
+  namespace: test-namespace
 spec:
   suspend: true
   schedule: "0 0 1 1 *" # schedule does not matter (set to yearly), it will be suspended anyway
@@ -20,16 +20,16 @@ spec:
               image: integration-test
               env:
                 - name: TIMESERIES_MOCK_ENDPOINT
-                  value: timeseries-mock-service.monitoring.svc.cluster.local:8088
+                  value: timeseries-mock-service.test-namespace.svc.cluster.local:8088
                 - name: PROMETHEUS_MOCK_ENDPOINT
-                  value: wiremock.monitoring.svc.cluster.local:8080
+                  value: wiremock.test-namespace.svc.cluster.local:8080
           restartPolicy: Never
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kube-api-for-tests
-  namespace: default
+  namespace: test-namespace
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -38,7 +38,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: kube-api-for-tests
-    namespace: default
+    namespace: test-namespace
 roleRef:
   kind: ClusterRole
   name: kube-api-for-tests-role
