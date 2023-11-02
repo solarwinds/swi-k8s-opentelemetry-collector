@@ -83,9 +83,10 @@ def retry_until_ok(url, func, print_failure):
         raise ValueError("Timed out waiting")
     
 def get_hash_key_by_attributes(obj):
+    if "attributes" not in obj:
+        return "No_Attributes"
     sorted_attributes = sorted(obj["attributes"], key=lambda a: a["key"])
     return "".join([f"{a['key']}={a['value']['stringValue']}" for a in sorted_attributes])
-
 
 def resource_sorting_key(resource):
     return get_hash_key_by_attributes(resource["resource"])
