@@ -217,8 +217,10 @@ def print_failure_internal_containers(content):
     print(f'Failed to find some of internal pod containers')
 
 def get_unique_container_names(merged_json):
-    result = list(set([resource_attribute["value"]["stringValue"]
-                       for resource in merged_json["resourceMetrics"]
-                       for resource_attribute in resource["resource"]["attributes"] if resource_attribute["key"] == "k8s.container.name"
-                       ]))
-    return result
+    container_names = set()
+    for resource in merged_json["resourceMetrics"]:
+        if 'attributes' in resource['resource']:
+            for resource_attribute in resource['resource']['attributes']:
+                if resource_attribute["key"] == "k8s.container.name":
+                    container_names.add(resource_attribute["value"]["stringValue"])
+    return list(container_names)
