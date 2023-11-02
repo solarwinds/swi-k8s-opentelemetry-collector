@@ -14,4 +14,4 @@ RUN ls /integration
 RUN pip install --no-cache-dir --upgrade -r /integration/requirements.txt
 COPY /tests/integration/ .
 
-CMD ["pytest", "-s", "--tb=short"]
+CMD ["pytest", "-s", "--tb=long"]
