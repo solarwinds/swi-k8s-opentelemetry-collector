@@ -1,0 +1,17 @@
+{{- if .Values.ebpfNetworkMonitoring.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
+  ports:
+    - name: telemetry
+      port: {{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}
+      targetPort: telemetry
+      protocol: TCP
+{{- end}}

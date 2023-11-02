@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgraded OTEL collector image to `0.8.8` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.8))
 
+### Added
+
+- Added network monitoring for Linux nodes which is based on eBPF, so does not require service mesh to be deployed.
+  - it is disabled by default, to enable it set `ebpfNetworkMonitoring.enabled: true` in `values.yaml`
+  - it is based on [opentelemetry-ebpf](https://github.com/open-telemetry/opentelemetry-ebpf)
+  - see [exported_metrics.md](../../doc/exported_metrics.md) for list of metrics
+
 ## [2.8.0] - 2023-10-30
 
 ### Added
