@@ -368,34 +368,6 @@ autoupdate:
 # Set labels to every deployed resource
 # commonLabels:
 
-prometheus:
-  # Whether the Prometheus server should be deployed as part of this chart.
-  # If true, the `otel.metrics.prometheus.url` setting is ignored.
-  enabled: false
-
-  alertmanager:
-    enabled: false
-  prometheus-node-exporter:
-    enabled: false
-  prometheus-pushgateway:
-    enabled: false
-  kube-state-metrics:
-    enabled: false
-  server:
-    # Disabling persistent volume to make the chart compatible with new EKS clusters
-    # (this matches the behavior of `kube-prometheus-stack` chart).
-    persistentVolume:
-      enabled: false
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: eks.amazonaws.com/compute-type
-              operator: NotIn
-              values:
-              - fargate
-
 kube-state-metrics:
   enabled: true
 

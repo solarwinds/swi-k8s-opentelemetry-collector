@@ -7,15 +7,6 @@ metadata:
   labels:
 {{ include "common.labels" . | indent 4 }}
 data:
-{{- if .Values.prometheus.enabled }}
-{{- if .Values.prometheus.forceNamespace }}
-  PROMETHEUS_URL: "{{ .Release.Name }}-prometheus-server.{{ .Values.prometheus.forceNamespace }}.svc.cluster.local:80"
-{{- else }}
-  PROMETHEUS_URL: "{{ .Release.Name }}-prometheus-server.{{ .Release.Namespace }}.svc.cluster.local:80"
-{{- end }}
-{{- else }}
-  PROMETHEUS_URL: {{ quote .Values.otel.metrics.prometheus.url }}
-{{- end }}
 {{- if (index .Values "kube-state-metrics").enabled }}
   KUBE_STATE_METRICS_URL: "{{ .Release.Name }}-kube-state-metrics.{{ .Release.Namespace }}.svc.cluster.local:8080"
 {{- else }}
