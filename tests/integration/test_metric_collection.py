@@ -7,20 +7,33 @@ from prometheus_client.parser import text_string_to_metric_families
 import difflib
 
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
+ci = os.getenv("CI", "")
 url = f'http://{endpoint}/metrics.json'
-
 
 endpointPrometheus = os.getenv("PROMETHEUS_MOCK_ENDPOINT", "localhost:8080")
 urlMetrics = [f'http://{endpointPrometheus}/metrics',
               f'http://{endpointPrometheus}/federate?match%5B%5D=container_cpu_usage_seconds_total&match%5B%5D=container_spec_cpu_quota&match%5B%5D=container_spec_cpu_period&match%5B%5D=container_memory_working_set_bytes&match%5B%5D=container_spec_memory_limit_bytes&match%5B%5D=container_cpu_cfs_throttled_periods_total&match%5B%5D=container_cpu_cfs_periods_total&match%5B%5D=container_fs_reads_total&match%5B%5D=container_fs_writes_total&match%5B%5D=container_fs_reads_bytes_total&match%5B%5D=container_fs_writes_bytes_total&match%5B%5D=container_fs_usage_bytes&match%5B%5D=container_network_receive_bytes_total&match%5B%5D=container_network_transmit_bytes_total&match%5B%5D=container_network_receive_packets_total&match%5B%5D=container_network_transmit_packets_total&match%5B%5D=container_network_receive_packets_dropped_total&match%5B%5D=container_network_transmit_packets_dropped_total&match%5B%5D=apiserver_request_total&match%5B%5D=kubelet_volume_stats_available_percent&match%5B%5D=%7B__name__%3D%22kubernetes_build_info%22%2C+job%3D~%22.%2Aapiserver.%2A%22%7D']
 
-with open('expected_metric_names.txt', "r", newline='\n') as file_with_expected_metric_names:
-    expected_metric_names = file_with_expected_metric_names.read().splitlines()
 
 def test_expected_metric_names_are_generated():
-    retry_until_ok(url, assert_test_metric_names_found,
-                   print_failure_metric_names)
+    expected_metric_names = []
+    with open('expected_metric_names.txt', "r", newline='\n') as file_with_expected_metric_names:
+        expected_metric_names = file_with_expected_metric_names.read().splitlines()
+
+    retry_until_ok(url, 
+                   lambda content: assert_metric_names_found(content, expected_metric_names),
+                   lambda content: print_failure_metric_names(content, expected_metric_names))
     
+def test_expected_network_metric_names_are_generated():
+    if ci != "true":
+        pytest.skip("Skipping this test on local environment")
+    else:
+        expected_metric_names = ["k8s.tcp.bytes"]
+
+        retry_until_ok(url, 
+                    lambda content: assert_metric_names_found(content, expected_metric_names),
+                    lambda content: print_failure_metric_names(content, expected_metric_names))
+
 def test_expected_otel_message_content_is_generated():
     retry_until_ok(url, assert_test_expected_otel_message_content_is_generated,
                    print_failure_otel_content)
@@ -110,11 +123,11 @@ def assert_prometheus_metrics(metricsContent, metrics):
     
     return (ok, error)
 
-def assert_test_metric_names_found(content):
+def assert_metric_names_found(content, expected_metric_names):
     merged_json = get_merged_json(content)
 
     metric_names = get_unique_metric_names(merged_json)
-    if (len(metric_names) == 0):
+    if len(metric_names) == 0:
         return False
 
     write_actual = os.getenv("WRITE_ACTUAL", "False")
@@ -132,12 +145,11 @@ def assert_test_metric_names_found(content):
             name for name in expected_metric_names if name not in metric_names]
 
         error = f'Some specific metric names are not found in the response. \
-Missing metrics: {missing_metric_names}'        
+Missing metrics: {missing_metric_names}'
 
     return (metric_matches, error)
 
-
-def print_failure_metric_names(content):
+def print_failure_metric_names(content, expected_metric_names):
     print(f'Failed to find some of expected metric names')
     print(expected_metric_names)
 
@@ -200,9 +212,7 @@ def assert_test_no_metric_datapoints_for_internal_containers(content):
 
 
 def print_failure_internal_containers(content):
-    print(f'Failed to find some of expected metric names')
-    print(expected_metric_names)
-
+    print(f'Failed to find some of internal pod containers')
 
 def get_unique_container_names(merged_json):
     result = list(set([resource_attribute["value"]["stringValue"]
