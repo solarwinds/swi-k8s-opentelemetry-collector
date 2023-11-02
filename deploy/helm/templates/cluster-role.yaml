@@ -9,10 +9,12 @@ rules:
       - ""
     resources:
       - events
+      - endpoints
       - namespaces
       - namespaces/status
       - nodes
       - nodes/spec
+      - nodes/proxy
       - pods
       - pods/status
       - replicationcontrollers
@@ -63,3 +65,7 @@ rules:
       - get
       - list
       - watch
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get

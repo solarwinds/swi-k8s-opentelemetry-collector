@@ -92,15 +92,15 @@ def resource_sorting_key(resource):
 
 def datapoint_sorting_key(datapoint):
     if "attributes" in datapoint:
-        return get_hash_key_by_attributes(datapoint)
+        return str(get_hash_key_by_attributes(datapoint))
     elif "asDouble" in datapoint:
-        return datapoint["asDouble"]
+        return str(datapoint["asDouble"])
     elif "asInt" in datapoint:
-        return datapoint["asInt"]
+        return str(datapoint["asInt"])
     elif "asString" in datapoint:
-        return datapoint["asString"]
+        return str(datapoint["asString"])
     else:
-        return datapoint
+        return str(datapoint)
     
 def datapoint_value(datapoint):    
     if "asDouble" in datapoint:

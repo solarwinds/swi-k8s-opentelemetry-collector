@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.21.3-bookworm@sha256:be515baad267e31ab8e31e6f15ae0a914c5b635c3e1ee4e3791d00b03ab0b99a as base
+FROM docker.io/library/golang:1.21.3-bookworm@sha256:20f9ab52a8c3598ef13f86c9bc3b94db400e13df115ecacd8c3dfd0c0f060208 as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
@@ -19,7 +19,7 @@ RUN cd src/processor/swmetricstransformprocessor && go test ./...
 FROM alpine:3.18@sha256:eece025e432126ce23f223450a0326fbebde39cdf496a85d8c016293fc851978 as prep
 RUN apk --update add ca-certificates
 
-FROM debian:12.2@sha256:22cc4de537485807b7efe6f4c942d7460c4482852f49434f9c022c044c545a90 as journal
+FROM debian:12.2@sha256:fab22df37377621693c68650b06680c0d8f7c6bf816ec92637944778db3ca2c0 as journal
 RUN apt update
 RUN apt install -y systemd
 

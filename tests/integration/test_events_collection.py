@@ -8,10 +8,10 @@ pod_name = 'dummy-pod'
 expected_event = f'Started container {pod_name}'
 
 def setup_function():
-    run_shell_command(f"kubectl run {pod_name} --labels \"test-label=test-value\" --overrides=\"{{ \\\"apiVersion\\\": \\\"v1\\\", \\\"metadata\\\": {{\\\"annotations\\\": {{ \\\"test-annotation\\\":\\\"test-value\\\" }} }} }}\" --image bash:alpine3.16 -- -ec \"while :; do sleep 5 ; done\"")
+    run_shell_command(f"kubectl run {pod_name} --labels \"test-label=test-value\" --overrides=\"{{ \\\"apiVersion\\\": \\\"v1\\\", \\\"metadata\\\": {{\\\"annotations\\\": {{ \\\"test-annotation\\\":\\\"test-value\\\" }} }} }}\" --image bash:alpine3.16 -n default -- -ec \"while :; do sleep 5 ; done\"")
 
 def teardown_function():
-    run_shell_command(f'kubectl delete pod {pod_name}')
+    run_shell_command(f'kubectl delete pod {pod_name} -n default')
 
 def test_events_generated():
     retry_until_ok(url, assert_test_event_found, print_failure)
