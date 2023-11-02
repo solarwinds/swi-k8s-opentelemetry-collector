@@ -590,6 +590,32 @@ Metrics config should match snapshot when using default values:
               - ^kube_endpoint_created$
               - ^kube_endpoint_ports$
               - ^kube_endpoint_address$
+        filter/prometheus-node-metrics:
+          metrics:
+            include:
+              match_type: regexp
+              metric_names:
+              - ^container_cpu_usage_seconds_total$
+              - ^container_spec_cpu_quota$
+              - ^container_spec_cpu_period$
+              - ^container_memory_working_set_bytes$
+              - ^container_spec_memory_limit_bytes$
+              - ^container_cpu_cfs_throttled_periods_total$
+              - ^container_cpu_cfs_periods_total$
+              - ^container_fs_reads_total$
+              - ^container_fs_writes_total$
+              - ^container_fs_reads_bytes_total$
+              - ^container_fs_writes_bytes_total$
+              - ^container_fs_usage_bytes$
+              - ^container_network_receive_bytes_total$
+              - ^container_network_transmit_bytes_total$
+              - ^container_network_receive_packets_total$
+              - ^container_network_transmit_packets_total$
+              - ^container_network_receive_packets_dropped_total$
+              - ^container_network_transmit_packets_dropped_total$
+              - ^apiserver_request_total$
+              - ^kubelet_volume_stats_available_percent$
+              - ^kubernetes_build_info$
         filter/receiver:
           metrics:
             exclude:
@@ -1632,7 +1658,7 @@ Metrics config should match snapshot when using default values:
               label_set: []
           - action: insert
             experimental_match_labels:
-              job: .*apiservers.*
+              scrape_job: .*apiservers.*
             include: k8s.kubernetes_build_info
             match_type: regexp
             new_name: k8s.cluster.version
@@ -2031,7 +2057,7 @@ Metrics config should match snapshot when using default values:
           config:
             scrape_configs:
             - honor_labels: true
-              honor_timestamps: true
+              honor_timestamps: false
               job_name: kube-state-metrics
               metrics_path: /metrics
               scheme: http
@@ -2039,41 +2065,121 @@ Metrics config should match snapshot when using default values:
               static_configs:
               - targets:
                 - ${KUBE_STATE_METRICS_URL}
-        prometheus/prometheus-server:
+        prometheus/node-metrics:
           config:
             scrape_configs:
-            - honor_labels: true
+            - authorization:
+                credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                type: Bearer
+              enable_http2: true
+              follow_redirects: true
               honor_timestamps: false
-              job_name: prometheus
-              metrics_path: /federate
-              params:
-                match[]:
-                - container_cpu_usage_seconds_total
-                - container_spec_cpu_quota
-                - container_spec_cpu_period
-                - container_memory_working_set_bytes
-                - container_spec_memory_limit_bytes
-                - container_cpu_cfs_throttled_periods_total
-                - container_cpu_cfs_periods_total
-                - container_fs_reads_total
-                - container_fs_writes_total
-                - container_fs_reads_bytes_total
-                - container_fs_writes_bytes_total
-                - container_fs_usage_bytes
-                - container_network_receive_bytes_total
-                - container_network_transmit_bytes_total
-                - container_network_receive_packets_total
-                - container_network_transmit_packets_total
-                - container_network_receive_packets_dropped_total
-                - container_network_transmit_packets_dropped_total
-                - apiserver_request_total
-                - kubelet_volume_stats_available_percent
-                - '{__name__="kubernetes_build_info", job=~".*apiserver.*"}'
-              scheme: http
+              job_name: kubernetes-nodes-cadvisor
+              kubernetes_sd_configs:
+              - enable_http2: true
+                follow_redirects: true
+                kubeconfig_file: ""
+                role: node
+              metrics_path: /metrics
+              relabel_configs:
+              - action: labelmap
+                regex: __meta_kubernetes_node_label_(.+)
+                replacement: $$1
+                separator: ;
+              - action: replace
+                regex: (.*)
+                replacement: kubernetes.default.svc:443
+                separator: ;
+                target_label: __address__
+              - action: replace
+                regex: (.+)
+                replacement: /api/v1/nodes/$$1/proxy/metrics/cadvisor
+                separator: ;
+                source_labels:
+                - __meta_kubernetes_node_name
+                target_label: __metrics_path__
+              - replacement: kubernetes-nodes-cadvisor
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scheme: https
               scrape_interval: 60s
-              static_configs:
-              - targets:
-                - ${PROMETHEUS_URL}
+              scrape_timeout: 10s
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+            - authorization:
+                credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                type: Bearer
+              enable_http2: true
+              follow_redirects: true
+              honor_timestamps: false
+              job_name: kubernetes-nodes
+              kubernetes_sd_configs:
+              - enable_http2: true
+                follow_redirects: true
+                kubeconfig_file: ""
+                role: node
+              metrics_path: /metrics
+              relabel_configs:
+              - action: labelmap
+                regex: __meta_kubernetes_node_label_(.+)
+                replacement: $$1
+                separator: ;
+              - action: replace
+                regex: (.*)
+                replacement: kubernetes.default.svc:443
+                separator: ;
+                target_label: __address__
+              - action: replace
+                regex: (.+)
+                replacement: /api/v1/nodes/$$1/proxy/metrics
+                separator: ;
+                source_labels:
+                - __meta_kubernetes_node_name
+                target_label: __metrics_path__
+              - replacement: kubernetes-nodes
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scheme: https
+              scrape_interval: 60s
+              scrape_timeout: 10s
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+            - authorization:
+                credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                type: Bearer
+              enable_http2: true
+              follow_redirects: true
+              honor_timestamps: false
+              job_name: kubernetes-apiservers
+              kubernetes_sd_configs:
+              - enable_http2: true
+                follow_redirects: true
+                kubeconfig_file: ""
+                role: endpoints
+              metrics_path: /metrics
+              relabel_configs:
+              - action: keep
+                regex: default;kubernetes;https
+                replacement: $$1
+                separator: ;
+                source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_endpoint_port_name
+              - replacement: kubernetes-apiservers
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scheme: https
+              scrape_interval: 60s
+              scrape_timeout: 10s
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
       service:
         extensions:
         - health_check
@@ -2137,13 +2243,14 @@ Metrics config should match snapshot when using default values:
             - batch
             receivers:
             - otlp
-          metrics/prometheus:
+          metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus
             processors:
             - memory_limiter
+            - filter/prometheus-node-metrics
             receivers:
-            - prometheus/prometheus-server
+            - prometheus/node-metrics
         telemetry:
           logs:
             level: info
