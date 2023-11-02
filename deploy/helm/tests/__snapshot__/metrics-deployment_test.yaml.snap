@@ -51,15 +51,6 @@ Metrics collector spec should match snapshot when using default values:
             readOnly: true
     initContainers:
       - command:
-          - sh
-          - -c
-          - until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"
-        envFrom:
-          - configMapRef:
-              name: RELEASE-NAME-swo-k8s-collector-metrics-env-config
-        image: busybox:1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43
-        name: prometheus-check
-      - command:
           - /bin/grpcurl
           - -expand-headers
           - -proto
