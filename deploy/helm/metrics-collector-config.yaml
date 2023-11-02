@@ -1386,6 +1386,27 @@ processors:
       - key: sw.k8s.log.type
         value: event
         action: insert
+
+  resource/otlp-metrics:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
@@ -1673,6 +1694,7 @@ service:
         - filter/ebpf
 {{- end }}
         - metricstransform/rename-ebpf
+        - resource/otlp-metrics
         - batch
       receivers:
         - otlp
