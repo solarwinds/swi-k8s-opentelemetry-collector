@@ -53,6 +53,10 @@ jobs:
       - name: Run integration tests
         uses: ./.github/actions/run-integration-tests
 
+      - name: Setup upterm session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() }}
+
       - name: Save image
         if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
         run: |
