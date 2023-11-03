@@ -47,9 +47,9 @@ spec:
       affinity:
         {{- toYaml .Values.otel.metrics.affinity | nindent 8 }}
       {{- end }}
-      {{- if or .Values.otel.metrics.prometheus_check .Values.otel.metrics.swi_endpoint_check }}
+      {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) .Values.otel.metrics.swi_endpoint_check }}
       initContainers:
-        {{- if .Values.otel.metrics.prometheus_check }}
+        {{- if and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url }}
         - name: prometheus-check
           image: busybox:1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43
           command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"']
