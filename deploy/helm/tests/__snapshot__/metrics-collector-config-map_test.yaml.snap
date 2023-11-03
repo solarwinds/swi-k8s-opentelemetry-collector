@@ -1,3 +1,2339 @@
+Metrics config should match snapshot when using Prometheus url with extra_scrape_metrics:
+  1: |
+    common.proto: "// Copyright 2019, OpenTelemetry Authors\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//     http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\nsyntax = \"proto3\";\n\npackage opentelemetry.proto.common.v1;\n\noption csharp_namespace = \"OpenTelemetry.Proto.Common.V1\";\noption java_multiple_files = true;\noption java_package = \"io.opentelemetry.proto.common.v1\";\noption java_outer_classname = \"CommonProto\";\noption go_package = \"go.opentelemetry.io/proto/otlp/common/v1\";\n\n// AnyValue is used to represent any type of attribute value. AnyValue may contain a\n// primitive value such as a string or integer or it may contain an arbitrary nested\n// object containing arrays, key-value lists and primitives.\nmessage AnyValue {\n  // The value is one of the listed fields. It is valid for all values to be unspecified\n  // in which case this AnyValue is considered to be \"empty\".\n  oneof value {\n    string string_value = 1;\n    bool bool_value = 2;\n    int64 int_value = 3;\n    double double_value = 4;\n    ArrayValue array_value = 5;\n    KeyValueList kvlist_value = 6;\n    bytes bytes_value = 7;\n  }\n}\n\n// ArrayValue is a list of AnyValue messages. We need ArrayValue as a message\n// since oneof in AnyValue does not allow repeated fields.\nmessage ArrayValue {\n  // Array of values. The array may be empty (contain 0 elements).\n  repeated AnyValue values = 1;\n}\n\n// KeyValueList is a list of KeyValue messages. We need KeyValueList as a message\n// since `oneof` in AnyValue does not allow repeated fields. Everywhere else where we need\n// a list of KeyValue messages (e.g. in Span) we use `repeated KeyValue` directly to\n// avoid unnecessary extra wrapping (which slows down the protocol). The 2 approaches\n// are semantically equivalent.\nmessage KeyValueList {\n  // A collection of key/value pairs of key-value pairs. The list may be empty (may\n  // contain 0 elements).\n  // The keys MUST be unique (it is not allowed to have more than one\n  // value with the same key).\n  repeated KeyValue values = 1;\n}\n\n// KeyValue is a key-value pair that is used to store Span attributes, Link\n// attributes, etc.\nmessage KeyValue {\n  string key = 1;\n  AnyValue value = 2;\n}\n\n// InstrumentationScope is a message representing the instrumentation scope information\n// such as the fully qualified name and version. \nmessage InstrumentationScope {\n  // An empty instrumentation scope name means the name is unknown.\n  string name = 1;\n  string version = 2;\n  repeated KeyValue attributes = 3;\n  uint32 dropped_attributes_count = 4;\n}\n"
+    logs.proto: |
+      // Copyright 2020, OpenTelemetry Authors
+      //
+      // Licensed under the Apache License, Version 2.0 (the "License");
+      // you may not use this file except in compliance with the License.
+      // You may obtain a copy of the License at
+      //
+      //     http://www.apache.org/licenses/LICENSE-2.0
+      //
+      // Unless required by applicable law or agreed to in writing, software
+      // distributed under the License is distributed on an "AS IS" BASIS,
+      // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      // See the License for the specific language governing permissions and
+      // limitations under the License.
+
+      syntax = "proto3";
+
+      package opentelemetry.proto.logs.v1;
+
+      import "opentelemetry/proto/common/v1/common.proto";
+      import "opentelemetry/proto/resource/v1/resource.proto";
+
+      option csharp_namespace = "OpenTelemetry.Proto.Logs.V1";
+      option java_multiple_files = true;
+      option java_package = "io.opentelemetry.proto.logs.v1";
+      option java_outer_classname = "LogsProto";
+      option go_package = "go.opentelemetry.io/proto/otlp/logs/v1";
+
+      // LogsData represents the logs data that can be stored in a persistent storage,
+      // OR can be embedded by other protocols that transfer OTLP logs data but do not
+      // implement the OTLP protocol.
+      //
+      // The main difference between this message and collector protocol is that
+      // in this message there will not be any "control" or "metadata" specific to
+      // OTLP protocol.
+      //
+      // When new fields are added into this message, the OTLP request MUST be updated
+      // as well.
+      message LogsData {
+        // An array of ResourceLogs.
+        // For data coming from a single resource this array will typically contain
+        // one element. Intermediary nodes that receive data from multiple origins
+        // typically batch the data before forwarding further and in that case this
+        // array will contain multiple elements.
+        repeated ResourceLogs resource_logs = 1;
+      }
+
+      // A collection of ScopeLogs from a Resource.
+      message ResourceLogs {
+        reserved 1000;
+
+        // The resource for the logs in this message.
+        // If this field is not set then resource info is unknown.
+        opentelemetry.proto.resource.v1.Resource resource = 1;
+
+        // A list of ScopeLogs that originate from a resource.
+        repeated ScopeLogs scope_logs = 2;
+
+        // This schema_url applies to the data in the "resource" field. It does not apply
+        // to the data in the "scope_logs" field which have their own schema_url field.
+        string schema_url = 3;
+      }
+
+      // A collection of Logs produced by a Scope.
+      message ScopeLogs {
+        // The instrumentation scope information for the logs in this message.
+        // Semantically when InstrumentationScope isn't set, it is equivalent with
+        // an empty instrumentation scope name (unknown).
+        opentelemetry.proto.common.v1.InstrumentationScope scope = 1;
+
+        // A list of log records.
+        repeated LogRecord log_records = 2;
+
+        // This schema_url applies to all logs in the "logs" field.
+        string schema_url = 3;
+      }
+
+      // Possible values for LogRecord.SeverityNumber.
+      enum SeverityNumber {
+        // UNSPECIFIED is the default SeverityNumber, it MUST NOT be used.
+        SEVERITY_NUMBER_UNSPECIFIED = 0;
+        SEVERITY_NUMBER_TRACE  = 1;
+        SEVERITY_NUMBER_TRACE2 = 2;
+        SEVERITY_NUMBER_TRACE3 = 3;
+        SEVERITY_NUMBER_TRACE4 = 4;
+        SEVERITY_NUMBER_DEBUG  = 5;
+        SEVERITY_NUMBER_DEBUG2 = 6;
+        SEVERITY_NUMBER_DEBUG3 = 7;
+        SEVERITY_NUMBER_DEBUG4 = 8;
+        SEVERITY_NUMBER_INFO   = 9;
+        SEVERITY_NUMBER_INFO2  = 10;
+        SEVERITY_NUMBER_INFO3  = 11;
+        SEVERITY_NUMBER_INFO4  = 12;
+        SEVERITY_NUMBER_WARN   = 13;
+        SEVERITY_NUMBER_WARN2  = 14;
+        SEVERITY_NUMBER_WARN3  = 15;
+        SEVERITY_NUMBER_WARN4  = 16;
+        SEVERITY_NUMBER_ERROR  = 17;
+        SEVERITY_NUMBER_ERROR2 = 18;
+        SEVERITY_NUMBER_ERROR3 = 19;
+        SEVERITY_NUMBER_ERROR4 = 20;
+        SEVERITY_NUMBER_FATAL  = 21;
+        SEVERITY_NUMBER_FATAL2 = 22;
+        SEVERITY_NUMBER_FATAL3 = 23;
+        SEVERITY_NUMBER_FATAL4 = 24;
+      }
+
+      // Masks for LogRecord.flags field.
+      enum LogRecordFlags {
+        LOG_RECORD_FLAG_UNSPECIFIED = 0;
+        LOG_RECORD_FLAG_TRACE_FLAGS_MASK = 0x000000FF;
+      }
+
+      // A log record according to OpenTelemetry Log Data Model:
+      // https://github.com/open-telemetry/oteps/blob/main/text/logs/0097-log-data-model.md
+      message LogRecord {
+        reserved 4;
+
+        // time_unix_nano is the time when the event occurred.
+        // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.
+        // Value of 0 indicates unknown or missing timestamp.
+        fixed64 time_unix_nano = 1;
+
+        // Time when the event was observed by the collection system.
+        // For events that originate in OpenTelemetry (e.g. using OpenTelemetry Logging SDK)
+        // this timestamp is typically set at the generation time and is equal to Timestamp.
+        // For events originating externally and collected by OpenTelemetry (e.g. using
+        // Collector) this is the time when OpenTelemetry's code observed the event measured
+        // by the clock of the OpenTelemetry code. This field MUST be set once the event is
+        // observed by OpenTelemetry.
+        //
+        // For converting OpenTelemetry log data to formats that support only one timestamp or
+        // when receiving OpenTelemetry log data by recipients that support only one timestamp
+        // internally the following logic is recommended:
+        //   - Use time_unix_nano if it is present, otherwise use observed_time_unix_nano.
+        //
+        // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January 1970.
+        // Value of 0 indicates unknown or missing timestamp.
+        fixed64 observed_time_unix_nano = 11;
+
+        // Numerical value of the severity, normalized to values described in Log Data Model.
+        // [Optional].
+        SeverityNumber severity_number = 2;
+
+        // The severity text (also known as log level). The original string representation as
+        // it is known at the source. [Optional].
+        string severity_text = 3;
+
+        // A value containing the body of the log record. Can be for example a human-readable
+        // string message (including multi-line) describing the event in a free form or it can
+        // be a structured data composed of arrays and maps of other values. [Optional].
+        opentelemetry.proto.common.v1.AnyValue body = 5;
+
+        // Additional attributes that describe the specific event occurrence. [Optional].
+        // Attribute keys MUST be unique (it is not allowed to have more than one
+        // attribute with the same key).
+        repeated opentelemetry.proto.common.v1.KeyValue attributes = 6;
+        uint32 dropped_attributes_count = 7;
+
+        // Flags, a bit field. 8 least significant bits are the trace flags as
+        // defined in W3C Trace Context specification. 24 most significant bits are reserved
+        // and must be set to 0. Readers must not assume that 24 most significant bits
+        // will be zero and must correctly mask the bits when reading 8-bit trace flag (use
+        // flags & TRACE_FLAGS_MASK). [Optional].
+        fixed32 flags = 8;
+
+        // A unique identifier for a trace. All logs from the same trace share
+        // the same `trace_id`. The ID is a 16-byte array. An ID with all zeroes OR
+        // of length other than 16 bytes is considered invalid (empty string in OTLP/JSON
+        // is zero-length and thus is also invalid).
+        //
+        // This field is optional.
+        //
+        // The receivers SHOULD assume that the log record is not associated with a
+        // trace if any of the following is true:
+        //   - the field is not present,
+        //   - the field contains an invalid value.
+        bytes trace_id = 9;
+
+        // A unique identifier for a span within a trace, assigned when the span
+        // is created. The ID is an 8-byte array. An ID with all zeroes OR of length
+        // other than 8 bytes is considered invalid (empty string in OTLP/JSON
+        // is zero-length and thus is also invalid).
+        //
+        // This field is optional. If the sender specifies a valid span_id then it SHOULD also
+        // specify a valid trace_id.
+        //
+        // The receivers SHOULD assume that the log record is not associated with a
+        // span if any of the following is true:
+        //   - the field is not present,
+        //   - the field contains an invalid value.
+        bytes span_id = 10;
+      }
+    logs_service.proto: |
+      // Copyright 2020, OpenTelemetry Authors
+      //
+      // Licensed under the Apache License, Version 2.0 (the "License");
+      // you may not use this file except in compliance with the License.
+      // You may obtain a copy of the License at
+      //
+      //     http://www.apache.org/licenses/LICENSE-2.0
+      //
+      // Unless required by applicable law or agreed to in writing, software
+      // distributed under the License is distributed on an "AS IS" BASIS,
+      // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      // See the License for the specific language governing permissions and
+      // limitations under the License.
+
+      syntax = "proto3";
+
+      package opentelemetry.proto.collector.logs.v1;
+
+      import "opentelemetry/proto/logs/v1/logs.proto";
+
+      option csharp_namespace = "OpenTelemetry.Proto.Collector.Logs.V1";
+      option java_multiple_files = true;
+      option java_package = "io.opentelemetry.proto.collector.logs.v1";
+      option java_outer_classname = "LogsServiceProto";
+      option go_package = "go.opentelemetry.io/proto/otlp/collector/logs/v1";
+
+      // Service that can be used to push logs between one Application instrumented with
+      // OpenTelemetry and an collector, or between an collector and a central collector (in this
+      // case logs are sent/received to/from multiple Applications).
+      service LogsService {
+        // For performance reasons, it is recommended to keep this RPC
+        // alive for the entire life of the application.
+        rpc Export(ExportLogsServiceRequest) returns (ExportLogsServiceResponse) {}
+      }
+
+      message ExportLogsServiceRequest {
+        // An array of ResourceLogs.
+        // For data coming from a single resource this array will typically contain one
+        // element. Intermediary nodes (such as OpenTelemetry Collector) that receive
+        // data from multiple origins typically batch the data before forwarding further and
+        // in that case this array will contain multiple elements.
+        repeated opentelemetry.proto.logs.v1.ResourceLogs resource_logs = 1;
+      }
+
+      message ExportLogsServiceResponse {
+        // The details of a partially successful export request.
+        //
+        // If the request is only partially accepted
+        // (i.e. when the server accepts only parts of the data and rejects the rest)
+        // the server MUST initialize the `partial_success` field and MUST
+        // set the `rejected_<signal>` with the number of items it rejected.
+        //
+        // Servers MAY also make use of the `partial_success` field to convey
+        // warnings/suggestions to senders even when the request was fully accepted.
+        // In such cases, the `rejected_<signal>` MUST have a value of `0` and
+        // the `error_message` MUST be non-empty.
+        //
+        // A `partial_success` message with an empty value (rejected_<signal> = 0 and
+        // `error_message` = "") is equivalent to it not being set/present. Senders
+        // SHOULD interpret it the same way as in the full success case.
+        ExportLogsPartialSuccess partial_success = 1;
+      }
+
+      message ExportLogsPartialSuccess {
+        // The number of rejected log records.
+        //
+        // A `rejected_<signal>` field holding a `0` value indicates that the
+        // request was fully accepted.
+        int64 rejected_log_records = 1;
+
+        // A developer-facing human-readable message in English. It should be used
+        // either to explain why the server rejected parts of the data during a partial
+        // success or to convey warnings/suggestions during a full success. The message
+        // should offer guidance on how users can address such issues.
+        //
+        // error_message is an optional field. An error_message with an empty value
+        // is equivalent to it not being set.
+        string error_message = 2;
+      }
+    metrics.config: |
+      connectors:
+        forward/prometheus: null
+      exporters:
+        otlp:
+          endpoint: ${OTEL_ENVOY_ADDRESS}
+          headers:
+            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          tls:
+            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      extensions:
+        health_check: {}
+        memory_ballast:
+          size_mib: 700
+      processors:
+        attributes/attributes_namespace_status:
+          actions:
+          - action: insert
+            from_attribute: phase
+            key: sw.k8s.namespace.status
+          include:
+            match_type: regexp
+            metric_names:
+            - k8s.kube_namespace_status_phase
+        attributes/attributes_pod_status:
+          actions:
+          - action: insert
+            from_attribute: phase
+            key: sw.k8s.pod.status
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_pod_status_phase
+        attributes/identify_init_container:
+          actions:
+          - action: insert
+            key: sw.k8s.container.init
+            value: "true"
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_pod_init_container_.*
+        attributes/identify_standard_container:
+          actions:
+          - action: insert
+            key: sw.k8s.container.init
+            value: "false"
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_pod_container_.*
+        attributes/remove_prometheus_attributes:
+          actions:
+          - action: delete
+            key: prometheus
+          - action: delete
+            key: prometheus_replica
+        attributes/remove_prometheus_attributes_endpoint:
+          actions:
+          - action: delete
+            key: endpoint
+          exclude:
+            match_type: regexp
+            metric_names:
+            - kube_endpoint_.*
+        attributes/remove_temp:
+          actions:
+          - action: delete
+            key: temp
+            pattern: (.*_temp$)|(^\$.*)
+          include:
+            match_type: regexp
+            metric_names:
+            - .*
+        attributes/unify_endpoint_attribute:
+          actions:
+          - action: insert
+            from_attribute: endpoint
+            key: k8s.service.name
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_endpoint_.*
+        attributes/unify_node_attribute:
+          actions:
+          - action: insert
+            from_attribute: node
+            key: k8s.node.name
+          - action: insert
+            from_attribute: kubernetes_io_hostname
+            key: k8s.node.name
+          include:
+            match_type: regexp
+            metric_names:
+            - container_.*
+            - kube_node_.*
+            - kube_pod_info
+            - kube_pod_container_resource_requests
+            - kube_pod_container_resource_limits
+            - kube_pod_init_container_resource_requests
+            - kube_pod_init_container_resource_limits
+        attributes/unify_pod_attribute:
+          actions:
+          - action: insert
+            from_attribute: uid
+            key: k8s.pod.uid
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_pod_.*
+        attributes/unify_service_attribute:
+          actions:
+          - action: insert
+            from_attribute: service
+            key: k8s.service.name
+          - action: insert
+            from_attribute: external_name
+            key: sw.k8s.service.external_name
+          - action: insert
+            from_attribute: type
+            key: sw.k8s.service.type
+          - action: insert
+            from_attribute: cluster_ip
+            key: sw.k8s.cluster.ip
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_service_.*
+        attributes/unify_volume_attribute:
+          actions:
+          - action: insert
+            from_attribute: volumename
+            key: persistentvolume
+          - action: insert
+            from_attribute: name
+            key: persistentvolumeclaim
+          - action: upsert
+            from_attribute: claim_namespace
+            key: namespace
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_persistentvolumeclaim_.*
+            - kube_persistentvolume_claim_ref
+        batch:
+          send_batch_max_size: 4096
+          send_batch_size: 4096
+          timeout: 1s
+        cumulativetodelta:
+          include:
+            match_type: strict
+            metrics:
+            - k8s.node.cpu.usage.seconds.rate
+            - k8s.pod.cpu.usage.seconds.rate
+            - k8s.container.fs.iops
+            - k8s.container.fs.throughput
+            - k8s.container.cpu.usage.seconds.rate
+            - k8s.container.network.bytes_received
+            - k8s.container.network.bytes_transmitted
+            - apiserver_request_not_failed_temp
+            - apiserver_request_total_temp
+            - k8s.pod.fs.iops
+            - k8s.pod.fs.throughput
+            - k8s.pod.fs.reads.rate
+            - k8s.pod.fs.writes.rate
+            - k8s.pod.fs.reads.bytes.rate
+            - k8s.pod.fs.writes.bytes.rate
+            - k8s.pod.network.bytes_received
+            - k8s.pod.network.bytes_transmitted
+            - k8s.pod.network.packets_received
+            - k8s.pod.network.packets_transmitted
+            - k8s.pod.network.receive_packets_dropped
+            - k8s.pod.network.transmit_packets_dropped
+            - k8s.node.fs.iops
+            - k8s.node.fs.throughput
+            - k8s.node.network.bytes_received
+            - k8s.node.network.bytes_transmitted
+            - k8s.node.network.packets_received
+            - k8s.node.network.packets_transmitted
+            - k8s.node.network.receive_packets_dropped
+            - k8s.node.network.transmit_packets_dropped
+        deltatorate:
+          metrics:
+          - k8s.node.cpu.usage.seconds.rate
+          - k8s.pod.cpu.usage.seconds.rate
+          - k8s.container.fs.iops
+          - k8s.container.fs.throughput
+          - k8s.container.cpu.usage.seconds.rate
+          - k8s.container.network.bytes_received
+          - k8s.container.network.bytes_transmitted
+          - k8s.pod.fs.iops
+          - k8s.pod.fs.throughput
+          - k8s.pod.fs.reads.rate
+          - k8s.pod.fs.writes.rate
+          - k8s.pod.fs.reads.bytes.rate
+          - k8s.pod.fs.writes.bytes.rate
+          - k8s.pod.network.bytes_received
+          - k8s.pod.network.bytes_transmitted
+          - k8s.pod.network.packets_received
+          - k8s.pod.network.packets_transmitted
+          - k8s.pod.network.receive_packets_dropped
+          - k8s.pod.network.transmit_packets_dropped
+          - k8s.node.fs.iops
+          - k8s.node.fs.throughput
+          - k8s.node.network.bytes_received
+          - k8s.node.network.bytes_transmitted
+          - k8s.node.network.packets_received
+          - k8s.node.network.packets_transmitted
+          - k8s.node.network.receive_packets_dropped
+          - k8s.node.network.transmit_packets_dropped
+        experimental_metricsgeneration/cluster:
+          rules:
+          - metric1: apiserver_request_not_failed_temp
+            metric2: apiserver_request_total_temp
+            name: k8s.apiserver.request.successrate
+            operation: percent
+            type: calculate
+            unit: Percent
+        filter:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - .*_temp
+              - apiserver_request_total
+        filter/ebpf:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - ^ebpf_net.*$
+        filter/kube-state-metrics:
+          metrics:
+            include:
+              match_type: regexp
+              metric_names:
+              - ^kube_deployment_created$
+              - ^kube_daemonset_created$
+              - ^kube_namespace_created$
+              - ^kube_node_info$
+              - ^kube_node_created$
+              - ^kube_node_status_capacity$
+              - ^kube_node_status_condition$
+              - ^kube_pod_created$
+              - ^kube_pod_info$
+              - ^kube_pod_owner$
+              - ^kube_pod_completion_time$
+              - ^kube_pod_status_phase$
+              - ^kube_pod_status_ready$
+              - ^kube_pod_status_reason$
+              - ^kube_pod_start_time$
+              - ^kube_pod_container_.*$
+              - ^kube_pod_init_container_.*$
+              - ^kube_namespace_status_phase$
+              - ^kube_deployment_labels$
+              - ^kube_deployment_spec_replicas$
+              - ^kube_deployment_spec_paused$
+              - ^kube_deployment_status_replicas$
+              - ^kube_deployment_status_replicas_ready$
+              - ^kube_deployment_status_replicas_available$
+              - ^kube_deployment_status_replicas_updated$
+              - ^kube_deployment_status_replicas_unavailable$
+              - ^kube_deployment_status_condition$
+              - ^kube_replicaset_owner$
+              - ^kube_replicaset_created$
+              - ^kube_replicaset_spec_replicas$
+              - ^kube_replicaset_status_ready_replicas$
+              - ^kube_replicaset_status_replicas$
+              - ^kube_statefulset_labels$
+              - ^kube_statefulset_replicas$
+              - ^kube_statefulset_status_replicas_ready$
+              - ^kube_statefulset_status_replicas_current$
+              - ^kube_statefulset_status_replicas_updated$
+              - ^kube_statefulset_created$
+              - ^kube_daemonset_labels$
+              - ^kube_daemonset_status_current_number_scheduled$
+              - ^kube_daemonset_status_desired_number_scheduled$
+              - ^kube_daemonset_status_updated_number_scheduled$
+              - ^kube_daemonset_status_number_available$
+              - ^kube_daemonset_status_number_misscheduled$
+              - ^kube_daemonset_status_number_ready$
+              - ^kube_daemonset_status_number_unavailable$
+              - ^kube_resourcequota$
+              - ^kube_node_status_allocatable$
+              - ^kube_node_spec_unschedulable$
+              - ^kube_job_info$
+              - ^kube_job_owner$
+              - ^kube_job_created$
+              - ^kube_job_complete$
+              - ^kube_job_failed$
+              - ^kube_job_status_active$
+              - ^kube_job_status_succeeded$
+              - ^kube_job_status_failed$
+              - ^kube_job_status_start_time$
+              - ^kube_job_status_completion_time$
+              - ^kube_job_spec_completions$
+              - ^kube_job_spec_parallelism$
+              - ^kube_persistentvolume_capacity_bytes$
+              - ^kube_persistentvolume_info$
+              - ^kube_persistentvolume_status_phase$
+              - ^kube_persistentvolume_claim_ref$
+              - ^kube_persistentvolume_created$
+              - ^kube_persistentvolumeclaim_info$
+              - ^kube_persistentvolumeclaim_access_mode$
+              - ^kube_persistentvolumeclaim_status_phase$
+              - ^kube_persistentvolumeclaim_resource_requests_storage_bytes$
+              - ^kube_persistentvolumeclaim_created$
+              - ^kube_pod_spec_volumes_persistentvolumeclaims_info$
+              - ^kube_service_info$
+              - ^kube_service_created$
+              - ^kube_service_spec_type$
+              - ^kube_service_spec_external_ip$
+              - ^kube_service_status_load_balancer_ingress$
+              - ^kube_endpoint_address_not_ready$
+              - ^kube_endpoint_address_available$
+              - ^kube_endpoint_info$
+              - ^kube_endpoint_created$
+              - ^kube_endpoint_ports$
+              - ^kube_endpoint_address$
+        filter/prometheus-node-metrics:
+          metrics:
+            include:
+              match_type: regexp
+              metric_names:
+              - ^container_cpu_usage_seconds_total$
+              - ^container_spec_cpu_quota$
+              - ^container_spec_cpu_period$
+              - ^container_memory_working_set_bytes$
+              - ^container_spec_memory_limit_bytes$
+              - ^container_cpu_cfs_throttled_periods_total$
+              - ^container_cpu_cfs_periods_total$
+              - ^container_fs_reads_total$
+              - ^container_fs_writes_total$
+              - ^container_fs_reads_bytes_total$
+              - ^container_fs_writes_bytes_total$
+              - ^container_fs_usage_bytes$
+              - ^container_network_receive_bytes_total$
+              - ^container_network_transmit_bytes_total$
+              - ^container_network_receive_packets_total$
+              - ^container_network_transmit_packets_total$
+              - ^container_network_receive_packets_dropped_total$
+              - ^container_network_transmit_packets_dropped_total$
+              - ^apiserver_request_total$
+              - ^kubelet_volume_stats_available_percent$
+              - ^kubernetes_build_info$
+        filter/receiver:
+          metrics:
+            exclude:
+              match_type: strict
+              metric_names:
+              - scrape_duration_seconds
+              - scrape_samples_post_metric_relabeling
+              - scrape_samples_scraped
+              - scrape_series_added
+              - up
+        filter/remove_internal:
+          metrics:
+            datapoint:
+            - attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*")
+              == false
+        filter/remove_internal_postprocessing:
+          metrics:
+            datapoint:
+            - attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*")
+              == true
+        groupbyattrs/all:
+          keys:
+          - kubelet_version
+          - container_runtime_version
+          - provider_id
+          - os_image
+          - namespace
+          - uid
+          - k8s.pod.uid
+          - pod_ip
+          - host_ip
+          - created_by_kind
+          - created_by_name
+          - host_network
+          - priority_class
+          - container_id
+          - container
+          - image
+          - image_id
+          - k8s.node.name
+          - sw.k8s.pod.status
+          - sw.k8s.namespace.status
+          - sw.k8s.node.status
+          - sw.k8s.container.status
+          - sw.k8s.container.init
+          - daemonset
+          - statefulset
+          - deployment
+          - replicaset
+          - job_name
+          - cronjob
+          - git_version
+          - internal_ip
+          - job_condition
+          - persistentvolumeclaim
+          - persistentvolume
+          - sw.k8s.persistentvolumeclaim.status
+          - sw.k8s.persistentvolume.status
+          - storageclass
+          - access_mode
+          - k8s.service.name
+          - sw.k8s.service.external_name
+          - sw.k8s.service.type
+          - sw.k8s.cluster.ip
+        groupbyattrs/node:
+          keys:
+          - k8s.node.name
+        groupbyattrs/pod:
+          keys:
+          - namespace
+          - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          cronjob:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.cronjob.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: cronjob
+                key_regex: (.*)
+                tag_name: k8s.cronjob.annotations.$$1
+              labels:
+              - from: cronjob
+                key_regex: (.*)
+                tag_name: k8s.cronjob.labels.$$1
+          daemonset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.daemonset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: daemonset
+                key_regex: (.*)
+                tag_name: k8s.daemonset.annotations.$$1
+              labels:
+              - from: daemonset
+                key_regex: (.*)
+                tag_name: k8s.daemonset.labels.$$1
+          deployment:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.deployment.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: deployment
+                key_regex: (.*)
+                tag_name: k8s.deployment.annotations.$$1
+              labels:
+              - from: deployment
+                key_regex: (.*)
+                tag_name: k8s.deployment.labels.$$1
+          extract:
+            annotations:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.annotations.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.annotations.$$1
+            labels:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.labels.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.labels.$$1
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+            - k8s.node.name
+          job:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.job.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: job
+                key_regex: (.*)
+                tag_name: k8s.job.annotations.$$1
+              labels:
+              - from: job
+                key_regex: (.*)
+                tag_name: k8s.job.labels.$$1
+          node:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.node.name
+            extract:
+              annotations:
+              - from: node
+                key_regex: (.*)
+                tag_name: k8s.node.annotations.$$1
+              labels:
+              - from: node
+                key_regex: (.*)
+                tag_name: k8s.node.labels.$$1
+          passthrough: false
+          persistentvolume:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolume.name
+            extract:
+              annotations:
+              - from: persistentvolume
+                key_regex: (.*)
+                tag_name: k8s.persistentvolume.annotations.$$1
+              labels:
+              - from: persistentvolume
+                key_regex: (.*)
+                tag_name: k8s.persistentvolume.labels.$$1
+          persistentvolumeclaim:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolumeclaim.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: persistentvolumeclaim
+                key_regex: (.*)
+                tag_name: k8s.persistentvolumeclaim.annotations.$$1
+              labels:
+              - from: persistentvolumeclaim
+                key_regex: (.*)
+                tag_name: k8s.persistentvolumeclaim.labels.$$1
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          replicaset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.replicaset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: replicaset
+                key_regex: (.*)
+                tag_name: k8s.replicaset.annotations.$$1
+              labels:
+              - from: replicaset
+                key_regex: (.*)
+                tag_name: k8s.replicaset.labels.$$1
+          service:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.service.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.annotations.$$1
+              labels:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.labels.$$1
+          set_object_existence: true
+          statefulset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.statefulset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: statefulset
+                key_regex: (.*)
+                tag_name: k8s.statefulset.annotations.$$1
+              labels:
+              - from: statefulset
+                key_regex: (.*)
+                tag_name: k8s.statefulset.labels.$$1
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 2560
+          spike_limit_mib: 512
+        metricstransform/aggregate_node_level:
+          transforms:
+          - action: insert
+            include: k8s.kube_pod_info
+            new_name: k8s.node.pods
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+        metricstransform/aggregate_pod_level:
+          transforms:
+          - action: insert
+            include: k8s.kube_pod_container_info
+            new_name: k8s.pod.containers
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+        metricstransform/preprocessing:
+          transforms:
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_container_resource_limits
+            new_name: k8s.container.spec.cpu.limit_temp
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_init_container_resource_limits
+            new_name: k8s.initcontainer.spec.cpu.limit_temp
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_container_resource_requests
+            new_name: k8s.container.spec.cpu.requests_temp
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_init_container_resource_requests
+            new_name: k8s.initcontainer.spec.cpu.requests_temp
+          - action: combine
+            include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.cpu.requests
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_container_resource_requests
+            new_name: k8s.container.spec.memory.requests_temp
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_init_container_resource_requests
+            new_name: k8s.initcontainer.spec.memory.requests_temp
+          - action: combine
+            include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.memory.requests
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_container_resource_limits
+            match_type: regexp
+            new_name: k8s.container.spec.memory.limit_temp
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_init_container_resource_limits
+            match_type: regexp
+            new_name: k8s.initcontainer.spec.memory.limit_temp
+          - action: insert
+            include: k8s.container_fs_reads_total
+            new_name: k8s.container_fs_reads_total_temp
+          - action: insert
+            include: k8s.container_fs_writes_total
+            new_name: k8s.container_fs_writes_total_temp
+          - action: combine
+            experimental_match_labels:
+              container: \S+
+              namespace: \S+
+              pod: \S+
+            include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+            match_type: regexp
+            new_name: k8s.container.fs.iops
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - container
+              - pod
+              - namespace
+            submatch_case: lower
+          - action: insert
+            include: k8s.container_fs_reads_bytes_total
+            new_name: k8s.container_fs_reads_bytes_total_temp
+          - action: insert
+            include: k8s.container_fs_writes_bytes_total
+            new_name: k8s.container_fs_writes_bytes_total_temp
+          - action: combine
+            experimental_match_labels:
+              container: \S+
+              namespace: \S+
+              pod: \S+
+            include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+            match_type: regexp
+            new_name: k8s.container.fs.throughput
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - container
+              - pod
+              - namespace
+            submatch_case: lower
+          - action: insert
+            include: k8s.container_network_receive_bytes_total
+            new_name: k8s.container.network.bytes_received
+          - action: insert
+            include: k8s.container_network_transmit_bytes_total
+            new_name: k8s.container.network.bytes_transmitted
+          - action: insert
+            include: k8s.kube_pod_container_status_waiting
+            new_name: k8s.kube_pod_container_status_waiting_only_temp
+          - action: insert
+            include: k8s.kube_pod_container_status_running
+            new_name: k8s.kube_pod_container_status_running_only_temp
+          - action: insert
+            include: k8s.kube_pod_container_status_terminated
+            new_name: k8s.kube_pod_container_status_terminated_only_temp
+          - action: combine
+            include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
+            match_type: regexp
+            new_name: k8s.container.status_temp
+            operations:
+            - action: update_label
+              label: status
+              new_label: sw.k8s.container.status
+            submatch_case: lower
+          - action: insert
+            include: k8s.kube_pod_init_container_status_waiting
+            new_name: k8s.kube_pod_init_container_status_waiting_only_temp
+          - action: insert
+            include: k8s.kube_pod_init_container_status_running
+            new_name: k8s.kube_pod_init_container_status_running_only_temp
+          - action: insert
+            include: k8s.kube_pod_init_container_status_terminated
+            new_name: k8s.kube_pod_init_container_status_terminated_only_temp
+          - action: combine
+            include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
+            match_type: regexp
+            new_name: k8s.initcontainer.status_temp
+            operations:
+            - action: update_label
+              label: status
+              new_label: sw.k8s.container.status
+            submatch_case: lower
+          - action: combine
+            include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
+            match_type: regexp
+            new_name: k8s.container.status
+            submatch_case: lower
+          - action: insert
+            include: k8s.container.spec.cpu.limit_temp
+            new_name: k8s.pod.spec.cpu.limit
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: combine
+            include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.cpu.limit
+          - action: insert
+            include: k8s.container.spec.memory.limit_temp
+            new_name: k8s.pod.spec.memory.limit
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: combine
+            include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.memory.limit
+          - action: insert
+            include: k8s.kube_pod_container_status_running
+            new_name: k8s.pod.containers.running
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+          - action: insert
+            include: k8s.container.spec.cpu.requests
+            new_name: k8s.pod.spec.cpu.requests
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            include: k8s.container.spec.memory.requests
+            new_name: k8s.pod.spec.memory.requests
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              container: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_cpu_usage_seconds_total
+            match_type: regexp
+            new_name: k8s.pod.cpu.usage.seconds.rate
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            include: k8s.container_cpu_usage_seconds_total
+            new_name: k8s.container.cpu.usage.seconds.rate
+          - action: insert
+            experimental_match_labels:
+              container: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_memory_working_set_bytes
+            match_type: regexp
+            new_name: k8s.pod.memory.working_set
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_network_receive_bytes_total
+            match_type: regexp
+            new_name: k8s.pod.network.bytes_received
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_network_transmit_bytes_total
+            match_type: regexp
+            new_name: k8s.pod.network.bytes_transmitted
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_network_receive_packets_total
+            match_type: regexp
+            new_name: k8s.pod.network.packets_received
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_network_transmit_packets_total
+            match_type: regexp
+            new_name: k8s.pod.network.packets_transmitted
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_network_receive_packets_dropped_total
+            match_type: regexp
+            new_name: k8s.pod.network.receive_packets_dropped
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_network_transmit_packets_dropped_total
+            match_type: regexp
+            new_name: k8s.pod.network.transmit_packets_dropped
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: DaemonSet
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.daemonset
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: daemonset
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: ReplicaSet
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.replicaset
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: replicaset
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: StatefulSet
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.statefulset
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: statefulset
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: Job
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.job
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: job_name
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: Deployment
+            include: k8s.kube_replicaset_owner
+            new_name: k8s.kube.replicaset.owner.deployment
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: deployment
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_fs_reads_total
+            match_type: regexp
+            new_name: k8s.pod.fs.reads.rate
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_fs_writes_total
+            match_type: regexp
+            new_name: k8s.pod.fs.writes.rate
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_fs_reads_bytes_total
+            match_type: regexp
+            new_name: k8s.pod.fs.reads.bytes.rate
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_fs_writes_bytes_total
+            match_type: regexp
+            new_name: k8s.pod.fs.writes.bytes.rate
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            include: k8s.pod.fs.reads.rate
+            new_name: k8s.pod.fs.reads.rate_temp
+          - action: insert
+            include: k8s.pod.fs.writes.rate
+            new_name: k8s.pod.fs.writes.rate_temp
+          - action: combine
+            include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+            match_type: regexp
+            new_name: k8s.pod.fs.iops
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+            submatch_case: lower
+          - action: insert
+            include: k8s.pod.fs.reads.bytes.rate
+            new_name: k8s.pod.fs.reads.bytes.rate_temp
+          - action: insert
+            include: k8s.pod.fs.writes.bytes.rate
+            new_name: k8s.pod.fs.writes.bytes.rate_temp
+          - action: combine
+            include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+            match_type: regexp
+            new_name: k8s.pod.fs.throughput
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+            submatch_case: lower
+          - action: insert
+            experimental_match_labels:
+              k8s.node.name: \S+
+              namespace: \S+
+              pod: \S+
+            include: k8s.container_fs_usage_bytes
+            match_type: regexp
+            new_name: k8s.pod.fs.usage.bytes
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              id: /
+            include: k8s.container_cpu_usage_seconds_total
+            new_name: k8s.node.cpu.usage.seconds.rate
+          - action: insert
+            experimental_match_labels:
+              id: /
+            include: k8s.container_memory_working_set_bytes
+            new_name: k8s.node.memory.working_set
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_node_status_capacity
+            new_name: k8s.node.cpu.capacity
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_node_status_allocatable
+            new_name: k8s.node.cpu.allocatable
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_node_status_capacity
+            new_name: k8s.node.memory.capacity
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_node_status_allocatable
+            new_name: k8s.node.memory.allocatable
+          - action: insert
+            experimental_match_labels:
+              condition: Ready
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.ready
+          - action: insert
+            experimental_match_labels:
+              condition: NetworkUnavailable
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.networkunavailable
+          - action: insert
+            experimental_match_labels:
+              condition: PIDPressure
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.pidpressure
+          - action: insert
+            experimental_match_labels:
+              condition: MemoryPressure
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.memorypressure
+          - action: insert
+            experimental_match_labels:
+              condition: DiskPressure
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.diskpressure
+          - action: insert
+            experimental_match_labels:
+              phase: Running
+            include: k8s.kube_pod_status_phase
+            new_name: k8s.pod.status.phase.running_temp
+          - action: insert
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+            include: k8s.container_network_receive_bytes_total
+            match_type: regexp
+            new_name: k8s.node.network.bytes_received
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+            include: k8s.container_network_transmit_bytes_total
+            match_type: regexp
+            new_name: k8s.node.network.bytes_transmitted
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+            include: k8s.container_network_receive_packets_total
+            match_type: regexp
+            new_name: k8s.node.network.packets_received
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+            include: k8s.container_network_transmit_packets_total
+            match_type: regexp
+            new_name: k8s.node.network.packets_transmitted
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+            include: k8s.container_network_receive_packets_dropped_total
+            match_type: regexp
+            new_name: k8s.node.network.receive_packets_dropped
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+            include: k8s.container_network_transmit_packets_dropped_total
+            match_type: regexp
+            new_name: k8s.node.network.transmit_packets_dropped
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            include: k8s.pod.fs.reads.rate
+            new_name: k8s.node.fs.reads.rate_temp
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            include: k8s.pod.fs.writes.rate
+            new_name: k8s.node.fs.writes.rate_temp
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            include: k8s.pod.fs.reads.bytes.rate
+            new_name: k8s.node.fs.reads.bytes.rate_temp
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            include: k8s.pod.fs.writes.bytes.rate
+            new_name: k8s.node.fs.writes.bytes.rate_temp
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: combine
+            include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+            match_type: regexp
+            new_name: k8s.node.fs.iops
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+            submatch_case: lower
+          - action: combine
+            include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+            match_type: regexp
+            new_name: k8s.node.fs.throughput
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+            submatch_case: lower
+          - action: insert
+            include: k8s.pod.fs.usage.bytes
+            new_name: k8s.node.fs.usage
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - k8s.node.name
+          - action: insert
+            include: k8s.kube_pod_info
+            new_name: k8s.cluster.pods
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.kube_node_info
+            new_name: k8s.cluster.nodes
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.node.status.condition.ready
+            new_name: k8s.cluster.nodes.ready
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.node.status.condition.ready
+            new_name: k8s.cluster.nodes.ready.avg
+            operations:
+            - action: aggregate_labels
+              aggregation_type: mean
+              label_set: []
+          - action: insert
+            include: k8s.container.spec.memory.requests
+            new_name: k8s.cluster.spec.memory.requests
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.container.spec.cpu.requests
+            new_name: k8s.cluster.spec.cpu.requests
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.pod.status.phase.running_temp
+            new_name: k8s.cluster.pods.running
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.node.cpu.capacity
+            new_name: k8s.cluster.cpu.capacity
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.node.cpu.allocatable
+            new_name: k8s.cluster.cpu.allocatable
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.node.memory.capacity
+            new_name: k8s.cluster.memory.capacity
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: k8s.node.memory.allocatable
+            new_name: k8s.cluster.memory.allocatable
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            experimental_match_labels:
+              scrape_job: .*apiservers.*
+            include: k8s.kubernetes_build_info
+            match_type: regexp
+            new_name: k8s.cluster.version
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - git_version
+          - action: update
+            include: k8s.kubernetes_build_info
+            new_name: k8s.kubernetes_build_info_temp
+          - action: insert
+            experimental_match_labels:
+              code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
+            include: apiserver_request_total
+            match_type: regexp
+            new_name: apiserver_request_not_failed_temp
+          - action: update
+            include: apiserver_request_not_failed_temp
+            new_name: apiserver_request_not_failed_temp
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            include: apiserver_request_total
+            new_name: apiserver_request_total_temp
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: []
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: CronJob
+            include: k8s.kube_job_owner
+            new_name: k8s.kube.job.owner.cronjob
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: cronjob
+        metricstransform/rename:
+          transforms:
+          - action: update
+            include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}$${2}
+        metricstransform/rename-ebpf:
+          transforms:
+          - action: update
+            include: ^(tcp.|udp.|http.|dns.)(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}$${2}
+        resource/events:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: event
+        resource/metrics:
+          attributes:
+          - action: delete
+            key: service.name
+          - action: delete
+            key: service.instance.id
+          - action: delete
+            key: net.host.name
+          - action: delete
+            key: net.host.port
+          - action: delete
+            key: http.scheme
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            from_attribute: git_version
+            key: sw.k8s.cluster.version
+          - action: insert
+            from_attribute: kubelet_version
+            key: sw.k8s.node.version
+          - action: insert
+            from_attribute: container_runtime_version
+            key: sw.k8s.node.container.runtime.version
+          - action: insert
+            from_attribute: provider_id
+            key: sw.k8s.node.provider.id
+          - action: insert
+            from_attribute: os_image
+            key: sw.k8s.node.os.image
+          - action: insert
+            from_attribute: internal_ip
+            key: sw.k8s.node.ip.internal
+          - action: insert
+            from_attribute: namespace
+            key: k8s.namespace.name
+          - action: insert
+            from_attribute: pod
+            key: k8s.pod.name
+          - action: insert
+            from_attribute: pod_ip
+            key: sw.k8s.pod.ip
+          - action: insert
+            from_attribute: host_ip
+            key: sw.k8s.pod.host.ip
+          - action: insert
+            from_attribute: created_by_kind
+            key: sw.k8s.pod.createdby.kind
+          - action: insert
+            from_attribute: created_by_name
+            key: sw.k8s.pod.createdby.name
+          - action: insert
+            from_attribute: host_network
+            key: sw.k8s.pod.host.network
+          - action: insert
+            from_attribute: priority_class
+            key: sw.k8s.pod.priority_class
+          - action: extract
+            key: container_id
+            pattern: ^(?P<extracted_container_runtime>[^:]+)://(?P<extracted_container_id>[^/]+)$
+          - action: insert
+            from_attribute: extracted_container_id
+            key: container.id
+          - action: insert
+            from_attribute: extracted_container_runtime
+            key: container.runtime
+          - action: insert
+            from_attribute: container
+            key: k8s.container.name
+          - action: insert
+            from_attribute: image_id
+            key: k8s.container.image.id
+          - action: insert
+            from_attribute: image
+            key: k8s.container.image.name
+          - action: insert
+            from_attribute: replicaset
+            key: k8s.replicaset.name
+          - action: insert
+            from_attribute: deployment
+            key: k8s.deployment.name
+          - action: insert
+            from_attribute: statefulset
+            key: k8s.statefulset.name
+          - action: insert
+            from_attribute: daemonset
+            key: k8s.daemonset.name
+          - action: insert
+            from_attribute: job_name
+            key: k8s.job.name
+          - action: insert
+            from_attribute: job_condition
+            key: k8s.job.condition
+          - action: insert
+            from_attribute: cronjob
+            key: k8s.cronjob.name
+          - action: insert
+            from_attribute: persistentvolume
+            key: k8s.persistentvolume.name
+          - action: insert
+            from_attribute: persistentvolumeclaim
+            key: k8s.persistentvolumeclaim.name
+        resource/otlp-metrics:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+        swmetricstransform/postprocessing:
+          transforms:
+          - action: update
+            include: k8s.container.status
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+        swmetricstransform/preprocessing:
+          transforms:
+          - action: insert
+            experimental_match_labels:
+              condition: Ready
+            include: k8s.kube_node_status_condition
+            new_name: k8s.kube_node_status_ready
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+            - action: update_label
+              label: status
+              value_actions:
+              - new_value: Ready
+                value: "true"
+              - new_value: NotReady
+                value: "false"
+              - new_value: Unknown
+                value: unknown
+            - action: update_label
+              label: status
+              new_label: sw.k8s.node.status
+          - action: insert
+            experimental_match_labels:
+              condition: Available
+            include: k8s.kube_deployment_status_condition
+            new_name: k8s.deployment.condition.available
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+            - action: update_label
+              label: status
+              new_label: sw.k8s.deployment.condition.available
+          - action: insert
+            experimental_match_labels:
+              condition: Progressing
+            include: k8s.kube_deployment_status_condition
+            new_name: k8s.deployment.condition.progressing
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+            - action: update_label
+              label: status
+              new_label: sw.k8s.deployment.condition.progressing
+          - action: insert
+            experimental_match_labels:
+              condition: ReplicaFailure
+            include: k8s.kube_deployment_status_condition
+            new_name: k8s.deployment.condition.replicafailure
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+            - action: update_label
+              label: status
+              new_label: sw.k8s.deployment.condition.replicafailure
+          - action: update
+            include: k8s.kube_pod_status_reason
+            new_name: k8s.pod.status.reason
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+          - action: update
+            include: k8s.kube_pod_status_phase
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+          - action: update
+            include: k8s.kube_pod_start_time
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_pod_completion_time
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: insert
+            include: k8s.kube_persistentvolume_status_phase
+            new_name: k8s.persistentvolume.status.phase
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+            - action: update_label
+              label: phase
+              new_label: sw.k8s.persistentvolume.status
+          - action: insert
+            include: k8s.kube_persistentvolumeclaim_status_phase
+            new_name: k8s.persistentvolumeclaim.status.phase
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+            - action: update_label
+              label: phase
+              new_label: sw.k8s.persistentvolumeclaim.status
+          - action: update
+            include: k8s.kube_node_created
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_pod_created
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_deployment_created
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_daemonset_created
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_namespace_status_phase
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 1
+              datapoint_value_action: include
+          - action: update
+            include: k8s.kube_namespace_created
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_statefulset_created
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_job_created
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_job_status_completion_time
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+          - action: update
+            include: k8s.kube_job_status_start_time
+            operations:
+            - action: filter_datapoints
+              datapoint_value: 0
+              datapoint_value_action: exclude
+        transform:
+          metric_statements:
+          - context: datapoint
+            statements:
+            - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$")
+              == true
+            - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$")
+              == true and value_double > 0
+            - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$")
+              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
+              > 0
+            - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
+              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
+              > 0
+        transform/cleanup_attributes_for_nonexisting_entities:
+          metric_statements:
+          - context: metric
+            statements:
+            - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
+              == "false"
+            - delete_key(resource.attributes, "sw.k8s.pod.found")
+            - delete_key(resource.attributes, "sw.k8s.deployment.found")
+            - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+            - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+            - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+            - delete_key(resource.attributes, "sw.k8s.job.found")
+            - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+            - delete_key(resource.attributes, "sw.k8s.node.found")
+        transform/unify_node_attribute:
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$")
+              == true and attributes["k8s.node.name"] == nil
+      receivers:
+        k8s_events: null
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+        prometheus/kube-state-metrics:
+          config:
+            scrape_configs:
+            - honor_labels: true
+              honor_timestamps: false
+              job_name: kube-state-metrics
+              metrics_path: /metrics
+              scheme: http
+              scrape_interval: 60s
+              static_configs:
+              - targets:
+                - ${KUBE_STATE_METRICS_URL}
+        prometheus/node-metrics:
+          config:
+            scrape_configs:
+            - authorization:
+                credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                type: Bearer
+              enable_http2: true
+              follow_redirects: true
+              honor_timestamps: false
+              job_name: kubernetes-nodes-cadvisor
+              kubernetes_sd_configs:
+              - enable_http2: true
+                follow_redirects: true
+                kubeconfig_file: ""
+                role: node
+              metrics_path: /metrics
+              relabel_configs:
+              - action: labelmap
+                regex: __meta_kubernetes_node_label_(.+)
+                replacement: $$1
+                separator: ;
+              - action: replace
+                regex: (.*)
+                replacement: kubernetes.default.svc:443
+                separator: ;
+                target_label: __address__
+              - action: replace
+                regex: (.+)
+                replacement: /api/v1/nodes/$$1/proxy/metrics/cadvisor
+                separator: ;
+                source_labels:
+                - __meta_kubernetes_node_name
+                target_label: __metrics_path__
+              - replacement: kubernetes-nodes-cadvisor
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scheme: https
+              scrape_interval: 60s
+              scrape_timeout: 10s
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+            - authorization:
+                credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                type: Bearer
+              enable_http2: true
+              follow_redirects: true
+              honor_timestamps: false
+              job_name: kubernetes-nodes
+              kubernetes_sd_configs:
+              - enable_http2: true
+                follow_redirects: true
+                kubeconfig_file: ""
+                role: node
+              metrics_path: /metrics
+              relabel_configs:
+              - action: labelmap
+                regex: __meta_kubernetes_node_label_(.+)
+                replacement: $$1
+                separator: ;
+              - action: replace
+                regex: (.*)
+                replacement: kubernetes.default.svc:443
+                separator: ;
+                target_label: __address__
+              - action: replace
+                regex: (.+)
+                replacement: /api/v1/nodes/$$1/proxy/metrics
+                separator: ;
+                source_labels:
+                - __meta_kubernetes_node_name
+                target_label: __metrics_path__
+              - replacement: kubernetes-nodes
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scheme: https
+              scrape_interval: 60s
+              scrape_timeout: 10s
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+            - authorization:
+                credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                type: Bearer
+              enable_http2: true
+              follow_redirects: true
+              honor_timestamps: false
+              job_name: kubernetes-apiservers
+              kubernetes_sd_configs:
+              - enable_http2: true
+                follow_redirects: true
+                kubeconfig_file: ""
+                role: endpoints
+              metrics_path: /metrics
+              relabel_configs:
+              - action: keep
+                regex: default;kubernetes;https
+                replacement: $$1
+                separator: ;
+                source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_endpoint_port_name
+              - replacement: kubernetes-apiservers
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scheme: https
+              scrape_interval: 60s
+              scrape_timeout: 10s
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+        prometheus/prometheus-server:
+          config:
+            scrape_configs:
+            - honor_labels: true
+              honor_timestamps: false
+              job_name: prometheus
+              metrics_path: /federate
+              params:
+                match[]:
+                - test-metric
+              scheme: http
+              scrape_interval: 60s
+              static_configs:
+              - targets:
+                - ${PROMETHEUS_URL}
+      service:
+        extensions:
+        - health_check
+        - memory_ballast
+        pipelines:
+          metrics:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - filter/receiver
+            - transform
+            - filter/remove_internal
+            - attributes/remove_prometheus_attributes
+            - attributes/remove_prometheus_attributes_endpoint
+            - attributes/unify_node_attribute
+            - transform/unify_node_attribute
+            - attributes/unify_volume_attribute
+            - attributes/unify_service_attribute
+            - attributes/unify_endpoint_attribute
+            - attributes/unify_pod_attribute
+            - attributes/identify_init_container
+            - attributes/identify_standard_container
+            - metricstransform/rename
+            - swmetricstransform/preprocessing
+            - metricstransform/preprocessing
+            - swmetricstransform/postprocessing
+            - filter/remove_internal_postprocessing
+            - attributes/remove_temp
+            - attributes/attributes_pod_status
+            - attributes/attributes_namespace_status
+            - cumulativetodelta
+            - deltatorate
+            - experimental_metricsgeneration/cluster
+            - groupbyattrs/node
+            - metricstransform/aggregate_node_level
+            - groupbyattrs/pod
+            - metricstransform/aggregate_pod_level
+            - groupbyattrs/all
+            - filter
+            - resource/metrics
+            - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
+            - batch
+            receivers:
+            - forward/prometheus
+          metrics/kubestatemetrics:
+            exporters:
+            - forward/prometheus
+            processors:
+            - memory_limiter
+            - filter/kube-state-metrics
+            receivers:
+            - prometheus/kube-state-metrics
+          metrics/otlp:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - metricstransform/rename-ebpf
+            - resource/otlp-metrics
+            - batch
+            receivers:
+            - otlp
+          metrics/prometheus:
+            exporters:
+            - forward/prometheus
+            processors:
+            - memory_limiter
+            receivers:
+            - prometheus/prometheus-server
+          metrics/prometheus-node-metrics:
+            exporters:
+            - forward/prometheus
+            processors:
+            - memory_limiter
+            - filter/prometheus-node-metrics
+            receivers:
+            - prometheus/node-metrics
+        telemetry:
+          logs:
+            level: info
+          metrics:
+            address: 0.0.0.0:8888
+    resource.proto: |
+      // Copyright 2019, OpenTelemetry Authors
+      //
+      // Licensed under the Apache License, Version 2.0 (the "License");
+      // you may not use this file except in compliance with the License.
+      // You may obtain a copy of the License at
+      //
+      //     http://www.apache.org/licenses/LICENSE-2.0
+      //
+      // Unless required by applicable law or agreed to in writing, software
+      // distributed under the License is distributed on an "AS IS" BASIS,
+      // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      // See the License for the specific language governing permissions and
+      // limitations under the License.
+
+      syntax = "proto3";
+
+      package opentelemetry.proto.resource.v1;
+
+      import "opentelemetry/proto/common/v1/common.proto";
+
+      option csharp_namespace = "OpenTelemetry.Proto.Resource.V1";
+      option java_multiple_files = true;
+      option java_package = "io.opentelemetry.proto.resource.v1";
+      option java_outer_classname = "ResourceProto";
+      option go_package = "go.opentelemetry.io/proto/otlp/resource/v1";
+
+      // Resource information.
+      message Resource {
+        // Set of attributes that describe the resource.
+        // Attribute keys MUST be unique (it is not allowed to have more than one
+        // attribute with the same key).
+        repeated opentelemetry.proto.common.v1.KeyValue attributes = 1;
+
+        // dropped_attributes_count is the number of dropped attributes. If the value is 0, then
+        // no attributes were dropped.
+        uint32 dropped_attributes_count = 2;
+      }
 Metrics config should match snapshot when using default values:
   1: |
     common.proto: "// Copyright 2019, OpenTelemetry Authors\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//     http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\nsyntax = \"proto3\";\n\npackage opentelemetry.proto.common.v1;\n\noption csharp_namespace = \"OpenTelemetry.Proto.Common.V1\";\noption java_multiple_files = true;\noption java_package = \"io.opentelemetry.proto.common.v1\";\noption java_outer_classname = \"CommonProto\";\noption go_package = \"go.opentelemetry.io/proto/otlp/common/v1\";\n\n// AnyValue is used to represent any type of attribute value. AnyValue may contain a\n// primitive value such as a string or integer or it may contain an arbitrary nested\n// object containing arrays, key-value lists and primitives.\nmessage AnyValue {\n  // The value is one of the listed fields. It is valid for all values to be unspecified\n  // in which case this AnyValue is considered to be \"empty\".\n  oneof value {\n    string string_value = 1;\n    bool bool_value = 2;\n    int64 int_value = 3;\n    double double_value = 4;\n    ArrayValue array_value = 5;\n    KeyValueList kvlist_value = 6;\n    bytes bytes_value = 7;\n  }\n}\n\n// ArrayValue is a list of AnyValue messages. We need ArrayValue as a message\n// since oneof in AnyValue does not allow repeated fields.\nmessage ArrayValue {\n  // Array of values. The array may be empty (contain 0 elements).\n  repeated AnyValue values = 1;\n}\n\n// KeyValueList is a list of KeyValue messages. We need KeyValueList as a message\n// since `oneof` in AnyValue does not allow repeated fields. Everywhere else where we need\n// a list of KeyValue messages (e.g. in Span) we use `repeated KeyValue` directly to\n// avoid unnecessary extra wrapping (which slows down the protocol). The 2 approaches\n// are semantically equivalent.\nmessage KeyValueList {\n  // A collection of key/value pairs of key-value pairs. The list may be empty (may\n  // contain 0 elements).\n  // The keys MUST be unique (it is not allowed to have more than one\n  // value with the same key).\n  repeated KeyValue values = 1;\n}\n\n// KeyValue is a key-value pair that is used to store Span attributes, Link\n// attributes, etc.\nmessage KeyValue {\n  string key = 1;\n  AnyValue value = 2;\n}\n\n// InstrumentationScope is a message representing the instrumentation scope information\n// such as the fully qualified name and version. \nmessage InstrumentationScope {\n  // An empty instrumentation scope name means the name is unknown.\n  string name = 1;\n  string version = 2;\n  repeated KeyValue attributes = 3;\n  uint32 dropped_attributes_count = 4;\n}\n"
