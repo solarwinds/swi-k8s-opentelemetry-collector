@@ -83,9 +83,10 @@ def retry_until_ok(url, func, print_failure):
         raise ValueError("Timed out waiting")
     
 def get_hash_key_by_attributes(obj):
+    if "attributes" not in obj:
+        return "No_Attributes"
     sorted_attributes = sorted(obj["attributes"], key=lambda a: a["key"])
     return "".join([f"{a['key']}={a['value']['stringValue']}" for a in sorted_attributes])
-
 
 def resource_sorting_key(resource):
     return get_hash_key_by_attributes(resource["resource"])
@@ -124,26 +125,6 @@ def sort_attributes(element):
         element["attributes"] = sorted(
             element["attributes"], key=lambda a: a["key"])
 
-def sanitize_attributes(element):
-    if "attributes" in element:
-        # Exclude node attributes as they comes from real cluster so it is not predictable in integrations test to match them
-        exclude_prefixes = ['k8s.node.annotations', 'k8s.node.labels']
-
-        filtered_attributes = [
-            attr for attr in element["attributes"]
-            if all(not attr["key"].startswith(prefix) for prefix in exclude_prefixes)
-        ]
-
-        # Sort the remaining attributes
-        element["attributes"] = sorted(
-            filtered_attributes, key=lambda a: a["key"]
-        )
-
-        # 'k8s.node.name' also comes from real cluster so sanitize it to `test-node` to make it predictable
-        for attr in element["attributes"]:
-            if attr["key"] == "k8s.node.name":
-                attr["value"] = {"stringValue": "test-node"}
-
 def sort_datapoints(metric):
     metric["dataPoints"] = sorted(
         metric["dataPoints"], key=datapoint_sorting_key)
@@ -153,7 +134,6 @@ def process_metric_type(metric):
     if "dataPoints" in metric:
         for dp in metric["dataPoints"]:
             remove_time_in_datapoint(dp)
-            sanitize_attributes(dp)
             sort_attributes(dp)
         sort_datapoints(metric)
 
@@ -225,7 +205,6 @@ def get_merged_json(content):
 
     # Sort the result and set timeStamps to 0 to make it easier to compare
     for resource in result["resourceMetrics"]:
-        sanitize_attributes(resource["resource"])
         sort_attributes(resource["resource"])
         for scope in resource["scopeMetrics"]:
             scope["scope"] = {}

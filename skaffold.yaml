@@ -10,16 +10,14 @@ build:
     - image: integration-test
       docker:
         dockerfile: build/docker/IntegrationTest.Dockerfile
-    - image: wiremock
-      docker:
-        dockerfile: build/docker/WireMock.Dockerfile
+        buildArgs: 
+          CI: "{{ .CI }}"
   local:
     push: false
 manifests:
   kustomize:
     paths:
       - tests/deploy/base
-      - tests/deploy/wiremock
       - tests/deploy/tests
     buildArgs:
       - --load-restrictor LoadRestrictionsNone
