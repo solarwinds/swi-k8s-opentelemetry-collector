@@ -170,6 +170,15 @@ processors:
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
+  
+  metricstransform/rename-ebpf:
+    transforms:
+      # add `k8s.` suffix to all metrics that are clearly provided by eBPF networking
+      - include: ^(tcp.|udp.|http.|dns.)(.*)$$
+        match_type: regexp
+        action: update
+        new_name: k8s.$${1}$${2}
+
   # Transformations done on all metrics before any grouping
   swmetricstransform/preprocessing:
     transforms:
@@ -1377,6 +1386,27 @@ processors:
       - key: sw.k8s.log.type
         value: event
         action: insert
+
+  resource/otlp-metrics:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
@@ -1468,6 +1498,12 @@ processors:
           - "^kube_endpoint_created$"
           - "^kube_endpoint_ports$"
           - "^kube_endpoint_address$"
+  filter/ebpf:
+    metrics:
+      exclude:
+        match_type: regexp
+        metric_names:
+          - "^ebpf_net.*$"
 
   filter/prometheus-node-metrics:
     metrics:
@@ -1500,6 +1536,10 @@ connectors:
   forward/prometheus:
 
 receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
   k8s_events:
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
   prometheus/prometheus-server:
@@ -1645,6 +1685,19 @@ service:
     - health_check
     - memory_ballast
   pipelines:
+    metrics/otlp:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled  }}
+        - filter/ebpf
+{{- end }}
+        - metricstransform/rename-ebpf
+        - resource/otlp-metrics
+        - batch
+      receivers:
+        - otlp
 {{- if .Values.otel.metrics.extra_scrape_metrics }}
     metrics/prometheus:
       exporters:

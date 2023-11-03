@@ -1,0 +1,16 @@
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.k8sCollector.enabled  }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "common.fullname" (tuple . "-network-k8s-collector-role-binding") }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "common.fullname" (tuple . "-network-k8s-collector-role") }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "common.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end}}

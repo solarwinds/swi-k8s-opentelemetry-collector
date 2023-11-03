@@ -499,6 +499,12 @@ Metrics config should match snapshot when using default values:
               metric_names:
               - .*_temp
               - apiserver_request_total
+        filter/ebpf:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - ^ebpf_net.*$
         filter/kube-state-metrics:
           metrics:
             include:
@@ -1703,6 +1709,12 @@ Metrics config should match snapshot when using default values:
             include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
+        metricstransform/rename-ebpf:
+          transforms:
+          - action: update
+            include: ^(tcp.|udp.|http.|dns.)(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}$${2}
         resource/events:
           attributes:
           - action: insert
@@ -1831,6 +1843,20 @@ Metrics config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/otlp-metrics:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swmetricstransform/postprocessing:
           transforms:
           - action: update
@@ -2040,6 +2066,10 @@ Metrics config should match snapshot when using default values:
               == true and attributes["k8s.node.name"] == nil
       receivers:
         k8s_events: null
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
         prometheus/kube-state-metrics:
           config:
             scrape_configs:
@@ -2221,6 +2251,16 @@ Metrics config should match snapshot when using default values:
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
+          metrics/otlp:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - metricstransform/rename-ebpf
+            - resource/otlp-metrics
+            - batch
+            receivers:
+            - otlp
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus

@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for k8s-collector-deployment
+templates:
+  - network/k8s-collector-deployment.yaml
+  - network/configmap.yaml
+tests:
+  - it: K8s Collector spec should match snapshot when using default values
+    template: network/k8s-collector-deployment.yaml
+    set:
+      ebpfNetworkMonitoring.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
