@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [3.0.0-alpha.3] - 2023-11-03
+## [3.0.0-alpha.4] - 2023-11-03
 
 ### Changed
 
 - Decreased the default batch size for metrics, logs and events sent to OTEL endpoint to 512 to avoid too big messages
+
+## [3.0.0-alpha.3] - 2023-11-03
+
+### Fixed
+
+- If `otel.metrics.prometheus.url` is empty, it ignores `otel.metrics.prometheus_check` to not fail on missing Prometheus
 
 ## [3.0.0-alpha.2] - 2023-11-03
 
