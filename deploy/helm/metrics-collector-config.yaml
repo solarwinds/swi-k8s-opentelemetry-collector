@@ -1541,7 +1541,7 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
   k8s_events:
-{{- if .Values.otel.metrics.extra_scrape_metrics }}
+{{- if and .Values.otel.metrics.extra_scrape_metrics .Values.otel.metrics.prometheus.url }}
   prometheus/prometheus-server:
     config:
       scrape_configs:

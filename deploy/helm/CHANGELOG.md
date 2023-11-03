@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Upgraded OTEL collector image to `0.8.8` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.8))
+- Prometheus is no longer needed for kubernetes monitoring, therefore is no longer deployed. By default metrics collector does not scrape anything from Prometheus.
+  - `otel.metrics.prometheus.url` option is still available, but is used only if `otel.metrics.extra_scrape_metrics` is used.
+  - Note that `otel.metrics.extra_scrape_metrics` is deprecated option and will be removed in future versions.
 
 ### Added
 
