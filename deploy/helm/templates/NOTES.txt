@@ -1,4 +1,6 @@
-{{- if and .Values.otel.metrics.extra_scrape_metrics .Values.prometheus.enabled }}
+{{- if and .Values.otel.metrics.extra_scrape_metrics .Values.prometheus -}}
+{{- if .Values.prometheus.enabled -}}
 WARNING: you rely on bundled Prometheus, but it was removed in this version. To scrape custom metrics you can deploy your own instance of Prometheus and set `.otel.metrics.prometheus.url`.
-{{- end }}
+{{- end -}}
+{{- end -}}
 

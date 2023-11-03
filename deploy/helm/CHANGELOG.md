@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.0.0-alpha.2] - 2023-11-03
+
+### Fixed
+
+- Fixing installation/upgrade on Helm 3.9.0 and bellow
+
 ## [3.0.0-alpha.1] - 2023-11-02
 
 ### Changed
