@@ -33,7 +33,6 @@ deploy:
         namespace: test-namespace
         createNamespace: true
         setValues:
-          prometheus.enabled: true
           kube-state-metrics.enabled: true
           otel.metrics.swi_endpoint_check: false
           otel.metrics.prometheus_check: false
@@ -58,6 +57,19 @@ deploy:
           # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
           otel.metrics.k8s_instrumentation.labels.excludePattern: "skaffold\\.dev/.*"
         upgradeOnChange: true
+      
+      # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
+      - name: monitoring
+        remoteChart: prometheus
+        namespace: test-namespace
+        createNamespace: true
+        repo: https://prometheus-community.github.io/helm-charts
+        version: 19.7.2
+        setValues:
+          alertmanager.enabled: false
+          prometheus-node-exporter.enabled: false
+          prometheus-pushgateway.enabled: false
+          kube-state-metrics.enabled: false
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -65,7 +77,7 @@ portForward:
   namespace: test-namespace
   port: 8088
 - resourceType: service
-  resourceName: swi-k8s-opentelemetry-collector-prometheus-server
+  resourceName: monitoring-prometheus-server
   namespace: test-namespace
   port: 80
   localPort: 8080
@@ -121,9 +133,8 @@ profiles:
     - op: add
       path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
       value: wiremock.test-namespace.svc.cluster.local:8080
-    - op: replace
-      path: /deploy/helm/releases/0/setValues/prometheus.enabled
-      value: false
+    - op: remove
+      path: /deploy/helm/releases/1
     - op: add
       path: "/deploy/helm/releases/0/setValues/otel.metrics.kube-state-metrics.url"
       value: wiremock.test-namespace.svc.cluster.local:8080
@@ -136,23 +147,6 @@ profiles:
     - op: replace
       path: /portForward/1/port
       value: 8080
-  # Useful to develop against remote prometheus instance (mounted locally on host.docker.internal:9090)
-  - name: remote-prometheus
-    patches:
-    - op: add
-      path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
-      value: host.docker.internal:9090
-    - op: replace
-      path: /deploy/helm/releases/0/setValues/prometheus.enabled
-      value: false
-    - op: add
-      path: "/deploy/helm/releases/0/setValues/otel.metrics.kube-state-metrics.url"
-      value: host.docker.internal:9090
-    - op: replace
-      path: /deploy/helm/releases/0/setValues/kube-state-metrics.enabled
-      value: false
-    - op: remove
-      path: /portForward/1
   - name: ci
     activation:
       - env: CI=true
@@ -167,14 +161,10 @@ profiles:
           - './build/docker/structure-test.yaml'
     patches:
     - op: add
-      path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
-      value: wiremock.test-namespace.svc.cluster.local:8080
-    - op: replace
-      path: /deploy/helm/releases/0/setValues/prometheus.enabled
-      value: false
-    - op: add
       path: "/deploy/helm/releases/0/setValues/otel.metrics.kube-state-metrics.url"
       value: wiremock.test-namespace.svc.cluster.local:8080
+    - op: remove
+      path: /deploy/helm/releases/1
     - op: replace
       path: /deploy/helm/releases/0/setValues/kube-state-metrics.enabled
       value: false
@@ -193,9 +183,6 @@ profiles:
       - op: add
         path: /deploy/helm/releases/0/setValues/otel.metrics.prometheus.url
         value: wiremock.test-namespace.svc.cluster.local:8080
-      - op: replace
-        path: /deploy/helm/releases/0/setValues/prometheus.enabled
-        value: false
       - op: add
         path: "/deploy/helm/releases/0/setValues/otel.metrics.kube-state-metrics.url"
         value: wiremock.test-namespace.svc.cluster.local:8080
