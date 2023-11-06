@@ -1698,7 +1698,7 @@ service:
         - batch
       receivers:
         - otlp
-{{- if .Values.otel.metrics.extra_scrape_metrics }}
+{{- if and .Values.otel.metrics.extra_scrape_metrics .Values.otel.metrics.prometheus.url }}
     metrics/prometheus:
       exporters:
         - forward/prometheus
