@@ -1,0 +1,111 @@
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.kernelCollector.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "common.fullname" (tuple . "-kernel-collector") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" (tuple . "-kernel-collector") }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "common.fullname" (tuple . "-kernel-collector") }}
+{{- include "common.labels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/network/configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        fsGroup: 0
+        runAsUser: 0
+        runAsGroup: 0
+      tolerations:
+      {{- if .Values.ebpfNetworkMonitoring.kernelCollector.tolerations }}
+      {{ toYaml .Values.ebpfNetworkMonitoring.kernelCollector.tolerations | nindent 8 }}
+      {{- else }}
+        - operator: Exists
+          effect: NoSchedule
+      {{- end }}
+      affinity:
+      {{- if .Values.ebpfNetworkMonitoring.kernelCollector.affinity }}
+      {{ toYaml .Values.ebpfNetworkMonitoring.kernelCollector.affinity | nindent 8 }}
+      {{- end }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: eks.amazonaws.com/compute-type
+                operator: NotIn
+                values:
+                - fargate
+      nodeSelector:
+      {{- if .Values.ebpfNetworkMonitoring.kernelCollector.nodeSelector }}
+      {{ toYaml .Values.ebpfNetworkMonitoring.kernelCollector.nodeSelector | nindent 8 }}
+      {{- end }}
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      containers:
+        - name: swi-kernel-collector
+          image: "{{ .Values.ebpfNetworkMonitoring.kernelCollector.image.repository | default "otel/opentelemetry-ebpf-kernel-collector" }}:{{ .Values.ebpfNetworkMonitoring.kernelCollector.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.kernelCollector.image.pullPolicy | default "IfNotPresent" }}
+          args:
+            - --config-file=/etc/network-explorer/config.yaml
+            - --disable-nomad-metadata
+            - --{{ .Values.ebpfNetworkMonitoring.kernelCollector.telemetry.logs.level }}
+          env:
+            - name: "EBPF_NET_CLUSTER_NAME"
+              value: {{ quote .Values.cluster.name }}
+            - name: "EBPF_NET_DISABLE_HTTP_METRICS"
+              value: "false"
+            - name: "EBPF_NET_KERNEL_HEADERS_AUTO_FETCH"
+              value: "true"
+            - name: "EBPF_NET_INTAKE_HOST"
+              value: "{{ include "common.fullname" (tuple . "-network-k8s-reducer") }}"
+            - name: "EBPF_NET_INTAKE_PORT"
+              value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
+            - name: "EBPF_NET_CRASH_METRIC_HOST"
+              value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
+            - name: "EBPF_NET_CRASH_METRIC_PORT"
+              value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
+            - name: "BCC_PROBE_SUFFIX"
+              value: {{ quote .Values.cluster.name }}
+          resources:
+            {{ toYaml .Values.ebpfNetworkMonitoring.kernelCollector.resources | nindent 12 }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /hostfs/
+              name: host-root
+              readOnly: true
+            - mountPath: /hostfs/var/cache
+              name: host-var-cache
+              readOnly: false
+            - mountPath: /etc/network-explorer
+              name: network-explorer-config
+              readOnly: true
+      volumes:
+        - name: network-explorer-config
+          projected:
+            sources:
+            - configMap:
+                name: {{ include "common.fullname" (tuple . "-network-otel-collector-config") }}
+                items:
+                - key: config.yaml
+                  path: config.yaml
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory
+        - name: host-var-cache
+          hostPath:
+            path: /var/cache
+            type: DirectoryOrCreate
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      serviceAccountName: {{ include "common.fullname" . }}
+{{- end }}

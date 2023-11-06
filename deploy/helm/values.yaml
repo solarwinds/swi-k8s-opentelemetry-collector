@@ -428,6 +428,17 @@ ebpfNetworkMonitoring:
       tag: ""
       pullPolicy: IfNotPresent
 
+    resources:
+      requests:
+        memory: 50Mi
+
+    # Scheduling configurations
+    nodeSelector: {}
+    # By default: tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
+    tolerations: []
+    # By default: affinity is set to run the DaemonSet on linux amd64.
+    affinity: {}
+
   k8sCollector:
     enabled: true
 
