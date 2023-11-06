@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixes metrics collector, when `otel.metrics.extra_scrape_metrics` and `prometheus.enabled` are set
+- node-collector no longer mounts `hostPort`. This was solved by separating kernel-collector into separate daemonset
 
 ## [3.0.0-alpha.4] - 2023-11-03
 

@@ -79,48 +79,6 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
-      - args:
-          - --config-file=/etc/network-explorer/config.yaml
-          - --disable-nomad-metadata
-          - --warning
-        env:
-          - name: EBPF_NET_CLUSTER_NAME
-            value: <CLUSTER_NAME>
-          - name: EBPF_NET_DISABLE_HTTP_METRICS
-            value: "false"
-          - name: EBPF_NET_KERNEL_HEADERS_AUTO_FETCH
-            value: "true"
-          - name: EBPF_NET_INTAKE_HOST
-            value: RELEASE-NAME-swo-k8s-collector-network-k8s-reducer
-          - name: EBPF_NET_INTAKE_PORT
-            value: "7000"
-          - name: EBPF_NET_HOST_DIR
-            value: /hostfs
-          - name: EBPF_NET_CRASH_METRIC_HOST
-            value: RELEASE-NAME-swo-k8s-collector-metrics-collector
-          - name: EBPF_NET_CRASH_METRIC_PORT
-            value: "4317"
-          - name: BCC_PROBE_SUFFIX
-            value: <CLUSTER_NAME>
-        image: otel/opentelemetry-ebpf-kernel-collector:v0.10.0
-        imagePullPolicy: IfNotPresent
-        name: swi-kernel-collector
-        resources: {}
-        securityContext:
-          privileged: true
-        volumeMounts:
-          - mountPath: /hostfs/
-            name: host-root
-            readOnly: true
-          - mountPath: /hostfs/var/cache
-            name: host-var-cache
-            readOnly: false
-          - mountPath: /etc/network-explorer
-            name: RELEASE-NAME-swo-k8s-collector-network-otel-collector-config
-            readOnly: true
-    dnsPolicy: ClusterFirstWithHostNet
-    hostNetwork: true
-    hostPID: true
     nodeSelector:
       kubernetes.io/arch: amd64
       kubernetes.io/os: linux
@@ -128,7 +86,6 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
       fsGroup: 0
       runAsGroup: 0
       runAsUser: 0
-    serviceAccountName: RELEASE-NAME-swo-k8s-collector
     terminationGracePeriodSeconds: 30
     tolerations:
       - effect: NoSchedule
@@ -159,22 +116,6 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
               path: relay.yaml
           name: RELEASE-NAME-swo-k8s-collector-node-collector-config
         name: opentelemetry-collector-configmap
-      - name: RELEASE-NAME-swo-k8s-collector-network-otel-collector-config
-        projected:
-          sources:
-            - configMap:
-                items:
-                  - key: config.yaml
-                    path: config.yaml
-                name: RELEASE-NAME-swo-k8s-collector-network-otel-collector-config
-      - hostPath:
-          path: /
-          type: Directory
-        name: host-root
-      - hostPath:
-          path: /var/cache
-          type: DirectoryOrCreate
-        name: host-var-cache
 DaemonSet spec should match snapshot when using default values:
   1: |
     affinity:
