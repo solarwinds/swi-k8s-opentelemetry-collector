@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.0.0-alpha.6] - 2023-11-07
+
+- correctly filtering out `ebpf_net` metrics by default (which is internal eBPF telemetry)
+
 ## [3.0.0-alpha.5] - 2023-11-06
 
 ### Fixed
