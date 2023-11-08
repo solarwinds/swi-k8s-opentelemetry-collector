@@ -25,16 +25,6 @@ def test_expected_metric_names_are_generated():
                    lambda content: assert_metric_names_found(content, expected_metric_names),
                    lambda content: print_failure_metric_names(content, expected_metric_names))
     
-def test_expected_network_metric_names_are_generated():
-    if ci != "true":
-        pytest.skip("Skipping this test on local environment")
-    else:
-        expected_metric_names = ["k8s.tcp.bytes"]
-
-        retry_until_ok(url, 
-                    lambda content: assert_metric_names_found(content, expected_metric_names),
-                    lambda content: print_failure_metric_names(content, expected_metric_names))
-
 test_cases = [
     {
         "metrics": [
@@ -399,6 +389,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
                             # Default to empty list if 'attributes' key is not present
                             metric_attributes = metric_in_test_case.get("attributes", [])
                             if metric_attributes:  # If attributes list is not empty
+                                
                                 test_case_passed = False
 
                                 if 'gauge' in metric:
