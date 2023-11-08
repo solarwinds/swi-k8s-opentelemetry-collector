@@ -1,0 +1,17 @@
+suite: test notes
+templates:
+  - NOTES.txt
+tests:
+  - it: There should be no notes with default values
+    asserts:
+      - equalRaw:
+          value: 
+
+  - it: should pass the notes file with extra_scrape_metrics and prometheus.enabled
+    set:
+      otel.metrics.extra_scrape_metrics: ["test-metric"]
+      prometheus.enabled: true
+    asserts:
+      - equalRaw:
+          value: | 
+            WARNING: you rely on bundled Prometheus, but it was removed in this version. To scrape custom metrics you can deploy your own instance of Prometheus and set `.otel.metrics.prometheus.url`.

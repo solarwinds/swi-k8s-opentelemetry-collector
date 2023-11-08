@@ -54,6 +54,8 @@ deploy:
           # excluded labels:
           # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
           otel.metrics.k8s_instrumentation.labels.excludePattern: "skaffold\\.dev/.*"
+
+          ebpfNetworkMonitoring.enabled: true
         upgradeOnChange: true
       
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
@@ -68,6 +70,10 @@ deploy:
           prometheus-node-exporter.enabled: false
           prometheus-pushgateway.enabled: false
           kube-state-metrics.enabled: false
+          server:
+            nodeSelector:
+              "kubernetes\\.io\\/os": linux
+              "kubernetes\\.io\\/arch": amd64
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -111,6 +117,12 @@ profiles:
       path: /manifests/kustomize/paths/2
     - op: remove
       path: /manifests/kustomize/paths/1
+    - op: replace
+      path: /deploy/helm/releases/1/namespace
+      value: "{{.TEST_CLUSTER_NAMESPACE}}"
+    - op: replace
+      path: /deploy/helm/releases/1/name
+      value: "{{.TEST_CLUSTER_RELEASE_NAME}}-prometheus"
     - op: replace
       path: /deploy/kubeContext
       value: "<your kube context here>"

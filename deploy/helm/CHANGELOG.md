@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.0.0-alpha.6] - 2023-11-07
+
+- correctly filtering out `ebpf_net` metrics by default (which is internal eBPF telemetry)
+
+## [3.0.0-alpha.5] - 2023-11-06
+
+### Fixed
+
+- Fixes metrics collector, when `otel.metrics.extra_scrape_metrics` and `prometheus.enabled` are set
+- node-collector no longer mounts `hostPort`. This was solved by separating kernel-collector into separate daemonset
+
+## [3.0.0-alpha.4] - 2023-11-03
+
+### Changed
+
+- Decreased the default batch size for metrics, logs and events sent to OTEL endpoint to 512 to avoid too big messages
+
+## [3.0.0-alpha.3] - 2023-11-03
+
+### Fixed
+
+- If `otel.metrics.prometheus.url` is empty, it ignores `otel.metrics.prometheus_check` to not fail on missing Prometheus
+
+## [3.0.0-alpha.2] - 2023-11-03
+
+### Fixed
+
+- Fixing installation/upgrade on Helm 3.9.0 and bellow
+
 ## [3.0.0-alpha.1] - 2023-11-02
 
 ### Changed

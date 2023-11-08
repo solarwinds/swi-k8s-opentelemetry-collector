@@ -419,8 +419,8 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - kube_persistentvolumeclaim_.*
             - kube_persistentvolume_claim_ref
         batch:
-          send_batch_max_size: 4096
-          send_batch_size: 4096
+          send_batch_max_size: 512
+          send_batch_size: 512
           timeout: 1s
         cumulativetodelta:
           include:
@@ -1709,12 +1709,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
-        metricstransform/rename-ebpf:
+        metricstransform/rename-otel:
           transforms:
           - action: update
-            include: ^(tcp.|udp.|http.|dns.)(.*)$$
+            include: ^(.*)$$
             match_type: regexp
-            new_name: k8s.$${1}$${2}
+            new_name: k8s.$${1}
         resource/events:
           attributes:
           - action: insert
@@ -2271,7 +2271,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - otlp
             processors:
             - memory_limiter
-            - metricstransform/rename-ebpf
+            - metricstransform/rename-otel
             - resource/otlp-metrics
             - batch
             receivers:
@@ -2755,8 +2755,8 @@ Metrics config should match snapshot when using default values:
             - kube_persistentvolumeclaim_.*
             - kube_persistentvolume_claim_ref
         batch:
-          send_batch_max_size: 4096
-          send_batch_size: 4096
+          send_batch_max_size: 512
+          send_batch_size: 512
           timeout: 1s
         cumulativetodelta:
           include:
@@ -4045,12 +4045,12 @@ Metrics config should match snapshot when using default values:
             include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
-        metricstransform/rename-ebpf:
+        metricstransform/rename-otel:
           transforms:
           - action: update
-            include: ^(tcp.|udp.|http.|dns.)(.*)$$
+            include: ^(.*)$$
             match_type: regexp
-            new_name: k8s.$${1}$${2}
+            new_name: k8s.$${1}
         resource/events:
           attributes:
           - action: insert
@@ -4592,7 +4592,7 @@ Metrics config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
-            - metricstransform/rename-ebpf
+            - metricstransform/rename-otel
             - resource/otlp-metrics
             - batch
             receivers:

@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for kernel-collector-daemonset
+templates:
+  - network/kernel-collector-daemonset.yaml
+  - network/configmap.yaml
+tests:
+  - it: DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled
+    template: network/kernel-collector-daemonset.yaml
+    set:
+      ebpfNetworkMonitoring.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec

@@ -171,13 +171,13 @@ processors:
         action: update
         new_name: k8s.$${1}$${2}
   
-  metricstransform/rename-ebpf:
+  metricstransform/rename-otel:
     transforms:
-      # add `k8s.` suffix to all metrics that are clearly provided by eBPF networking
-      - include: ^(tcp.|udp.|http.|dns.)(.*)$$
+      # add `k8s.` prefix to all metrics
+      - include: ^(.*)$$
         match_type: regexp
         action: update
-        new_name: k8s.$${1}$${2}
+        new_name: k8s.$${1}
 
   # Transformations done on all metrics before any grouping
   swmetricstransform/preprocessing:
@@ -1690,15 +1690,15 @@ service:
         - otlp
       processors:
         - memory_limiter
-{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled  }}
+{{- if and .Values.ebpfNetworkMonitoring.enabled (not .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled)  }}
         - filter/ebpf
 {{- end }}
-        - metricstransform/rename-ebpf
+        - metricstransform/rename-otel
         - resource/otlp-metrics
         - batch
       receivers:
         - otlp
-{{- if .Values.otel.metrics.extra_scrape_metrics }}
+{{- if and .Values.otel.metrics.extra_scrape_metrics .Values.otel.metrics.prometheus.url }}
     metrics/prometheus:
       exporters:
         - forward/prometheus
