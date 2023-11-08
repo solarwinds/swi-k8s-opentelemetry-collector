@@ -26,203 +26,23 @@ def test_expected_metric_names_are_generated():
                    lambda content: print_failure_metric_names(content, expected_metric_names))
     
 test_cases = [
-    {
-        "metrics": [
-            { "name": "k8s.container.cpu.usage.seconds.rate" },
-            { "name": "k8s.container.status" },
-            { "name": "k8s.container_cpu_usage_seconds_total" },
-            { "name": "k8s.container_memory_working_set_bytes" },
-            { "name": "k8s.container_spec_cpu_period" },
-            { "name": "k8s.container_spec_memory_limit_bytes" },
-            { "name": "k8s.kube_pod_container_info" },
-            { "name": "k8s.kube_pod_container_state_started" },
-            { "name": "k8s.kube_pod_container_status_ready" },
-            { "name": "k8s.kube_pod_container_status_restarts_total" },
-            { "name": "k8s.kube_pod_container_status_running" },
-            { "name": "k8s.kube_pod_container_status_terminated" },
-            { "name": "k8s.kube_pod_container_status_waiting" },
-            { "name": "k8s.kube_pod_created" },
-            { "name": "k8s.kube_pod_info" },
-            { "name": "k8s.kube_pod_owner" },
-            { "name": "k8s.kube_pod_start_time" },
-            { "name": "k8s.kube_pod_status_phase" },
-            { "name": "k8s.kube_pod_status_ready" },
-            { "name": "k8s.pod.containers" },
-            { "name": "k8s.pod.containers.running" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.pod.name", "value": "test-pod" }, 
-            { "key":"k8s.pod.labels.app", "value": "test-pod"},
-            { "key":"k8s.pod.annotations.test-annotation", "value": "test-value"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.container.status" },
-            { "name": "k8s.kube_pod_container_info" },
-            { "name": "k8s.kube_pod_container_state_started" },
-            { "name": "k8s.kube_pod_container_status_ready" },
-            { "name": "k8s.kube_pod_container_status_restarts_total" },
-            { "name": "k8s.kube_pod_container_status_running" },
-            { "name": "k8s.kube_pod_container_status_terminated" },
-            { "name": "k8s.kube_pod_container_status_waiting" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.pod.name", "value": "test-pod" },
-            { "key":"k8s.container.name", "value": "test-container" },
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.kube.pod.owner.daemonset" },
-            { "name": "k8s.kube_daemonset_created" },
-            { "name": "k8s.kube_daemonset_labels" },
-            { "name": "k8s.kube_daemonset_status_current_number_scheduled" },
-            { "name": "k8s.kube_daemonset_status_desired_number_scheduled" },
-            { "name": "k8s.kube_daemonset_status_number_available" },
-            { "name": "k8s.kube_daemonset_status_number_misscheduled" },
-            { "name": "k8s.kube_daemonset_status_number_ready" },
-            { "name": "k8s.kube_daemonset_status_number_unavailable" },
-            { "name": "k8s.kube_daemonset_status_updated_number_scheduled" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.daemonset.name", "value": "test-daemonset" }, 
-            { "key":"k8s.daemonset.labels.app", "value": "test-daemonset"},
-            { "key":"k8s.daemonset.annotations.test-annotation", "value": "test-value"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.deployment.condition.available" },
-            { "name": "k8s.deployment.condition.progressing" },
-            { "name": "k8s.kube.pod.owner.replicaset" },
-            { "name": "k8s.kube.replicaset.owner.deployment" },
-            { "name": "k8s.kube_deployment_created" },
-            { "name": "k8s.kube_deployment_labels" },
-            { "name": "k8s.kube_deployment_spec_paused" },
-            { "name": "k8s.kube_deployment_spec_replicas" },
-            { "name": "k8s.kube_deployment_status_condition" },
-            { "name": "k8s.kube_deployment_status_replicas" },
-            { "name": "k8s.kube_deployment_status_replicas_available" },
-            { "name": "k8s.kube_deployment_status_replicas_ready" },
-            { "name": "k8s.kube_deployment_status_replicas_unavailable" },
-            { "name": "k8s.kube_deployment_status_replicas_updated" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.deployment.name", "value": "test-deployment" }, 
-            { "key":"k8s.deployment.labels.app", "value": "test-deployment"},
-            { "key":"k8s.deployment.annotations.test-annotation", "value": "test-value"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.kube.pod.owner.statefulset" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.statefulset.name", "value": "test-statefulset" }, 
-            { "key":"k8s.statefulset.labels.app", "value": "test-statefulset"},
-            { "key":"k8s.statefulset.annotations.test-annotation", "value": "test-value"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.kube.pod.owner.replicaset" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.replicaset.name", "value": "test-replicaset" }, 
-            { "key":"k8s.replicaset.labels.app", "value": "test-replicaset"},
-            { "key":"k8s.replicaset.annotations.test-annotation", "value": "test-value"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.kube.job.owner.cronjob" },
-            { "name": "k8s.kube.pod.owner.job" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.cronjob.name", "value": "test-cronjob" }, 
-            { "key":"k8s.cronjob.labels.app", "value": "test-cronjob"},
-            { "key":"k8s.cronjob.annotations.test-annotation", "value": "test-value"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.kube_persistentvolume_claim_ref" },
-            { "name": "k8s.kube_persistentvolumeclaim_info" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.persistentvolume.name", "value": "test-pv" }, 
-            { "key":"k8s.persistentvolume.labels.type", "value": "local"},
-            { "key":"k8s.persistentvolume.annotations.example.com/annotation", "value": "example-annotation"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.kube_persistentvolume_claim_ref" },
-            { "name": "k8s.kube_persistentvolumeclaim_access_mode" },
-            { "name": "k8s.kube_persistentvolumeclaim_created" },
-            { "name": "k8s.kube_persistentvolumeclaim_info" },
-            { "name": "k8s.kube_persistentvolumeclaim_resource_requests_storage_bytes" },
-            { "name": "k8s.kube_persistentvolumeclaim_status_phase" },
-            { "name": "k8s.persistentvolumeclaim.status.phase" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.persistentvolumeclaim.name", "value": "test-pvc" }, 
-            { "key":"k8s.persistentvolumeclaim.labels.example.com/label", "value": "example-label"},
-            { "key":"k8s.persistentvolumeclaim.annotations.example.com/annotation", "value": "example-annotation"},
-        ],
-    },
-    {
-        "metrics": [
-            { "name": "k8s.kube_endpoint_address_available" },
-            { "name": "k8s.kube_endpoint_address_not_ready" },
-            { "name": "k8s.kube_endpoint_created" },
-            { "name": "k8s.kube_endpoint_info" },
-            { "name": "k8s.kube_service_created" },
-            { "name": "k8s.kube_service_info" },
-            { "name": "k8s.kube_service_spec_type" },
-        ],
-        "resource_attributes": [
-            "sw.k8s.cluster.uid",
-            { "key":"k8s.cluster.name", "value": "cluster name" },
-            { "key":"k8s.namespace.name", "value": "test-namespace" }, 
-            { "key":"k8s.service.name", "value": "test-service" }, 
-            { "key":"k8s.service.labels.example.com/label", "value": "example-label"},
-            { "key":"k8s.service.annotations.example.com/annotation", "value": "example-annotation"},
-        ],
-    },
 ]
 
 
-@pytest.mark.parametrize("test_case", test_cases)
-def test_expected_otel_message_content_is_generated(test_case):
+@pytest.mark.parametrize("file_name", os.listdir(os.path.join(os.path.dirname(__file__), 'expected_telemetry')))
+def test_expected_otel_message_content_is_generated(file_name):
+    # Skip files that are not JSON
+    if not file_name.endswith('.json'):
+        pytest.skip("Skipping non-JSON file")
+
+    # Construct the full file path
+    file_path = os.path.join(os.path.dirname(__file__), 'expected_telemetry', file_name)
+
+    # Read the JSON file and parse the test case
+    with open(file_path, 'r') as file:
+        test_case = json.load(file)
+
+    # Continue with the rest of the test using the parsed test_case
     resource_attributes = test_case["resource_attributes"]
     metrics = test_case["metrics"]
 
