@@ -236,6 +236,8 @@ def test_expected_otel_message_content_is_generated(test_case):
     resource_attributes = test_case["resource_attributes"]
     metrics = test_case["metrics"]
 
+    print(f'Checking metrics {metrics} with resource attributes {resource_attributes}')
+
     retry_until_ok(url, 
                    lambda content: assert_test_contain_expected_datapoints(content, metrics, resource_attributes),
                    print_failure_otel_content,
@@ -386,19 +388,19 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
                         break
 
             if attributes_match:
-                print("Found resource with all attributes")
-
                 # Loop through each scope
                 for scope in resource["scopeMetrics"]:
                     # Loop through each metric
                     for metric in scope["metrics"]:
                         if metric["name"] == metric_in_test_case["name"]:
-                            print("Found metric with name")
-                            test_case_passed = True  # Mark as passed since metric is found
+                            print(f'Found metric {metric_in_test_case["name"]} in resource group')
+                            test_case_passed = True
 
                             # Default to empty list if 'attributes' key is not present
                             metric_attributes = metric_in_test_case.get("attributes", [])
                             if metric_attributes:  # If attributes list is not empty
+                                test_case_passed = False
+
                                 if 'gauge' in metric:
                                     dataPoints = metric['gauge']['dataPoints']
                                 elif 'sum' in metric:
@@ -415,6 +417,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
                                     # Check datapoints for the specified attribute keys
                                     if all(key in datapoint_attr_dict and datapoint_attr_dict[key] for key in metric_in_test_case["attributes"]):
                                         print("Found datapoint with all attributes")
+                                        test_case_passed = True
                                         break  # Found the required datapoint, break the loop
 
                             # If metric is found and no attributes are specified, no need to check datapoints
