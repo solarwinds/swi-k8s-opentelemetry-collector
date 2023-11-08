@@ -172,17 +172,6 @@ Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll moc
 * Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
 * You can run it directly in cluster by manually triggering `integration-test` CronJob
 
-### Updating tests if processing is changed
-* Run `utils\set_expected_output.py` in Python
-
-### Updating mocked data if new data are scraped
-* Open/Create `.env` file and set `PROMETHEUS_HOST` variable from where you want to generate mocked data. For example `PROMETHEUS_HOST=localhost:8080`
-* Open `utils/cleanup_mocked_prometheus_response.py`
-* update `url` with request which our monitoring actually execute on prometheus
-  * to get that you run `skaffold dev -p=only-mock` and check console output of `wiremock` pod, which logs full request it receive
-* Run the script (`Python: File` in launch.json)
-* Continue with `Updating tests if processing is changed`
-
 ### Updating utils used for testing
 
 Whenever there is a need to improve the test tooling, eg. the script for scraping test data from a Prometheus (`utils/cleanup_mocked_prometheus_response.py`), or data comparison code, or versions or Python packages, ..., it should always happen in a separate PR. Do not mix changes to the test framework with changes to the k8s collector itself. Otherwise a change to the testing framework might hide an unintentional change to the collector code.
