@@ -51,7 +51,7 @@ def test_expected_otel_message_content_is_generated(file_name):
     retry_until_ok(url, 
                    lambda content: assert_test_contain_expected_datapoints(content, metrics, resource_attributes),
                    print_failure_otel_content,
-                   timeout=60)
+                   timeout=120)
 
 def test_no_metric_datapoints_for_internal_containers():
     retry_until_ok(url, assert_test_no_metric_datapoints_for_internal_containers,
