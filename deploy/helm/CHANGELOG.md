@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Automatic discovery and scraping of prometheus endpoints on pods. Driven by `otel.metrics.autodiscovery.prometheusEndpoints.enabled` option in `values.yaml`, by default enabled (Fargate not yet supported). 
+- Upgraded OTEL collector image to `0.8.9` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.9))
+
 ## [3.0.0-alpha.6] - 2023-11-07
 
 - correctly filtering out `ebpf_net` metrics by default (which is internal eBPF telemetry)

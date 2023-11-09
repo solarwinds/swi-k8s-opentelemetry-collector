@@ -6,11 +6,16 @@ metadata:
     app: test-pod
   annotations:
     test-annotation: "test-value"
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8080"
 spec:
   containers:
   - name: test-container
     image: busybox
-    command: ["sh", "-c", "sleep infinity"]
+    command: ["sh", "-c", "echo 'test_metric_from_pod 1' > /metrics; httpd -f -p 8080 -h /; sleep infinity"]
+    ports:
+    - containerPort: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -31,11 +36,16 @@ spec:
         app: test-deployment
       annotations:
         test-annotation: "test-value"
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/custom_metrics"
+        prometheus.io/port: "8081"
     spec:
       containers:
       - name: test-container
         image: busybox
-        command: ["sh", "-c", "sleep infinity"]
+        command: ["sh", "-c", "echo 'test_metric_from_deployment 1' > /custom_metrics; httpd -f -p 8081 -h /; sleep infinity"]
+        ports:
+        - containerPort: 8081
 ---
 apiVersion: apps/v1
 kind: StatefulSet

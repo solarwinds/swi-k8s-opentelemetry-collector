@@ -26,6 +26,23 @@ otel:
     # Define whether metrics will be collected and sent
     enabled: true
 
+    # configuration for metric discovery
+    autodiscovery:
+      prometheusEndpoints: 
+        # Define whether metrics will be discovered and scraped by prometheus annotations
+        enabled: true
+
+        # Additional custom rule for discovery (following rule is always present: type == "pod" && annotations["prometheus.io/scrape"] == "true")
+        # Available fields
+        #   `id` - ID of source endpoint
+        #   `name` - name of the pod
+        #   `namespace` - namespace of the pod
+        #   `uid` - unique id of the pod
+        #   `labels` - map of labels set on the pod
+        #   `annotations` - map of annotations set on the pod
+        # Example: namespace == "test-namespace" && labels["app"] == "test-app"
+        additionalRules: 
+
     # Check if SWI OTEL endpoint is reachable
     swi_endpoint_check: true
 
