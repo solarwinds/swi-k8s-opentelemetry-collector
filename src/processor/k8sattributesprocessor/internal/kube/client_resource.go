@@ -265,6 +265,16 @@ func NewWatchResourceClient[T KubernetesResource](
 	)
 	if c.extractResourceLabelsAnnotations(resourceType) {
 		c.informer = clientResource.Informer(c.client.kc, c.Filters.Namespace, labelSelector, fieldSelector)
+		err = c.informer.SetTransform(
+			func(object interface{}) (interface{}, error) {
+				originalResource, success := object.(metav1.Object)
+				if !success {
+					return object, nil
+				}
+	
+				return removeUnnecessaryResourceData(originalResource, c.Rules), nil
+			},
+		)
 	} else {
 		c.informer = NewNoOpInformer(c.client.kc)
 	}
@@ -524,4 +534,27 @@ func (c *WatchResourceClient[T]) extractResourceLabelsAnnotations(resourceType s
 	}
 
 	return false
+}
+
+// This function removes all data from resource except what is required by extraction rules
+func removeUnnecessaryResourceData(resource metav1.Object, rules ExtractionRulesResource) metav1.Object {
+	transformedResource := metav1.ObjectMeta{
+		Name:      resource.GetName(),
+		Namespace: resource.GetNamespace(),
+	}
+
+	if rules.UID {
+		transformedResource.SetUID(resource.GetUID())
+	}
+
+	if len(rules.Labels) > 0 {
+		transformedResource.Labels = resource.GetLabels()
+	}
+
+	if len(rules.Annotations) > 0 {
+		transformedResource.Annotations = resource.GetAnnotations()
+	}
+
+	transformedResource.SetOwnerReferences(resource.GetOwnerReferences())
+	return &transformedResource
 }
