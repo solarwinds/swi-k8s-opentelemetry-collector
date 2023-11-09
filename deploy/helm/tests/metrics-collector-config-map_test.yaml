@@ -11,6 +11,7 @@ tests:
   - it: Metrics config should match snapshot when using Prometheus url with extra_scrape_metrics
     template: metrics-collector-config-map.yaml
     set:
+      otel.metrics.force_extra_scrape_metrics: true
       otel.metrics.prometheus.url: "my-prometheus-url"
       otel.metrics.extra_scrape_metrics: ["test-metric"]
     asserts:
