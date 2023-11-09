@@ -13,6 +13,13 @@ extensions:
   memory_ballast:
 {{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
 {{- end }}
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
+  k8s_observer:
+    auth_type: serviceAccount
+    node: ${NODE_NAME}
+    observe_pods: true
+    observe_nodes: false
+{{- end }}
 
 processors:
   memory_limiter:
@@ -34,6 +41,31 @@ processors:
       - host.name
       - service.name
 
+  resource/all:
+    attributes:
+
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+
+      # Node
+      - key: k8s.node.name
+        value: ${NODE_NAME}
+        action: insert
 
   resource/container:
     attributes:
@@ -105,6 +137,48 @@ processors:
 
   batch:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
+
+  k8sattributes:
+    auth_type: "serviceAccount"
+    passthrough: false
+    filter:
+      node_from_env_var: NODE_NAME
+    extract:
+      metadata:
+        - k8s.deployment.name
+        - k8s.replicaset.name
+        - k8s.daemonset.name
+        - k8s.job.name
+        - k8s.cronjob.name
+        - k8s.statefulset.name
+      labels:
+        - key_regex: (.*)
+          tag_name: k8s.pod.labels.$$1
+          from: pod
+        - key_regex: (.*)
+          tag_name: k8s.namespace.labels.$$1
+          from: namespace
+      annotations:
+        - key_regex: (.*)
+          tag_name: k8s.pod.annotations.$$1
+          from: pod
+        - key_regex: (.*)
+          tag_name: k8s.namespace.annotations.$$1
+          from: namespace
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+
+  metricstransform/rename:
+    transforms:
+      # add `k8s.` prefix to all metrics
+      - include: ^(.*)$$
+        match_type: regexp
+        action: update
+        new_name: k8s.$${1}
 
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
@@ -243,12 +317,40 @@ receivers:
         from: body.log
         to: body
 
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
+  receiver_creator:
+    watch_observers: 
+      - k8s_observer
+    receivers:
+      prometheus:
+        {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        {{- else }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
+        {{- end }} 
+        config:
+          config:
+            scrape_configs:
+              - job_name: pod
+                scheme: "http"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
+                honor_timestamps: false
+                honor_labels: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
+{{- end }}
+
 service:
   extensions:
     - file_storage
     - health_check
 {{- if .Values.otel.logs.memory_ballast }}
     - memory_ballast
+{{- end}}
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
+    - k8s_observer
 {{- end}}
   pipelines:
 {{- if .Values.otel.logs.container }}
@@ -279,6 +381,20 @@ service:
       receivers:
         - journald/runlogs
         - journald/varlogs
+{{- end }}
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
+    metrics:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - metricstransform/rename
+        - groupbyattrs/all
+        - resource/all
+        - k8sattributes
+        - batch
+      receivers:
+        - receiver_creator
 {{- end }}
   telemetry:
 {{- if .Values.otel.logs.telemetry.logs.enabled }}

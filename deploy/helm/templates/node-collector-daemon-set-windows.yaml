@@ -29,6 +29,7 @@ spec:
 {{- end}}
     spec:
       terminationGracePeriodSeconds: 30
+      serviceAccountName: {{ include "common.fullname" . }}
       tolerations:
       {{- if .Values.otel.logs.tolerations }}
       {{ toYaml .Values.otel.logs.tolerations | nindent 8 }}

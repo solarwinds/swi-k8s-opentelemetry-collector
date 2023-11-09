@@ -14,6 +14,11 @@ Node collector config for windows nodes should match snapshot when using default
           directory: /var/lib/swo/checkpoints
           timeout: 5s
         health_check: {}
+        k8s_observer:
+          auth_type: serviceAccount
+          node: ${NODE_NAME}
+          observe_nodes: false
+          observe_pods: true
       processors:
         batch:
           send_batch_max_size: 512
@@ -34,10 +39,66 @@ Node collector config for windows nodes should match snapshot when using default
           - k8s.pod.uid
           - host.name
           - service.name
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            annotations:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.annotations.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.annotations.$$1
+            labels:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.labels.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.labels.$$1
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 550
           spike_limit_mib: 300
+        metricstransform/rename:
+          transforms:
+          - action: update
+            include: ^(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}
+        resource/all:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: k8s.node.name
+            value: ${NODE_NAME}
         resource/container:
           attributes:
           - action: insert
@@ -165,10 +226,31 @@ Node collector config for windows nodes should match snapshot when using default
           poll_interval: 200ms
           start_at: end
           storage: file_storage
+        receiver_creator:
+          receivers:
+            prometheus:
+              config:
+                config:
+                  scrape_configs:
+                  - honor_labels: true
+                    honor_timestamps: false
+                    job_name: pod
+                    metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
+                      : "/metrics"`'
+                    scheme: http
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
+                        : 9090`'
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
+          watch_observers:
+          - k8s_observer
       service:
         extensions:
         - file_storage
         - health_check
+        - k8s_observer
         pipelines:
           logs:
             exporters:
@@ -182,6 +264,18 @@ Node collector config for windows nodes should match snapshot when using default
             - batch
             receivers:
             - filelog
+          metrics:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - metricstransform/rename
+            - groupbyattrs/all
+            - resource/all
+            - k8sattributes
+            - batch
+            receivers:
+            - receiver_creator
         telemetry:
           logs:
             level: info
