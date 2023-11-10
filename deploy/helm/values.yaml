@@ -43,6 +43,14 @@ otel:
         # Example: namespace == "test-namespace" && labels["app"] == "test-app"
         additionalRules: 
 
+        customTransformations:
+          # list of metrics that are counters should be converted to rate
+          counterToRate:
+
+        # This filter is applied after metric processing, it is the place where metrics could be filtered out
+        # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+        filter:
+
     # Check if SWI OTEL endpoint is reachable
     swi_endpoint_check: true
 
