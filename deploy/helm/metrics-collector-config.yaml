@@ -1541,7 +1541,7 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
   k8s_events:
-{{- if and .Values.otel.metrics.extra_scrape_metrics .Values.otel.metrics.prometheus.url }}
+{{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
   prometheus/prometheus-server:
     config:
       scrape_configs:
@@ -1698,7 +1698,7 @@ service:
         - batch
       receivers:
         - otlp
-{{- if and .Values.otel.metrics.extra_scrape_metrics .Values.otel.metrics.prometheus.url }}
+{{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
     metrics/prometheus:
       exporters:
         - forward/prometheus

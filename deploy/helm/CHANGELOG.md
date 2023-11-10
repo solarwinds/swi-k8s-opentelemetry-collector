@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Automatic discovery and scraping of prometheus endpoints on pods. Driven by `otel.metrics.autodiscovery.prometheusEndpoints.enabled` option in `values.yaml`, by default enabled (Fargate not yet supported). 
+  - In case `otel.metrics.autodiscovery.prometheusEndpoints.enabled` is set to `true` (which is by default) `extra_scrape_metrics` is ignored as there is high chance that those metrics will be collected two times. You can override this behavior by by setting `force_extra_scrape_metrics` to true.
 - Upgraded OTEL collector image to `0.8.9` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.9))
 
 ## [3.0.0] - 2023-11-10

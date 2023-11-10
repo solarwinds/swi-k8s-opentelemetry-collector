@@ -86,6 +86,11 @@ otel:
     # See format in https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors
     extra_scrape_metrics: []
 
+    # In case `otel.metrics.autodiscovery.prometheusEndpoints.enabled` is set to `true` (which is by default) there is a possibility
+    # that those extra prometheus metrics are scraped by the collector, so in this case `extra_scrape_metrics` is ignored. By setting 
+    # `force_extra_scrape_metrics` to `true` you can force the collector to scrape those metrics.
+    force_extra_scrape_metrics: false
+
     # Batching configuration for metrics
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
     batch:

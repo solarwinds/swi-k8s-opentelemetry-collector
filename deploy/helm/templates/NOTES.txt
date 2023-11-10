@@ -1,6 +1,11 @@
 {{- if and .Values.otel.metrics.extra_scrape_metrics .Values.prometheus -}}
 {{- if .Values.prometheus.enabled -}}
 WARNING: you rely on bundled Prometheus, but it was removed in this version. To scrape custom metrics you can deploy your own instance of Prometheus and set `.otel.metrics.prometheus.url`.
+
 {{- end -}}
+{{- end -}}
+{{- if and .Values.otel.metrics.extra_scrape_metrics (and .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled (not .Values.otel.metrics.force_extra_scrape_metrics)) -}}
+WARNING: You have enabled autodiscovery of prometheus endpoints, so `extra_scrape_metrics` is ignored. If you are sure that those metrics won't be covered by autodiscovery set `otel.metrics.force_extra_scrape_metrics` to `true`.
+
 {{- end -}}
 
