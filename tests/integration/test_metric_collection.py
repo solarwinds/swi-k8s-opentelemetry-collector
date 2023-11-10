@@ -63,31 +63,32 @@ def assert_test_original_metrics(otelContent):
     #transpose otel to metrics again so we can compare
     # it will be record "name"-[metrics]
     metrics = {}
-    for resource in merged_json['resourceMetrics']:
-        resAttributes={}
-        for attr in resource['resource']['attributes']: 
-            resAttributes[attr['key']] = attr['value']['stringValue']
-        for scope in resource['scopeMetrics']:
-            for metric in scope['metrics']:        
-                metricName = metric['name'].replace('k8s.', '')
-                if( '.' in metricName ):
-                    continue
-                m = Metric(metricName, '', 'gauge')
-                list = metrics.setdefault(m.name, [])
-                list.append(m)
-                dataPoints = {}
-                if( 'gauge' in metric ):
-                    dataPoints = metric['gauge']['dataPoints']
-                elif ('sum' in metric) :
-                    dataPoints = metric['sum']['dataPoints']                                        
-                else :
-                    raise Exception('unknown data')
-            
-                for dataPoint in dataPoints:
-                    attributes = resAttributes.copy()
-                    for attr in dataPoint['attributes']:                    
-                        attributes[attr['key']] = attr['value']['stringValue']
-                    m.add_sample(m.name, attributes, datapoint_value(dataPoint), dataPoint['timeUnixNano'])            
+    for json_line in merged_json:
+        for resource in json_line['resourceMetrics']:
+            resAttributes={}
+            for attr in resource['resource']['attributes']: 
+                resAttributes[attr['key']] = attr['value']['stringValue']
+            for scope in resource['scopeMetrics']:
+                for metric in scope['metrics']:        
+                    metricName = metric['name'].replace('k8s.', '')
+                    if( '.' in metricName ):
+                        continue
+                    m = Metric(metricName, '', 'gauge')
+                    list = metrics.setdefault(m.name, [])
+                    list.append(m)
+                    dataPoints = {}
+                    if( 'gauge' in metric ):
+                        dataPoints = metric['gauge']['dataPoints']
+                    elif ('sum' in metric) :
+                        dataPoints = metric['sum']['dataPoints']                                        
+                    else :
+                        raise Exception('unknown data')
+                
+                    for dataPoint in dataPoints:
+                        attributes = resAttributes.copy()
+                        for attr in dataPoint['attributes']:                    
+                            attributes[attr['key']] = attr['value']['stringValue']
+                        m.add_sample(m.name, attributes, datapoint_value(dataPoint), dataPoint['timeUnixNano'])            
     
     for url in urlMetrics :
         retry_until_ok(url, lambda metricsContent: assert_prometheus_metrics(metricsContent, metrics), '')
@@ -170,76 +171,80 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
         test_case_passed = False
 
         # Loop through each resource
-        for resource in merged_json["resourceMetrics"]:
-            # If the test case has passed, no need to check further resources
+        for json_line in merged_json:
+            for resource in json_line["resourceMetrics"]:
+                # If the test case has passed, no need to check further resources
+                if test_case_passed:
+                    break
+
+                # Create a dictionary of resource attributes for easier access
+                resource_attr_dict = {
+                    attr["key"]: attr["value"]["stringValue"]
+                    for attr in resource["resource"]["attributes"]
+                }
+
+                # Check if resource has all attributes with non-empty values or specific values
+                attributes_match = True
+                for attribute in resource_attributes:
+                    if isinstance(attribute, dict):
+                        # Check both key and value for dict-type attributes
+                        key = attribute['key']
+                        value = attribute['value']
+                        if not (key in resource_attr_dict and resource_attr_dict[key] == value):
+                            attributes_match = False
+                            break
+                    else:
+                        # Check only key for string-type attributes
+                        if not (attribute in resource_attr_dict and resource_attr_dict[attribute]):
+                            attributes_match = False
+                            break
+
+                if attributes_match:
+                    # Loop through each scope
+                    for scope in resource["scopeMetrics"]:
+                        # Loop through each metric
+                        for metric in scope["metrics"]:
+                            if metric["name"] == metric_in_test_case["name"]:
+                                print(f'Found metric {metric_in_test_case["name"]} in resource group')
+                                test_case_passed = True
+
+                                # Default to empty list if 'attributes' key is not present
+                                metric_attributes = metric_in_test_case.get("attributes", [])
+                                if metric_attributes:  # If attributes list is not empty
+                                    
+                                    test_case_passed = False
+
+                                    if 'gauge' in metric:
+                                        dataPoints = metric['gauge']['dataPoints']
+                                    elif 'sum' in metric:
+                                        dataPoints = metric['sum']['dataPoints']
+                                    else:
+                                        raise Exception('unknown data type for metric')
+
+                                    # Loop through each datapoint
+                                    for datapoint in dataPoints:
+                                        datapoint_attr_dict = {
+                                            attr["key"]: attr["value"]["stringValue"]
+                                            for attr in datapoint["attributes"]
+                                        }
+                                        # Check datapoints for the specified attribute keys
+                                        if all(key in datapoint_attr_dict and datapoint_attr_dict[key] for key in metric_in_test_case["attributes"]):
+                                            print("Found datapoint with all attributes")
+                                            test_case_passed = True
+                                            break  # Found the required datapoint, break the loop
+
+                                # If metric is found and no attributes are specified, no need to check datapoints
+                                if test_case_passed:
+                                    break  # Metric found, break the metric loop
+
+                        if test_case_passed:
+                            break  # Metric found, break the scope loop
+
+                if test_case_passed:
+                    break  # Metric found, break the resource loop
+
             if test_case_passed:
-                break
-
-            # Create a dictionary of resource attributes for easier access
-            resource_attr_dict = {
-                attr["key"]: attr["value"]["stringValue"]
-                for attr in resource["resource"]["attributes"]
-            }
-
-            # Check if resource has all attributes with non-empty values or specific values
-            attributes_match = True
-            for attribute in resource_attributes:
-                if isinstance(attribute, dict):
-                    # Check both key and value for dict-type attributes
-                    key = attribute['key']
-                    value = attribute['value']
-                    if not (key in resource_attr_dict and resource_attr_dict[key] == value):
-                        attributes_match = False
-                        break
-                else:
-                    # Check only key for string-type attributes
-                    if not (attribute in resource_attr_dict and resource_attr_dict[attribute]):
-                        attributes_match = False
-                        break
-
-            if attributes_match:
-                # Loop through each scope
-                for scope in resource["scopeMetrics"]:
-                    # Loop through each metric
-                    for metric in scope["metrics"]:
-                        if metric["name"] == metric_in_test_case["name"]:
-                            print(f'Found metric {metric_in_test_case["name"]} in resource group')
-                            test_case_passed = True
-
-                            # Default to empty list if 'attributes' key is not present
-                            metric_attributes = metric_in_test_case.get("attributes", [])
-                            if metric_attributes:  # If attributes list is not empty
-                                
-                                test_case_passed = False
-
-                                if 'gauge' in metric:
-                                    dataPoints = metric['gauge']['dataPoints']
-                                elif 'sum' in metric:
-                                    dataPoints = metric['sum']['dataPoints']
-                                else:
-                                    raise Exception('unknown data type for metric')
-
-                                # Loop through each datapoint
-                                for datapoint in dataPoints:
-                                    datapoint_attr_dict = {
-                                        attr["key"]: attr["value"]["stringValue"]
-                                        for attr in datapoint["attributes"]
-                                    }
-                                    # Check datapoints for the specified attribute keys
-                                    if all(key in datapoint_attr_dict and datapoint_attr_dict[key] for key in metric_in_test_case["attributes"]):
-                                        print("Found datapoint with all attributes")
-                                        test_case_passed = True
-                                        break  # Found the required datapoint, break the loop
-
-                            # If metric is found and no attributes are specified, no need to check datapoints
-                            if test_case_passed:
-                                break  # Metric found, break the metric loop
-
-                    if test_case_passed:
-                        break  # Metric found, break the scope loop
-
-            if test_case_passed:
-                break  # Metric found, break the resource loop
+                break  # Metric found, break the resource loop            
 
         if not test_case_passed:
             return (False, f'Failed to find metric {metric_in_test_case["name"]} in resource group')
@@ -251,7 +256,8 @@ def print_failure_otel_content(content):
 
 def get_unique_metric_names(merged_json):
     result = list(set([metric["name"]
-                       for resource in merged_json["resourceMetrics"]
+                       for json_line in merged_json
+                       for resource in json_line["resourceMetrics"]
                        for metric in resource["scopeMetrics"][0]["metrics"]
                        ]))
     return result
@@ -272,9 +278,10 @@ def print_failure_internal_containers(content):
 
 def get_unique_container_names(merged_json):
     container_names = set()
-    for resource in merged_json["resourceMetrics"]:
-        if 'attributes' in resource['resource']:
-            for resource_attribute in resource['resource']['attributes']:
-                if resource_attribute["key"] == "k8s.container.name":
-                    container_names.add(resource_attribute["value"]["stringValue"])
+    for json_line in merged_json:
+        for resource in json_line["resourceMetrics"]:
+            if 'attributes' in resource['resource']:
+                for resource_attribute in resource['resource']['attributes']:
+                    if resource_attribute["key"] == "k8s.container.name":
+                        container_names.add(resource_attribute["value"]["stringValue"])
     return list(container_names)
