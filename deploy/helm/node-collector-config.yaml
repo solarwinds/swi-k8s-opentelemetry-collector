@@ -180,6 +180,27 @@ processors:
         action: update
         new_name: k8s.$${1}
 
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+  cumulativetodelta:
+    include:
+      metrics:
+{{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+        - {{ . }}
+{{- end }}
+      match_type: strict
+  deltatorate:
+    metrics:
+{{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+      - {{ . }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+  filter/metrics:
+    metrics:
+{{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 6 }}
+{{- end }}
+
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
   journald/runlogs:
@@ -388,7 +409,14 @@ service:
         - otlp
       processors:
         - memory_limiter
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+        - filter/metrics
+{{- end }}
         - metricstransform/rename
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+        - cumulativetodelta
+        - deltatorate
+{{- end }}
         - groupbyattrs/all
         - resource/all
         - k8sattributes
