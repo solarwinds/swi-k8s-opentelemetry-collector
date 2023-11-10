@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.0-alpha.1] - 2023-11-10
+
 ### Added
 
 - Automatic discovery and scraping of prometheus endpoints on pods. Driven by `otel.metrics.autodiscovery.prometheusEndpoints.enabled` option in `values.yaml`, by default enabled (Fargate not yet supported). 
