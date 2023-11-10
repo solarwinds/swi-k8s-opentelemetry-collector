@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "common.fullname" . }}-role
+  name: {{ include "common.fullname" (tuple . "-role") }}
   labels:
 {{ include "common.labels" . | indent 4 }}
 rules:
@@ -9,10 +9,12 @@ rules:
       - ""
     resources:
       - events
+      - endpoints
       - namespaces
       - namespaces/status
       - nodes
       - nodes/spec
+      - nodes/proxy
       - pods
       - pods/status
       - replicationcontrollers
@@ -63,3 +65,7 @@ rules:
       - get
       - list
       - watch
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get

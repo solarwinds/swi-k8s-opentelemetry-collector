@@ -30,7 +30,7 @@ otel:
     swi_endpoint_check: true
 
     # Check if Prometheus endpoint is reachable
-    prometheus_check: true
+    prometheus_check: false
 
     prometheus:
       # URL of prometheus where to scrape
@@ -41,6 +41,10 @@ otel:
 
       # How often the metrics are scraped from Prometheus
       scrape_interval: 60s
+
+    # Configuration for endpoint on which metrics collector receives OpenTelemetry metrics
+    otlp_endpoint:
+      port: 4317
 
     kube-state-metrics:
       # URL of kube-state-metrics where to scrape
@@ -68,8 +72,8 @@ otel:
     # Batching configuration for metrics
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
     batch:
-      send_batch_size: 4096
-      send_batch_max_size: 4096
+      send_batch_size: 512
+      send_batch_max_size: 512
       timeout: 1s
 
     # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
@@ -147,18 +151,18 @@ otel:
 
   # Configuration for Events collection
   events:
-    # Define whether metrics will be collected and sent
+    # Define whether events will be collected and sent
     enabled: true
 
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     # filter:
 
-    # Batching configuration for metrics
+    # Batching configuration for events
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
     batch:
-      send_batch_size: 1024
-      send_batch_max_size: 1024
+      send_batch_size: 512
+      send_batch_max_size: 512
       timeout: 1s
 
     # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
@@ -278,8 +282,8 @@ otel:
     # Batching configuration for logs
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
     batch:
-      send_batch_size: 1024
-      send_batch_max_size: 1024
+      send_batch_size: 512
+      send_batch_max_size: 512
       timeout: 1s
 
     # Telemetry information of the collector
@@ -368,34 +372,6 @@ autoupdate:
 # Set labels to every deployed resource
 # commonLabels:
 
-prometheus:
-  # Whether the Prometheus server should be deployed as part of this chart.
-  # If true, the `otel.metrics.prometheus.url` setting is ignored.
-  enabled: false
-
-  alertmanager:
-    enabled: false
-  prometheus-node-exporter:
-    enabled: false
-  prometheus-pushgateway:
-    enabled: false
-  kube-state-metrics:
-    enabled: false
-  server:
-    # Disabling persistent volume to make the chart compatible with new EKS clusters
-    # (this matches the behavior of `kube-prometheus-stack` chart).
-    persistentVolume:
-      enabled: false
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: eks.amazonaws.com/compute-type
-              operator: NotIn
-              values:
-              - fargate
-
 kube-state-metrics:
   enabled: true
 
@@ -437,3 +413,64 @@ aws_fargate:
     # see https://docs.fluentbit.io/manual/pipeline/filters
     # NOTE: The FluentBit configuration expects four spaces as indentation within sections
     filters:
+
+ebpfNetworkMonitoring:
+  enabled: false
+  kernelCollector:
+    enabled: true
+
+    telemetry:
+      logs:
+        level: "warning"
+
+    image:
+      repository: ""
+      tag: ""
+      pullPolicy: IfNotPresent
+
+    resources:
+      requests:
+        memory: 50Mi
+
+    # Scheduling configurations
+    nodeSelector: {}
+    # By default: tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
+    tolerations: []
+    # By default: affinity is set to run the DaemonSet on linux amd64.
+    affinity: {}
+
+  k8sCollector:
+    enabled: true
+
+    telemetry:
+      logs:
+        level: "warning"
+    
+    watcher:
+      image:
+        repository: ""
+        tag: ""
+        pullPolicy: IfNotPresent
+
+    relay:
+      image:
+        repository: ""
+        tag: ""
+        pullPolicy: IfNotPresent
+  reducer:
+    disableMetrics: []
+    enableMetrics: []
+
+    # Port on which the reducer will listen for metrics from kernelCollector and k8sCollector
+    telemetryPort: 7000
+
+    telemetry:
+      logs:
+        level: "warning"
+      metrics:
+        enabled: false
+    
+    image:
+      repository: ""
+      tag: ""
+      pullPolicy: IfNotPresent

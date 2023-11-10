@@ -10,18 +10,36 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 And depending on the resources the name is completed with an extension.
 If release name contains chart name it will be used as a full name.
+Usages: 
+  no suffix: {{ include "common.fullname" . }}
+  with suffix: {{ include "common.fullname" (tuple . "-node-collector") }}
 */}}
 {{- define "common.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- $context := . -}}
+{{- $suffix := "" -}}
+{{- $maxLength := 63 -}}
+{{- if eq (kindOf .) "slice" -}}
+{{- $context = index . 0 -}}
+{{- $suffix = index . 1 | default "" -}}
+{{- $maxLength = sub 63 (len $suffix) -}}
+{{- end -}}
+
+{{- $maxLengthStr := printf "%d" $maxLength -}}
+{{- $maxLengthInt := $maxLengthStr | atoi -}}
+{{- $releaseName := $context.Release.Name | trunc 30 | trimSuffix "-" -}}
+{{- $result := "" -}}
+
+{{- if $context.Values.fullnameOverride -}}
+{{- $result = $context.Values.fullnameOverride | trunc $maxLengthInt | trimSuffix "-" -}}
 {{- else -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- $name := default $context.Chart.Name $context.Values.nameOverride -}}
+{{- if contains $name $releaseName -}}
+{{- $result = $releaseName | trunc $maxLengthInt | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- $result = printf "%s-%s" $releaseName $name | trunc $maxLengthInt | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
+{{- printf "%s%s" $result $suffix -}}
 {{- end -}}
 
 {{/*

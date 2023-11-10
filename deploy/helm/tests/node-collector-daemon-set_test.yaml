@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for node-collector-daemon-set
+templates:
+  - node-collector-daemon-set.yaml
+  - node-collector-config-map.yaml
+  - common-env-config-map.yaml
+  - network/configmap.yaml
+tests:
+  - it: DaemonSet spec should match snapshot when using default values
+    template: node-collector-daemon-set.yaml
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
+  - it: DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled
+    template: node-collector-daemon-set.yaml
+    set:
+      ebpfNetworkMonitoring.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec

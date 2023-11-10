@@ -1,0 +1,67 @@
+{{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.k8sCollector.enabled  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/network/configmap.yaml") . | sha256sum }}
+        checksum/values: {{ toJson .Values | sha256sum }}
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      containers:
+      - image: "{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.repository | default "otel/opentelemetry-ebpf-k8s-watcher" }}:{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.tag | default "v0.10.0" }}"
+        imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
+        name: k8s-watcher
+        args:
+          - --log-console
+          - --log-level={{ .Values.ebpfNetworkMonitoring.k8sCollector.telemetry.logs.level }}
+      - image: "{{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.repository | default "otel/opentelemetry-ebpf-k8s-relay" }}:{{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.tag | default "v0.10.0" }}"
+        imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
+        name: k8s-relay
+        args:
+          - --config-file=/etc/network-explorer/config.yaml
+          - --{{ .Values.ebpfNetworkMonitoring.k8sCollector.telemetry.logs.level }}
+        env:
+          - name: "EBPF_NET_CLUSTER_NAME"
+            value: {{ quote .Values.cluster.name }}
+          - name: "EBPF_NET_INTAKE_HOST"
+            value: "{{ include "common.fullname" (tuple . "-network-k8s-reducer") }}"
+          - name: "EBPF_NET_INTAKE_PORT"
+            value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
+          - name: "EBPF_NET_CRASH_METRIC_HOST"
+            value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
+          - name: "EBPF_NET_CRASH_METRIC_PORT"
+            value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
+        volumeMounts:
+        - mountPath: /etc/network-explorer
+          name: k8s-relay-config
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: k8s-relay-config
+        projected:
+          sources:
+            - configMap:
+                name: {{ include "common.fullname" (tuple . "-network-otel-collector-config") }}
+                items:
+                - key: config.yaml
+                  path: config.yaml
+      securityContext: {}
+      serviceAccountName: {{ include "common.fullname" . }}
+{{- end}}
