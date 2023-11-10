@@ -14,6 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic discovery and scraping of prometheus endpoints on pods. Driven by `otel.metrics.autodiscovery.prometheusEndpoints.enabled` option in `values.yaml`, by default enabled (Fargate not yet supported). 
 - Upgraded OTEL collector image to `0.8.9` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.9))
 
+## [3.0.0] - 2023-11-10
+
+### Changed
+
+- Prometheus is no longer needed for kubernetes monitoring, therefore it is no longer deployed. By default, k8s collector does not scrape anything from Prometheus.
+  - If there was a Prometheus deployed by the previous version (using setting `prometheus.enabled``), it will be automatically removed.
+  - Setting `otel.metrics.prometheus.url` is still available, but is valid only in combination with `otel.metrics.extra_scrape_metrics`.
+  - If `otel.metrics.prometheus.url` is empty, `otel.metrics.prometheus_check`` is ignored to not fail on missing Prometheus.
+  - Note that `otel.metrics.extra_scrape_metrics` is deprecated option and will be removed in future versions.
+- Decreased the default batch size for metrics, logs and events sent to OTEL endpoint to 512 to avoid too big messages
+- Upgraded OTEL collector image to `0.8.8` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.8))
+
+### Added
+
+- Added network monitoring for Linux nodes which is based on eBPF, so it does not require service mesh to be deployed.
+  - It is disabled by default, to enable it set `ebpfNetworkMonitoring.enabled: true` in `values.yaml`
+  - It is based on [opentelemetry-ebpf](https://github.com/open-telemetry/opentelemetry-ebpf)
+  - See [exported_metrics.md](../../doc/exported_metrics.md) for list of metrics
+
 ## [3.0.0-alpha.6] - 2023-11-07
 
 - correctly filtering out `ebpf_net` metrics by default (which is internal eBPF telemetry)
