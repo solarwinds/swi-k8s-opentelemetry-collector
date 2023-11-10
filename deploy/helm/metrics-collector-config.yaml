@@ -1575,6 +1575,7 @@ receivers:
   prometheus/node-metrics:
     config:
       scrape_configs:
+{{- if .Values.aws_fargate.enabled }}
         - job_name: 'kubernetes-nodes-cadvisor'
           honor_timestamps: false
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
@@ -1653,6 +1654,7 @@ receivers:
             kubeconfig_file: ""
             follow_redirects: true
             enable_http2: true
+{{- end }}
         - job_name: kubernetes-apiservers
           honor_timestamps: false
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}

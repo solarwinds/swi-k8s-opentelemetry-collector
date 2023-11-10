@@ -18,7 +18,7 @@ extensions:
     auth_type: serviceAccount
     node: ${NODE_NAME}
     observe_pods: true
-    observe_nodes: false
+    observe_nodes: true
 {{- end }}
 
 processors:
@@ -339,11 +339,11 @@ receivers:
         to: body
 
 {{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
-  receiver_creator:
+  receiver_creator/discovery:
     watch_observers: 
       - k8s_observer
     receivers:
-      prometheus:
+      prometheus/discovery:
         {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         {{- else }}
@@ -362,6 +362,44 @@ receivers:
                   - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
 {{- end }}
+
+  receiver_creator/node:
+    watch_observers: 
+      - k8s_observer
+    receivers:
+      prometheus/node:
+        rule: type == "k8s.node"
+        config:
+          config:
+            scrape_configs:
+              - job_name: 'kubernetes-nodes-cadvisor'
+                scheme: "https"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                scrape_timeout: 10s
+                metrics_path: "/metrics/cadvisor"
+                honor_timestamps: false
+                honor_labels: true
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`kubelet_endpoint_port`'
+              - job_name: 'kubernetes-nodes'
+                scheme: "https"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                scrape_timeout: 10s
+                metrics_path: "/metrics"
+                honor_timestamps: false
+                honor_labels: true
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`kubelet_endpoint_port`'
 
 service:
   extensions:
@@ -404,7 +442,7 @@ service:
         - journald/varlogs
 {{- end }}
 {{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
-    metrics:
+    metrics/discovery:
       exporters:
         - otlp
       processors:
@@ -422,7 +460,21 @@ service:
         - k8sattributes
         - batch
       receivers:
-        - receiver_creator
+        - receiver_creator/discovery
+{{- end }}
+{{- if .Values.otel.metrics.enabled }}
+    metrics/node:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        # TODO - copy all the processors that are needed to process cAdvisor and kubelet metrics
+        - groupbyattrs/all
+        - resource/all
+        - k8sattributes
+        - batch
+      receivers:
+        - receiver_creator/node
 {{- end }}
   telemetry:
 {{- if .Values.otel.logs.telemetry.logs.enabled }}
