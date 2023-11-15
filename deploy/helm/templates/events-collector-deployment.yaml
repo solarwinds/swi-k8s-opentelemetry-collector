@@ -46,6 +46,10 @@ spec:
       affinity:
         {{- toYaml .Values.otel.events.affinity | nindent 8 }}
       {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           command:

@@ -22,6 +22,10 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
         kubernetes.io/arch: amd64
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       containers:
         - name: reducer
           image: "{{ .Values.ebpfNetworkMonitoring.reducer.image.repository | default "otel/opentelemetry-ebpf-reducer" }}:{{ .Values.ebpfNetworkMonitoring.reducer.image.tag | default "v0.10.0" }}"

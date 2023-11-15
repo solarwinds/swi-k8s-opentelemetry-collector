@@ -13,6 +13,10 @@ spec:
       template:
         spec:
           serviceAccountName: {{ include "common.fullname" (tuple . "-autoupdate") }}
+          {{- if .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml .Values.imagePullSecrets | nindent 12 }}
+          {{- end }}
           containers:
           - name: helm-upgrade
             image: "{{ .Values.otel.image.repository | default alpine/k8s}}:{{ .Values.otel.image.tag | default 1.27.2@sha256:bbdbcb2e799b50958beb278de4a309d60bd238c14bdaff50c4e5ae42e446f745 }}"
