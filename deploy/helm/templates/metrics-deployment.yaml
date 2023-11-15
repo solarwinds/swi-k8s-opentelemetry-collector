@@ -63,7 +63,7 @@ spec:
         {{- end }}
         {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
-          image: "{{ .Values.otel.init_image.repository | fullstorydev/grpcurl }}:{{ .Values.otel.init_image.tag | default v1.8.7@sha256:ee1a84e31a5f99af12e0767314c59f05a578c01d28404049a3964d67a15b3580 }}"
+          image: "{{ .Values.otel.init_image.repository | default "fullstorydev/grpcurl" }}:{{ .Values.otel.init_image.tag | default "v1.8.7@sha256:ee1a84e31a5f99af12e0767314c59f05a578c01d28404049a3964d67a15b3580" }}"
           imagePullPolicy: {{ .Values.otel.init_image.pullPolicy }}
           command: ['/bin/grpcurl', '-expand-headers',
                     '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
