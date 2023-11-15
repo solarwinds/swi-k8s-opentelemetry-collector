@@ -15,7 +15,8 @@ spec:
           serviceAccountName: {{ include "common.fullname" (tuple . "-autoupdate") }}
           containers:
           - name: helm-upgrade
-            image: alpine/k8s:1.27.2@sha256:bbdbcb2e799b50958beb278de4a309d60bd238c14bdaff50c4e5ae42e446f745
+            image: "{{ .Values.otel.image.repository | default alpine/k8s}}:{{ .Values.otel.image.tag | default 1.27.2@sha256:bbdbcb2e799b50958beb278de4a309d60bd238c14bdaff50c4e5ae42e446f745 }}"
+            imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
             command: 
               - /bin/bash
               - /scripts/helm-upgrade.sh

@@ -6,6 +6,9 @@
 nameOverride: ""
 fullnameOverride: ""
 
+imagePullSecrets:
+  name: ""
+
 otel:
   # e.g. otel-collector.dc-01.cloud.solarwinds.com:443
   endpoint: <OTEL_ENVOY_ADDRESS>
@@ -18,6 +21,12 @@ otel:
   image:
     repository: solarwinds/swi-opentelemetry-collector
     # if not set appVersion field from Chart.yaml is used
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  init_image:
+    # otel-endpoint-check image
+    repository: ""
     tag: ""
     pullPolicy: IfNotPresent
 
@@ -398,6 +407,11 @@ autoupdate:
 
   # Whether it should check for pre-release versions
   devel: false
+
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
 
 # Set labels to every deployed resource
 # commonLabels:
