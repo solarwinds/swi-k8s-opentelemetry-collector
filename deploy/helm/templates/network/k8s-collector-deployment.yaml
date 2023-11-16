@@ -25,6 +25,10 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
         kubernetes.io/arch: amd64
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       containers:
       - image: "{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.repository | default "otel/opentelemetry-ebpf-k8s-watcher" }}:{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.tag | default "v0.10.0" }}"
         imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
