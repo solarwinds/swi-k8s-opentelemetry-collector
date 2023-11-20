@@ -31,7 +31,6 @@ processors:
     metric_statements:
       - context: datapoint
         statements:
-          - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$") == true
           - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0
           - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
           - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
@@ -1153,7 +1152,8 @@ processors:
           - scrape_samples_post_metric_relabeling
           - scrape_samples_scraped
           - scrape_series_added
-          - up      
+          - up
+
   attributes/attributes_namespace_status:
     include:
       match_type: regexp
@@ -1536,6 +1536,7 @@ processors:
 
 connectors:
   forward/prometheus:
+  forward/metric-exporter:
 
 receivers:
   otlp:
@@ -1691,7 +1692,7 @@ service:
   pipelines:
     metrics/otlp:
       exporters:
-        - otlp
+        - forward/metric-exporter
       processors:
         - memory_limiter
 {{- if and .Values.ebpfNetworkMonitoring.enabled (not .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled)  }}
@@ -1699,11 +1700,10 @@ service:
 {{- end }}
         - metricstransform/rename-otel
         - resource/otlp-metrics
-        - batch
       receivers:
         - otlp
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
-    metrics/prometheus:
+    metrics/prometheus-server:
       exporters:
         - forward/prometheus
       processors:
@@ -1727,9 +1727,9 @@ service:
         - filter/prometheus-node-metrics
       receivers:
         - prometheus/node-metrics
-    metrics:
+    metrics/prometheus:
       exporters:
-        - otlp
+        - forward/metric-exporter
       processors:
         - memory_limiter
         - filter/receiver
@@ -1773,9 +1773,17 @@ service:
         - resource/k8sattributes_annotations_filter
 {{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
-        - batch
       receivers:
         - forward/prometheus
+    metrics:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - batch
+      receivers:
+        - forward/metric-exporter
+    
   telemetry:
 {{- if .Values.otel.metrics.telemetry.logs.enabled }}
     logs:
