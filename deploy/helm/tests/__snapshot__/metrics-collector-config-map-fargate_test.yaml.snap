@@ -276,6 +276,7 @@ Metrics config should match snapshot when using default values:
       }
     metrics.config: |
       connectors:
+        forward/metric-exporter: null
         forward/prometheus: null
       exporters:
         otlp:
@@ -2030,8 +2031,6 @@ Metrics config should match snapshot when using default values:
           metric_statements:
           - context: datapoint
             statements:
-            - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$")
-              == true
             - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$")
               == true and value_double > 0
             - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$")
@@ -2204,6 +2203,31 @@ Metrics config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
+            - batch
+            receivers:
+            - forward/metric-exporter
+          metrics/kubestatemetrics:
+            exporters:
+            - forward/prometheus
+            processors:
+            - memory_limiter
+            - filter/kube-state-metrics
+            receivers:
+            - prometheus/kube-state-metrics
+          metrics/otlp:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - metricstransform/rename-otel
+            - resource/otlp-metrics
+            receivers:
+            - otlp
+          metrics/prometheus:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/receiver
             - transform
             - filter/remove_internal
@@ -2237,27 +2261,8 @@ Metrics config should match snapshot when using default values:
             - resource/metrics
             - k8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - batch
             receivers:
             - forward/prometheus
-          metrics/kubestatemetrics:
-            exporters:
-            - forward/prometheus
-            processors:
-            - memory_limiter
-            - filter/kube-state-metrics
-            receivers:
-            - prometheus/kube-state-metrics
-          metrics/otlp:
-            exporters:
-            - otlp
-            processors:
-            - memory_limiter
-            - metricstransform/rename-otel
-            - resource/otlp-metrics
-            - batch
-            receivers:
-            - otlp
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus
