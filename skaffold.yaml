@@ -42,9 +42,15 @@ deploy:
             image:
               repository: "swi-k8s-opentelemetry-collector"
               tag: ""
+            node_collector:
+              sending_queue:
+                persistent_storage:
+                  enabled: true
             metrics:
               swi_endpoint_check: false
               prometheus_check: false
+              sending_queue:
+                offload_to_disk: true
               prometheus:
                 scrape_interval: "15s"
               kube-state-metrics:
@@ -70,6 +76,9 @@ deploy:
                       match_type: regexp
                       metric_names:
                         - k8s.otelcol_processor.*
+            events:
+              sending_queue:
+                offload_to_disk: true
             logs:
               filter:
                 include:

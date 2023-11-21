@@ -5,7 +5,18 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    sending_queue:
+      enabled: {{ .Values.otel.events.sending_queue.enabled }}
+      num_consumers: {{ .Values.otel.events.sending_queue.num_consumers }}
+      queue_size: {{ .Values.otel.events.sending_queue.queue_size }}
+{{- if .Values.otel.events.sending_queue.offload_to_disk }}
+      storage: file_storage/sending_queue
+{{- end }}
 extensions:
+{{- if .Values.otel.events.sending_queue.offload_to_disk }}
+  file_storage/sending_queue:
+    directory: /var/lib/swo/sending_queue
+{{- end }}
   health_check: {}
   memory_ballast:
 {{ toYaml .Values.otel.events.memory_ballast | indent 4 }}
@@ -116,6 +127,9 @@ receivers:
 
 service:
   extensions:
+{{- if .Values.otel.events.sending_queue.offload_to_disk }}
+    - file_storage/sending_queue
+{{- end}}
     - health_check
     - memory_ballast
   pipelines:
