@@ -269,7 +269,7 @@ processors:
 {{- end }}
 
 connectors:
-{{- if .Values.otel.metrics.enabled }}
+{{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
   forward/metric-exporter:
 {{- end }}
 {{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
@@ -438,6 +438,7 @@ receivers:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
 {{- end }}
 
+{{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
   receiver_creator/node:
     watch_observers: 
       - k8s_observer
@@ -475,6 +476,7 @@ receivers:
                 static_configs:
                   - targets:
                       - '`endpoint`:`kubelet_endpoint_port`'
+{{- end }}
 
 service:
   extensions:
@@ -545,7 +547,7 @@ service:
       receivers:
         - receiver_creator/discovery
 {{- end }}
-{{- if .Values.otel.metrics.enabled }}
+{{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
     metrics/node:
       exporters:
         - forward/metric-exporter
