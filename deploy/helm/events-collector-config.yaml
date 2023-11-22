@@ -5,6 +5,11 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    retry_on_failure:
+      enabled: {{ .Values.otel.events.retry_on_failure.enabled }}
+      initial_interval: {{ .Values.otel.events.retry_on_failure.initial_interval }}
+      max_interval: {{ .Values.otel.events.retry_on_failure.max_interval }}
+      max_elapsed_time: {{ .Values.otel.events.retry_on_failure.max_elapsed_time }}
     sending_queue:
       enabled: {{ .Values.otel.events.sending_queue.enabled }}
       num_consumers: {{ .Values.otel.events.sending_queue.num_consumers }}
