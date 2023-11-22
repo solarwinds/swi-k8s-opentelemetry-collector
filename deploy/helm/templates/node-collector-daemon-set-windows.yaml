@@ -28,7 +28,7 @@ spec:
         prometheus.io/scheme: "http"
 {{- end}}
     spec:
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: {{ .Values.otel.node_collector.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
       tolerations:
       {{- if .Values.otel.logs.tolerations }}
