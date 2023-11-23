@@ -29,6 +29,7 @@ spec:
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" (tuple . "-events") }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.otel.events.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
       nodeSelector:

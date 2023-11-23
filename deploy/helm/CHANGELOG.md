@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `sending_queue`.`queue_size` changed from `1000` to `200`, decreasing amount of memory it can take
 
 ### Added
+- Added option to configure terminationGracePeriodSeconds defaulting to 10 minutes, so that it is guaranteed that collector process whole pipeline
 - Added option to offload sending_queue to storage, reducing memory requirement for the collector
 - Added option to configure sending_queue
 - Added option to configure retry_on_failure
