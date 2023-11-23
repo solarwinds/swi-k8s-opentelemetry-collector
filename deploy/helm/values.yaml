@@ -604,6 +604,17 @@ ebpfNetworkMonitoring:
     # Port on which the reducer will listen for metrics from kernelCollector and k8sCollector
     telemetryPort: 7000
 
+    # Enables id-id time-series generation. The id-id time-series carry the lowest-level information but are of the greatest volume and cardinality, so are disabled by default.
+    # This also adds IP address to ingested metrics which is useful for identification which Pod from the workload is causing the traffic.
+    enableIdIdGeneration: false
+
+    # At present, scaling the reducer is a manual try-and-see task. The reducer runs a data processing pipeline separated into three stages – ingest, matching and aggregation.
+    # Usually, the best approach is to scale all the stages by the same factor. Keep in mind that each shard consumes a certain amount of memory, whether it is heavily loaded or not.
+    # Read more info about architecture https://github.com/open-telemetry/opentelemetry-ebpf/blob/main/docs/reducer/architecture.md
+    numIngestShards: 3
+    numMatchingShards: 3
+    numAggregationShards: 3
+
     telemetry:
       logs:
         level: "warning"
