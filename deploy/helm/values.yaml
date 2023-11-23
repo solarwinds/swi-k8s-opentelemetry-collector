@@ -54,6 +54,18 @@ otel:
         enabled: false
         directory: /var/lib/swo/sending_queue
 
+    retry_on_failure:
+      enabled: true
+
+      # Time to wait after the first failure before retrying; ignored if enabled is false
+      initial_interval: 10s
+
+      # Is the upper bound on backoff; ignored if enabled is false
+      max_interval: 30s
+
+      # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+      max_elapsed_time: 300s
+
   # Configuration for metrics collection
   metrics:
     # Define whether metrics will be collected and sent
@@ -105,6 +117,18 @@ otel:
       # When enabled sending_queue of metrics collector will be offloaded to disk. It will use emptyDir volume
       # This will reduce amount of memory, but it will use slightly more CPU and will have slightly lower throughput
       offload_to_disk: false
+
+    retry_on_failure:
+      enabled: true
+
+      # Time to wait after the first failure before retrying; ignored if enabled is false
+      initial_interval: 10s
+
+      # Is the upper bound on backoff; ignored if enabled is false
+      max_interval: 30s
+
+      # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+      max_elapsed_time: 300s
 
     prometheus:
       # URL of prometheus where to scrape
@@ -259,6 +283,18 @@ otel:
       # When enabled sending_queue of metrics collector will be offloaded to disk. It will use emptyDir volume
       # This will reduce amount of memory, but it will use slightly more CPU and will have slightly lower throughput
       offload_to_disk: false
+
+    retry_on_failure:
+      enabled: true
+
+      # Time to wait after the first failure before retrying; ignored if enabled is false
+      initial_interval: 10s
+
+      # Is the upper bound on backoff; ignored if enabled is false
+      max_interval: 30s
+
+      # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+      max_elapsed_time: 300s
 
     # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference

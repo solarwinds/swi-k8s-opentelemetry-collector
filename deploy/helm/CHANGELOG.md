@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added option to offload sending_queue to storage, reducing memory requirement for the collector
 - Added option to configure sending_queue
+- Added option to configure retry_on_failure
+  - default for initial_interval is now `10s` (previously was `5s`) avoiding unnecessary retries when backend takes time to respond
 
 ### Fixed
 - ebpf monitoring: Added necessary init containers making sure that all components start in the right order

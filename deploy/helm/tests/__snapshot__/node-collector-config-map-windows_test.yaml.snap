@@ -7,6 +7,11 @@ Node collector config for windows nodes should match snapshot when using default
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          retry_on_failure:
+            enabled: true
+            initial_interval: 10s
+            max_elapsed_time: 300s
+            max_interval: 30s
           sending_queue:
             enabled: true
             num_consumers: 10
