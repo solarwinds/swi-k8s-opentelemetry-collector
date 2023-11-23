@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.0-rc.3] - 2023-11-23
+
+### Fixed
+- Fixed `k8s.node.name` from node collector
+
 ## [3.1.0-rc.2] - 2023-11-23
 
 ### Added

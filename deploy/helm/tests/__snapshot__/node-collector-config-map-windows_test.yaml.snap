@@ -705,7 +705,7 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
-          - action: insert
+          - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/container:
@@ -1075,6 +1075,7 @@ Node collector config for windows nodes should match snapshot when using default
             - groupbyattrs/all
             - filter/metrics
             - resource/metrics
+            - resource/all
             receivers:
             - receiver_creator/node
         telemetry:
