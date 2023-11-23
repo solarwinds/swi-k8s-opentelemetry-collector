@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.0-rc.4] - 2023-11-24
+- Fixed metrics in node-collector when logs are disabled
+- Fine tuning default values of sending_queue for better performance
+
 ## [3.1.0-rc.3] - 2023-11-23
 
 ### Fixed
