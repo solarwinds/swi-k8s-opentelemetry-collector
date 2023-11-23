@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.0-rc.1] - 2023-11-23
+
 ### Changed
 - `sending_queue`.`queue_size` changed from `1000` to `200`, decreasing amount of memory it can take
 - Upgraded OTEL collector image to `0.8.10` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.10))
+- Upgraded SWO Agent image to `v2.6.28`
 
 ### Added
 - Added option to configure terminationGracePeriodSeconds defaulting to 10 minutes, so that it is guaranteed that collector process whole pipeline
@@ -20,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - ebpf monitoring: Added necessary init containers making sure that all components start in the right order
-
 
 ## [3.1.0-alpha.2] - 2023-11-16
 
