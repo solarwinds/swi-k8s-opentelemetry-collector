@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.0-rc.2] - 2023-11-23
+
+### Added
+- Added option to configure scaling of eBPF monitoring reducer
+- Added option to configure eBPF reducer's `enableIdIdGeneration` which is unnecessary at the moment (default false). 
+
 ## [3.1.0-rc.1] - 2023-11-23
 
 ### Changed
