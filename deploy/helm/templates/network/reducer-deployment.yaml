@@ -26,6 +26,16 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
       {{- end }}
+      initContainers:
+        - name: wait-for-metrics-collector
+          image: "{{ .Values.otel.init_images.busy_box.repository | default "busybox" }}:{{ .Values.otel.init_images.busy_box.tag | default "1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43" }}"
+          imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
+          command: ['sh', '-c', 'until nc -zv $METRICS_COLLECTOR_HOST $METRICS_COLLECTOR_PORT; do echo "Waiting for metrics collector endpoint..."; sleep 5; done;']
+          env:
+            - name: "METRICS_COLLECTOR_HOST"
+              value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
+            - name: "METRICS_COLLECTOR_PORT"
+              value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
       containers:
         - name: reducer
           image: "{{ .Values.ebpfNetworkMonitoring.reducer.image.repository | default "otel/opentelemetry-ebpf-reducer" }}:{{ .Values.ebpfNetworkMonitoring.reducer.image.tag | default "v0.10.0" }}"

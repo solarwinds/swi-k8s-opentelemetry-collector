@@ -52,6 +52,19 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
     dnsPolicy: ClusterFirstWithHostNet
     hostNetwork: true
     hostPID: true
+    initContainers:
+      - command:
+          - sh
+          - -c
+          - until nc -zv $EBPF_NET_INTAKE_HOST $EBPF_NET_INTAKE_PORT; do echo "Waiting for reducer endpoint..."; sleep 5; done;
+        env:
+          - name: EBPF_NET_INTAKE_HOST
+            value: RELEASE-NAME-swo-k8s-collector-network-k8s-reducer
+          - name: EBPF_NET_INTAKE_PORT
+            value: "7000"
+        image: busybox:1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43
+        imagePullPolicy: IfNotPresent
+        name: wait-for-reducer
     nodeSelector:
       kubernetes.io/arch: amd64
       kubernetes.io/os: linux
