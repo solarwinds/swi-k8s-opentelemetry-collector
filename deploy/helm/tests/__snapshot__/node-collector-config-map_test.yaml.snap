@@ -702,7 +702,7 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
-          - action: insert
+          - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/container:
@@ -1762,7 +1762,7 @@ Node collector config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
-          - action: insert
+          - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/container:
@@ -2174,6 +2174,7 @@ Node collector config should match snapshot when using default values:
             - groupbyattrs/all
             - filter/metrics
             - resource/metrics
+            - resource/all
             receivers:
             - receiver_creator/node
         telemetry:

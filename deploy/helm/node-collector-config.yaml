@@ -145,7 +145,7 @@ processors:
       # Node
       - key: k8s.node.name
         value: ${NODE_NAME}
-        action: insert
+        action: upsert
 
   resource/container:
     attributes:
@@ -590,6 +590,7 @@ service:
         - filter/metrics
 {{- end }}
         - resource/metrics
+        - resource/all
       receivers:
         - receiver_creator/node
     metrics:
