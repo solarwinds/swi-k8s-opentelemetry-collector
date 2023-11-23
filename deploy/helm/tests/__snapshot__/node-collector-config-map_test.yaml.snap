@@ -1058,10 +1058,14 @@ Node collector config should match snapshot when using default values:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          sending_queue:
+            enabled: true
+            num_consumers: 10
+            queue_size: 200
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
-        file_storage:
+        file_storage/checkpoints:
           directory: /var/lib/swo/checkpoints
           timeout: 5s
         health_check: {}
@@ -2011,7 +2015,7 @@ Node collector config should match snapshot when using default values:
             type: move
           poll_interval: 200ms
           start_at: end
-          storage: file_storage
+          storage: file_storage/checkpoints
         journald/runlogs:
           directory: /run/log/journal
           units:
@@ -2083,7 +2087,7 @@ Node collector config should match snapshot when using default values:
           - k8s_observer
       service:
         extensions:
-        - file_storage
+        - file_storage/checkpoints
         - health_check
         - k8s_observer
         pipelines:

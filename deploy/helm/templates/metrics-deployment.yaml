@@ -55,7 +55,8 @@ spec:
       initContainers:
         {{- if and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url }}
         - name: prometheus-check
-          image: busybox:1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43
+          image: "{{ .Values.otel.init_images.busy_box.repository | default "busybox" }}:{{ .Values.otel.init_images.busy_box.tag | default "1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43" }}"
+          imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
           command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"']
           envFrom:
             - configMapRef:
@@ -63,8 +64,8 @@ spec:
         {{- end }}
         {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
-          image: "{{ .Values.otel.init_image.repository | default "fullstorydev/grpcurl" }}:{{ .Values.otel.init_image.tag | default "v1.8.7@sha256:ee1a84e31a5f99af12e0767314c59f05a578c01d28404049a3964d67a15b3580" }}"
-          imagePullPolicy: {{ .Values.otel.init_image.pullPolicy }}
+          image: "{{ .Values.otel.init_images.swi_endpoint_check.repository | default "fullstorydev/grpcurl" }}:{{ .Values.otel.init_images.swi_endpoint_check.tag | default "v1.8.7@sha256:ee1a84e31a5f99af12e0767314c59f05a578c01d28404049a3964d67a15b3580" }}"
+          imagePullPolicy: {{ .Values.otel.init_images.swi_endpoint_check.pullPolicy }}
           command: ['/bin/grpcurl', '-expand-headers',
                     '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
                     '-H', 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}',
@@ -144,6 +145,10 @@ spec:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
+{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+            - name: sending-queue
+              mountPath: /var/lib/swo/sending_queue
+{{- end }} 
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
@@ -158,5 +163,9 @@ spec:
               - key: common.proto
                 path: common.proto
               - key: resource.proto
-                path: resource.proto                
+                path: resource.proto  
+{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+        - name: sending-queue
+          emptyDir: {}
+{{- end }}
 {{- end}}
