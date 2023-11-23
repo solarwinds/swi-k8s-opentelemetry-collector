@@ -145,6 +145,10 @@ spec:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
+{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+            - name: sending-queue
+              mountPath: /var/lib/swo/sending_queue
+{{- end }} 
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
@@ -159,5 +163,9 @@ spec:
               - key: common.proto
                 path: common.proto
               - key: resource.proto
-                path: resource.proto                
+                path: resource.proto  
+{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+        - name: sending-queue
+          emptyDir: {}
+{{- end }}
 {{- end}}

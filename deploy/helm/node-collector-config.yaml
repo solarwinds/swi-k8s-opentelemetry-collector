@@ -5,9 +5,20 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    sending_queue:
+      enabled: {{ .Values.otel.node_collector.sending_queue.enabled }}
+      num_consumers: {{ .Values.otel.node_collector.sending_queue.num_consumers }}
+      queue_size: {{ .Values.otel.node_collector.sending_queue.queue_size }}
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+      storage: file_storage/sending_queue
+{{- end }}
 extensions:
-  file_storage:
+  file_storage/checkpoints:
 {{ toYaml .Values.otel.logs.filestorage | indent 4 }}
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+  file_storage/sending_queue:
+    directory: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
+{{- end }}
   health_check: {}
 {{- if .Values.otel.logs.memory_ballast }}
   memory_ballast:
@@ -228,7 +239,7 @@ receivers:
     start_at: {{ .Values.otel.logs.receiver.start_at }}
     include_file_path: true
     include_file_name: false
-    storage: file_storage
+    storage: file_storage/checkpoints
     max_log_size: {{ .Values.otel.logs.receiver.max_log_size }}
     max_concurrent_files: {{ .Values.otel.logs.receiver.max_concurrent_files }}
     fingerprint_size: {{ .Values.otel.logs.receiver.fingerprint_size }}
@@ -365,7 +376,10 @@ receivers:
 
 service:
   extensions:
-    - file_storage
+    - file_storage/checkpoints
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+    - file_storage/sending_queue
+{{- end}}
     - health_check
 {{- if .Values.otel.logs.memory_ballast }}
     - memory_ballast

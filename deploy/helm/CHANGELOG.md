@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Fixed
+### Changed
+- `sending_queue`.`queue_size` changed from `1000` to `200`, decreasing amount of memory it can take
 
+### Added
+- Added option to offload sending_queue to storage, reducing memory requirement for the collector
+- Added option to configure sending_queue
+
+### Fixed
 - ebpf monitoring: Added necessary init containers making sure that all components start in the right order
 
 ## [3.1.0-alpha.2] - 2023-11-16

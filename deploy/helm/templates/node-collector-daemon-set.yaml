@@ -133,6 +133,10 @@ spec:
               readOnly: true
             - name: logcheckpoints
               mountPath: {{ .Values.otel.logs.filestorage.directory }}
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+            - name: sending-queue
+              mountPath: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
+{{- end }}
       volumes:
         - name: varlogpods
           hostPath:
@@ -159,4 +163,10 @@ spec:
             items:
               - key: logs.config
                 path: relay.yaml
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+        - name: sending-queue
+          hostPath:
+            path: {{ printf "%s/%s" .Values.otel.node_collector.sending_queue.persistent_storage.directory .Values.cluster.uid }}
+            type: DirectoryOrCreate
+{{- end }}
 {{- end }}

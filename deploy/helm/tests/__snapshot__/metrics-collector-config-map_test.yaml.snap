@@ -282,6 +282,10 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          sending_queue:
+            enabled: true
+            num_consumers: 10
+            queue_size: 200
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -2618,6 +2622,10 @@ Metrics config should match snapshot when using default values:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          sending_queue:
+            enabled: true
+            num_consumers: 10
+            queue_size: 200
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
