@@ -5,9 +5,25 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    retry_on_failure:
+      enabled: {{ .Values.otel.node_collector.retry_on_failure.enabled }}
+      initial_interval: {{ .Values.otel.node_collector.retry_on_failure.initial_interval }}
+      max_interval: {{ .Values.otel.node_collector.retry_on_failure.max_interval }}
+      max_elapsed_time: {{ .Values.otel.node_collector.retry_on_failure.max_elapsed_time }}
+    sending_queue:
+      enabled: {{ .Values.otel.node_collector.sending_queue.enabled }}
+      num_consumers: {{ .Values.otel.node_collector.sending_queue.num_consumers }}
+      queue_size: {{ .Values.otel.node_collector.sending_queue.queue_size }}
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+      storage: file_storage/sending_queue
+{{- end }}
 extensions:
-  file_storage:
+  file_storage/checkpoints:
 {{ toYaml .Values.otel.logs.filestorage | indent 4 }}
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+  file_storage/sending_queue:
+    directory: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
+{{- end }}
   health_check: {}
 {{- if .Values.otel.logs.memory_ballast }}
   memory_ballast:
@@ -18,7 +34,7 @@ extensions:
     auth_type: serviceAccount
     node: ${NODE_NAME}
     observe_pods: true
-    observe_nodes: false
+    observe_nodes: true
 {{- end }}
 
 processors:
@@ -27,12 +43,76 @@ processors:
 
 {{- if .Values.otel.logs.filter }}
   # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
-  filter:
+  filter/logs:
     logs:
 {{ toYaml .Values.otel.logs.filter | indent 6 }}
 {{- end }}
 
-  groupbyattrs/all:
+  {{- include "common-config.filter-reciever" . | nindent 2 }}
+  {{- include "common-config.filter-remove-internal" . | nindent 2 }}
+  {{- include "common-config.attributes-remove-prometheus-attributes" . | nindent 2 }}
+
+  # unify attributes
+  attributes/unify_node_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - container_.*
+    actions:
+      - key: k8s.node.name
+        from_attribute: node
+        action: insert
+{{- if not .Values.aws_fargate.enabled }}
+      - key: k8s.node.name
+        from_attribute: kubernetes_io_hostname
+        action: insert
+{{- end }}
+
+  {{- include "common-config.transform-node-attributes" . | nindent 2 }}
+
+  metricstransform/preprocessing:
+    transforms:
+      {{- include "common-config.metricstransform-preprocessing-cadvisor" . | nindent 6 }}
+
+  {{- include "common-config.filter-remove-internal-post-processing" . | nindent 2 }}
+  {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
+
+  cumulativetodelta:
+    include:
+      metrics:
+        {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}
+      match_type: strict
+
+  deltatorate:
+    metrics:
+      {{- include "common-config.cumulativetorate-cadvisor" . | nindent 6}}
+
+  {{- include "common-config.groupbyattrs-node" . | nindent 2 }}
+  {{- include "common-config.groupbyattrs-pod" . | nindent 2 }}
+  {{- include "common-config.groupbyattrs-all" . | nindent 2 }}
+  
+{{- if .Values.otel.metrics.filter }}
+  filter/metrics:
+    metrics:
+{{ toYaml .Values.otel.metrics.filter | indent 6 }}
+{{- end }}
+
+  {{- include "common-config.resource-metrics" . | nindent 2 }}
+
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
+  resource/k8sattributes_labels_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.metrics.k8s_instrumentation.labels.excludePattern }}
+{{- end }}
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
+  resource/k8sattributes_annotations_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
+{{- end }}
+
+  groupbyattrs/common-all:
     keys:
       - k8s.container.name
       - k8s.namespace.name
@@ -135,8 +215,11 @@ processors:
           - set( attributes["host.name"], attributes["k8s.pod.name"])
           - set( attributes["service.name"], attributes["k8s.container.name"])
 
-  batch:
+  batch/logs:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
+
+  batch/metrics:
+{{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
   k8sattributes:
     auth_type: "serviceAccount"
@@ -196,9 +279,17 @@ processors:
 {{- end }}
 
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
-  filter/metrics:
+  filter/metrics-discovery:
     metrics:
 {{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 6 }}
+{{- end }}
+
+connectors:
+{{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
+  forward/metric-exporter:
+{{- end }}
+{{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
+  forward/logs-exporter:
 {{- end }}
 
 receivers:
@@ -228,7 +319,7 @@ receivers:
     start_at: {{ .Values.otel.logs.receiver.start_at }}
     include_file_path: true
     include_file_name: false
-    storage: file_storage
+    storage: file_storage/checkpoints
     max_log_size: {{ .Values.otel.logs.receiver.max_log_size }}
     max_concurrent_files: {{ .Values.otel.logs.receiver.max_concurrent_files }}
     fingerprint_size: {{ .Values.otel.logs.receiver.fingerprint_size }}
@@ -339,11 +430,11 @@ receivers:
         to: body
 
 {{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
-  receiver_creator:
+  receiver_creator/discovery:
     watch_observers: 
       - k8s_observer
     receivers:
-      prometheus:
+      prometheus/discovery:
         {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         {{- else }}
@@ -363,9 +454,52 @@ receivers:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
 {{- end }}
 
+{{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+  receiver_creator/node:
+    watch_observers: 
+      - k8s_observer
+    receivers:
+      prometheus/node:
+        rule: type == "k8s.node"
+        config:
+          config:
+            scrape_configs:
+              - job_name: 'kubernetes-nodes-cadvisor'
+                scheme: "https"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                scrape_timeout: 10s
+                metrics_path: "/metrics/cadvisor"
+                honor_timestamps: false
+                honor_labels: true
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`kubelet_endpoint_port`'
+              - job_name: 'kubernetes-nodes'
+                scheme: "https"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                scrape_timeout: 10s
+                metrics_path: "/metrics"
+                honor_timestamps: false
+                honor_labels: true
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`kubelet_endpoint_port`'
+{{- end }}
+
 service:
   extensions:
-    - file_storage
+    - file_storage/checkpoints
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+    - file_storage/sending_queue
+{{- end}}
     - health_check
 {{- if .Values.otel.logs.memory_ballast }}
     - memory_ballast
@@ -374,55 +508,105 @@ service:
     - k8s_observer
 {{- end}}
   pipelines:
+{{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
 {{- if .Values.otel.logs.container }}
+    logs/container:
+      exporters:
+        - forward/logs-exporter
+      processors:
+        - memory_limiter
+{{- if .Values.otel.logs.filter }}
+        - filter/logs
+{{- end }}
+        - transform/syslogify
+        - groupbyattrs/common-all
+        - resource/container
+      receivers:
+        - filelog
+{{- end }}
+{{- if and (not .isWindows) .Values.otel.logs.journal }}
+    logs/journal:
+      exporters:
+        - forward/logs-exporter
+      processors:
+        - memory_limiter
+        - groupbyattrs/common-all
+        - resource/journal
+      receivers:
+        - journald/runlogs
+        - journald/varlogs
+{{- end }}
+
     logs:
       exporters:
         - otlp
       processors:
         - memory_limiter
-{{- if .Values.otel.logs.filter }}
-        - filter
-{{- end }}
-        - transform/syslogify
-        - groupbyattrs/all
-        - resource/container
-        - batch
+        - batch/logs
       receivers:
-        - filelog
+        - forward/logs-exporter
 {{- end }}
-{{- if and (not .isWindows) .Values.otel.logs.journal }}
-    logs/2:
-      exporters:
-        - otlp
-      processors:
-        - memory_limiter
-        - groupbyattrs/all
-        - resource/journal
-        - batch
-      receivers:
-        - journald/runlogs
-        - journald/varlogs
-{{- end }}
+
 {{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
-    metrics:
+    metrics/discovery:
       exporters:
-        - otlp
+        - forward/metric-exporter
       processors:
         - memory_limiter
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
-        - filter/metrics
+        - filter/metrics-discovery
 {{- end }}
         - metricstransform/rename
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
         - cumulativetodelta
         - deltatorate
 {{- end }}
-        - groupbyattrs/all
+        - groupbyattrs/common-all
         - resource/all
-        - k8sattributes
-        - batch
       receivers:
-        - receiver_creator
+        - receiver_creator/discovery
+{{- end }}
+{{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+    metrics/node:
+      exporters:
+        - forward/metric-exporter
+      processors:
+        - memory_limiter
+        - filter/receiver
+        - filter/remove_internal        
+        - attributes/remove_prometheus_attributes
+        - attributes/unify_node_attribute
+        - transform/unify_node_attribute   
+        - metricstransform/rename
+        - metricstransform/preprocessing
+        - filter/remove_internal_postprocessing
+        - attributes/remove_temp
+        - cumulativetodelta
+        - deltatorate
+        - groupbyattrs/node
+        - groupbyattrs/pod
+        - groupbyattrs/all
+{{- if .Values.otel.metrics.filter }}
+        - filter/metrics
+{{- end }}
+        - resource/metrics
+      receivers:
+        - receiver_creator/node
+    metrics:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - k8sattributes
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
+        - resource/k8sattributes_labels_filter
+{{- end }}
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
+        - resource/k8sattributes_annotations_filter
+{{- end }}
+        - batch/metrics
+      receivers:
+        - forward/metric-exporter
 {{- end }}
   telemetry:
 {{- if .Values.otel.logs.telemetry.logs.enabled }}

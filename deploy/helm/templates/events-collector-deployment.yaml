@@ -29,6 +29,7 @@ spec:
 {{ include "common.template-labels" . | indent 8 }}
         app: {{ include "common.fullname" (tuple . "-events") }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.otel.events.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
       nodeSelector:
@@ -93,6 +94,10 @@ spec:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
+{{- if .Values.otel.events.sending_queue.offload_to_disk }}
+            - name: sending-queue
+              mountPath: /var/lib/swo/sending_queue
+{{- end }}
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
@@ -100,4 +105,8 @@ spec:
             items:
               - key: events.config
                 path: relay.yaml
+{{- if .Values.otel.events.sending_queue.offload_to_disk }}
+        - name: sending-queue
+          emptyDir: {}
+{{- end }}   
 {{- end}}

@@ -276,12 +276,22 @@ Metrics config should match snapshot when using default values:
       }
     metrics.config: |
       connectors:
+        forward/metric-exporter: null
         forward/prometheus: null
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          retry_on_failure:
+            enabled: true
+            initial_interval: 10s
+            max_elapsed_time: 300s
+            max_interval: 30s
+          sending_queue:
+            enabled: true
+            num_consumers: 10
+            queue_size: 200
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -430,8 +440,6 @@ Metrics config should match snapshot when using default values:
             - k8s.container.cpu.usage.seconds.rate
             - k8s.container.network.bytes_received
             - k8s.container.network.bytes_transmitted
-            - apiserver_request_not_failed_temp
-            - apiserver_request_total_temp
             - k8s.pod.fs.iops
             - k8s.pod.fs.throughput
             - k8s.pod.fs.reads.rate
@@ -452,6 +460,8 @@ Metrics config should match snapshot when using default values:
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
+            - apiserver_request_not_failed_temp
+            - apiserver_request_total_temp
         deltatorate:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
@@ -901,56 +911,6 @@ Metrics config should match snapshot when using default values:
         metricstransform/preprocessing:
           transforms:
           - action: insert
-            experimental_match_labels:
-              resource: cpu
-            include: k8s.kube_pod_container_resource_limits
-            new_name: k8s.container.spec.cpu.limit_temp
-          - action: insert
-            experimental_match_labels:
-              resource: cpu
-            include: k8s.kube_pod_init_container_resource_limits
-            new_name: k8s.initcontainer.spec.cpu.limit_temp
-          - action: insert
-            experimental_match_labels:
-              resource: cpu
-            include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.cpu.requests_temp
-          - action: insert
-            experimental_match_labels:
-              resource: cpu
-            include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.cpu.requests_temp
-          - action: combine
-            include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
-            match_type: regexp
-            new_name: k8s.container.spec.cpu.requests
-          - action: insert
-            experimental_match_labels:
-              resource: memory
-            include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.memory.requests_temp
-          - action: insert
-            experimental_match_labels:
-              resource: memory
-            include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.memory.requests_temp
-          - action: combine
-            include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
-            match_type: regexp
-            new_name: k8s.container.spec.memory.requests
-          - action: insert
-            experimental_match_labels:
-              resource: memory
-            include: k8s.kube_pod_container_resource_limits
-            match_type: regexp
-            new_name: k8s.container.spec.memory.limit_temp
-          - action: insert
-            experimental_match_labels:
-              resource: memory
-            include: k8s.kube_pod_init_container_resource_limits
-            match_type: regexp
-            new_name: k8s.initcontainer.spec.memory.limit_temp
-          - action: insert
             include: k8s.container_fs_reads_total
             new_name: k8s.container_fs_reads_total_temp
           - action: insert
@@ -1000,104 +960,6 @@ Metrics config should match snapshot when using default values:
           - action: insert
             include: k8s.container_network_transmit_bytes_total
             new_name: k8s.container.network.bytes_transmitted
-          - action: insert
-            include: k8s.kube_pod_container_status_waiting
-            new_name: k8s.kube_pod_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_running
-            new_name: k8s.kube_pod_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_terminated
-            new_name: k8s.kube_pod_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.container.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: insert
-            include: k8s.kube_pod_init_container_status_waiting
-            new_name: k8s.kube_pod_init_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_running
-            new_name: k8s.kube_pod_init_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_terminated
-            new_name: k8s.kube_pod_init_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.initcontainer.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: combine
-            include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
-            match_type: regexp
-            new_name: k8s.container.status
-            submatch_case: lower
-          - action: insert
-            include: k8s.container.spec.cpu.limit_temp
-            new_name: k8s.pod.spec.cpu.limit
-            operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set:
-              - pod
-              - namespace
-              - k8s.node.name
-          - action: combine
-            include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
-            match_type: regexp
-            new_name: k8s.container.spec.cpu.limit
-          - action: insert
-            include: k8s.container.spec.memory.limit_temp
-            new_name: k8s.pod.spec.memory.limit
-            operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set:
-              - pod
-              - namespace
-              - k8s.node.name
-          - action: combine
-            include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
-            match_type: regexp
-            new_name: k8s.container.spec.memory.limit
-          - action: insert
-            include: k8s.kube_pod_container_status_running
-            new_name: k8s.pod.containers.running
-            operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set:
-              - pod
-              - namespace
-          - action: insert
-            include: k8s.container.spec.cpu.requests
-            new_name: k8s.pod.spec.cpu.requests
-            operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set:
-              - pod
-              - namespace
-              - k8s.node.name
-          - action: insert
-            include: k8s.container.spec.memory.requests
-            new_name: k8s.pod.spec.memory.requests
-            operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set:
-              - pod
-              - namespace
-              - k8s.node.name
           - action: insert
             experimental_match_labels:
               container: \S+
@@ -1223,56 +1085,6 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
           - action: insert
             experimental_match_labels:
-              owner_is_controller: "true"
-              owner_kind: DaemonSet
-            include: k8s.kube_pod_owner
-            new_name: k8s.kube.pod.owner.daemonset
-            operations:
-            - action: update_label
-              label: owner_name
-              new_label: daemonset
-          - action: insert
-            experimental_match_labels:
-              owner_is_controller: "true"
-              owner_kind: ReplicaSet
-            include: k8s.kube_pod_owner
-            new_name: k8s.kube.pod.owner.replicaset
-            operations:
-            - action: update_label
-              label: owner_name
-              new_label: replicaset
-          - action: insert
-            experimental_match_labels:
-              owner_is_controller: "true"
-              owner_kind: StatefulSet
-            include: k8s.kube_pod_owner
-            new_name: k8s.kube.pod.owner.statefulset
-            operations:
-            - action: update_label
-              label: owner_name
-              new_label: statefulset
-          - action: insert
-            experimental_match_labels:
-              owner_is_controller: "true"
-              owner_kind: Job
-            include: k8s.kube_pod_owner
-            new_name: k8s.kube.pod.owner.job
-            operations:
-            - action: update_label
-              label: owner_name
-              new_label: job_name
-          - action: insert
-            experimental_match_labels:
-              owner_is_controller: "true"
-              owner_kind: Deployment
-            include: k8s.kube_replicaset_owner
-            new_name: k8s.kube.replicaset.owner.deployment
-            operations:
-            - action: update_label
-              label: owner_name
-              new_label: deployment
-          - action: insert
-            experimental_match_labels:
               k8s.node.name: \S+
               namespace: \S+
               pod: \S+
@@ -1392,61 +1204,6 @@ Metrics config should match snapshot when using default values:
               id: /
             include: k8s.container_memory_working_set_bytes
             new_name: k8s.node.memory.working_set
-          - action: insert
-            experimental_match_labels:
-              resource: cpu
-            include: k8s.kube_node_status_capacity
-            new_name: k8s.node.cpu.capacity
-          - action: insert
-            experimental_match_labels:
-              resource: cpu
-            include: k8s.kube_node_status_allocatable
-            new_name: k8s.node.cpu.allocatable
-          - action: insert
-            experimental_match_labels:
-              resource: memory
-            include: k8s.kube_node_status_capacity
-            new_name: k8s.node.memory.capacity
-          - action: insert
-            experimental_match_labels:
-              resource: memory
-            include: k8s.kube_node_status_allocatable
-            new_name: k8s.node.memory.allocatable
-          - action: insert
-            experimental_match_labels:
-              condition: Ready
-              status: "true"
-            include: k8s.kube_node_status_condition
-            new_name: k8s.node.status.condition.ready
-          - action: insert
-            experimental_match_labels:
-              condition: NetworkUnavailable
-              status: "true"
-            include: k8s.kube_node_status_condition
-            new_name: k8s.node.status.condition.networkunavailable
-          - action: insert
-            experimental_match_labels:
-              condition: PIDPressure
-              status: "true"
-            include: k8s.kube_node_status_condition
-            new_name: k8s.node.status.condition.pidpressure
-          - action: insert
-            experimental_match_labels:
-              condition: MemoryPressure
-              status: "true"
-            include: k8s.kube_node_status_condition
-            new_name: k8s.node.status.condition.memorypressure
-          - action: insert
-            experimental_match_labels:
-              condition: DiskPressure
-              status: "true"
-            include: k8s.kube_node_status_condition
-            new_name: k8s.node.status.condition.diskpressure
-          - action: insert
-            experimental_match_labels:
-              phase: Running
-            include: k8s.kube_pod_status_phase
-            new_name: k8s.pod.status.phase.running_temp
           - action: insert
             experimental_match_labels:
               id: /
@@ -1579,6 +1336,259 @@ Metrics config should match snapshot when using default values:
               aggregation_type: sum
               label_set:
               - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_container_resource_limits
+            new_name: k8s.container.spec.cpu.limit_temp
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_init_container_resource_limits
+            new_name: k8s.initcontainer.spec.cpu.limit_temp
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_container_resource_requests
+            new_name: k8s.container.spec.cpu.requests_temp
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_pod_init_container_resource_requests
+            new_name: k8s.initcontainer.spec.cpu.requests_temp
+          - action: combine
+            include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.cpu.requests
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_container_resource_requests
+            new_name: k8s.container.spec.memory.requests_temp
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_init_container_resource_requests
+            new_name: k8s.initcontainer.spec.memory.requests_temp
+          - action: combine
+            include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.memory.requests
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_container_resource_limits
+            match_type: regexp
+            new_name: k8s.container.spec.memory.limit_temp
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_pod_init_container_resource_limits
+            match_type: regexp
+            new_name: k8s.initcontainer.spec.memory.limit_temp
+          - action: insert
+            include: k8s.kube_pod_container_status_waiting
+            new_name: k8s.kube_pod_container_status_waiting_only_temp
+          - action: insert
+            include: k8s.kube_pod_container_status_running
+            new_name: k8s.kube_pod_container_status_running_only_temp
+          - action: insert
+            include: k8s.kube_pod_container_status_terminated
+            new_name: k8s.kube_pod_container_status_terminated_only_temp
+          - action: combine
+            include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
+            match_type: regexp
+            new_name: k8s.container.status_temp
+            operations:
+            - action: update_label
+              label: status
+              new_label: sw.k8s.container.status
+            submatch_case: lower
+          - action: insert
+            include: k8s.kube_pod_init_container_status_waiting
+            new_name: k8s.kube_pod_init_container_status_waiting_only_temp
+          - action: insert
+            include: k8s.kube_pod_init_container_status_running
+            new_name: k8s.kube_pod_init_container_status_running_only_temp
+          - action: insert
+            include: k8s.kube_pod_init_container_status_terminated
+            new_name: k8s.kube_pod_init_container_status_terminated_only_temp
+          - action: combine
+            include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
+            match_type: regexp
+            new_name: k8s.initcontainer.status_temp
+            operations:
+            - action: update_label
+              label: status
+              new_label: sw.k8s.container.status
+            submatch_case: lower
+          - action: combine
+            include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
+            match_type: regexp
+            new_name: k8s.container.status
+            submatch_case: lower
+          - action: insert
+            include: k8s.container.spec.cpu.limit_temp
+            new_name: k8s.pod.spec.cpu.limit
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: combine
+            include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.cpu.limit
+          - action: insert
+            include: k8s.container.spec.memory.limit_temp
+            new_name: k8s.pod.spec.memory.limit
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: combine
+            include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+            match_type: regexp
+            new_name: k8s.container.spec.memory.limit
+          - action: insert
+            include: k8s.kube_pod_container_status_running
+            new_name: k8s.pod.containers.running
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+          - action: insert
+            include: k8s.container.spec.cpu.requests
+            new_name: k8s.pod.spec.cpu.requests
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            include: k8s.container.spec.memory.requests
+            new_name: k8s.pod.spec.memory.requests
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - pod
+              - namespace
+              - k8s.node.name
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: DaemonSet
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.daemonset
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: daemonset
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: ReplicaSet
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.replicaset
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: replicaset
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: StatefulSet
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.statefulset
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: statefulset
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: Job
+            include: k8s.kube_pod_owner
+            new_name: k8s.kube.pod.owner.job
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: job_name
+          - action: insert
+            experimental_match_labels:
+              owner_is_controller: "true"
+              owner_kind: Deployment
+            include: k8s.kube_replicaset_owner
+            new_name: k8s.kube.replicaset.owner.deployment
+            operations:
+            - action: update_label
+              label: owner_name
+              new_label: deployment
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_node_status_capacity
+            new_name: k8s.node.cpu.capacity
+          - action: insert
+            experimental_match_labels:
+              resource: cpu
+            include: k8s.kube_node_status_allocatable
+            new_name: k8s.node.cpu.allocatable
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_node_status_capacity
+            new_name: k8s.node.memory.capacity
+          - action: insert
+            experimental_match_labels:
+              resource: memory
+            include: k8s.kube_node_status_allocatable
+            new_name: k8s.node.memory.allocatable
+          - action: insert
+            experimental_match_labels:
+              condition: Ready
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.ready
+          - action: insert
+            experimental_match_labels:
+              condition: NetworkUnavailable
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.networkunavailable
+          - action: insert
+            experimental_match_labels:
+              condition: PIDPressure
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.pidpressure
+          - action: insert
+            experimental_match_labels:
+              condition: MemoryPressure
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.memorypressure
+          - action: insert
+            experimental_match_labels:
+              condition: DiskPressure
+              status: "true"
+            include: k8s.kube_node_status_condition
+            new_name: k8s.node.status.condition.diskpressure
+          - action: insert
+            experimental_match_labels:
+              phase: Running
+            include: k8s.kube_pod_status_phase
+            new_name: k8s.pod.status.phase.running_temp
           - action: insert
             include: k8s.kube_pod_info
             new_name: k8s.cluster.pods
@@ -2030,8 +2040,6 @@ Metrics config should match snapshot when using default values:
           metric_statements:
           - context: datapoint
             statements:
-            - convert_gauge_to_sum("cumulative", true) where IsMatch(metric.name, "^.*_total$")
-              == true
             - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$")
               == true and value_double > 0
             - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$")
@@ -2059,8 +2067,8 @@ Metrics config should match snapshot when using default values:
           - context: datapoint
             statements:
             - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)|(kube_node_.*)|(kube_pod_info)|(kube_pod_container_resource_requests)|(kube_pod_container_resource_limits)|(kube_pod_init_container_resource_requests)|(kube_pod_init_container_resource_limits)$")
-              == true and attributes["k8s.node.name"] == nil
+              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+              == nil
       receivers:
         k8s_events: null
         otlp:
@@ -2204,6 +2212,31 @@ Metrics config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
+            - batch
+            receivers:
+            - forward/metric-exporter
+          metrics/kubestatemetrics:
+            exporters:
+            - forward/prometheus
+            processors:
+            - memory_limiter
+            - filter/kube-state-metrics
+            receivers:
+            - prometheus/kube-state-metrics
+          metrics/otlp:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - metricstransform/rename-otel
+            - resource/otlp-metrics
+            receivers:
+            - otlp
+          metrics/prometheus:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/receiver
             - transform
             - filter/remove_internal
@@ -2237,27 +2270,8 @@ Metrics config should match snapshot when using default values:
             - resource/metrics
             - k8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - batch
             receivers:
             - forward/prometheus
-          metrics/kubestatemetrics:
-            exporters:
-            - forward/prometheus
-            processors:
-            - memory_limiter
-            - filter/kube-state-metrics
-            receivers:
-            - prometheus/kube-state-metrics
-          metrics/otlp:
-            exporters:
-            - otlp
-            processors:
-            - memory_limiter
-            - metricstransform/rename-otel
-            - resource/otlp-metrics
-            - batch
-            receivers:
-            - otlp
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus

@@ -24,11 +24,49 @@ otel:
     tag: ""
     pullPolicy: IfNotPresent
 
-  init_image:
-    # otel-endpoint-check image
-    repository: ""
-    tag: ""
-    pullPolicy: IfNotPresent
+  init_images:
+    swi_endpoint_check:
+      repository: ""
+      tag: ""
+      pullPolicy: IfNotPresent
+    
+    busy_box:
+      repository: ""
+      tag: ""
+      pullPolicy: IfNotPresent
+
+  node_collector:
+    terminationGracePeriodSeconds: 600
+
+    sending_queue:
+      enabled: true
+
+      # Number of consumers that dequeue batches; ignored if enabled is false
+      num_consumers: 10
+
+      # Maximum number of batches kept in memory before dropping; ignored if enabled is false User should calculate this as num_seconds * requests_per_second / requests_per_batch where:
+      # * num_seconds is the number of seconds to buffer in case of a backend outage
+      # * requests_per_second is the average number of requests per seconds
+      # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
+      queue_size: 200
+
+      # Configuration for persistent data storage of sending queue of node-collector
+      # For detailed explanation see https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md#persistent-queue
+      persistent_storage:
+        enabled: false
+        directory: /var/lib/swo/sending_queue
+
+    retry_on_failure:
+      enabled: true
+
+      # Time to wait after the first failure before retrying; ignored if enabled is false
+      initial_interval: 10s
+
+      # Is the upper bound on backoff; ignored if enabled is false
+      max_interval: 30s
+
+      # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+      max_elapsed_time: 300s
 
   # Configuration for metrics collection
   metrics:
@@ -65,6 +103,34 @@ otel:
 
     # Check if Prometheus endpoint is reachable
     prometheus_check: false
+
+    sending_queue:
+      enabled: true
+
+      # Number of consumers that dequeue batches; ignored if enabled is false
+      num_consumers: 10
+
+      # Maximum number of batches kept in memory before dropping; ignored if enabled is false User should calculate this as num_seconds * requests_per_second / requests_per_batch where:
+      # * num_seconds is the number of seconds to buffer in case of a backend outage
+      # * requests_per_second is the average number of requests per seconds
+      # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
+      queue_size: 200
+
+      # When enabled sending_queue of metrics collector will be offloaded to disk. It will use emptyDir volume
+      # This will reduce amount of memory, but it will use slightly more CPU and will have slightly lower throughput
+      offload_to_disk: false
+
+    retry_on_failure:
+      enabled: true
+
+      # Time to wait after the first failure before retrying; ignored if enabled is false
+      initial_interval: 10s
+
+      # Is the upper bound on backoff; ignored if enabled is false
+      max_interval: 30s
+
+      # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+      max_elapsed_time: 300s
 
     prometheus:
       # URL of prometheus where to scrape
@@ -187,6 +253,7 @@ otel:
     nodeSelector: {}
     tolerations: []
     affinity: {}
+    terminationGracePeriodSeconds: 600
 
   # Configuration for Events collection
   events:
@@ -203,6 +270,34 @@ otel:
       send_batch_size: 512
       send_batch_max_size: 512
       timeout: 1s
+
+    sending_queue:
+      enabled: true
+
+      # Number of consumers that dequeue batches; ignored if enabled is false
+      num_consumers: 10
+
+      # Maximum number of batches kept in memory before dropping; ignored if enabled is false User should calculate this as num_seconds * requests_per_second / requests_per_batch where:
+      # * num_seconds is the number of seconds to buffer in case of a backend outage
+      # * requests_per_second is the average number of requests per seconds
+      # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
+      queue_size: 200
+
+      # When enabled sending_queue of metrics collector will be offloaded to disk. It will use emptyDir volume
+      # This will reduce amount of memory, but it will use slightly more CPU and will have slightly lower throughput
+      offload_to_disk: false
+
+    retry_on_failure:
+      enabled: true
+
+      # Time to wait after the first failure before retrying; ignored if enabled is false
+      initial_interval: 10s
+
+      # Is the upper bound on backoff; ignored if enabled is false
+      max_interval: 30s
+
+      # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+      max_elapsed_time: 300s
 
     # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
@@ -275,6 +370,7 @@ otel:
     nodeSelector: {}
     tolerations: []
     affinity: {}
+    terminationGracePeriodSeconds: 600
 
   # Configuration for Logs collection
   logs:

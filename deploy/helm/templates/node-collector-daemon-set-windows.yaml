@@ -28,7 +28,7 @@ spec:
         prometheus.io/scheme: "http"
 {{- end}}
     spec:
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: {{ .Values.otel.node_collector.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
       tolerations:
       {{- if .Values.otel.logs.tolerations }}
@@ -123,6 +123,10 @@ spec:
               readOnly: true
             - name: logcheckpoints
               mountPath: c:{{ .Values.otel.logs.filestorage.directory }}
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+            - name: sending-queue
+              mountPath: c:{{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
+{{- end }}
       volumes:
         - name: varlogpods
           hostPath:
@@ -143,4 +147,10 @@ spec:
             items:
               - key: logs.config
                 path: relay.yaml
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+        - name: sending-queue
+          hostPath:
+            path: c:{{ printf "%s/%s" .Values.otel.node_collector.sending_queue.persistent_storage.directory .Values.cluster.uid }}
+            type: DirectoryOrCreate
+{{- end }}
 {{- end }}
