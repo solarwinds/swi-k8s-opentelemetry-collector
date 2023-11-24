@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.0-rc.6] - 2023-11-24
+
+### Added
+- Added option to configure liveness and readiness probes initial startup delay on metrics collector, defaulting to 10s
+
 ## [3.1.0-rc.5] - 2023-11-24
 
 ### Fixed
