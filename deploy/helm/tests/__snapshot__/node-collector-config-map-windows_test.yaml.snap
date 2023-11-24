@@ -67,7 +67,7 @@ Node collector config for windows nodes should match snapshot when using default
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
-        cumulativetodelta:
+        cumulativetodelta/cadvisor:
           include:
             match_type: strict
             metrics:
@@ -98,7 +98,7 @@ Node collector config for windows nodes should match snapshot when using default
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
-        deltatorate:
+        deltatorate/cadvisor:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
           - k8s.pod.cpu.usage.seconds.rate
@@ -1068,8 +1068,8 @@ Node collector config for windows nodes should match snapshot when using default
             - metricstransform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
-            - cumulativetodelta
-            - deltatorate
+            - cumulativetodelta/cadvisor
+            - deltatorate/cadvisor
             - groupbyattrs/node
             - groupbyattrs/pod
             - groupbyattrs/all
