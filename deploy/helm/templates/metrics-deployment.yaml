@@ -133,10 +133,16 @@ spec:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
           livenessProbe:
+            {{- if .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
+            {{- end }}
             httpGet:
               path: /
               port: 13133
           readinessProbe:
+            {{- if .Values.otel.metrics.readinessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.otel.metrics.readinessProbe.initialDelaySeconds }}
+            {{- end }}
             httpGet:
               path: /
               port: 13133
