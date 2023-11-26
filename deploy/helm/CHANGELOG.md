@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.1] - 2023-11-27
+
+### Added
+
+- Added ARM64 support
+  - Upgraded OTEL collector image to `0.8.12` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.12))
+
+
 ## [3.1.0-rc.6] - 2023-11-24
 
 ### Added

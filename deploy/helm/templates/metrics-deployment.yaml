@@ -33,20 +33,27 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.otel.metrics.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
-      nodeSelector:
       {{- if .Values.otel.metrics.nodeSelector }}
+      nodeSelector:
       {{ toYaml .Values.otel.metrics.nodeSelector | nindent 8 }}
-      {{- else }}
-        kubernetes.io/os: linux
-        kubernetes.io/arch: amd64
       {{- end }}
       {{- if .Values.otel.metrics.tolerations }}
       tolerations:
         {{ toYaml .Values.otel.metrics.tolerations | nindent 8 }}
       {{- end }}
-      {{- if .Values.otel.metrics.affinity }}
       affinity:
+      {{- if .Values.otel.metrics.affinity }}
         {{- toYaml .Values.otel.metrics.affinity | nindent 8 }}
+      {{- else }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
       {{- end }}
       {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) .Values.otel.metrics.swi_endpoint_check }}
       {{- if .Values.imagePullSecrets }}

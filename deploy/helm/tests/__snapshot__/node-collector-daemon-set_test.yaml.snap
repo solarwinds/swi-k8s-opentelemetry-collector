@@ -9,6 +9,11 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
                   operator: NotIn
                   values:
                     - fargate
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
     containers:
       - command:
           - /wrapper
@@ -38,7 +43,7 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:0.8.10
+        image: solarwinds/swi-opentelemetry-collector:0.8.12
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -79,9 +84,6 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
-    nodeSelector:
-      kubernetes.io/arch: amd64
-      kubernetes.io/os: linux
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -128,6 +130,11 @@ DaemonSet spec should match snapshot when using default values:
                   operator: NotIn
                   values:
                     - fargate
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
     containers:
       - command:
           - /wrapper
@@ -157,7 +164,7 @@ DaemonSet spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:0.8.10
+        image: solarwinds/swi-opentelemetry-collector:0.8.12
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -198,9 +205,6 @@ DaemonSet spec should match snapshot when using default values:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
-    nodeSelector:
-      kubernetes.io/arch: amd64
-      kubernetes.io/os: linux
     securityContext:
       fsGroup: 0
       runAsGroup: 0
