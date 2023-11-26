@@ -19,7 +19,7 @@ RUN cd src/processor/swmetricstransformprocessor && go test ./...
 FROM alpine:3.18@sha256:eece025e432126ce23f223450a0326fbebde39cdf496a85d8c016293fc851978 as prep
 RUN apk --update add ca-certificates
 
-FROM debian:12.2@sha256:fab22df37377621693c68650b06680c0d8f7c6bf816ec92637944778db3ca2c0 as journal
+FROM debian:12.2@sha256:133a1f2aa9e55d1c93d0ae1aaa7b94fb141265d0ee3ea677175cdb96f5f990e5 as journal
 RUN apt update
 RUN apt install -y systemd
 
