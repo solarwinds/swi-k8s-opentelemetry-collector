@@ -54,6 +54,10 @@ spec:
                 values:
                 - amd64
                 - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
       {{- end }}
       {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) .Values.otel.metrics.swi_endpoint_check }}
       {{- if .Values.imagePullSecrets }}
