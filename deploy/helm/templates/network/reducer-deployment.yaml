@@ -46,14 +46,16 @@ spec:
             - --no-log-file
             - --{{ .Values.ebpfNetworkMonitoring.reducer.telemetry.logs.level }}
             - --enable-aws-enrichment
+            {{- if .Values.ebpfNetworkMonitoring.reducer.enableIdIdGeneration }}
             - --enable-id-id
+            {{- end }}
             - --disable-prometheus-metrics
             - --enable-otlp-grpc-metrics
             - --otlp-grpc-metrics-host={{ include "common.fullname" (tuple . "-metrics-collector") }}
             - --otlp-grpc-metrics-port={{ .Values.otel.metrics.otlp_endpoint.port }}
-            - --num-ingest-shards=1
-            - --num-matching-shards=1
-            - --num-aggregation-shards=1
+            - --num-ingest-shards={{ .Values.ebpfNetworkMonitoring.reducer.numIngestShards }}
+            - --num-matching-shards={{ .Values.ebpfNetworkMonitoring.reducer.numMatchingShards }}
+            - --num-aggregation-shards={{ .Values.ebpfNetworkMonitoring.reducer.numAggregationShards }}
             {{- if .Values.ebpfNetworkMonitoring.reducer.disableMetrics }}
             - --disable-metrics={{join "," .Values.ebpfNetworkMonitoring.reducer.disableMetrics}}
             {{- end }}

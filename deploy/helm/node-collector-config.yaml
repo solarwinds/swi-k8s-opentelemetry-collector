@@ -77,13 +77,13 @@ processors:
   {{- include "common-config.filter-remove-internal-post-processing" . | nindent 2 }}
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
 
-  cumulativetodelta:
+  cumulativetodelta/cadvisor:
     include:
       metrics:
         {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}
       match_type: strict
 
-  deltatorate:
+  deltatorate/cadvisor:
     metrics:
       {{- include "common-config.cumulativetorate-cadvisor" . | nindent 6}}
 
@@ -145,7 +145,7 @@ processors:
       # Node
       - key: k8s.node.name
         value: ${NODE_NAME}
-        action: insert
+        action: upsert
 
   resource/container:
     attributes:
@@ -264,14 +264,14 @@ processors:
         new_name: k8s.$${1}
 
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
-  cumulativetodelta:
+  cumulativetodelta/discovery:
     include:
       metrics:
 {{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
         - {{ . }}
 {{- end }}
       match_type: strict
-  deltatorate:
+  deltatorate/discovery:
     metrics:
 {{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
       - {{ . }}
@@ -558,8 +558,8 @@ service:
 {{- end }}
         - metricstransform/rename
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
-        - cumulativetodelta
-        - deltatorate
+        - cumulativetodelta/discovery
+        - deltatorate/discovery
 {{- end }}
         - groupbyattrs/common-all
         - resource/all
@@ -581,8 +581,8 @@ service:
         - metricstransform/preprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
-        - cumulativetodelta
-        - deltatorate
+        - cumulativetodelta/cadvisor
+        - deltatorate/cadvisor
         - groupbyattrs/node
         - groupbyattrs/pod
         - groupbyattrs/all
@@ -590,6 +590,7 @@ service:
         - filter/metrics
 {{- end }}
         - resource/metrics
+        - resource/all
       receivers:
         - receiver_creator/node
     metrics:

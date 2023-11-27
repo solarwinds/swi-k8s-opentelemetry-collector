@@ -42,13 +42,13 @@ otel:
       enabled: true
 
       # Number of consumers that dequeue batches; ignored if enabled is false
-      num_consumers: 10
+      num_consumers: 20
 
       # Maximum number of batches kept in memory before dropping; ignored if enabled is false User should calculate this as num_seconds * requests_per_second / requests_per_batch where:
       # * num_seconds is the number of seconds to buffer in case of a backend outage
       # * requests_per_second is the average number of requests per seconds
       # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
-      queue_size: 200
+      queue_size: 1000
 
       # Configuration for persistent data storage of sending queue of node-collector
       # For detailed explanation see https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md#persistent-queue
@@ -108,13 +108,13 @@ otel:
       enabled: true
 
       # Number of consumers that dequeue batches; ignored if enabled is false
-      num_consumers: 10
+      num_consumers: 20
 
       # Maximum number of batches kept in memory before dropping; ignored if enabled is false User should calculate this as num_seconds * requests_per_second / requests_per_batch where:
       # * num_seconds is the number of seconds to buffer in case of a backend outage
       # * requests_per_second is the average number of requests per seconds
       # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
-      queue_size: 200
+      queue_size: 1000
 
       # When enabled sending_queue of metrics collector will be offloaded to disk. It will use emptyDir volume
       # This will reduce amount of memory, but it will use slightly more CPU and will have slightly lower throughput
@@ -255,6 +255,11 @@ otel:
     affinity: {}
     terminationGracePeriodSeconds: 600
 
+    readinessProbe:
+      initialDelaySeconds: 10
+    livenessProbe:
+      initialDelaySeconds: 10
+
   # Configuration for Events collection
   events:
     # Define whether events will be collected and sent
@@ -281,7 +286,7 @@ otel:
       # * num_seconds is the number of seconds to buffer in case of a backend outage
       # * requests_per_second is the average number of requests per seconds
       # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
-      queue_size: 200
+      queue_size: 1000
 
       # When enabled sending_queue of metrics collector will be offloaded to disk. It will use emptyDir volume
       # This will reduce amount of memory, but it will use slightly more CPU and will have slightly lower throughput
@@ -603,6 +608,17 @@ ebpfNetworkMonitoring:
 
     # Port on which the reducer will listen for metrics from kernelCollector and k8sCollector
     telemetryPort: 7000
+
+    # Enables id-id time-series generation. The id-id time-series carry the lowest-level information but are of the greatest volume and cardinality, so are disabled by default.
+    # This also adds IP address to ingested metrics which is useful for identification which Pod from the workload is causing the traffic.
+    enableIdIdGeneration: false
+
+    # At present, scaling the reducer is a manual try-and-see task. The reducer runs a data processing pipeline separated into three stages – ingest, matching and aggregation.
+    # Usually, the best approach is to scale all the stages by the same factor. Keep in mind that each shard consumes a certain amount of memory, whether it is heavily loaded or not.
+    # Read more info about architecture https://github.com/open-telemetry/opentelemetry-ebpf/blob/main/docs/reducer/architecture.md
+    numIngestShards: 3
+    numMatchingShards: 3
+    numAggregationShards: 3
 
     telemetry:
       logs:

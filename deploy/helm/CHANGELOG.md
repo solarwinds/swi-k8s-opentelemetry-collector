@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.0-rc.6] - 2023-11-24
+
+### Added
+- Added option to configure liveness and readiness probes initial startup delay on metrics collector, defaulting to 10s
+
+## [3.1.0-rc.5] - 2023-11-24
+
+### Fixed
+- Fixed counterToRate conversion (when defined custom it broke cAdvisor processing)
+
+## [3.1.0-rc.4] - 2023-11-24
+- Fixed metrics in node-collector when logs are disabled
+- Fine tuning default values of sending_queue for better performance
+
+## [3.1.0-rc.3] - 2023-11-23
+
+### Fixed
+- Fixed `k8s.node.name` from node collector
+
+## [3.1.0-rc.2] - 2023-11-23
+
+### Added
+- Added option to configure scaling of eBPF monitoring reducer
+- Added option to configure eBPF reducer's `enableIdIdGeneration` which is unnecessary at the moment (default false). 
+
 ## [3.1.0-rc.1] - 2023-11-23
 
 ### Changed
