@@ -456,7 +456,7 @@ otel:
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
     memory_limiter:
       check_interval: 1s
-      limit_mib: 550
+      limit_mib: 800
       spike_limit_mib: 300
 
     # Memory Ballast enables applications to configure memory ballast for the process.
@@ -469,7 +469,7 @@ otel:
       requests:
         memory: 50Mi
       limits:
-        memory: 700Mi
+        memory: 1Gi
 
     # Scheduling configurations
     nodeSelector: {}
@@ -541,7 +541,6 @@ prometheus-node-exporter:
 
   nodeSelector:
     kubernetes.io/os: linux
-    kubernetes.io/arch: amd64
 
   affinity:
     nodeAffinity:
