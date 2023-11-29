@@ -527,8 +527,8 @@ kube-state-metrics:
 
   nodeSelector:
     kubernetes.io/os: linux
-    kubernetes.io/arch: amd64
 
+# Node exporter is deployed only in case opencost section is enabled. Otherwise this section can be ignored.
 prometheus-node-exporter:  
   service:
     port: 9101
@@ -536,8 +536,6 @@ prometheus-node-exporter:
     annotations:
       opencost.scrape: "true"     
       prometheus.io/scrape: "false"
-
-  prometheusScrape: false
 
   nodeSelector:
     kubernetes.io/os: linux
@@ -658,6 +656,7 @@ ebpfNetworkMonitoring:
       tag: ""
       pullPolicy: IfNotPresent
 
+# Prometheus is deployed ony in case opencost section is enabled. Otherwise this section can be ignored.
 prometheus:  
   alertmanager:
     enabled: false  
@@ -835,14 +834,12 @@ prometheus:
               - fargate
     nodeSelector:
       kubernetes.io/os: linux
-      kubernetes.io/arch: amd64
 
 opencost:
-  enabled: false
+  enabled: true
   opencost:     
     nodeSelector:
       kubernetes.io/os: linux
-      kubernetes.io/arch: amd64
     prometheus:
       internal:
         enabled: true     

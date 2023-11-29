@@ -45,7 +45,9 @@ jobs:
         uses: ./.github/actions/deploy-kubernetes
 
       - name: Add dependency chart repos
-        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add opencost https://opencost.github.io/opencost-helm-chart
 
       - name: Deploy services using Skaffold
         run: skaffold deploy --build-artifacts=/tmp/tags.json
@@ -97,7 +99,9 @@ jobs:
         uses: ./.github/actions/deploy-kubernetes
 
       - name: Add dependency chart repos
-        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add opencost https://opencost.github.io/opencost-helm-chart
 
       - name: Build
         run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
@@ -121,7 +125,10 @@ jobs:
           version: v3.10.0
 
       - name: Add dependency chart repos
-        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add opencost https://opencost.github.io/opencost-helm-chart
+
 
       - name: Download chart dependencies before linting
         run: helm dependency build deploy/helm
@@ -148,6 +155,7 @@ jobs:
       - name: Add dependency chart repos
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add opencost https://opencost.github.io/opencost-helm-chart
           helm repo add solarwinds https://helm.solarwinds.com
           helm repo update
 

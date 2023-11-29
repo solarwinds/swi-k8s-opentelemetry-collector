@@ -66,6 +66,12 @@ processors:
         - kube_pod_container_resource_limits
         - kube_pod_init_container_resource_requests
         - kube_pod_init_container_resource_limits
+        - k8s.node_cpu_hourly_cost
+        - k8s.node_gpu_hourly_cost
+        - k8s.node_ram_hourly_cost
+        - k8s.node_total_hourly_cost        
+        - k8s.node_gpu_count
+        - k8s.kubecost_node_is_spot                
     actions:
       - key: k8s.node.name
         from_attribute: node
@@ -871,6 +877,7 @@ processors:
 
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
+{{- if .Values.opencost.enabled }}
   filter/opencost-metrics:
     metrics:
       include:
@@ -883,6 +890,7 @@ processors:
           - "^node_gpu_count$"
           - "^kubecost_.*$"
           - "^.*_cost$"
+{{- end }}
   filter/kube-state-metrics:
     metrics:
       include:
@@ -1015,7 +1023,7 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
   k8s_events:
-{{ if .Values.opencost.enabled }}
+{{- if .Values.opencost.enabled }}
   prometheus/opencost:
     config:
       scrape_configs:
