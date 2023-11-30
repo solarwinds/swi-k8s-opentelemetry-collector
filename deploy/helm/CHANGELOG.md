@@ -12,6 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed autoupdate job to use right image
 
+## [3.2.0-alpha.3] - 2023-11-29
+
+- Added option to enable opencost metrics
+
+## [3.2.0-alpha.2] - 2023-11-27
+
+- Fine tuning default node-collector values for better performance
+
+## [3.2.0-alpha.1] - 2023-11-27
+
+### Added
+
+- Added ARM64 support
+  - Upgraded OTEL collector image to `0.8.12` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.12))
+
+
 ## [3.1.0] - 2023-11-27
 
 ### Added
