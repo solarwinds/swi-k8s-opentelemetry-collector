@@ -141,115 +141,116 @@ jobs:
       
       - name: Run unit tests
         run: helm unittest deploy/helm
+  # Since this job is installing last published Helm chart, it is temporarily disabled until we release new version which has image repo fixed
+  # helm_test_auto_update_against_last_published:
+  #   runs-on: ubuntu-latest
 
-  helm_test_auto_update_against_last_published:
-    runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  #     - name: Deploy Kubernetes
+  #       uses: ./.github/actions/deploy-kubernetes
 
-      - name: Deploy Kubernetes
-        uses: ./.github/actions/deploy-kubernetes
+  #     - name: Add dependency chart repos
+  #       run: |
+  #         helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  #         helm repo add opencost https://opencost.github.io/opencost-helm-chart
+  #         helm repo add solarwinds https://helm.solarwinds.com
+  #         helm repo update
 
-      - name: Add dependency chart repos
-        run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add opencost https://opencost.github.io/opencost-helm-chart
-          helm repo add solarwinds https://helm.solarwinds.com
-          helm repo update
+  #     - name: Deploy mocks.yaml
+  #       run: kubectl apply -f tests/deploy/base/mocks.yaml
 
-      - name: Deploy mocks.yaml
-        run: kubectl apply -f tests/deploy/base/mocks.yaml
 
-      - name: Create Dockerfile with Helm repository
-        run: |
-          cat <<EOF > Dockerfile
-          FROM python:3.8-alpine
-          WORKDIR /app
-          COPY . .
-          EXPOSE 5000
-          CMD ["python", "-m", "http.server", "5000"]
-          EOF
+  #     - name: Create Dockerfile with Helm repository
+  #       run: |
+  #         cat <<EOF > Dockerfile
+  #         FROM python:3.8-alpine
+  #         WORKDIR /app
+  #         COPY . .
+  #         EXPOSE 5000
+  #         CMD ["python", "-m", "http.server", "5000"]
+  #         EOF
 
-      - name: Package and build Helm repository image
-        run: |
-          helm dependency build deploy/helm
-          helm package deploy/helm
-          helm repo index .
-          docker build -t helm-repo:latest .
+  #     - name: Package and build Helm repository image
+  #       run: |
+  #         helm dependency build deploy/helm
+  #         helm package deploy/helm
+  #         helm repo index .
+  #         docker build -t helm-repo:latest .
 
-      - name: Deploy Helm repository in Kubernetes cluster
-        run: |
-          cat <<EOF | kubectl apply -f -
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: helm-repo
-          spec:
-            selector:
-              matchLabels:
-                app: helm-repo
-            replicas: 1
-            template:
-              metadata:
-                labels:
-                  app: helm-repo
-              spec:
-                containers:
-                - name: helm-repo
-                  image: helm-repo:latest
-                  imagePullPolicy: Never
-                  ports:
-                  - containerPort: 5000
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: helm-repo
-          spec:
-            selector:
-              app: helm-repo
-            ports:
-              - protocol: TCP
-                port: 5000
-                targetPort: 5000
-            type: ClusterIP
-          EOF
+  #     - name: Deploy Helm repository in Kubernetes cluster
+  #       run: |
+  #         cat <<EOF | kubectl apply -f -
+  #         apiVersion: apps/v1
+  #         kind: Deployment
+  #         metadata:
+  #           name: helm-repo
+  #         spec:
+  #           selector:
+  #             matchLabels:
+  #               app: helm-repo
+  #           replicas: 1
+  #           template:
+  #             metadata:
+  #               labels:
+  #                 app: helm-repo
+  #             spec:
+  #               containers:
+  #               - name: helm-repo
+  #                 image: helm-repo:latest
+  #                 imagePullPolicy: Never
+  #                 ports:
+  #                 - containerPort: 5000
+  #         ---
+  #         apiVersion: v1
+  #         kind: Service
+  #         metadata:
+  #           name: helm-repo
+  #         spec:
+  #           selector:
+  #             app: helm-repo
+  #           ports:
+  #             - protocol: TCP
+  #               port: 5000
+  #               targetPort: 5000
+  #           type: ClusterIP
+  #         EOF
 
-      - name: Deploy swo-k8s-collector Helm chart
-        run: |
-          helm install swo-k8s-collector solarwinds/swo-k8s-collector \
-            --create-namespace \
-            --namespace swo-k8s-collector \
-            --set cluster.name=test-cluster \
-            --set cluster.uid=test-cluster \
-            --set otel.endpoint=timeseries-mock-service:9082 \
-            --set prometheus.enabled=true \
-            --set autoupdate.enabled=true \
-            --set autoupdate.devel=true \
-            --set otel.metrics.swi_endpoint_check=false \
-            --set otel.metrics.prometheus_check=false \
-            --set otel.metrics.resources.requests.memory=100Mi \
-            --set otel.events.resources.requests.memory=100Mi \
-            --set otel.logs.resources.requests.memory=100Mi
+  #     - name: Deploy swo-k8s-collector Helm chart
+  #       run: |
+  #         helm install swo-k8s-collector solarwinds/swo-k8s-collector \
+  #           --create-namespace \
+  #           --namespace swo-k8s-collector \
+  #           --set cluster.name=test-cluster \
+  #           --set cluster.uid=test-cluster \
+  #           --set otel.endpoint=timeseries-mock-service:9082 \
+  #           --set prometheus.enabled=true \
+  #           --set autoupdate.enabled=true \
+  #           --set autoupdate.devel=true \
+  #           --set otel.metrics.swi_endpoint_check=false \
+  #           --set otel.metrics.prometheus_check=false \
+  #           --set otel.metrics.resources.requests.memory=100Mi \
+  #           --set otel.events.resources.requests.memory=100Mi \
+  #           --set otel.logs.resources.requests.memory=100Mi
 
-      - name: Update AutoUpdate ConfigMap to use local Helm repository
-        run: |
-          kubectl get configmap swo-k8s-collector-autoupdate-script -n swo-k8s-collector -o yaml > autoupdate-script.yaml
-          sed -i 's|https://helm.solarwinds.com|http://helm-repo.default.svc.cluster.local:5000|' autoupdate-script.yaml
-          kubectl apply -f autoupdate-script.yaml
-          cat autoupdate-script.yaml
+  #     - name: Update AutoUpdate ConfigMap to use local Helm repository
+  #       run: |
+  #         kubectl get configmap swo-k8s-collector-autoupdate-script -n swo-k8s-collector -o yaml > autoupdate-script.yaml
+  #         sed -i 's|https://helm.solarwinds.com|http://helm-repo.default.svc.cluster.local:5000|' autoupdate-script.yaml
+  #         kubectl apply -f autoupdate-script.yaml
+  #         cat autoupdate-script.yaml
 
-      - name: Trigger helm-autoupdate CronJob and verify
-        run: |
-          kubectl create job --from=cronjob/helm-autoupdate helm-autoupdate-manual-trigger -n swo-k8s-collector
-          kubectl wait --for=condition=complete --timeout=300s job/helm-autoupdate-manual-trigger -n swo-k8s-collector
+  #     - name: Trigger helm-autoupdate CronJob and verify
+  #       run: |
+  #         kubectl create job --from=cronjob/helm-autoupdate helm-autoupdate-manual-trigger -n swo-k8s-collector
+  #         kubectl wait --for=condition=complete --timeout=300s job/helm-autoupdate-manual-trigger -n swo-k8s-collector
 
-      - name: Trigger helm-autoupdate CronJob logs
-        if: ${{ always() }}
-        run: |
-          kubectl logs jobs/helm-autoupdate-manual-trigger -n swo-k8s-collector --all-containers=true
+  #     - name: Trigger helm-autoupdate CronJob logs
+  #       if: ${{ always() }}
+  #       run: |
+  #         kubectl logs jobs/helm-autoupdate-manual-trigger -n swo-k8s-collector --all-containers=true
 
   deploy_dockerhub:
     runs-on: ubuntu-latest
