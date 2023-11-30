@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.1.1] - 2023-11-30
+
+### Fixed
+- Fixed autoupdate job to use right image
+
 ## [3.1.0] - 2023-11-27
 
 ### Added
