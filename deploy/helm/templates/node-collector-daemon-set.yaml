@@ -73,7 +73,7 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
             - /wrapper

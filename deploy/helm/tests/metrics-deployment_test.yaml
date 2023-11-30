@@ -8,6 +8,92 @@ templates:
 tests:
   - it: Metrics collector spec should match snapshot when using default values
     template: metrics-deployment.yaml
+    chart:
+      appVersion: 1.0.0
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: Image should be correct in default state
+    template: metrics-deployment.yaml
+    chart:
+      appVersion: 1.0.0
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: solarwinds/swi-opentelemetry-collector:1.0.0
+  - it: Image should be correct when overriden repository
+    template: metrics-deployment.yaml
+    chart:
+      appVersion: 1.0.0
+    set:
+      otel.image.repository: "swi-opentelemetry-collector"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: swi-opentelemetry-collector:1.0.0
+  - it: Image should be correct when overriden tag
+    template: metrics-deployment.yaml
+    set:
+      otel.image.tag: "beta1"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: solarwinds/swi-opentelemetry-collector:beta1
+  - it: Image should be correct when overriden by azure
+    template: metrics-deployment.yaml
+    set:
+      aks: true
+      global.azure.images.image.digest: "abcd"
+      global.azure.images.image.image: "swi-opentelemetry-collector:v1.2.3"
+      global.azure.images.image.registry: "azurek8s.azure.io/marketplaceimages"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
+  - it: Image otel-endpoint-check should be correct in default state
+    template: metrics-deployment.yaml
+    set:
+      otel.metrics.swi_endpoint_check: true
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: fullstorydev/grpcurl:v1.8.7
+  - it: Image otel-endpoint-check should be correct when overriden repository
+    template: metrics-deployment.yaml
+    set:
+      otel.metrics.swi_endpoint_check: true
+      otel.init_images.swi_endpoint_check.repository: "aws/test-grpcurl"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: aws/test-grpcurl:v1.8.7
+  - it: Image otel-endpoint-check should be correct when overriden tag
+    template: metrics-deployment.yaml
+    set:
+      otel.metrics.swi_endpoint_check: true
+      otel.init_images.swi_endpoint_check.tag: "beta1"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: fullstorydev/grpcurl:beta1
+  - it: Image otel-endpoint-check should be correct when overriden by azure
+    template: metrics-deployment.yaml
+    set:
+      otel.metrics.swi_endpoint_check: true
+      aks: true
+      global.azure.images.swi_endpoint_check.digest: "abcd"
+      global.azure.images.swi_endpoint_check.image: "owngrpcurl:v1.2.3"
+      global.azure.images.swi_endpoint_check.registry: "azurek8s.azure.io/marketplaceimages"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: azurek8s.azure.io/marketplaceimages/owngrpcurl:v1.2.3@abcd
+  - it: Image prometheus-check should be correct in default state
+    template: metrics-deployment.yaml
+    set:
+      otel.metrics.prometheus_check: true
+      otel.metrics.prometheus.url: "http://prometheus:9090"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: busybox:1.36.1

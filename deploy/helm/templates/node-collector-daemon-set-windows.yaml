@@ -62,8 +62,8 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}-nanoserver-ltsc2022"
-          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          image: "{{ include "common.image" (tuple . .Values.otel "image_windows" nil (printf "%s%s" .Chart.AppVersion "-nanoserver-ltsc2022")) }}"
+          imagePullPolicy: {{ .Values.otel.image_windows.pullPolicy }}
           command:
             - c:\wrapper.exe
             - c:\swi-otelcol.exe

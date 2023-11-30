@@ -8,11 +8,15 @@ templates:
 tests:
   - it: DaemonSet spec should match snapshot when using default values
     template: node-collector-daemon-set.yaml
+    chart:
+      appVersion: 1.0.0
     asserts:
       - matchSnapshot:
           path: spec.template.spec
   - it: DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled
     template: node-collector-daemon-set.yaml
+    chart:
+      appVersion: 1.0.0
     set:
       ebpfNetworkMonitoring.enabled: true
     asserts:

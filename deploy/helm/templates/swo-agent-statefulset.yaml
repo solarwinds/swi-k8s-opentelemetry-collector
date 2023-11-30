@@ -37,7 +37,7 @@ spec:
       {{- end }}
       containers:
         - name: swo-agent
-          image: "{{ .Values.swoagent.image.repository }}:{{ .Values.swoagent.image.tag | default "v2.6.28@sha256:acfbb0122d24b4b8e9c9c9e2cf33ff1ee19abd2957a04098635a2bb9a248b716" }}"
+          image: "{{ include "common.image" (tuple . .Values.swoagent (tuple "image" "swoagent") "solarwinds/swo-agent:v2.6.28") }}"
           imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
