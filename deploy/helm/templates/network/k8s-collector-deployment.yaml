@@ -31,7 +31,7 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-reducer
-          image: "{{ .Values.otel.init_images.busy_box.repository | default "busybox" }}:{{ .Values.otel.init_images.busy_box.tag | default "1.36.1@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43" }}"
+          image: "{{ .Values.otel.init_images.busy_box.repository | default "busybox" }}:{{ .Values.otel.init_images.busy_box.tag | default "1.36.1" }}"
           imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
           command: ['sh', '-c', 'until nc -zv $EBPF_NET_INTAKE_HOST $EBPF_NET_INTAKE_PORT; do echo "Waiting for reducer endpoint..."; sleep 5; done;']
           env:
