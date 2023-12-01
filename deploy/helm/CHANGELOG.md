@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Images can be overriden by setting `global.azure.images.<image_key>` in `values.yaml`
+- Added `otel.api_token` to allow setting API token for OTEL collector through `values.yaml`
 
 ## [3.2.0-alpha.4] - 2023-11-30
 

@@ -282,3 +282,14 @@ Example:
 {{- end -}}
 
 {{- end -}}
+
+{{/*
+Define name for the Secret
+*/}}
+{{- define "common.secret" -}}
+{{- if .Values.otel.api_token }}
+{{- include "common.fullname" (tuple . "-secret") }}
+{{- else }}
+{{- "solarwinds-api-token" }}
+{{- end }}
+{{- end -}}
