@@ -295,3 +295,9 @@ Define name for the Secret
 {{- "solarwinds-api-token" }}
 {{- end }}
 {{- end -}}
+
+{{- define "common.minHelmVersion" -}}
+{{- if semverCompare "<3.10.3" .Capabilities.HelmVersion.Version }}
+  {{- fail (printf "Minimum required Helm version is 3.10.3, current version is %s" .Capabilities.HelmVersion.Version) }}
+{{- end }}
+{{- end }}
