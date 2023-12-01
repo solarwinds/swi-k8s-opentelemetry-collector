@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Images can be overriden by setting `global.azure.images.<image_key>` in `values.yaml`
 
+## [3.2.0-alpha.4] - 2023-11-30
+
+### Fixed
+- Removing sha256 from image pulls as it does not allow multi arch images
+
 ## [3.1.1] - 2023-11-30
 
 ### Fixed
