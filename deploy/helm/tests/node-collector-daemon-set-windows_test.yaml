@@ -7,6 +7,35 @@ templates:
 tests:
   - it: DaemonSet spec for windows nodes should match snapshot when using default values
     template: node-collector-daemon-set-windows.yaml
+    chart:
+      appVersion: 1.0.0
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: Image should be correct in default state
+    template: node-collector-daemon-set-windows.yaml
+    chart:
+      appVersion: 1.0.0
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: solarwinds/swi-opentelemetry-collector:1.0.0-nanoserver-ltsc2022
+  - it: Image should be correct when overriden tag
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.image_windows.tag: "beta1-nanoserver-ltsc2022"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: solarwinds/swi-opentelemetry-collector:beta1-nanoserver-ltsc2022
+  - it: Image should be correct when overriden by azure
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      aks: true
+      global.azure.images.image_windows.digest: "abcd"
+      global.azure.images.image_windows.image: "swi-opentelemetry-collector:v1.2.3"
+      global.azure.images.image_windows.registry: "azurek8s.azure.io/marketplaceimages"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd

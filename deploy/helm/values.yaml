@@ -14,11 +14,20 @@ otel:
   endpoint: <OTEL_ENVOY_ADDRESS>
   tls_insecure: false
 
+  # SWO API token used for authentication. If filled it will create secret that will be used by the collector
+  api_token: ""
+
   # The OTEL collector supports an HTTPS proxy. Specify the full URL of the HTTPS
   # proxy here. e.g. https_proxy: "https://myproxy.mydomain.com:8080"
   https_proxy_url: ""
 
   image:
+    repository: solarwinds/swi-opentelemetry-collector
+    # if not set appVersion field from Chart.yaml is used
+    tag: ""
+    pullPolicy: IfNotPresent
+  
+  image_windows:
     repository: solarwinds/swi-opentelemetry-collector
     # if not set appVersion field from Chart.yaml is used
     tag: ""

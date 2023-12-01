@@ -43,19 +43,21 @@ Usages:
 {{- end -}}
 
 {{/*
-Common template labels
+Common pod labels - those labels are included on every pod in the chart
 */}}
-{{- define "common.template-labels" -}}
-app.kubernetes.io/part-of: swo-k8s-collector
-app.kubernetes.io/instance: {{ template "common.fullname" . }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- define "common.pod-labels" -}}
+{{- if .Values.aks }}
+azure-extensions-usage-release-identifier: {{ .Release.Name }}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Common labels
 */}}
 {{- define "common.labels" -}}
-{{ include "common.template-labels" . }}
+app.kubernetes.io/part-of: swo-k8s-collector
+app.kubernetes.io/instance: {{ template "common.fullname" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if .Chart.AppVersion }}
 helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -198,4 +200,98 @@ pod_association:
 {{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "persistentvolumeclaim" (index . 1) (index . 2)) }}
 {{ include "common.k8s-instrumentation.resource" (tuple . "node" (index . 1) (index . 2)) }}
 {{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "service" (index . 1) (index . 2)) }}
+{{- end -}}
+
+{{/*
+common.image - Helper template to determine the image path based on various conditions.
+
+Usage:
+{{ include "common.image" (tuple $root $path $nameObj $defaultFullImage $defaultTag) }}
+
+Where:
+- $root: The root context of the chart (usually passed as '.' from the calling template).
+- $path: The path within .Values where the image information is located.
+- $nameObj: The key name for the image configuration. This can be either a string or a slice.
+  - If a string, it is used as the key name for both otel and Azure image configurations.
+  - If a slice, it expects two elements:
+    - The first element is the key name for the otel image configuration.
+    - The second element is the key name for the Azure image configuration.
+- $defaultFullImage: (Optional) A default image (including tag) to use if the specified image is not found. 
+  - Expected format: "repository/image:tag".
+- $defaultTag: (Optional) A default tag to use if no tag is specified in the image configuration.
+
+Details:
+- The template first checks if $nameObj is a slice to handle different keys for otel and Azure configurations.
+- It then prepares the image path based on whether the chart is configured to use Azure (`$root.Values.aks`) or custom settings.
+- For Azure configurations, it constructs the image path using Azure registry, image, and digest details.
+- For non-Azure configurations, it uses the repository and tag from the specified path in .Values, falling back to default values if necessary.
+
+Example:
+{{ include "common.image" (tuple . .Values.otel "image" "myrepo/myimage:v1.0.0" "v1.0.0") }}
+- This example uses "image" as the key for both otel and Azure configurations, with default image "myrepo/myimage:v1.0.0" and default tag "v1.0.0".
+*/}}
+{{- define "common.image" -}}
+{{- $root := index . 0 -}}
+{{- $path := index . 1 -}}
+{{- $nameObj := index . 2 -}}
+{{- $name := "" -}}
+{{- $azureName := "" -}}
+{{- if eq (kindOf $nameObj) "slice" -}}
+  {{- $name = index $nameObj 0 -}}
+  {{- $azureName = index $nameObj 1 -}}
+{{- else -}}
+  {{- $name = $nameObj -}}
+  {{- $azureName = $nameObj -}}
+{{- end -}}
+
+{{- $defaultFullImage := "" -}}
+{{- $defaultImage := "" -}}
+{{- $defaultTag := "" -}}
+{{- if gt (len .) 3 -}}
+  {{- $defaultFullImage = index . 3 -}}
+{{- end -}}
+
+{{- if gt (len .) 4 -}}
+  {{- $defaultTag = index . 4 -}}
+{{- end -}}
+
+{{- if $defaultFullImage -}}
+  {{- $defaultImageParts := split ":" $defaultFullImage -}}
+  {{- $defaultImage = $defaultImageParts._0 -}}
+  {{- if gt (len $defaultImageParts) 1 -}}
+    {{- $defaultTag = $defaultImageParts._1 -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if and $root.Values.aks $root.Values.global $root.Values.global.azure $root.Values.global.azure.images (index $root.Values.global.azure.images $azureName) -}}
+  {{- $azurePath := $root.Values.global.azure.images -}}
+  {{- $azureImageObj := index $azurePath $azureName -}}
+  {{- $azureDigest := index $azureImageObj "digest" -}}
+  {{- $azureImage := index $azureImageObj "image" -}}
+  {{- $azureRegistry := index $azureImageObj "registry" -}}
+  {{- printf "%s/%s@%s" $azureRegistry $azureImage $azureDigest -}}
+{{- else -}}
+  {{- $valuesPath := index $path $name -}}
+  {{- $valuesRepository := index $valuesPath "repository" -}}
+  {{- $valuesTag := index $valuesPath "tag" -}}
+  {{- $repo := $valuesRepository | default $defaultImage -}}
+  {{- $tag := $valuesTag | default $defaultTag -}}
+  {{- if $tag -}}
+    {{- printf "%s:%s" $repo $tag -}}
+  {{- else -}}
+    {{- printf "%s" $repo -}}
+  {{- end -}}
+{{- end -}}
+
+{{- end -}}
+
+{{/*
+Define name for the Secret
+*/}}
+{{- define "common.secret" -}}
+{{- if .Values.otel.api_token }}
+{{- include "common.fullname" (tuple . "-secret") }}
+{{- else }}
+{{- "solarwinds-api-token" }}
+{{- end }}
 {{- end -}}

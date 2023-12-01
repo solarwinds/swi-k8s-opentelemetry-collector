@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: swo-k8s-collector
         app: {{ include "common.fullname" (tuple . "-node-collector-windows") }}
 {{ include "common.labels" . | indent 8 }}
+{{ include "common.pod-labels" . | indent 8 }}
       annotations:
         checksum/config: {{ tpl (.Files.Get "node-collector-config-map-windows.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
@@ -62,8 +63,8 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ .Values.otel.image.repository }}:{{ .Values.otel.image.tag | default .Chart.AppVersion }}-nanoserver-ltsc2022"
-          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          image: "{{ include "common.image" (tuple . .Values.otel "image_windows" nil (printf "%s%s" .Chart.AppVersion "-nanoserver-ltsc2022")) }}"
+          imagePullPolicy: {{ .Values.otel.image_windows.pullPolicy }}
           command:
             - c:\wrapper.exe
             - c:\swi-otelcol.exe
@@ -86,7 +87,7 @@ spec:
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: solarwinds-api-token
+                  name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
                   optional: true
           envFrom:

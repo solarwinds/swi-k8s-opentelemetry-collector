@@ -18,6 +18,8 @@ spec:
     metadata:
       labels:
         app: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+{{ include "common.labels" . | indent 8 }}
+{{ include "common.pod-labels" . | indent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/network/configmap.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
@@ -31,7 +33,7 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-reducer
-          image: "{{ .Values.otel.init_images.busy_box.repository | default "busybox" }}:{{ .Values.otel.init_images.busy_box.tag | default "1.36.1" }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box" "busybox:1.36.1") }}"
           imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
           command: ['sh', '-c', 'until nc -zv $EBPF_NET_INTAKE_HOST $EBPF_NET_INTAKE_PORT; do echo "Waiting for reducer endpoint..."; sleep 5; done;']
           env:
@@ -40,13 +42,13 @@ spec:
             - name: "EBPF_NET_INTAKE_PORT"
               value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
       containers:
-      - image: "{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.repository | default "otel/opentelemetry-ebpf-k8s-watcher" }}:{{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.tag | default "v0.10.0" }}"
+      - image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.k8sCollector.watcher (tuple "image" "ebpf_k8s_watcher") "otel/opentelemetry-ebpf-k8s-watcher:v0.10.0") }}"
         imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
         name: k8s-watcher
         args:
           - --log-console
           - --log-level={{ .Values.ebpfNetworkMonitoring.k8sCollector.telemetry.logs.level }}
-      - image: "{{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.repository | default "otel/opentelemetry-ebpf-k8s-relay" }}:{{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.tag | default "v0.10.0" }}"
+      - image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.k8sCollector.relay (tuple "image" "ebpf_k8s_relay") "otel/opentelemetry-ebpf-k8s-relay:v0.10.0") }}"
         imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
         name: k8s-relay
         args:

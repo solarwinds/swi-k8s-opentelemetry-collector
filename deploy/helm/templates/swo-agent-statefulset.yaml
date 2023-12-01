@@ -23,9 +23,10 @@ spec:
       annotations:
         checksum/values: {{ toJson .Values | sha256sum }}
       labels:
-{{ include "common.template-labels" . | indent 8 }}
+{{ include "common.labels" . | indent 8 }}
         app: {{ include "common.fullname" (tuple . "-swo-agent") }}
         solarwinds/swo-agent: "true"
+{{ include "common.pod-labels" . | indent 8 }}
     spec:
       securityContext: {}
       nodeSelector:
@@ -37,7 +38,7 @@ spec:
       {{- end }}
       containers:
         - name: swo-agent
-          image: "{{ .Values.swoagent.image.repository }}:{{ .Values.swoagent.image.tag | default "v2.6.28@sha256:acfbb0122d24b4b8e9c9c9e2cf33ff1ee19abd2957a04098635a2bb9a248b716" }}"
+          image: "{{ include "common.image" (tuple . .Values.swoagent (tuple "image" "swoagent") "solarwinds/swo-agent:v2.6.28") }}"
           imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
@@ -47,7 +48,7 @@ spec:
             - name: UAMS_ACCESS_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: solarwinds-api-token
+                  name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
           resources:
 {{ toYaml .Values.swoagent.resources | indent 12 }}
