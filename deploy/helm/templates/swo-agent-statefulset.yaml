@@ -23,9 +23,10 @@ spec:
       annotations:
         checksum/values: {{ toJson .Values | sha256sum }}
       labels:
-{{ include "common.template-labels" . | indent 8 }}
+{{ include "common.labels" . | indent 8 }}
         app: {{ include "common.fullname" (tuple . "-swo-agent") }}
         solarwinds/swo-agent: "true"
+{{ include "common.pod-labels" . | indent 8 }}
     spec:
       securityContext: {}
       nodeSelector:

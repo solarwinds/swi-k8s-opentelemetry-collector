@@ -26,8 +26,9 @@ spec:
 {{- end}}
       labels:
         app.kubernetes.io/name: swo-k8s-collector
-{{ include "common.template-labels" . | indent 8 }}
+{{ include "common.labels" . | indent 8 }}
         app: {{ include "common.fullname" (tuple . "-events") }}
+{{ include "common.pod-labels" . | indent 8 }}
     spec:
       terminationGracePeriodSeconds: {{ .Values.otel.events.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}

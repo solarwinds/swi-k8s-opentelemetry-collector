@@ -43,19 +43,21 @@ Usages:
 {{- end -}}
 
 {{/*
-Common template labels
+Common pod labels - those labels are included on every pod in the chart
 */}}
-{{- define "common.template-labels" -}}
-app.kubernetes.io/part-of: swo-k8s-collector
-app.kubernetes.io/instance: {{ template "common.fullname" . }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- define "common.pod-labels" -}}
+{{- if .Values.aks }}
+azure-extensions-usage-release-identifier: {{ .Release.Name }}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Common labels
 */}}
 {{- define "common.labels" -}}
-{{ include "common.template-labels" . }}
+app.kubernetes.io/part-of: swo-k8s-collector
+app.kubernetes.io/instance: {{ template "common.fullname" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if .Chart.AppVersion }}
 helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

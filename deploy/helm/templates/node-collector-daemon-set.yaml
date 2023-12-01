@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: swo-k8s-collector
         app: {{ include "common.fullname" (tuple . "-node-collector") }}
 {{ include "common.labels" . | indent 8 }}
+{{ include "common.pod-labels" . | indent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/node-collector-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}

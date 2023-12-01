@@ -50,6 +50,10 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
+    - isSubset:
+        path: spec.template.metadata.labels
+        content:
+          azure-extensions-usage-release-identifier: RELEASE-NAME
   - it: Image otel-endpoint-check should be correct in default state
     template: metrics-deployment.yaml
     set:

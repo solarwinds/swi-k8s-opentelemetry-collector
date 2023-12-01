@@ -18,6 +18,8 @@ spec:
     metadata:
       labels:
         app: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
+{{ include "common.labels" . | indent 8 }}
+{{ include "common.pod-labels" . | indent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/network/configmap.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}

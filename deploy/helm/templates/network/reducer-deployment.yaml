@@ -16,6 +16,8 @@ spec:
     metadata:
       labels:
         app: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
+{{ include "common.labels" . | indent 8 }}
+{{ include "common.pod-labels" . | indent 8 }}
       annotations:
         checksum/values: {{ toJson .Values | sha256sum }}
     spec:
