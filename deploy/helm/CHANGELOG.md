@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.5] - 2023-12-01
+
 ### Added
 
 - Images can be overriden by setting `global.azure.images.<image_key>` in `values.yaml`
