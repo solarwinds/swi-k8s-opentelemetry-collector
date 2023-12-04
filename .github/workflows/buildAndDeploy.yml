@@ -141,7 +141,7 @@ jobs:
       
       - name: Run unit tests
         run: helm unittest deploy/helm
-        
+
   helm_test_auto_update_against_last_published:
     runs-on: ubuntu-latest
 
@@ -244,8 +244,26 @@ jobs:
 
       - name: Trigger helm-autoupdate CronJob and verify
         run: |
+          # Trigger the CronJob
           kubectl create job --from=cronjob/helm-autoupdate helm-autoupdate-manual-trigger -n swo-k8s-collector
+          
+          # Wait for the job to complete
           kubectl wait --for=condition=complete --timeout=300s job/helm-autoupdate-manual-trigger -n swo-k8s-collector
+          
+          # Get the job's success and failure status
+          JOB_SUCCEEDED=$(kubectl get job helm-autoupdate-manual-trigger -n swo-k8s-collector -o=jsonpath='{.status.succeeded}')
+          JOB_FAILED=$(kubectl get job helm-autoupdate-manual-trigger -n swo-k8s-collector -o=jsonpath='{.status.failed}')
+
+          # Check if the job succeeded or failed
+          if [ "$JOB_SUCCEEDED" == "1" ]; then
+            echo "Job completed successfully."
+          elif [ "$JOB_FAILED" != "" ]; then
+            echo "Job failed."
+            exit 1
+          else
+            echo "Job did not complete successfully. Status is ambiguous."
+            exit 1
+          fi
 
       - name: Trigger helm-autoupdate CronJob logs
         if: ${{ always() }}
