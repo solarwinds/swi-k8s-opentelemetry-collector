@@ -15,8 +15,14 @@ runs:
         docker-enabled: true
         metrics-enabled: true
 
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: '3.10.3'
+
     - name: Print cluster info
       run: |
+        helm version
         kubectl version
         kubectl get sc
         kubectl cluster-info dump --output=yaml
