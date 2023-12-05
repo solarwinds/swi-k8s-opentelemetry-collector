@@ -338,7 +338,7 @@ jobs:
 
   deploy_dockerhub_windows:
     runs-on: windows-2022
-    needs: build_and_test_windows
+    needs: [build_and_test_windows_2022, build_and_test_windows_2019]
     name: Deploy to docker hub Windows
     if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
     environment:
