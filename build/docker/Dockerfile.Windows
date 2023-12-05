@@ -1,3 +1,5 @@
+ARG WINBASE=mcr.microsoft.com/windows/nanoserver:ltsc2022
+
 FROM docker.io/library/golang:1.21.4-nanoserver-ltsc2022@sha256:2370cf7fe10ee665fb650b73d3a1413396ade6e6eae99738ff63cf0def881e96 as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
@@ -20,7 +22,7 @@ ARG GOEXPERIMENT=boringcrypto
 
 RUN go build -a -o ./wrapper.exe
 
-FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
+FROM ${WINBASE}
 
 COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol.exe
 COPY --from=wrapper /src/src/wrapper/wrapper.exe /wrapper.exe
