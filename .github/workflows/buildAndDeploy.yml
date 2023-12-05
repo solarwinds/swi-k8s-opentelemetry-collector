@@ -102,6 +102,12 @@ jobs:
         run: |
           docker build -t swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2022 -f build/docker/Dockerfile.Windows-2022 . 
           
+      - name: CP assets
+        run: |
+          docker create --name assets swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2022
+          docker cp assets:/swi-otelcol.exe swi-otelcol.exe
+          docker cp assets:/wrapper.exe wrapper.exe
+
       - name: Save image
         if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
         run: |
@@ -113,6 +119,8 @@ jobs:
           name: image
           path: |
             swi-k8s-opentelemetry-collector-windows-ltsc2022.tar
+            wrapper.exe
+            swi-otelcol.exe
           retention-days: 2
         
 
