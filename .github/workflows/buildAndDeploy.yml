@@ -55,42 +55,7 @@ jobs:
       - name: Run integration tests
         uses: ./.github/actions/run-integration-tests
   
-  build_and_test_windows_2019:
-    runs-on: windows-2019
-    needs: build_and_test_windows_2022
-    #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
-    outputs:
-      image_tag: ${{ steps.generate-tag.outputs.value }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: binaries
-
-      - name: Generate docker image tag
-        id: generate-tag
-        run: echo "::set-output name=value::v${{ github.run_number }}-$(git rev-parse --short HEAD)"
-
-      - name: Build
-        run: |
-          docker build -t swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019 -f build/docker/Dockerfile.Windows-2019 . 
-
-      - name: Save image
-        #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
-        run: |
-          docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2019.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019
-
-      - uses: actions/upload-artifact@v3
-        #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
-        with:
-          name: image2019
-          path: |
-            swi-k8s-opentelemetry-collector-windows-ltsc2019.tar
-          retention-days: 2
-
-  build_and_test_windows_2022:
+  build_and_test_windows:
     runs-on: windows-2022
     #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
     outputs:
@@ -113,19 +78,15 @@ jobs:
           docker cp assets:/swi-otelcol.exe swi-otelcol.exe
           docker cp assets:/wrapper.exe wrapper.exe
 
+      - name: Build 2019
+        run: |
+          docker build -t swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019 --build-arg WINBASE=mcr.microsoft.com/windows/nanoserver:ltsc2019 -f build/docker/Dockerfile.Windows-Runtime . 
+
       - name: Save image
         #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
         run: |
           docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2022.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2022
-          
-      - uses: actions/upload-artifact@v3
-        #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
-        with:
-          name: binaries
-          path: |
-            wrapper.exe
-            swi-otelcol.exe
-          retention-days: 2
+          docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2019.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019
       
       - uses: actions/upload-artifact@v3
         #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
@@ -133,6 +94,7 @@ jobs:
           name: image
           path: |
             swi-k8s-opentelemetry-collector-windows-ltsc2022.tar
+            swi-k8s-opentelemetry-collector-windows-ltsc2019.tar
           retention-days: 2
         
 
@@ -358,7 +320,7 @@ jobs:
 
   deploy_dockerhub_windows:
     runs-on: windows-2022
-    needs: [build_and_test_windows_2022, build_and_test_windows_2019]
+    needs: build_and_test_windows
     name: Deploy to docker hub Windows
     #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
     environment:
@@ -368,10 +330,6 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: image
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: image2019
 
       - name: Get image tag
         id: vars
@@ -387,12 +345,22 @@ jobs:
           docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test_windows.outputs.image_tag }}-nanoserver-ltsc2022 ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
           docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test_windows.outputs.image_tag }}-nanoserver-ltsc2019 ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2019
 
-      # - name: Docker login
-      #   env:
-      #     DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
-      #     DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
-      #   run: echo "$env:DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:DOCKER_HUB_CI_USER" --password-stdin
+      - name: Docker login
+        env:
+          DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
+          DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
+        run: echo "$env:DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:DOCKER_HUB_CI_USER" --password-stdin
 
-      # - name: Push as specific
-      #   run: docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
+      - name: Push as specific
+        run: | 
+          docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
+          docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2019
+
+      - name: Create multi-arch manifest
+        run: | 
+          docker manifest create ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver --amend ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022 --amend ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2019
+
+      - name: Push multi-arch manifest
+        run: | 
+          docker manifest push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver
 
