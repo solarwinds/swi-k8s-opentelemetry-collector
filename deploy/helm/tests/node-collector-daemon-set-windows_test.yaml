@@ -19,15 +19,15 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.containers[0].image
-          value: solarwinds/swi-opentelemetry-collector:1.0.0-nanoserver-ltsc2022
+          value: solarwinds/swi-opentelemetry-collector:1.0.0-nanoserver
   - it: Image should be correct when overriden tag
     template: node-collector-daemon-set-windows.yaml
     set:
-      otel.image_windows.tag: "beta1-nanoserver-ltsc2022"
+      otel.image_windows.tag: "beta1-nanoserver"
     asserts:
     - equal:
           path: spec.template.spec.containers[0].image
-          value: solarwinds/swi-opentelemetry-collector:beta1-nanoserver-ltsc2022
+          value: solarwinds/swi-opentelemetry-collector:beta1-nanoserver
   - it: Image should be correct when overriden by azure
     template: node-collector-daemon-set-windows.yaml
     set:
