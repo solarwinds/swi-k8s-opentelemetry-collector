@@ -340,7 +340,7 @@ jobs:
     runs-on: windows-2022
     needs: [build_and_test_windows_2022, build_and_test_windows_2019]
     name: Deploy to docker hub Windows
-    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+    #if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
     environment:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
@@ -355,18 +355,20 @@ jobs:
 
       - name: Load image
         run: |
-          docker load --input swi-k8s-opentelemetry-collector-windows.tar
+          docker load --input swi-k8s-opentelemetry-collector-windows-ltsc2022.tar
+          docker load --input swi-k8s-opentelemetry-collector-windows-ltsc2019.tar
 
       - name: Tag images
         run: |
           docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test_windows.outputs.image_tag }}-nanoserver-ltsc2022 ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
+          docker tag swi-k8s-opentelemetry-collector:${{ needs.build_and_test_windows.outputs.image_tag }}-nanoserver-ltsc2019 ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2019
 
-      - name: Docker login
-        env:
-          DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
-          DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
-        run: echo "$env:DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:DOCKER_HUB_CI_USER" --password-stdin
+      # - name: Docker login
+      #   env:
+      #     DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
+      #     DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
+      #   run: echo "$env:DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:DOCKER_HUB_CI_USER" --password-stdin
 
-      - name: Push as specific
-        run: docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
+      # - name: Push as specific
+      #   run: docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
 
