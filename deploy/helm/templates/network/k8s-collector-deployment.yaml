@@ -49,7 +49,7 @@ spec:
           - --log-console
           - --log-level={{ .Values.ebpfNetworkMonitoring.k8sCollector.telemetry.logs.level }}
       - image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.k8sCollector.relay (tuple "image" "ebpf_k8s_relay") "otel/opentelemetry-ebpf-k8s-relay:v0.10.0") }}"
-        imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
+        imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.pullPolicy }}
         name: k8s-relay
         args:
           - --config-file=/etc/network-explorer/config.yaml
