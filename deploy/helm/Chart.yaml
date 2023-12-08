@@ -19,18 +19,22 @@ maintainers:
     email: support@solarwinds.com
 dependencies:
   - name: prometheus
-    repository: https://prometheus-community.github.io/helm-charts
+    # https://github.com/prometheus-community/helm-charts/tree/prometheus-19.7.2/charts/prometheus
+    repository: "file://./dependency_chart/prometheus"
     version: "~> 19.7.2"
     condition: opencost.enabled
   - name: prometheus-node-exporter
-    repository: https://prometheus-community.github.io/helm-charts
+    # https://github.com/prometheus-community/helm-charts/tree/prometheus-node-exporter-4.24.0/charts/prometheus-node-exporter
+    repository: "file://./dependency_chart/prometheus-node-exporter"
     version: "~> 4.24.0"
     condition: opencost.enabled
   - name: opencost
-    repository: https://opencost.github.io/opencost-helm-chart
+    # https://github.com/opencost/opencost-helm-chart/tree/1.26.2-helm/charts/opencost
+    repository: "file://./dependency_chart/opencost"
     version: "~> 1.26.2"
     condition: opencost.enabled  
   - name: kube-state-metrics
-    repository: https://prometheus-community.github.io/helm-charts
+    # https://github.com/prometheus-community/helm-charts/tree/kube-state-metrics-5.5.0/charts/kube-state-metrics
+    repository: "file://./dependency_chart/kube-state-metrics"
     version: "~> 5.5.0"
     condition: kube-state-metrics.enabled

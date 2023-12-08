@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Referencing all Helm subcharts locally
+
 ### Fixed
 
 - Fixed usage of `ebpfNetworkMonitoring.k8sCollector.relay.image.pullPolicy`
