@@ -35,17 +35,6 @@
   choco install kubernetes-helm
   ```
 
-- Prometheus community Helm repo - it hosts a dependency for the collector's chart:
-
-  ```shell
-  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-  ```
-- OpenCost community Helm repo 
-
-  ``` shell
-  helm repo add opencost https://opencost.github.io/opencost-helm-chart
-  ```
-
 - [Docker desktop](https://www.docker.com/products/docker-desktop) with Kubernetes enabled
 
 ## Deployment
@@ -64,24 +53,6 @@ That will:
 - deploy customized Otel Collector
 
 Possible issues:
-
-- if you get errors like:
-
-  ```text
-  Error: INSTALLATION FAILED: failed to download https://github.com/prometheus-community/helm-charts...
-  ```
-
-  or
-
-  ```text
-  Error: INSTALLATION FAILED: no cached repo found. (try 'helm repo update'): open C:\Users\<user>\AppData\Local\Temp\helm\repository\stable-index.yaml: The system cannot find the file specified.
-  ```
-
-  you need to update Helm repo:
-
-  ```shell
-  helm repo update
-  ```
 
 - if you get error like
 
