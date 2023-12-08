@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Fixed usage of `ebpfNetworkMonitoring.k8sCollector.relay.image.pullPolicy`
+
 ## [3.2.0-alpha.7] - 2023-12-07
 
 ### Fixed
