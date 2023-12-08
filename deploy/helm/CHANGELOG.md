@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.7] - 2023-12-07
+
+### Fixed
+
+- Fixed rendering on FluxCD, removing helm version constraint
+
 ## [3.2.0-alpha.6] - 2023-12-05
 
 ### Added
