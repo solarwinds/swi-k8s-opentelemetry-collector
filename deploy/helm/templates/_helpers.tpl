@@ -263,7 +263,18 @@ Example:
   {{- end -}}
 {{- end -}}
 
-{{- if and $root.Values.aks $root.Values.global $root.Values.global.azure $root.Values.global.azure.images (index $root.Values.global.azure.images $azureName) -}}
+{{- $azure := false -}}
+{{- if and $root.Values.aks $root.Values.global -}}
+{{- if $root.Values.global.azure -}}
+{{- if $root.Values.global.azure.images -}}
+{{- if index $root.Values.global.azure.images $azureName -}}
+  {{- $azure = true -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- if $azure -}}
   {{- $azurePath := $root.Values.global.azure.images -}}
   {{- $azureImageObj := index $azurePath $azureName -}}
   {{- $azureDigest := index $azureImageObj "digest" -}}
