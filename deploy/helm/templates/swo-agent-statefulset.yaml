@@ -50,6 +50,17 @@ spec:
                 secretKeyRef:
                   name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
+          volumeMounts:
+            - name: uams-client-workdir
+              mountPath: /uamsclient/workdir
           resources:
 {{ toYaml .Values.swoagent.resources | indent 12 }}
+      volumes:
+        - name: uams-client-workdir
+          persistentVolumeClaim:
+{{- if regexMatch "^[a-zA-Z]{1}[a-zA-Z0-9-\\ ]*[a-z0-9]{1}$" .Values.cluster.name }}
+            claimName: {{ printf "%s-swo-agent" .Values.cluster.name | lower | replace " " "-" | trunc 63  }}
+{{ else }}
+            claimName: {{ include "common.fullname" (tuple . "-swo-agent") }}
+{{ end }}
 {{- end}}
