@@ -1,4 +1,4 @@
-{{- if .Values.otel.logs.enabled }}
+{{- if and .Values.otel.logs.enabled .Values.otel.windows.enabled }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -63,8 +63,8 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ include "common.image" (tuple . .Values.otel "image_windows" nil (printf "%s%s" .Chart.AppVersion "-nanoserver")) }}"
-          imagePullPolicy: {{ .Values.otel.image_windows.pullPolicy }}
+          image: "{{ include "common.image" (tuple . .Values.otel.windows "image" nil (printf "%s%s" .Chart.AppVersion "-nanoserver")) }}"
+          imagePullPolicy: {{ .Values.otel.windows.image.pullPolicy }}
           command:
             - c:\wrapper.exe
             - c:\swi-otelcol.exe
