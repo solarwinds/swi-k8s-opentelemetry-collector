@@ -26,19 +26,21 @@ otel:
     # if not set appVersion field from Chart.yaml is used
     tag: ""
     pullPolicy: IfNotPresent
-  
-  image_windows:
-    repository: solarwinds/swi-opentelemetry-collector
-    # if not set appVersion field from Chart.yaml is used
-    tag: ""
-    pullPolicy: IfNotPresent
+
+  windows:
+    enabled: true
+    image:
+      repository: solarwinds/swi-opentelemetry-collector
+      # if not set appVersion field from Chart.yaml is used
+      tag: ""
+      pullPolicy: IfNotPresent
 
   init_images:
     swi_endpoint_check:
       repository: ""
       tag: ""
       pullPolicy: IfNotPresent
-    
+
     busy_box:
       repository: ""
       tag: ""
@@ -84,7 +86,7 @@ otel:
 
     # configuration for metric discovery
     autodiscovery:
-      prometheusEndpoints: 
+      prometheusEndpoints:
         # Define whether metrics will be discovered and scraped by prometheus annotations
         enabled: true
 
@@ -97,7 +99,7 @@ otel:
         #   `labels` - map of labels set on the pod
         #   `annotations` - map of annotations set on the pod
         # Example: namespace == "test-namespace" && labels["app"] == "test-app"
-        additionalRules: 
+        additionalRules:
 
         customTransformations:
           # list of metrics that are counters should be converted to rate
@@ -179,7 +181,7 @@ otel:
     extra_scrape_metrics: []
 
     # In case `otel.metrics.autodiscovery.prometheusEndpoints.enabled` is set to `true` (which is by default) there is a possibility
-    # that those extra prometheus metrics are scraped by the collector, so in this case `extra_scrape_metrics` is ignored. By setting 
+    # that those extra prometheus metrics are scraped by the collector, so in this case `extra_scrape_metrics` is ignored. By setting
     # `force_extra_scrape_metrics` to `true` you can force the collector to scrape those metrics.
     force_extra_scrape_metrics: false
 
@@ -529,21 +531,21 @@ autoupdate:
 kube-state-metrics:
   enabled: true
   service:
-    annotations:       
+    annotations:
       opencost.scrape: "true"
 
-  prometheusScrape: false  
+  prometheusScrape: false
 
   nodeSelector:
     kubernetes.io/os: linux
 
 # Node exporter is deployed only in case opencost section is enabled. Otherwise this section can be ignored.
-prometheus-node-exporter:  
+prometheus-node-exporter:
   service:
     port: 9101
     targetPort: 9101
     annotations:
-      opencost.scrape: "true"     
+      opencost.scrape: "true"
       prometheus.io/scrape: "false"
 
   rbac:
@@ -561,7 +563,7 @@ prometheus-node-exporter:
             operator: NotIn
             values:
             - fargate
-  
+
 
 swoagent:
   # Whether the SWO Agent should be deployed as part of this chart.
@@ -627,7 +629,7 @@ ebpfNetworkMonitoring:
     telemetry:
       logs:
         level: "warning"
-    
+
     watcher:
       image:
         repository: ""
@@ -662,22 +664,22 @@ ebpfNetworkMonitoring:
         level: "warning"
       metrics:
         enabled: false
-    
+
     image:
       repository: ""
       tag: ""
       pullPolicy: IfNotPresent
 
 # Prometheus is deployed only in case opencost section is enabled. Otherwise this section can be ignored.
-prometheus:  
+prometheus:
   alertmanager:
-    enabled: false  
+    enabled: false
   prometheus-node-exporter:
     enabled: false
   prometheus-pushgateway:
-    enabled: false  
+    enabled: false
   kube-state-metrics:
-    enabled: false 
+    enabled: false
   serverFiles:
     prometheus.yml:
       rule_files:
@@ -778,7 +780,7 @@ prometheus:
 
         metric_relabel_configs:
           - source_labels: [ __name__ ]
-            regex: (kubelet_volume_stats_used_bytes) # this metric is in alpha 
+            regex: (kubelet_volume_stats_used_bytes) # this metric is in alpha
             action: keep
       # Scrape config for service endpoints.
       #
@@ -827,7 +829,7 @@ prometheus:
         metric_relabel_configs:
           - source_labels: [ __name__ ]
             regex: (container_cpu_allocation|container_cpu_usage_seconds_total|container_fs_limit_bytes|container_fs_writes_bytes_total|container_gpu_allocation|container_memory_allocation_bytes|container_memory_usage_bytes|container_memory_working_set_bytes|container_network_receive_bytes_total|container_network_transmit_bytes_total|DCGM_FI_DEV_GPU_UTIL|deployment_match_labels|kube_daemonset_status_desired_number_scheduled|kube_daemonset_status_number_ready|kube_deployment_spec_replicas|kube_deployment_status_replicas|kube_deployment_status_replicas_available|kube_job_status_failed|kube_namespace_annotations|kube_namespace_labels|kube_node_info|kube_node_labels|kube_node_status_allocatable|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_node_status_capacity|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_node_status_condition|kube_persistentvolume_capacity_bytes|kube_persistentvolume_status_phase|kube_persistentvolumeclaim_info|kube_persistentvolumeclaim_resource_requests_storage_bytes|kube_pod_container_info|kube_pod_container_resource_limits|kube_pod_container_resource_limits_cpu_cores|kube_pod_container_resource_limits_memory_bytes|kube_pod_container_resource_requests|kube_pod_container_resource_requests_cpu_cores|kube_pod_container_resource_requests_memory_bytes|kube_pod_container_status_restarts_total|kube_pod_container_status_running|kube_pod_container_status_terminated_reason|kube_pod_labels|kube_pod_owner|kube_pod_status_phase|kube_replicaset_owner|kube_statefulset_replicas|kube_statefulset_status_replicas|kubecost_cluster_info|kubecost_cluster_management_cost|kubecost_cluster_memory_working_set_bytes|kubecost_load_balancer_cost|kubecost_network_internet_egress_cost|kubecost_network_region_egress_cost|kubecost_network_zone_egress_cost|kubecost_node_is_spot|kubecost_pod_network_egress_bytes_total|node_cpu_hourly_cost|node_cpu_seconds_total|node_disk_reads_completed|node_disk_reads_completed_total|node_disk_writes_completed|node_disk_writes_completed_total|node_filesystem_device_error|node_gpu_count|node_gpu_hourly_cost|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemAvailable_bytes|node_memory_MemFree_bytes|node_memory_MemTotal_bytes|node_network_transmit_bytes_total|node_ram_hourly_cost|node_total_hourly_cost|pod_pvc_allocation|pv_hourly_cost|service_selector_labels|statefulSet_match_labels|kubecost_pv_info|up)
-            action: keep 
+            action: keep
 
 
   server:
@@ -849,13 +851,13 @@ prometheus:
 
 opencost:
   enabled: true
-  opencost:     
+  opencost:
     nodeSelector:
       kubernetes.io/os: linux
     prometheus:
       internal:
-        enabled: true     
-        port: 80   
+        enabled: true
+        port: 80
         namespaceName: "{{ .Release.Namespace }}"
         serviceName: "{{ .Release.Name }}-prometheus-server"
     ui:
