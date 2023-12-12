@@ -16,9 +16,6 @@ RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else 
 FROM base as tests
 RUN cd src/processor/swmetricstransformprocessor && go test ./...
 
-FROM alpine:3.19 as prep
-RUN apk --update add ca-certificates
-
 FROM debian:12.2 as journal
 RUN apt update
 RUN apt install -y systemd
@@ -30,12 +27,12 @@ FROM base as wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-FROM scratch
+FROM alpine:3.19
+RUN apk --update add ca-certificates
 
 ARG USER_UID=10001
 USER ${USER_UID}
 
-COPY --from=prep /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
 COPY --from=wrapper /bin/wrapper /wrapper
 COPY --from=journal /journalctl-deps/ /
