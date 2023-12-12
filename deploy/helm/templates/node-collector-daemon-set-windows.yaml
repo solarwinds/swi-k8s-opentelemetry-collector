@@ -63,7 +63,7 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ include "common.image" (tuple . .Values.otel.windows "image_windows" nil (printf "%s%s" .Chart.AppVersion "-nanoserver")) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.windows tuple( "image", "image_windows") nil (printf "%s%s" .Chart.AppVersion "-nanoserver")) }}"
           imagePullPolicy: {{ .Values.otel.windows.image.pullPolicy }}
           command:
             - c:\wrapper.exe
