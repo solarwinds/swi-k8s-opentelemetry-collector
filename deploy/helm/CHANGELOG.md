@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.8] - 2023-12-13
+
+### Added
+
+- Added `otel.metrics.autodiscovery.prometheusEndpoints.podMonitors` configuration option. Define if you want to monitor applications that do not have prometheus annotations.
+
 ### Fixed
 
 - Fixed usage of `ebpfNetworkMonitoring.k8sCollector.relay.image.pullPolicy`
