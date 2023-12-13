@@ -90,7 +90,7 @@ processors:
   {{- include "common-config.groupbyattrs-node" . | nindent 2 }}
   {{- include "common-config.groupbyattrs-pod" . | nindent 2 }}
   {{- include "common-config.groupbyattrs-all" . | nindent 2 }}
-  
+
 {{- if .Values.otel.metrics.filter }}
   filter/metrics:
     metrics:
@@ -313,7 +313,7 @@ receivers:
     exclude: [ "\\var\\log\\pods\\${POD_NAMESPACE}_${POD_NAME}*_*\\swi-opentelemetry-collector\\*.log" ]
 {{- else }}
     include: [ "/var/log/pods/*/*/*.log" ]
-    # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log    
+    # Exclude collector container's logs. The file format is /var/log/pods/<namespace_name>_<pod_name>_<pod_uid>/<container_name>/<run_id>.log
     exclude: [ "/var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log" ]
 {{- end }}
     start_at: {{ .Values.otel.logs.receiver.start_at }}
@@ -431,7 +431,7 @@ receivers:
 
 {{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
   receiver_creator/discovery:
-    watch_observers: 
+    watch_observers:
       - k8s_observer
     receivers:
       prometheus/discovery:
@@ -439,7 +439,7 @@ receivers:
         rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         {{- else }}
         rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
-        {{- end }} 
+        {{- end }}
         config:
           config:
             scrape_configs:
@@ -452,11 +452,30 @@ receivers:
                 static_configs:
                   - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
+
+      {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.podMonitors }}
+      {{- range $key, $rule :=.Values.otel.metrics.autodiscovery.prometheusEndpoints.podMonitors.rules }}
+      prometheus/discovery/{{ $key }}:
+        rule: {{ $rule.rule }}
+        config:
+          config:
+            scrape_configs:
+              - job_name: pod
+                scheme: "http"
+                scrape_interval: {{ $rule.scrape_interval | default "60s" | quote}}
+                metrics_path: {{ quote $rule.metrics_path }}
+                honor_timestamps: false
+                honor_labels: true
+                static_configs:
+                  - targets:
+                    - '`endpoint`:{{ $rule.endpoint_port }}'
+      {{- end }}
+      {{- end }}
 {{- end }}
 
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
   receiver_creator/node:
-    watch_observers: 
+    watch_observers:
       - k8s_observer
     receivers:
       prometheus/node:
@@ -573,10 +592,10 @@ service:
       processors:
         - memory_limiter
         - filter/receiver
-        - filter/remove_internal        
+        - filter/remove_internal
         - attributes/remove_prometheus_attributes
         - attributes/unify_node_attribute
-        - transform/unify_node_attribute   
+        - transform/unify_node_attribute
         - metricstransform/rename
         - metricstransform/preprocessing
         - filter/remove_internal_postprocessing
