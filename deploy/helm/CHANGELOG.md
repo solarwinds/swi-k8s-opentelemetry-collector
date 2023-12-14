@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `otel.metrics.autodiscovery.prometheusEndpoints.podMonitors` configuration option. Define if you want to monitor applications that do not have prometheus annotations.
+- Upgraded OTEL collector image to `0.9.0` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.0))
 
 ### Fixed
 
