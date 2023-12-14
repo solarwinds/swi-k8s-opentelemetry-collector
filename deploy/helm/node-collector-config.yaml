@@ -455,20 +455,22 @@ receivers:
 
       {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.podMonitors }}
       {{- range $key, $rule :=.Values.otel.metrics.autodiscovery.prometheusEndpoints.podMonitors.rules }}
+      {{- if and $rule.rule }}
       prometheus/discovery/{{ $key }}:
-        rule: {{ $rule.rule }}
+        rule: type == "pod" && {{ $rule.rule }}
         config:
           config:
             scrape_configs:
               - job_name: pod
                 scheme: "http"
-                scrape_interval: {{ $rule.scrape_interval | default "60s" | quote}}
-                metrics_path: {{ quote $rule.metrics_path }}
+                scrape_interval: {{ quote $.Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: {{ $rule.metrics_path | default "/metrics" | quote }}
                 honor_timestamps: false
                 honor_labels: true
                 static_configs:
                   - targets:
-                    - '`endpoint`:{{ $rule.endpoint_port }}'
+                    - '`endpoint`:{{ $rule.endpoint_port | default "9090" }}'
+      {{- end }}
       {{- end }}
       {{- end }}
 {{- end }}
