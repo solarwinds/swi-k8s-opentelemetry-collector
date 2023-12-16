@@ -155,7 +155,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.deployment.condition.progressing | Gauge |  | Describes whether the deployment has a Progressing status condition | custom |
 | k8s.deployment.condition.replicafailure | Gauge |  | Describes whether the deployment has a ReplicaFailure status condition | custom |
 | k8s.kube_deployment_created | Gauge | seconds | Unix creation timestamp | native |
-| k8s.kube_deployment_labels | Gauge |  | Kubernetes labels converted to Prometheus labels | native |
 | k8s.kube_deployment_spec_paused | Gauge |  | Whether the deployment is paused and will not be processed by the deployment controller | native |
 | k8s.kube_deployment_spec_replicas | Gauge |  | Number of desired pods for a deployment | native |
 | k8s.kube_deployment_status_condition | Gauge |  | The current status conditions of a deployment | native |
@@ -170,7 +169,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
 | k8s.kube_statefulset_created | Gauge | seconds | Unix creation timestamp | native |
-| k8s.kube_statefulset_labels | Gauge |  | Kubernetes labels converted to Prometheus labels | native |
 | k8s.kube_statefulset_replicas | Gauge |  | Number of desired pods for a StatefulSet | native |
 | k8s.kube_statefulset_status_replicas_current | Gauge |  | The number of current replicas per StatefulSet | native |
 | k8s.kube_statefulset_status_replicas_ready | Gauge |  | The number of ready replicas per StatefulSet | native |
@@ -181,7 +179,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
 | k8s.kube_daemonset_created | Gauge | seconds | Unix creation timestamp | native |
-| k8s.kube_daemonset_labels | Gauge |  | Kubernetes labels converted to Prometheus labels | native |
 | k8s.kube_daemonset_status_current_number_scheduled | Gauge |  | The number of nodes running at least one daemon pod and are supposed to | native |
 | k8s.kube_daemonset_status_desired_number_scheduled | Gauge |  | The number of nodes that should be running the daemon pod | native |
 | k8s.kube_daemonset_status_number_available | Gauge |  | The number of nodes that should be running the daemon pod and have one or more of the daemon pod running and available | native |
@@ -258,7 +255,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | ---    | ---  | ---  | ---         | ---           |
 | k8s.kube_service_annotations | Gauge |  | Kubernetes annotations converted to Prometheus labels | native |
 | k8s.kube_service_info | Gauge |  | Information about service | native |
-| k8s.kube_service_labels| Gauge |  | Kubernetes labels converted to Prometheus labels | native |
 | k8s.kube_service_created| Gauge |  | Unix creation timestamp | native |
 | k8s.kube_service_spec_type| Gauge |  | Type about service | native |
 | k8s.kube_service_spec_external_ip| Gauge |  | Service external ips. One series for each ip | native |
