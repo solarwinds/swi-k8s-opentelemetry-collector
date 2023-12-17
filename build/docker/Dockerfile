@@ -27,7 +27,7 @@ FROM base as wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-FROM alpine:3.18
+FROM alpine:3.19
 RUN apk --update add ca-certificates
 
 ARG USER_UID=10001
