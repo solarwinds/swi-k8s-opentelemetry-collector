@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.9] - 2023-12-15
+
+### Changed
+
+- Updating kube-state-metrics to 5.15.2
+  - removing `k8s.kube_daemonset_labels`, `k8s.kube_deployment_labels` and `k8s.kube_statefulset_labels` metrics (they were redundant anyway)
+- Upgraded OTEL collector image to `0.9.1` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.1))
+
 ## [3.2.0-alpha.8] - 2023-12-13
 
 ### Added
