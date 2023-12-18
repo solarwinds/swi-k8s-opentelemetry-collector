@@ -23,16 +23,29 @@
 
 - [Skaffold](https://skaffold.dev) at least [v2.0.3](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.0.3)
   - On windows, do not install it using choco due to [this issue](https://github.com/GoogleContainerTools/skaffold/issues/4058)
+  - For Mac
+  ```shell
+  # For macOS on ARMv8 (arm64)
+  curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-darwin-arm64 && \
+  sudo install skaffold /usr/local/bin/
+  ```
 - [Kustomize](https://kustomize.io):
 
   ```shell
+  # For Windows
   choco install kustomize
+
+  # For macOS
+  brew install kustomize
   ```
 
 - [Helm](https://helm.sh):
 
   ```shell
   choco install kubernetes-helm
+
+  # For macOS
+  brew install helm
   ```
 
 - Prometheus community Helm repo - it hosts a dependency for the collector's chart:
