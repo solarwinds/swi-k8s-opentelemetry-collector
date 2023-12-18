@@ -4,16 +4,16 @@ go 1.19
 
 require (
 	github.com/google/go-cmp v0.5.9
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.81.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.89.0
 	github.com/stretchr/testify v1.8.4
 	go.opencensus.io v0.24.0
-	go.opentelemetry.io/collector v0.81.0
-	go.opentelemetry.io/collector/component v0.81.0
-	go.opentelemetry.io/collector/confmap v0.81.0
-	go.opentelemetry.io/collector/consumer v0.81.0
+	go.opentelemetry.io/collector v0.89.0
+	go.opentelemetry.io/collector/component v0.89.0
+	go.opentelemetry.io/collector/confmap v0.89.0
+	go.opentelemetry.io/collector/consumer v0.89.0
 	go.opentelemetry.io/collector/pdata v1.0.0-rcv0013
-	go.opentelemetry.io/collector/processor v0.81.0
-	go.opentelemetry.io/collector/semconv v0.81.0
+	go.opentelemetry.io/collector/processor v0.89.0
+	go.opentelemetry.io/collector/semconv v0.89.0
 	go.uber.org/zap v1.24.0
 	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3
@@ -51,7 +51,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.81.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.89.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.0.0-rcv0013 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
