@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.9] - 2023-12-18
+
+### Fixed
+- Changed strategy to Recreate for all deployments.
+
+
 ## [3.2.0-alpha.8] - 2023-12-13
 
 ### Added
