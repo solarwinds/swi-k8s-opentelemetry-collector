@@ -24,9 +24,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/cache"
 )
 
 func deploymentAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interface{})) {
@@ -63,7 +63,7 @@ func TestDeploymentCreate(t *testing.T) {
 	assert.Equal(t, "deployment1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	deployment.CreationTimestamp = startTime
 	c.DeploymentClient.handleResourceUpdate(&appsv1.Deployment{}, deployment)
 	assert.Equal(t, 1, len(c.DeploymentClient.Resources))
@@ -81,31 +81,58 @@ func TestDeploymentUpdate(t *testing.T) {
 }
 
 func TestDeploymentDelete(t *testing.T) {
-	c, _ := newTestClient(t)
-	deploymentAddAndUpdateTest(t, c, c.DeploymentClient.handleResourceAdd)
-	assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+	tests := []struct {
+		name        string
+		objToDelete interface{}
+	}{
+		{
+			name: "Deployment should be deleted",
+			objToDelete: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "deploymentA",
+					UID:  "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+				},
+			},
+		},
+		{
+			name: "Deployment wrapped in DeletedFinalStateUnknown should be deleted",
+			objToDelete: cache.DeletedFinalStateUnknown{
+				Obj: &appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "deploymentA",
+						UID:  "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+					},
+				},
+			},
+		},
+	}
 
-	deployment := &appsv1.Deployment{}
-	deployment.Name = "deploymentA"
-	deployment.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-	c.DeploymentClient.handleResourceDelete(deployment)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, _ := newTestClient(t)
+			deploymentAddAndUpdateTest(t, c, c.DeploymentClient.handleResourceAdd)
+			assert.Equal(t, 1, len(c.DeploymentClient.Resources))
 
-	assert.Equal(t, 1, len(c.DeploymentClient.Resources))
-	assert.Equal(t, 1, len(c.DeploymentClient.deleteQueue))
-	deleteRequest := c.DeploymentClient.deleteQueue[0]
-	assert.Equal(t, newResourceIdentifier("resource_attribute", "k8s.deployment.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), deleteRequest.id)
-	assert.Equal(t, "deploymentA", deleteRequest.resourceName)
-	assert.False(t, deleteRequest.ts.After(time.Now()))
+			c.DeploymentClient.handleResourceDelete(tt.objToDelete)
+
+			assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+			assert.Equal(t, 1, len(c.DeploymentClient.deleteQueue))
+			deleteRequest := c.DeploymentClient.deleteQueue[0]
+			assert.Equal(t, newResourceIdentifier("resource_attribute", "k8s.deployment.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), deleteRequest.id)
+			assert.Equal(t, "deploymentA", deleteRequest.resourceName)
+			assert.False(t, deleteRequest.ts.After(time.Now()))
+		})
+	}
 }
 
 func TestDeploymentExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	deployment := &appsv1.Deployment{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "auth-service-deployment",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -198,7 +225,7 @@ func TestDeploymentIgnorePatterns(t *testing.T) {
 	}, {
 		ignore: true,
 		deployment: appsv1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "True ",
 				},
@@ -207,7 +234,7 @@ func TestDeploymentIgnorePatterns(t *testing.T) {
 	}, {
 		ignore: true,
 		deployment: appsv1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "true",
 				},
@@ -216,7 +243,7 @@ func TestDeploymentIgnorePatterns(t *testing.T) {
 	}, {
 		ignore: false,
 		deployment: appsv1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "false",
 				},
@@ -225,7 +252,7 @@ func TestDeploymentIgnorePatterns(t *testing.T) {
 	}, {
 		ignore: false,
 		deployment: appsv1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "",
 				},
@@ -234,7 +261,7 @@ func TestDeploymentIgnorePatterns(t *testing.T) {
 	}, {
 		ignore: false,
 		deployment: appsv1.Deployment{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-deployment-name",
 			},
 		},
@@ -270,7 +297,7 @@ func TestStatefulSetCreate(t *testing.T) {
 	assert.Equal(t, "statefulSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	statefulSet.CreationTimestamp = startTime
 	c.StatefulSetClient.handleResourceUpdate(&appsv1.StatefulSet{}, statefulSet)
 	assert.Equal(t, 1, len(c.StatefulSetClient.Resources))
@@ -291,10 +318,10 @@ func TestStatefulSetExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	statefulSet := &appsv1.StatefulSet{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "auth-service-statefulset",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -528,7 +555,7 @@ func TestDaemonSetCreate(t *testing.T) {
 	assert.Equal(t, "daemonSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	daemonSet.CreationTimestamp = startTime
 	c.DaemonSetClient.handleResourceUpdate(&appsv1.DaemonSet{}, daemonSet)
 	assert.Equal(t, 1, len(c.DaemonSetClient.Resources))
@@ -549,10 +576,10 @@ func TestDaemonSetExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	daemonSet := &appsv1.DaemonSet{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "auth-service-daemonset",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -658,7 +685,7 @@ func TestJobCreate(t *testing.T) {
 	assert.Equal(t, "job1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	job.CreationTimestamp = startTime
 	c.JobClient.handleResourceUpdate(&batchv1.Job{}, job)
 	assert.Equal(t, 1, len(c.JobClient.Resources))
@@ -679,10 +706,10 @@ func TestJobExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	job := &batchv1.Job{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "job",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -787,7 +814,7 @@ func TestCronJobCreate(t *testing.T) {
 	assert.Equal(t, "cronJob1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	cronJob.CreationTimestamp = startTime
 	c.CronJobClient.handleResourceUpdate(&batchv1.CronJob{}, cronJob)
 	assert.Equal(t, 1, len(c.CronJobClient.Resources))
@@ -808,10 +835,10 @@ func TestCronJobExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	cronJob := &batchv1.CronJob{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "cronjob",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -917,7 +944,7 @@ func TestNodeCreate(t *testing.T) {
 	assert.Equal(t, "node1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	node.CreationTimestamp = startTime
 	c.NodeClient.handleResourceUpdate(&corev1.Node{}, node)
 	assert.Equal(t, 1, len(c.NodeClient.Resources))
@@ -938,10 +965,10 @@ func TestNodeExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	node := &corev1.Node{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "node1",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -1046,7 +1073,7 @@ func TestPersistentVolumeCreate(t *testing.T) {
 	assert.Equal(t, "persistentVolume1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	persistentVolume.CreationTimestamp = startTime
 	c.PersistentVolumeClient.handleResourceUpdate(&corev1.PersistentVolume{}, persistentVolume)
 	assert.Equal(t, 1, len(c.PersistentVolumeClient.Resources))
@@ -1067,10 +1094,10 @@ func TestPersistentVolumeExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	persistentVolume := &corev1.PersistentVolume{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "persistentVolume1",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -1175,7 +1202,7 @@ func TestPersistentVolumeClaimCreate(t *testing.T) {
 	assert.Equal(t, "persistentVolumeClaim1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	persistentVolumeClaim.CreationTimestamp = startTime
 	c.PersistentVolumeClaimClient.handleResourceUpdate(&corev1.PersistentVolumeClaim{}, persistentVolumeClaim)
 	assert.Equal(t, 1, len(c.PersistentVolumeClaimClient.Resources))
@@ -1196,10 +1223,10 @@ func TestPersistentVolumeClaimExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	persistentVolumeClaim := &corev1.PersistentVolumeClaim{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "persistentVolumeClaim1",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},
@@ -1304,7 +1331,7 @@ func TestServiceCreate(t *testing.T) {
 	assert.Equal(t, "service1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
 
-	startTime := meta_v1.NewTime(time.Now())
+	startTime := metav1.NewTime(time.Now())
 	service.CreationTimestamp = startTime
 	c.ServiceClient.handleResourceUpdate(&corev1.Service{}, service)
 	assert.Equal(t, 1, len(c.ServiceClient.Resources))
@@ -1325,10 +1352,10 @@ func TestServiceExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
 	service := &corev1.Service{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "service1",
 			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			CreationTimestamp: meta_v1.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels: map[string]string{
 				"label1": "lv1",
 			},

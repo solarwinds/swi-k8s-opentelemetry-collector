@@ -271,7 +271,7 @@ func NewWatchResourceClient[T KubernetesResource](
 				if !success {
 					return object, nil
 				}
-	
+
 				return removeUnnecessaryResourceData(originalResource, c.Rules), nil
 			},
 		)
@@ -319,7 +319,7 @@ func (c *WatchResourceClient[T]) handleResourceUpdate(old, new interface{}) {
 
 func (c *WatchResourceClient[T]) handleResourceDelete(obj interface{}) {
 	c.observabilityResourceDeleted()
-	if resource, ok := obj.(metav1.Object); ok {
+	if resource, ok := ignoreDeletedFinalStateUnknown(obj).(metav1.Object); ok {
 		c.forgetResource(resource)
 	} else {
 		c.client.logger.Error("object received was not of type metav1.Object", zap.Any("received", obj))
