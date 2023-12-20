@@ -142,10 +142,6 @@ func New(
 	}
 
 	if newNamespaceInformer == nil {
-		newNamespaceInformer = newNamespaceSharedInformer
-	}
-
-	if newNamespaceInformer == nil {
 		// if rules to extract metadata from namespace is configured use namespace shared informer containing
 		// all namespaces including kube-system which contains cluster uid information (kube-system-uid)
 		if c.extractNamespaceLabelsAnnotations() {
@@ -172,11 +168,7 @@ func New(
 		return nil, err
 	}
 
-	if c.extractNamespaceLabelsAnnotations() {
-		c.namespaceInformer = newNamespaceInformer(c.kc)
-	} else {
-		c.namespaceInformer = NewNoOpInformer(c.kc)
-	}
+	c.namespaceInformer = newNamespaceInformer(c.kc)
 
 	if clientResources[MetadataFromDeployment] != nil {
 		deploymentClient, err := NewWatchDeploymentClient(
