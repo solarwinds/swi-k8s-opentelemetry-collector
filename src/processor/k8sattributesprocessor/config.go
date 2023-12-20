@@ -34,7 +34,7 @@ type Config struct {
 	// directly from services to be able to correctly detect the pod IPs.
 	Passthrough bool `mapstructure:"passthrough"`
 
-	// Indicates that it will instrument `sw.k8s.<object type>.found` attributes 
+	// Indicates that it will instrument `sw.k8s.<object type>.found` attributes
 	// that will be set to true when the object is found in the cluster and false otherwise
 	SetObjectExistence bool `mapstructure:"set_object_existence"`
 
@@ -262,10 +262,10 @@ func (cfg *PersistentVolumeClaimConfig) Validate() error {
 }
 
 type ServiceConfig struct {
-	Extract     ExtractConfig                      `mapstructure:"extract"`
-	Filter      FilterConfig                       `mapstructure:"filter"`
-	Exclude     ExcludeServiceConfig			   `mapstructure:"exclude"`
-	Association []AssociationConfig                `mapstructure:"association"`
+	Extract     ExtractConfig        `mapstructure:"extract"`
+	Filter      FilterConfig         `mapstructure:"filter"`
+	Exclude     ExcludeServiceConfig `mapstructure:"exclude"`
+	Association []AssociationConfig  `mapstructure:"association"`
 }
 
 func (cfg *ServiceConfig) Validate() error {
@@ -297,6 +297,7 @@ type ExtractConfig struct {
 	//   k8s.statefulset.name, k8s.statefulset.uid,
 	//   k8s.container.name, container.image.name,
 	//   container.image.tag, container.id
+	//   k8s.cluster.uid
 	//
 	// Specifying anything other than these values will result in an error.
 	// By default, the following fields are extracted and added to spans, metrics and logs as attributes:

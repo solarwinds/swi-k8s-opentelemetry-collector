@@ -145,6 +145,18 @@ func New(
 		newNamespaceInformer = newNamespaceSharedInformer
 	}
 
+	if newNamespaceInformer == nil {
+		// if rules to extract metadata from namespace is configured use namespace shared informer containing
+		// all namespaces including kube-system which contains cluster uid information (kube-system-uid)
+		if c.extractNamespaceLabelsAnnotations() {
+			newNamespaceInformer = newNamespaceSharedInformer
+		} else {
+			// use kube-system shared informer to only watch kube-system namespace
+			// reducing overhead of watching all the namespaces
+			newNamespaceInformer = newKubeSystemSharedInformer
+		}
+	}
+
 	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
 	err = c.informer.SetTransform(
 		func(object interface{}) (interface{}, error) {
@@ -367,13 +379,13 @@ func (c *WatchClient) handlePodAdd(obj interface{}) {
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) handlePodUpdate(_, new interface{}) {
+func (c *WatchClient) handlePodUpdate(_, newPod interface{}) {
 	observability.RecordPodUpdated()
-	if pod, ok := new.(*api_v1.Pod); ok {
+	if pod, ok := newPod.(*api_v1.Pod); ok {
 		// TODO: update or remove based on whether container is ready/unready?.
 		c.addOrUpdatePod(pod)
 	} else {
-		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", new))
+		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", newPod))
 	}
 	podTableSize := len(c.Pods)
 	observability.RecordPodTableSize(int64(podTableSize))
@@ -399,12 +411,12 @@ func (c *WatchClient) handleNamespaceAdd(obj interface{}) {
 	}
 }
 
-func (c *WatchClient) handleNamespaceUpdate(_, new interface{}) {
+func (c *WatchClient) handleNamespaceUpdate(_, newNamespace interface{}) {
 	observability.RecordNamespaceUpdated()
-	if namespace, ok := new.(*api_v1.Namespace); ok {
+	if namespace, ok := newNamespace.(*api_v1.Namespace); ok {
 		c.addOrUpdateNamespace(namespace)
 	} else {
-		c.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", new))
+		c.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", newNamespace))
 	}
 }
 
@@ -606,6 +618,14 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 
 	if c.Rules.Node {
 		tags[tagNodeName] = pod.Spec.NodeName
+	}
+
+	if c.Rules.ClusterUID {
+		if val, ok := c.Namespaces["kube-system"]; ok {
+			tags[tagClusterUID] = val.NamespaceUID
+		} else {
+			c.logger.Debug("unable to find kube-system namespace, cluster uid will not be available")
+		}
 	}
 
 	for _, r := range c.Rules.Labels {

@@ -47,11 +47,11 @@ func TestLoadConfig(t *testing.T) {
 		{
 			id: component.NewIDWithName(typeStr, "2"),
 			expected: &Config{
-				APIConfig:   k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
-				Passthrough: false,
+				APIConfig:          k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
+				Passthrough:        false,
 				SetObjectExistence: true,
 				Extract: ExtractConfig{
-					Metadata: []string{"k8s.pod.name", "k8s.pod.uid", "k8s.deployment.name", "k8s.namespace.name", "k8s.node.name", "k8s.pod.start_time"},
+					Metadata: []string{"k8s.pod.name", "k8s.pod.uid", "k8s.deployment.name", "k8s.namespace.name", "k8s.node.name", "k8s.pod.start_time", "k8s.cluster.uid"},
 					Annotations: []FieldExtractConfig{
 						{TagName: "a1", Key: "annotation-one", From: "pod"},
 						{TagName: "a2", Key: "annotation-two", Regex: "field=(?P<value>.+)", From: kube.MetadataFromPod},
