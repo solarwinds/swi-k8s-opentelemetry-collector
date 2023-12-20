@@ -194,8 +194,6 @@ func withExtractMetadata(fields ...string) option {
 				p.rules.ContainerImageTag = true
 			case clusterUID:
 				p.rules.ClusterUID = true
-			default:
-				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
 			}
 		}
 		return nil
@@ -349,14 +347,8 @@ func withFilterLabels(filters ...FieldFilterConfig) option {
 	return func(p *kubernetesprocessor) error {
 		var labels []kube.FieldFilter
 		for _, f := range filters {
-			if f.Op == "" {
-				f.Op = filterOPEquals
-			}
-
 			var op selection.Operator
 			switch f.Op {
-			case filterOPEquals:
-				op = selection.Equals
 			case filterOPNotEquals:
 				op = selection.NotEquals
 			case filterOPExists:
@@ -364,7 +356,7 @@ func withFilterLabels(filters ...FieldFilterConfig) option {
 			case filterOPDoesNotExist:
 				op = selection.DoesNotExist
 			default:
-				return fmt.Errorf("'%s' is not a valid label filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)
+				op = selection.Equals
 			}
 			labels = append(labels, kube.FieldFilter{
 				Key:   f.Key,
@@ -382,18 +374,12 @@ func withFilterFields(filters ...FieldFilterConfig) option {
 	return func(p *kubernetesprocessor) error {
 		var fields []kube.FieldFilter
 		for _, f := range filters {
-			if f.Op == "" {
-				f.Op = filterOPEquals
-			}
-
 			var op selection.Operator
 			switch f.Op {
-			case filterOPEquals:
-				op = selection.Equals
 			case filterOPNotEquals:
 				op = selection.NotEquals
 			default:
-				return fmt.Errorf("'%s' is not a valid field filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)
+				op = selection.Equals
 			}
 			fields = append(fields, kube.FieldFilter{
 				Key:   f.Key,

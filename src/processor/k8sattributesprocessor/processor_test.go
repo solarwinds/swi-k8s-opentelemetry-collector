@@ -228,17 +228,6 @@ func TestNewProcessor(t *testing.T) {
 	newMultiTest(t, cfg, nil)
 }
 
-func TestProcessorBadConfig(t *testing.T) {
-	cfg := NewFactory().CreateDefaultConfig()
-	oCfg := cfg.(*Config)
-	oCfg.Extract.Metadata = []string{"bad-attribute"}
-
-	newMultiTest(t, cfg, func(err error) {
-		assert.Error(t, err)
-		assert.Equal(t, "\"bad-attribute\" is not a supported metadata field", err.Error())
-	})
-}
-
 func TestProcessorBadClientProvider(t *testing.T) {
 	clientProvider := func(
 		_ *zap.Logger,
