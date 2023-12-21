@@ -210,7 +210,7 @@ to complete the following steps:
 Add the following snippet under the pod env section of the OpenTelemetry container.
 
 ```yaml
-2. spec:
+spec:
   containers:
   - env:
     - name: KUBE_NODE_NAME
