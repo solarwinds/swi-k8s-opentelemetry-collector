@@ -58,7 +58,7 @@ func newPodIdentifier(from string, name string, value string) PodIdentifier {
 	}
 }
 
-func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interface{})) {
+func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
 	assert.Equal(t, 0, len(c.Pods))
 
 	// pod without IP
@@ -102,7 +102,7 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 	assert.Equal(t, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", got.PodUID)
 }
 
-func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interface{})) {
+func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
 	assert.Equal(t, 0, len(c.Namespaces))
 
 	namespace := &api_v1.Namespace{}
@@ -347,7 +347,7 @@ func TestPodAddOutOfSync(t *testing.T) {
 
 func TestPodUpdate(t *testing.T) {
 	c, _ := newTestClient(t)
-	podAddAndUpdateTest(t, c, func(obj interface{}) {
+	podAddAndUpdateTest(t, c, func(obj any) {
 		// first argument (old pod) is not used right now
 		c.handlePodUpdate(&api_v1.Pod{}, obj)
 	})
@@ -355,7 +355,7 @@ func TestPodUpdate(t *testing.T) {
 
 func TestNamespaceUpdate(t *testing.T) {
 	c, _ := newTestClient(t)
-	namespaceAddAndUpdateTest(t, c, func(obj interface{}) {
+	namespaceAddAndUpdateTest(t, c, func(obj any) {
 		// first argument (old namespace) is not used right now
 		c.handleNamespaceUpdate(&api_v1.Namespace{}, obj)
 	})
@@ -1108,20 +1108,20 @@ func TestFilters(t *testing.T) {
 func TestPodIgnorePatterns(t *testing.T) {
 	testCases := []struct {
 		ignore bool
-		pod    api_v1.Pod
+		pod    *api_v1.Pod
 	}{{
 		ignore: false,
-		pod:    api_v1.Pod{},
+		pod:    &api_v1.Pod{},
 	}, {
 		ignore: false,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			Spec: api_v1.PodSpec{
 				HostNetwork: true,
 			},
 		},
 	}, {
 		ignore: true,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "True ",
@@ -1130,7 +1130,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		},
 	}, {
 		ignore: true,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "true",
@@ -1139,7 +1139,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		},
 	}, {
 		ignore: false,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "false",
@@ -1148,7 +1148,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		},
 	}, {
 		ignore: false,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Annotations: map[string]string{
 					"opentelemetry.io/k8s-processor/ignore": "",
@@ -1157,28 +1157,28 @@ func TestPodIgnorePatterns(t *testing.T) {
 		},
 	}, {
 		ignore: true,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "jaeger-agent",
 			},
 		},
 	}, {
 		ignore: true,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "jaeger-collector",
 			},
 		},
 	}, {
 		ignore: true,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "jaeger-agent-b2zdv",
 			},
 		},
 	}, {
 		ignore: false,
-		pod: api_v1.Pod{
+		pod: &api_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "test-pod-name",
 			},
@@ -1188,7 +1188,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 
 	c, _ := newTestClient(t)
 	for _, tc := range testCases {
-		assert.Equal(t, tc.ignore, c.shouldIgnorePod(&tc.pod))
+		assert.Equal(t, tc.ignore, c.shouldIgnorePod(tc.pod))
 	}
 }
 
@@ -1237,7 +1237,7 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 	tests := []struct {
 		name  string
 		rules ExtractionRules
-		pod   api_v1.Pod
+		pod   *api_v1.Pod
 		want  PodContainers
 	}{
 		{
@@ -1247,13 +1247,13 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 				ContainerImageTag:  true,
 				ContainerID:        true,
 			},
-			pod:  api_v1.Pod{},
+			pod:  &api_v1.Pod{},
 			want: PodContainers{ByID: map[string]*Container{}, ByName: map[string]*Container{}},
 		},
 		{
 			name:  "no-rules",
 			rules: ExtractionRules{},
-			pod:   pod,
+			pod:   &pod,
 			want:  PodContainers{ByID: map[string]*Container{}, ByName: map[string]*Container{}},
 		},
 		{
@@ -1261,7 +1261,7 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 			rules: ExtractionRules{
 				ContainerImageName: true,
 			},
-			pod: pod,
+			pod: &pod,
 			want: PodContainers{
 				ByID: map[string]*Container{
 					"container1-id-123":     {ImageName: "test/image1"},
@@ -1280,7 +1280,7 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 			rules: ExtractionRules{
 				ContainerImageName: true,
 			},
-			pod: api_v1.Pod{
+			pod: &api_v1.Pod{
 				Spec: api_v1.PodSpec{
 					Containers: []api_v1.Container{
 						{
@@ -1302,7 +1302,7 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 			rules: ExtractionRules{
 				ContainerID: true,
 			},
-			pod: pod,
+			pod: &pod,
 			want: PodContainers{
 				ByID: map[string]*Container{
 					"container1-id-123": {
@@ -1347,7 +1347,7 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 				ContainerImageTag:  true,
 				ContainerID:        true,
 			},
-			pod: pod,
+			pod: &pod,
 			want: PodContainers{
 				ByID: map[string]*Container{
 					"container1-id-123": {
@@ -1403,7 +1403,7 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 			c := WatchClient{Rules: tt.rules}
 			// manually call the data removal function here
 			// normally the informer does this, but fully emulating the informer in this test is annoying
-			transformedPod := removeUnnecessaryPodData(&tt.pod, c.Rules)
+			transformedPod := removeUnnecessaryPodData(tt.pod, c.Rules)
 			assert.Equal(t, tt.want, c.extractPodContainersAttributes(transformedPod))
 		})
 	}

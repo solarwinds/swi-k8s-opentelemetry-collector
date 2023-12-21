@@ -261,7 +261,7 @@ func TestWithExtractLabels(t *testing.T) {
 			"",
 		},
 		{
-			"basic-namespace",
+			"basic-namespace-keyregex",
 			[]FieldExtractConfig{
 				{
 					TagName:  "tag1",
