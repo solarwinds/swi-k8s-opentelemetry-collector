@@ -107,13 +107,9 @@ stateDiagram-v2
 
     nc_logsJournalPipeline: 'logs/journal' pipeline
     state nc_logsJournalPipeline {
-      nc_r3_1: 'journald/runlogs' receiver
-      nc_r3_2: 'journald/varlogs' receiver
-      state nc_p3 <<join>>
+      nc_r3: 'journald' receiver
       nc_e3: 'forward/logs-exporter' connector
-      nc_r3_1 --> nc_p3
-      nc_r3_2 --> nc_p3
-      nc_p3 --> nc_e3 : processors
+      nc_r3 --> nc_e3 : processors
     }
 
     nc_metricsPipeline: 'metrics' pipeline

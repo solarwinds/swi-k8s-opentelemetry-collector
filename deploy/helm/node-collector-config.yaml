@@ -294,14 +294,7 @@ connectors:
 
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
-  journald/runlogs:
-    directory: /run/log/journal
-    units:
-      - kubelet
-      - docker
-      - containerd
-  journald/varlogs:
-    directory: /var/log/journal
+  journald:
     units:
       - kubelet
       - docker
@@ -554,8 +547,7 @@ service:
         - groupbyattrs/common-all
         - resource/journal
       receivers:
-        - journald/runlogs
-        - journald/varlogs
+        - journald
 {{- end }}
 
     logs:
