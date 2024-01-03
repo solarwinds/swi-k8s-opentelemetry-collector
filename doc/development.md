@@ -171,7 +171,7 @@ helm unittest -u deploy/helm
 Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
 
 ### Prerequisites
-Deploy cluster locally using `skaffold dev -p=only-mock` (configured to poll mocked data)
+Deploy cluster locally using `skaffold dev`
 ### Run tests locally
 * Install all dependencies: `pip install --user -r tests/integration/requirements.txt` 
 * Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
