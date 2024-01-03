@@ -8,7 +8,7 @@ pod_name = 'dummy-logging-pod'
 tested_log = '!!testlog!!'
 
 def setup_function():
-    run_shell_command(f'kubectl run {pod_name} --image bash:alpine3.16 -n default -- -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"')
+    run_shell_command(f'kubectl run {pod_name} --image bash:alpine3.19 -n default -- -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"')
 
 def teardown_function():
     run_shell_command(f'kubectl delete pod {pod_name} -n default')
