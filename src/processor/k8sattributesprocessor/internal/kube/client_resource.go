@@ -266,7 +266,7 @@ func NewWatchResourceClient[T KubernetesResource](
 	if c.extractResourceLabelsAnnotations(resourceType) {
 		c.informer = clientResource.Informer(c.client.kc, c.Filters.Namespace, labelSelector, fieldSelector)
 		err = c.informer.SetTransform(
-			func(object interface{}) (interface{}, error) {
+			func(object any) (any, error) {
 				originalResource, success := object.(metav1.Object)
 				if !success {
 					return object, nil
@@ -295,7 +295,7 @@ func (c *WatchResourceClient[T]) Start() {
 	go c.informer.Run(c.client.stopCh)
 }
 
-func (c *WatchResourceClient[T]) handleResourceAdd(obj interface{}) {
+func (c *WatchResourceClient[T]) handleResourceAdd(obj any) {
 	c.observabilityResourceAdded()
 	if resource, ok := obj.(metav1.Object); ok {
 		c.addOrUpdateResource(resource)
@@ -306,7 +306,7 @@ func (c *WatchResourceClient[T]) handleResourceAdd(obj interface{}) {
 	c.observabilityTableSizeFunc(int64(resourceTableSize))
 }
 
-func (c *WatchResourceClient[T]) handleResourceUpdate(old, new interface{}) {
+func (c *WatchResourceClient[T]) handleResourceUpdate(old, new any) {
 	c.observabilityResourceUpdated()
 	if resource, ok := new.(metav1.Object); ok {
 		c.addOrUpdateResource(resource)
@@ -317,7 +317,7 @@ func (c *WatchResourceClient[T]) handleResourceUpdate(old, new interface{}) {
 	c.observabilityTableSizeFunc(int64(resourceTableSize))
 }
 
-func (c *WatchResourceClient[T]) handleResourceDelete(obj interface{}) {
+func (c *WatchResourceClient[T]) handleResourceDelete(obj any) {
 	c.observabilityResourceDeleted()
 	if resource, ok := ignoreDeletedFinalStateUnknown(obj).(metav1.Object); ok {
 		c.forgetResource(resource)
