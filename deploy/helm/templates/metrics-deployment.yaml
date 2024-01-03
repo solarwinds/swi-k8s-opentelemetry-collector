@@ -77,7 +77,7 @@ spec:
         {{- end }}
         {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel.init_images "swi_endpoint_check" "fullstorydev/grpcurl:v1.8.7") }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.init_images "swi_endpoint_check" "fullstorydev/grpcurl:v1.8.9") }}"
           imagePullPolicy: {{ .Values.otel.init_images.swi_endpoint_check.pullPolicy }}
           command: ['/bin/grpcurl', '-expand-headers',
                     '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
