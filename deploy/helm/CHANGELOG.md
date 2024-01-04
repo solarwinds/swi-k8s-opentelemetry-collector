@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.12] - 2024-01-04
+
+- Upgraded OTEL collector image to `0.9.2` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.2)) which brings following changes
+  - Bumped 3rd party dependencies and Docker images
+  - OTEL upgraded to v0.91.0
+- Upgraded `otel/opentelemetry-ebpf-*` images to `v0.10.1`
+
 ## [3.2.0-alpha.11] - 2023-12-21
 
 - Revert deployments strategy to RollingUpdate
