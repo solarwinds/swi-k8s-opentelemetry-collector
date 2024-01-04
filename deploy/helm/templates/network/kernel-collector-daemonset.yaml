@@ -65,7 +65,7 @@ spec:
               value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
       containers:
         - name: swi-kernel-collector
-          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.kernelCollector (tuple "image" "ebpf_kernel_collector") "otel/opentelemetry-ebpf-kernel-collector:v0.10.0") }}"
+          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.kernelCollector (tuple "image" "ebpf_kernel_collector") "otel/opentelemetry-ebpf-kernel-collector:v0.10.1") }}"
           imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.kernelCollector.image.pullPolicy | default "IfNotPresent" }}
           args:
             - --config-file=/etc/network-explorer/config.yaml
