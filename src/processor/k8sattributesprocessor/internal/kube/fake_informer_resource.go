@@ -66,7 +66,7 @@ func (f *FakeResourceInformer) SetTransform(handler cache.TransformFunc) error {
 }
 
 func (f *FakeResourceInformer) GetStore() cache.Store {
-	return cache.NewStore(func(obj interface{}) (string, error) { return "", nil })
+	return cache.NewStore(func(obj any) (string, error) { return "", nil })
 }
 
 func (f *FakeResourceInformer) GetController() cache.Controller {

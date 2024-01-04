@@ -19,9 +19,11 @@ package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetr
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
+	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 )
 
 // Config defines configuration for k8s attributes processor.
@@ -34,7 +36,7 @@ type Config struct {
 	// directly from services to be able to correctly detect the pod IPs.
 	Passthrough bool `mapstructure:"passthrough"`
 
-	// Indicates that it will instrument `sw.k8s.<object type>.found` attributes 
+	// Indicates that it will instrument `sw.k8s.<object type>.found` attributes
 	// that will be set to true when the object is found in the cluster and false otherwise
 	SetObjectExistence bool `mapstructure:"set_object_existence"`
 
@@ -93,6 +95,66 @@ func (cfg *Config) Validate() error {
 	for _, assoc := range cfg.Association {
 		if len(assoc.Sources) > kube.PodIdentifierMaxLength {
 			return fmt.Errorf("too many association sources. limit is %v", kube.PodIdentifierMaxLength)
+		}
+	}
+
+	for _, f := range append(cfg.Extract.Labels, cfg.Extract.Annotations...) {
+		if f.Key != "" && f.KeyRegex != "" {
+			return fmt.Errorf("Out of Key or KeyRegex only one option is expected to be configured at a time, currently Key:%s and KeyRegex:%s", f.Key, f.KeyRegex)
+		}
+
+		switch f.From {
+		case "", kube.MetadataFromPod, kube.MetadataFromNamespace:
+		default:
+			return fmt.Errorf("%s is not a valid choice for From. Must be one of: pod, namespace", f.From)
+		}
+
+		if f.Regex != "" {
+			r, err := regexp.Compile(f.Regex)
+			if err != nil {
+				return err
+			}
+			names := r.SubexpNames()
+			if len(names) != 2 || names[1] != "value" {
+				return fmt.Errorf("regex must contain exactly one named submatch (value)")
+			}
+		}
+
+		if f.KeyRegex != "" {
+			_, err := regexp.Compile("^(?:" + f.KeyRegex + ")$")
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, field := range cfg.Extract.Metadata {
+		switch field {
+		case conventions.AttributeK8SNamespaceName, conventions.AttributeK8SPodName, conventions.AttributeK8SPodUID,
+			specPodHostName, metadataPodStartTime, conventions.AttributeK8SDeploymentName, conventions.AttributeK8SDeploymentUID,
+			conventions.AttributeK8SReplicaSetName, conventions.AttributeK8SReplicaSetUID, conventions.AttributeK8SDaemonSetName,
+			conventions.AttributeK8SDaemonSetUID, conventions.AttributeK8SStatefulSetName, conventions.AttributeK8SStatefulSetUID,
+			conventions.AttributeK8SContainerName, conventions.AttributeK8SJobName, conventions.AttributeK8SJobUID,
+			conventions.AttributeK8SCronJobName, conventions.AttributeK8SNodeName, conventions.AttributeContainerID,
+			conventions.AttributeContainerImageName, conventions.AttributeContainerImageTag, clusterUID:
+		default:
+			return fmt.Errorf("\"%s\" is not a supported metadata field", field)
+		}
+	}
+
+	for _, f := range cfg.Filter.Labels {
+		switch f.Op {
+		case "", filterOPEquals, filterOPNotEquals, filterOPExists, filterOPDoesNotExist:
+		default:
+			return fmt.Errorf("'%s' is not a valid label filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)
+		}
+	}
+
+	for _, f := range cfg.Filter.Fields {
+		switch f.Op {
+		case "", filterOPEquals, filterOPNotEquals:
+		default:
+			return fmt.Errorf("'%s' is not a valid label filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)
 		}
 	}
 
@@ -262,10 +324,10 @@ func (cfg *PersistentVolumeClaimConfig) Validate() error {
 }
 
 type ServiceConfig struct {
-	Extract     ExtractConfig                      `mapstructure:"extract"`
-	Filter      FilterConfig                       `mapstructure:"filter"`
-	Exclude     ExcludeServiceConfig			   `mapstructure:"exclude"`
-	Association []AssociationConfig                `mapstructure:"association"`
+	Extract     ExtractConfig        `mapstructure:"extract"`
+	Filter      FilterConfig         `mapstructure:"filter"`
+	Exclude     ExcludeServiceConfig `mapstructure:"exclude"`
+	Association []AssociationConfig  `mapstructure:"association"`
 }
 
 func (cfg *ServiceConfig) Validate() error {
@@ -297,6 +359,7 @@ type ExtractConfig struct {
 	//   k8s.statefulset.name, k8s.statefulset.uid,
 	//   k8s.container.name, container.image.name,
 	//   container.image.tag, container.id
+	//   k8s.cluster.uid
 	//
 	// Specifying anything other than these values will result in an error.
 	// By default, the following fields are extracted and added to spans, metrics and logs as attributes:

@@ -970,14 +970,7 @@ Node collector config should match snapshot when fargate is enabled:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
-        journald/runlogs:
-          directory: /run/log/journal
-          units:
-          - kubelet
-          - docker
-          - containerd
-        journald/varlogs:
-          directory: /var/log/journal
+        journald:
           units:
           - kubelet
           - docker
@@ -1035,8 +1028,7 @@ Node collector config should match snapshot when fargate is enabled:
             - groupbyattrs/common-all
             - resource/journal
             receivers:
-            - journald/runlogs
-            - journald/varlogs
+            - journald
           metrics/discovery:
             exporters:
             - forward/metric-exporter
@@ -2030,14 +2022,7 @@ Node collector config should match snapshot when using default values:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
-        journald/runlogs:
-          directory: /run/log/journal
-          units:
-          - kubelet
-          - docker
-          - containerd
-        journald/varlogs:
-          directory: /var/log/journal
+        journald:
           units:
           - kubelet
           - docker
@@ -2132,8 +2117,7 @@ Node collector config should match snapshot when using default values:
             - groupbyattrs/common-all
             - resource/journal
             receivers:
-            - journald/runlogs
-            - journald/varlogs
+            - journald
           metrics:
             exporters:
             - otlp

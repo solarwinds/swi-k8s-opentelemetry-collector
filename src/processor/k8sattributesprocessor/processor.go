@@ -77,7 +77,7 @@ func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kub
 				kube.MetadataFromNode:                  kp.getClientResource(kp.resources[kube.MetadataFromNode]),
 				kube.MetadataFromPersistentVolume:      kp.getClientResource(kp.resources[kube.MetadataFromPersistentVolume]),
 				kube.MetadataFromPersistentVolumeClaim: kp.getClientResource(kp.resources[kube.MetadataFromPersistentVolumeClaim]),
-				kube.MetadataFromService:			    kp.getClientResource(kp.resources[kube.MetadataFromService]),
+				kube.MetadataFromService:               kp.getClientResource(kp.resources[kube.MetadataFromService]),
 			})
 		if err != nil {
 			return err
@@ -151,8 +151,10 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 		return
 	}
 
+	var pod *kube.Pod
 	if podIdentifierValue.IsNotEmpty() {
-		if pod, ok := kp.kc.GetPod(podIdentifierValue); ok {
+		var podFound bool
+		if pod, podFound = kp.kc.GetPod(podIdentifierValue); podFound {
 			kp.logger.Debug("getting the pod", zap.Any("pod", pod))
 
 			for key, val := range pod.Attributes {
@@ -164,7 +166,7 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 		}
 	}
 
-	namespace := stringAttributeFromMap(resource.Attributes(), conventions.AttributeK8SNamespaceName)
+	namespace := getNamespace(pod, resource.Attributes())
 	if namespace != "" {
 		attrsToAdd := kp.getAttributesForPodsNamespace(namespace)
 		for key, val := range attrsToAdd {
@@ -179,6 +181,13 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 			processGenericResource(kp, resourceType, k8sResource.associations, ctx, resource)
 		}
 	}
+}
+
+func getNamespace(pod *kube.Pod, resAttrs pcommon.Map) string {
+	if pod != nil && pod.Namespace != "" {
+		return pod.Namespace
+	}
+	return stringAttributeFromMap(resAttrs, conventions.AttributeK8SNamespaceName)
 }
 
 // addContainerAttributes looks if pod has any container identifiers and adds additional container attributes
@@ -264,6 +273,8 @@ func intFromAttribute(val pcommon.Value) (int, error) {
 			return 0, err
 		}
 		return i, nil
+	case pcommon.ValueTypeEmpty, pcommon.ValueTypeDouble, pcommon.ValueTypeBool, pcommon.ValueTypeMap, pcommon.ValueTypeSlice, pcommon.ValueTypeBytes:
+		fallthrough
 	default:
 		return 0, fmt.Errorf("wrong attribute type %v, expected int", val.Type())
 	}

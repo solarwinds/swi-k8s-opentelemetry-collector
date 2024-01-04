@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/collector/featuregate"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 	"go.uber.org/zap"
 	api_v1 "k8s.io/api/core/v1"
@@ -36,6 +37,14 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/observability"
+)
+
+// Upgrade to StageStable in v0.92.0
+var enableRFC3339Timestamp = featuregate.GlobalRegistry().MustRegister(
+	"k8sattr.rfc3339",
+	featuregate.StageBeta,
+	featuregate.WithRegisterDescription("When enabled, uses RFC3339 format for k8s.pod.start_time value"),
+	featuregate.WithRegisterFromVersion("v0.82.0"),
 )
 
 // WatchClient is the main interface provided by this package to a kubernetes cluster.
@@ -72,7 +81,7 @@ type WatchClient struct {
 	NodeClient                  *WatchResourceClient[KubernetesResource]
 	PersistentVolumeClient      *WatchResourceClient[KubernetesResource]
 	PersistentVolumeClaimClient *WatchResourceClient[KubernetesResource]
-	ServiceClient 				*WatchResourceClient[KubernetesResource]
+	ServiceClient               *WatchResourceClient[KubernetesResource]
 }
 
 // Extract replicaset name from the pod name. Pod name is created using
@@ -133,12 +142,20 @@ func New(
 	}
 
 	if newNamespaceInformer == nil {
-		newNamespaceInformer = newNamespaceSharedInformer
+		// if rules to extract metadata from namespace is configured use namespace shared informer containing
+		// all namespaces including kube-system which contains cluster uid information (kube-system-uid)
+		if c.extractNamespaceLabelsAnnotations() {
+			newNamespaceInformer = newNamespaceSharedInformer
+		} else {
+			// use kube-system shared informer to only watch kube-system namespace
+			// reducing overhead of watching all the namespaces
+			newNamespaceInformer = newKubeSystemSharedInformer
+		}
 	}
 
 	c.informer = newInformer(c.kc, c.Filters.Namespace, labelSelector, fieldSelector)
 	err = c.informer.SetTransform(
-		func(object interface{}) (interface{}, error) {
+		func(object any) (any, error) {
 			originalPod, success := object.(*api_v1.Pod)
 			if !success { // means this is a cache.DeletedFinalStateUnknown, in which case we do nothing
 				return object, nil
@@ -151,11 +168,7 @@ func New(
 		return nil, err
 	}
 
-	if c.extractNamespaceLabelsAnnotations() {
-		c.namespaceInformer = newNamespaceInformer(c.kc)
-	} else {
-		c.namespaceInformer = NewNoOpInformer(c.kc)
-	}
+	c.namespaceInformer = newNamespaceInformer(c.kc)
 
 	if clientResources[MetadataFromDeployment] != nil {
 		deploymentClient, err := NewWatchDeploymentClient(
@@ -347,7 +360,7 @@ func (c *WatchClient) Stop() {
 	close(c.stopCh)
 }
 
-func (c *WatchClient) handlePodAdd(obj interface{}) {
+func (c *WatchClient) handlePodAdd(obj any) {
 	observability.RecordPodAdded()
 	if pod, ok := obj.(*api_v1.Pod); ok {
 		c.addOrUpdatePod(pod)
@@ -358,21 +371,21 @@ func (c *WatchClient) handlePodAdd(obj interface{}) {
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) handlePodUpdate(_, new interface{}) {
+func (c *WatchClient) handlePodUpdate(_, newPod any) {
 	observability.RecordPodUpdated()
-	if pod, ok := new.(*api_v1.Pod); ok {
+	if pod, ok := newPod.(*api_v1.Pod); ok {
 		// TODO: update or remove based on whether container is ready/unready?.
 		c.addOrUpdatePod(pod)
 	} else {
-		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", new))
+		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", newPod))
 	}
 	podTableSize := len(c.Pods)
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) handlePodDelete(obj interface{}) {
+func (c *WatchClient) handlePodDelete(obj any) {
 	observability.RecordPodDeleted()
-	if pod, ok := obj.(*api_v1.Pod); ok {
+	if pod, ok := ignoreDeletedFinalStateUnknown(obj).(*api_v1.Pod); ok {
 		c.forgetPod(pod)
 	} else {
 		c.logger.Error("object received was not of type api_v1.Pod", zap.Any("received", obj))
@@ -381,7 +394,7 @@ func (c *WatchClient) handlePodDelete(obj interface{}) {
 	observability.RecordPodTableSize(int64(podTableSize))
 }
 
-func (c *WatchClient) handleNamespaceAdd(obj interface{}) {
+func (c *WatchClient) handleNamespaceAdd(obj any) {
 	observability.RecordNamespaceAdded()
 	if namespace, ok := obj.(*api_v1.Namespace); ok {
 		c.addOrUpdateNamespace(namespace)
@@ -390,18 +403,18 @@ func (c *WatchClient) handleNamespaceAdd(obj interface{}) {
 	}
 }
 
-func (c *WatchClient) handleNamespaceUpdate(_, new interface{}) {
+func (c *WatchClient) handleNamespaceUpdate(_, newNamespace any) {
 	observability.RecordNamespaceUpdated()
-	if namespace, ok := new.(*api_v1.Namespace); ok {
+	if namespace, ok := newNamespace.(*api_v1.Namespace); ok {
 		c.addOrUpdateNamespace(namespace)
 	} else {
-		c.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", new))
+		c.logger.Error("object received was not of type api_v1.Namespace", zap.Any("received", newNamespace))
 	}
 }
 
-func (c *WatchClient) handleNamespaceDelete(obj interface{}) {
+func (c *WatchClient) handleNamespaceDelete(obj any) {
 	observability.RecordNamespaceDeleted()
-	if namespace, ok := obj.(*api_v1.Namespace); ok {
+	if namespace, ok := ignoreDeletedFinalStateUnknown(obj).(*api_v1.Namespace); ok {
 		c.m.Lock()
 		if ns, ok := c.Namespaces[namespace.Name]; ok {
 			// When a namespace is deleted all the pods(and other k8s objects in that namespace) in that namespace are deleted before it.
@@ -526,7 +539,15 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 	if c.Rules.StartTime {
 		ts := pod.GetCreationTimestamp()
 		if !ts.IsZero() {
-			tags[tagStartTime] = ts.String()
+			if enableRFC3339Timestamp.IsEnabled() {
+				if rfc3339ts, err := ts.MarshalText(); err != nil {
+					c.logger.Error("failed to unmarshal pod creation timestamp", zap.Error(err))
+				} else {
+					tags[tagStartTime] = string(rfc3339ts)
+				}
+			} else {
+				tags[tagStartTime] = ts.String()
+			}
 		}
 	}
 
@@ -589,6 +610,14 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 
 	if c.Rules.Node {
 		tags[tagNodeName] = pod.Spec.NodeName
+	}
+
+	if c.Rules.ClusterUID {
+		if val, ok := c.Namespaces["kube-system"]; ok {
+			tags[tagClusterUID] = val.NamespaceUID
+		} else {
+			c.logger.Debug("unable to find kube-system namespace, cluster uid will not be available")
+		}
 	}
 
 	for _, r := range c.Rules.Labels {
@@ -934,6 +963,8 @@ func selectorsFromFilters(filters Filters) (labels.Selector, fields.Selector, er
 			selectors = append(selectors, fields.OneTermEqualSelector(f.Key, f.Value))
 		case selection.NotEquals:
 			selectors = append(selectors, fields.OneTermNotEqualSelector(f.Key, f.Value))
+		case selection.DoesNotExist, selection.DoubleEquals, selection.In, selection.NotIn, selection.Exists, selection.GreaterThan, selection.LessThan:
+			fallthrough
 		default:
 			return nil, nil, fmt.Errorf("field filters don't support operator: '%s'", f.Op)
 		}
@@ -981,4 +1012,14 @@ func needContainerAttributes(rules ExtractionRules) bool {
 		rules.ContainerName ||
 		rules.ContainerImageTag ||
 		rules.ContainerID
+}
+
+// ignoreDeletedFinalStateUnknown returns the object wrapped in
+// DeletedFinalStateUnknown. Useful in OnDelete resource event handlers that do
+// not need the additional context.
+func ignoreDeletedFinalStateUnknown(obj any) any {
+	if obj, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		return obj.Obj
+	}
+	return obj
 }

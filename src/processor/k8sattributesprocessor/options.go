@@ -37,6 +37,8 @@ const (
 	filterOPDoesNotExist = "does-not-exist"
 	metadataPodStartTime = "k8s.pod.start_time"
 	specPodHostName      = "k8s.pod.hostname"
+	// TODO: use k8s.cluster.uid from semconv when available, and replace clusterUID with conventions.AttributeClusterUid
+	clusterUID = "k8s.cluster.uid"
 )
 
 // option represents a configuration option that can be passes.
@@ -72,6 +74,9 @@ func withSetObjectExistence() option {
 // enabledAttributes returns the list of resource attributes enabled by default.
 func enabledAttributes() (attributes []string) {
 	defaultConfig := metadata.DefaultResourceAttributesConfig()
+	if defaultConfig.K8sClusterUID.Enabled {
+		attributes = append(attributes, clusterUID)
+	}
 	if defaultConfig.ContainerID.Enabled {
 		attributes = append(attributes, conventions.AttributeContainerID)
 	}
@@ -142,9 +147,6 @@ func enabledAttributes() (attributes []string) {
 // If no fields explicitly provided, the defaults are pulled from metadata.yaml.
 func withExtractMetadata(fields ...string) option {
 	return func(p *kubernetesprocessor) error {
-		if len(fields) == 0 {
-			fields = enabledAttributes()
-		}
 		for _, field := range fields {
 			switch field {
 			case conventions.AttributeK8SNamespaceName:
@@ -187,8 +189,8 @@ func withExtractMetadata(fields ...string) option {
 				p.rules.ContainerImageName = true
 			case conventions.AttributeContainerImageTag:
 				p.rules.ContainerImageTag = true
-			default:
-				return fmt.Errorf("\"%s\" is not a supported metadata field", field)
+			case clusterUID:
+				p.rules.ClusterUID = true
 			}
 		}
 		return nil
@@ -342,14 +344,8 @@ func withFilterLabels(filters ...FieldFilterConfig) option {
 	return func(p *kubernetesprocessor) error {
 		var labels []kube.FieldFilter
 		for _, f := range filters {
-			if f.Op == "" {
-				f.Op = filterOPEquals
-			}
-
 			var op selection.Operator
 			switch f.Op {
-			case filterOPEquals:
-				op = selection.Equals
 			case filterOPNotEquals:
 				op = selection.NotEquals
 			case filterOPExists:
@@ -357,7 +353,7 @@ func withFilterLabels(filters ...FieldFilterConfig) option {
 			case filterOPDoesNotExist:
 				op = selection.DoesNotExist
 			default:
-				return fmt.Errorf("'%s' is not a valid label filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)
+				op = selection.Equals
 			}
 			labels = append(labels, kube.FieldFilter{
 				Key:   f.Key,
@@ -375,18 +371,12 @@ func withFilterFields(filters ...FieldFilterConfig) option {
 	return func(p *kubernetesprocessor) error {
 		var fields []kube.FieldFilter
 		for _, f := range filters {
-			if f.Op == "" {
-				f.Op = filterOPEquals
-			}
-
 			var op selection.Operator
 			switch f.Op {
-			case filterOPEquals:
-				op = selection.Equals
 			case filterOPNotEquals:
 				op = selection.NotEquals
 			default:
-				return fmt.Errorf("'%s' is not a valid field filter operation for key=%s, value=%s", f.Op, f.Key, f.Value)
+				op = selection.Equals
 			}
 			fields = append(fields, kube.FieldFilter{
 				Key:   f.Key,

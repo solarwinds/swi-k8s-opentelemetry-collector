@@ -28,6 +28,7 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/metadata"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -38,20 +39,23 @@ func TestLoadConfig(t *testing.T) {
 		expected component.Config
 	}{
 		{
-			id: component.NewID(typeStr),
+			id: component.NewID(metadata.Type),
 			expected: &Config{
 				APIConfig: k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeServiceAccount},
 				Exclude:   ExcludeConfig{Pods: []ExcludePodConfig{{Name: "jaeger-agent"}, {Name: "jaeger-collector"}}},
+				Extract: ExtractConfig{
+					Metadata: enabledAttributes(),
+				},
 			},
 		},
 		{
-			id: component.NewIDWithName(typeStr, "2"),
+			id: component.NewIDWithName(metadata.Type, "2"),
 			expected: &Config{
-				APIConfig:   k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
-				Passthrough: false,
+				APIConfig:          k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
+				Passthrough:        false,
 				SetObjectExistence: true,
 				Extract: ExtractConfig{
-					Metadata: []string{"k8s.pod.name", "k8s.pod.uid", "k8s.deployment.name", "k8s.namespace.name", "k8s.node.name", "k8s.pod.start_time"},
+					Metadata: []string{"k8s.pod.name", "k8s.pod.uid", "k8s.deployment.name", "k8s.namespace.name", "k8s.node.name", "k8s.pod.start_time", "k8s.cluster.uid"},
 					Annotations: []FieldExtractConfig{
 						{TagName: "a1", Key: "annotation-one", From: "pod"},
 						{TagName: "a2", Key: "annotation-two", Regex: "field=(?P<value>.+)", From: kube.MetadataFromPod},
@@ -360,7 +364,7 @@ func TestLoadConfig(t *testing.T) {
 			},
 		},
 		{
-			id: component.NewIDWithName(typeStr, "3"),
+			id: component.NewIDWithName(metadata.Type, "3"),
 			expected: &Config{
 				APIConfig:   k8sconfig.APIConfig{AuthType: k8sconfig.AuthTypeKubeConfig},
 				Passthrough: false,
@@ -371,6 +375,7 @@ func TestLoadConfig(t *testing.T) {
 					Labels: []FieldExtractConfig{
 						{KeyRegex: "opentel.*", From: kube.MetadataFromPod},
 					},
+					Metadata: enabledAttributes(),
 				},
 				Exclude: ExcludeConfig{
 					Pods: []ExcludePodConfig{
@@ -379,6 +384,51 @@ func TestLoadConfig(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "too_many_sources"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_keys_labels"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_keys_annotations"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_from_labels"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_from_annotations"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_regex_labels"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_regex_annotations"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_keyregex_labels"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_keyregex_annotations"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_regex_groups_labels"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_regex_groups_annotations"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_regex_name_labels"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_regex_name_annotations"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_filter_label_op"),
+		},
+		{
+			id: component.NewIDWithName(metadata.Type, "bad_filter_field_op"),
 		},
 	}
 
@@ -393,6 +443,12 @@ func TestLoadConfig(t *testing.T) {
 			sub, err := cm.Sub(tt.id.String())
 			require.NoError(t, err)
 			require.NoError(t, component.UnmarshalConfig(sub, cfg))
+
+			if tt.expected == nil {
+				err = component.ValidateConfig(cfg)
+				assert.Error(t, err)
+				return
+			}
 
 			assert.NoError(t, component.ValidateConfig(cfg))
 			assert.Equal(t, tt.expected, cfg)
