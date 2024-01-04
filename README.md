@@ -1,4 +1,4 @@
-# swo-k8s-collector
+ # swo-k8s-collector
 
 Assets to monitor Kubernetes infrastructure using [SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/default.htm#cshid=gh-k8s-collector)
 
