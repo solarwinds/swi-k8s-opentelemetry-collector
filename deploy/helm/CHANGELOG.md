@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.13] - 2024-01-08
+
+- Make sure discoverd histogram metrics are not sent to SWO
+- Publish custom Istio metrics, when available: `k8s.istio_request_bytes.rate`, `k8s.istio_response_bytes.rate` and `k8s.istio_request_duration_milliseconds.rate`.
+
 ## [3.2.0-alpha.12] - 2024-01-04
 
 - Upgraded OTEL collector image to `0.9.2` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.2)) which brings following changes

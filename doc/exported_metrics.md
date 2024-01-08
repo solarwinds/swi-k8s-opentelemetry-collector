@@ -305,3 +305,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.dns.timeouts | Counter | | The total number of	DNS timeouts between the source and destination measured for the prior thirty seconds. | custom |
 | k8s.dns.client.duration_average | Counter | | This metric is the average duration in microseconds from when the client sends a DNS request, until the response is received back from the server.  As such, it includes the communication round-trip times, plus the server processing latency.  Computed by the summation of all times, divided by dns.responses. | custom |
 | k8s.dns.server.duration_average | Counter | | This metric is the average duration in microseconds for the server to respond to a request received locally.  Thus, it does not include the network latency from or to the client.  Computed by the summation of all times, divided by dns.responses. | custom |
+| k8s.istio_request_bytes.rate | Gauge | | Bytes per second used for HTTP request bodies. | custom |
+| k8s.istio_response_bytes.rate | Gauge | | Bytes per second used for HTTP response bodies. | custom |
+| k8s.istio_request_duration_milliseconds.rate | Gauge | | Duration of requests per second. | custom |

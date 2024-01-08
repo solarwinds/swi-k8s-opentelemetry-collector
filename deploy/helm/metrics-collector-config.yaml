@@ -1010,6 +1010,11 @@ processors:
           - "^kubelet_volume_stats_available_percent$"
           - "^kubernetes_build_info$"
 
+  filter/histograms:
+    metrics:
+      metric:
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM'
+
 connectors:
   forward/prometheus:
   forward/metric-exporter:
@@ -1284,6 +1289,7 @@ service:
         - otlp
       processors:
         - memory_limiter
+        - filter/histograms
         - batch
       receivers:
         - forward/metric-exporter
