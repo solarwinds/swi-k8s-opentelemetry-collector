@@ -95,6 +95,13 @@ Node collector config should match snapshot when fargate is enabled:
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
+        cumulativetodelta/istio-histograms:
+          include:
+            match_type: strict
+            metrics:
+            - k8s.istio_request_bytes.rate
+            - k8s.istio_response_bytes.rate
+            - k8s.istio_request_duration_milliseconds.rate
         deltatorate/cadvisor:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
@@ -124,6 +131,15 @@ Node collector config should match snapshot when fargate is enabled:
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
+        deltatorate/istio-histograms:
+          metrics:
+          - k8s.istio_request_bytes.rate
+          - k8s.istio_response_bytes.rate
+          - k8s.istio_request_duration_milliseconds.rate
+        filter/histograms:
+          metrics:
+            metric:
+            - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/logs:
           logs:
             include:
@@ -856,6 +872,15 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        transform/istio-histograms:
+          metric_statements:
+          - context: metric
+            statements:
+            - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
+              == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
+            - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
+            - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
+            - set(name, "k8s.istio_request_duration_milliseconds.rate") where name == "k8s.istio_request_duration_milliseconds_sum"
         transform/syslogify:
           error_mode: ignore
           log_statements:
@@ -1035,6 +1060,9 @@ Node collector config should match snapshot when fargate is enabled:
             processors:
             - memory_limiter
             - metricstransform/rename
+            - transform/istio-histograms
+            - cumulativetodelta/istio-histograms
+            - deltatorate/istio-histograms
             - groupbyattrs/common-all
             - resource/all
             receivers:
@@ -1147,6 +1175,13 @@ Node collector config should match snapshot when using default values:
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
+        cumulativetodelta/istio-histograms:
+          include:
+            match_type: strict
+            metrics:
+            - k8s.istio_request_bytes.rate
+            - k8s.istio_response_bytes.rate
+            - k8s.istio_request_duration_milliseconds.rate
         deltatorate/cadvisor:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
@@ -1176,6 +1211,15 @@ Node collector config should match snapshot when using default values:
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
+        deltatorate/istio-histograms:
+          metrics:
+          - k8s.istio_request_bytes.rate
+          - k8s.istio_response_bytes.rate
+          - k8s.istio_request_duration_milliseconds.rate
+        filter/histograms:
+          metrics:
+            metric:
+            - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/logs:
           logs:
             include:
@@ -1908,6 +1952,15 @@ Node collector config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        transform/istio-histograms:
+          metric_statements:
+          - context: metric
+            statements:
+            - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
+              == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
+            - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
+            - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
+            - set(name, "k8s.istio_request_duration_milliseconds.rate") where name == "k8s.istio_request_duration_milliseconds_sum"
         transform/syslogify:
           error_mode: ignore
           log_statements:
@@ -2123,6 +2176,7 @@ Node collector config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
+            - filter/histograms
             - k8sattributes
             - batch/metrics
             receivers:
@@ -2133,6 +2187,9 @@ Node collector config should match snapshot when using default values:
             processors:
             - memory_limiter
             - metricstransform/rename
+            - transform/istio-histograms
+            - cumulativetodelta/istio-histograms
+            - deltatorate/istio-histograms
             - groupbyattrs/common-all
             - resource/all
             receivers:

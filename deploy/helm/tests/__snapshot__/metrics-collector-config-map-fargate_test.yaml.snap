@@ -518,6 +518,10 @@ Metrics config should match snapshot when using default values:
               match_type: regexp
               metric_names:
               - ^ebpf_net.*$
+        filter/histograms:
+          metrics:
+            metric:
+            - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/kube-state-metrics:
           metrics:
             include:
@@ -2239,6 +2243,7 @@ Metrics config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
+            - filter/histograms
             - batch
             receivers:
             - forward/metric-exporter
