@@ -607,18 +607,6 @@ Metrics config should match snapshot when fargate is enabled:
               - ^kube_endpoint_created$
               - ^kube_endpoint_ports$
               - ^kube_endpoint_address$
-        filter/opencost-metrics:
-          metrics:
-            include:
-              match_type: regexp
-              metric_names:
-              - ^container_cpu_allocation$
-              - ^container_gpu_allocation$
-              - ^container_memory_allocation_bytes$
-              - ^pod_pvc_allocation$
-              - ^node_gpu_count$
-              - ^kubecost_.*$
-              - ^.*_cost$
         filter/prometheus-node-metrics:
           metrics:
             include:
@@ -2220,19 +2208,6 @@ Metrics config should match snapshot when fargate is enabled:
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: true
-        prometheus/opencost:
-          config:
-            scrape_configs:
-            - honor_labels: true
-              honor_timestamps: false
-              job_name: opencost
-              metrics_path: /metrics
-              scheme: http
-              scrape_interval: 60s
-              scrape_timeout: 10s
-              static_configs:
-              - targets:
-                - ${OPENCOST_URL}
       service:
         extensions:
         - health_check
@@ -2255,15 +2230,6 @@ Metrics config should match snapshot when fargate is enabled:
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
-          metrics/opencost:
-            exporters:
-            - forward/prometheus
-            processors:
-            - memory_limiter
-            - filter/opencost-metrics
-            - metricstransform/rename-otel
-            receivers:
-            - prometheus/opencost
           metrics/otlp:
             exporters:
             - forward/metric-exporter
@@ -2976,18 +2942,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - ^kube_endpoint_created$
               - ^kube_endpoint_ports$
               - ^kube_endpoint_address$
-        filter/opencost-metrics:
-          metrics:
-            include:
-              match_type: regexp
-              metric_names:
-              - ^container_cpu_allocation$
-              - ^container_gpu_allocation$
-              - ^container_memory_allocation_bytes$
-              - ^pod_pvc_allocation$
-              - ^node_gpu_count$
-              - ^kubecost_.*$
-              - ^.*_cost$
         filter/prometheus-node-metrics:
           metrics:
             include:
@@ -4509,19 +4463,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: true
-        prometheus/opencost:
-          config:
-            scrape_configs:
-            - honor_labels: true
-              honor_timestamps: false
-              job_name: opencost
-              metrics_path: /metrics
-              scheme: http
-              scrape_interval: 60s
-              scrape_timeout: 10s
-              static_configs:
-              - targets:
-                - ${OPENCOST_URL}
         prometheus/prometheus-server:
           config:
             scrape_configs:
@@ -4559,15 +4500,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
-          metrics/opencost:
-            exporters:
-            - forward/prometheus
-            processors:
-            - memory_limiter
-            - filter/opencost-metrics
-            - metricstransform/rename-otel
-            receivers:
-            - prometheus/opencost
           metrics/otlp:
             exporters:
             - forward/metric-exporter
@@ -5287,18 +5219,6 @@ Metrics config should match snapshot when using default values:
               - ^kube_endpoint_created$
               - ^kube_endpoint_ports$
               - ^kube_endpoint_address$
-        filter/opencost-metrics:
-          metrics:
-            include:
-              match_type: regexp
-              metric_names:
-              - ^container_cpu_allocation$
-              - ^container_gpu_allocation$
-              - ^container_memory_allocation_bytes$
-              - ^pod_pvc_allocation$
-              - ^node_gpu_count$
-              - ^kubecost_.*$
-              - ^.*_cost$
         filter/prometheus-node-metrics:
           metrics:
             include:
@@ -6820,19 +6740,6 @@ Metrics config should match snapshot when using default values:
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: true
-        prometheus/opencost:
-          config:
-            scrape_configs:
-            - honor_labels: true
-              honor_timestamps: false
-              job_name: opencost
-              metrics_path: /metrics
-              scheme: http
-              scrape_interval: 60s
-              scrape_timeout: 10s
-              static_configs:
-              - targets:
-                - ${OPENCOST_URL}
       service:
         extensions:
         - health_check
@@ -6855,15 +6762,6 @@ Metrics config should match snapshot when using default values:
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
-          metrics/opencost:
-            exporters:
-            - forward/prometheus
-            processors:
-            - memory_limiter
-            - filter/opencost-metrics
-            - metricstransform/rename-otel
-            receivers:
-            - prometheus/opencost
           metrics/otlp:
             exporters:
             - forward/metric-exporter
