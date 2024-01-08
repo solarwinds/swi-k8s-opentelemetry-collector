@@ -284,6 +284,34 @@ processors:
 {{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 6 }}
 {{- end }}
 
+  filter/histograms:
+    metrics:
+      metric:
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM'
+
+  transform/istio-histograms:
+    metric_statements:
+      - context: metric
+        statements:
+          - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
+          - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
+          - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
+          - set(name, "k8s.istio_request_duration_milliseconds.rate") where name == "k8s.istio_request_duration_milliseconds_sum"
+  
+  cumulativetodelta/istio-histograms:
+    include:
+      metrics:
+        - k8s.istio_request_bytes.rate
+        - k8s.istio_response_bytes.rate
+        - k8s.istio_request_duration_milliseconds.rate
+      match_type: strict
+
+  deltatorate/istio-histograms:
+    metrics:
+      - k8s.istio_request_bytes.rate
+      - k8s.istio_response_bytes.rate
+      - k8s.istio_request_duration_milliseconds.rate
+
 connectors:
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
   forward/metric-exporter:
@@ -570,6 +598,9 @@ service:
         - filter/metrics-discovery
 {{- end }}
         - metricstransform/rename
+        - transform/istio-histograms
+        - cumulativetodelta/istio-histograms
+        - deltatorate/istio-histograms
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
         - cumulativetodelta/discovery
         - deltatorate/discovery
@@ -611,6 +642,7 @@ service:
         - otlp
       processors:
         - memory_limiter
+        - filter/histograms
         - k8sattributes
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
         - resource/k8sattributes_labels_filter
