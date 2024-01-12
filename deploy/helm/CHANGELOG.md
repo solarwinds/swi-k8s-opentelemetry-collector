@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.14] - 2024-01-12
+
+- Publish custom Istio metrics, when available: `k8s.istio_request_bytes.delta`, `k8s.istio_response_bytes.delta`, `k8s.istio_requests.rate`, `k8s.istio_tcp_sent_bytes.rate`, `k8s.istio_tcp_received_bytes.rate`, `k8s.istio_requests.delta`, `k8s.istio_tcp_sent_bytes.delta`, `k8s.istio_tcp_received_bytes.delta`
+
 ## [3.2.0-alpha.13] - 2024-01-08
 
 - Make sure discoverd histogram metrics are not sent to SWO
