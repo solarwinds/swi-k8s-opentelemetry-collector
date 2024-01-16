@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.15] - 2024-01-17
+
+### Fixed
+
+- Fixed restarts of the collector when automatic discovery and scraping of prometheus endpoints (`otel.metrics.autodiscovery.prometheusEndpoints.enabled`) was disabled
+
 ## [3.2.0-alpha.14] - 2024-01-12
 
 - Publish custom Istio metrics, when available: `k8s.istio_request_bytes.delta`, `k8s.istio_response_bytes.delta`, `k8s.istio_requests.rate`, `k8s.istio_tcp_sent_bytes.rate`, `k8s.istio_tcp_received_bytes.rate`, `k8s.istio_requests.delta`, `k8s.istio_tcp_sent_bytes.delta`, `k8s.istio_tcp_received_bytes.delta`
+- Disable opencost metrics by default
 
 ## [3.2.0-alpha.13] - 2024-01-08
 
