@@ -98,13 +98,21 @@ Node collector config for windows nodes should match snapshot when using default
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
-        cumulativetodelta/istio-histograms:
+        cumulativetodelta/istio-metrics:
           include:
             match_type: strict
             metrics:
             - k8s.istio_request_bytes.rate
             - k8s.istio_response_bytes.rate
             - k8s.istio_request_duration_milliseconds.rate
+            - k8s.istio_requests.rate
+            - k8s.istio_tcp_sent_bytes.rate
+            - k8s.istio_tcp_received_bytes.rate
+            - k8s.istio_request_bytes.delta
+            - k8s.istio_response_bytes.delta
+            - k8s.istio_requests.delta
+            - k8s.istio_tcp_sent_bytes.delta
+            - k8s.istio_tcp_received_bytes.delta
         deltatorate/cadvisor:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
@@ -134,11 +142,14 @@ Node collector config for windows nodes should match snapshot when using default
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        deltatorate/istio-histograms:
+        deltatorate/istio-metrics:
           metrics:
           - k8s.istio_request_bytes.rate
           - k8s.istio_response_bytes.rate
           - k8s.istio_request_duration_milliseconds.rate
+          - k8s.istio_requests.rate
+          - k8s.istio_tcp_sent_bytes.rate
+          - k8s.istio_tcp_received_bytes.rate
         filter/histograms:
           metrics:
             metric:
@@ -273,6 +284,23 @@ Node collector config for windows nodes should match snapshot when using default
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricstransform/istio-metrics:
+          transforms:
+          - action: insert
+            include: k8s.istio_request_bytes.rate
+            new_name: k8s.istio_request_bytes.delta
+          - action: insert
+            include: k8s.istio_response_bytes.rate
+            new_name: k8s.istio_response_bytes.delta
+          - action: insert
+            include: k8s.istio_requests.rate
+            new_name: k8s.istio_requests.delta
+          - action: insert
+            include: k8s.istio_tcp_sent_bytes.rate
+            new_name: k8s.istio_tcp_sent_bytes.delta
+          - action: insert
+            include: k8s.istio_tcp_received_bytes.rate
+            new_name: k8s.istio_tcp_received_bytes.delta
         metricstransform/preprocessing:
           transforms:
           - action: insert
@@ -855,7 +883,7 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        transform/istio-histograms:
+        transform/istio-metrics:
           metric_statements:
           - context: metric
             statements:
@@ -864,6 +892,9 @@ Node collector config for windows nodes should match snapshot when using default
             - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
             - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
             - set(name, "k8s.istio_request_duration_milliseconds.rate") where name == "k8s.istio_request_duration_milliseconds_sum"
+            - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
+            - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
+            - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
         transform/syslogify:
           error_mode: ignore
           log_statements:
@@ -1076,9 +1107,10 @@ Node collector config for windows nodes should match snapshot when using default
             processors:
             - memory_limiter
             - metricstransform/rename
-            - transform/istio-histograms
-            - cumulativetodelta/istio-histograms
-            - deltatorate/istio-histograms
+            - transform/istio-metrics
+            - metricstransform/istio-metrics
+            - cumulativetodelta/istio-metrics
+            - deltatorate/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:

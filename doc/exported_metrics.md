@@ -308,3 +308,11 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.istio_request_bytes.rate | Gauge | | Bytes per second used for HTTP request bodies. | custom |
 | k8s.istio_response_bytes.rate | Gauge | | Bytes per second used for HTTP response bodies. | custom |
 | k8s.istio_request_duration_milliseconds.rate | Gauge | | Duration of requests per second. | custom |
+| k8s.istio_request_bytes.delta | Gauge | | HTTP request bodies size. | custom |
+| k8s.istio_response_bytes.delta | Gauge | | HTTP response bodies size. | custom |
+| k8s.istio_requests.rate | Gauge | | HTTP requests per second. | custom |
+| k8s.istio_tcp_sent_bytes.rate | Gauge | | TCP bytes sent per second. | custom |
+| k8s.istio_tcp_received_bytes.rate | Gauge | | TCP bytes received per second | custom |
+| k8s.istio_requests.delta | Gauge | | HTTP requests count | custom |
+| k8s.istio_tcp_sent_bytes.delta | Gauge | | TCP bytes sent. | custom |
+| k8s.istio_tcp_received_bytes.delta | Gauge | | TCP bytes received. | custom |

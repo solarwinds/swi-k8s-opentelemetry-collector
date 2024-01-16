@@ -289,7 +289,7 @@ processors:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 
-  transform/istio-histograms:
+  transform/istio-metrics:
     metric_statements:
       - context: metric
         statements:
@@ -297,20 +297,52 @@ processors:
           - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
           - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
           - set(name, "k8s.istio_request_duration_milliseconds.rate") where name == "k8s.istio_request_duration_milliseconds_sum"
+          - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
+          - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
+          - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
   
-  cumulativetodelta/istio-histograms:
+  metricstransform/istio-metrics:
+    transforms:
+      - include: k8s.istio_request_bytes.rate
+        action: insert
+        new_name: k8s.istio_request_bytes.delta
+      - include: k8s.istio_response_bytes.rate
+        action: insert
+        new_name: k8s.istio_response_bytes.delta
+      - include: k8s.istio_requests.rate
+        action: insert
+        new_name: k8s.istio_requests.delta
+      - include: k8s.istio_tcp_sent_bytes.rate
+        action: insert
+        new_name: k8s.istio_tcp_sent_bytes.delta
+      - include: k8s.istio_tcp_received_bytes.rate
+        action: insert
+        new_name: k8s.istio_tcp_received_bytes.delta
+
+  cumulativetodelta/istio-metrics:
     include:
       metrics:
         - k8s.istio_request_bytes.rate
         - k8s.istio_response_bytes.rate
         - k8s.istio_request_duration_milliseconds.rate
+        - k8s.istio_requests.rate
+        - k8s.istio_tcp_sent_bytes.rate
+        - k8s.istio_tcp_received_bytes.rate
+        - k8s.istio_request_bytes.delta
+        - k8s.istio_response_bytes.delta
+        - k8s.istio_requests.delta
+        - k8s.istio_tcp_sent_bytes.delta
+        - k8s.istio_tcp_received_bytes.delta
       match_type: strict
 
-  deltatorate/istio-histograms:
+  deltatorate/istio-metrics:
     metrics:
       - k8s.istio_request_bytes.rate
       - k8s.istio_response_bytes.rate
       - k8s.istio_request_duration_milliseconds.rate
+      - k8s.istio_requests.rate
+      - k8s.istio_tcp_sent_bytes.rate
+      - k8s.istio_tcp_received_bytes.rate
 
 connectors:
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
@@ -598,9 +630,10 @@ service:
         - filter/metrics-discovery
 {{- end }}
         - metricstransform/rename
-        - transform/istio-histograms
-        - cumulativetodelta/istio-histograms
-        - deltatorate/istio-histograms
+        - transform/istio-metrics
+        - metricstransform/istio-metrics
+        - cumulativetodelta/istio-metrics
+        - deltatorate/istio-metrics
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
         - cumulativetodelta/discovery
         - deltatorate/discovery
