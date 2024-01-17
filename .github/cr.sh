@@ -20,7 +20,20 @@ main() {
     cr upload -c "$(git rev-parse HEAD)"
 
     echo 'Updating chart repo index...'
-    cr index --pr
+    cr index
+
+    # Find the .tgz file and extract the release name
+    RELEASE_FILE=$(find .cr-release-packages -name '*.tgz')
+    RELEASE_NAME=$(basename "$RELEASE_FILE" .tgz)
+
+    echo "Release file: $RELEASE_FILE"
+    echo "Release name: $RELEASE_NAME"
+
+    echo 'Pushing update...'
+    push_files "$RELEASE_NAME"
+
+    echo 'Creating pull request...'
+    create_pr "$RELEASE_NAME"
 }
 
 install_chart_releaser() {
@@ -37,6 +50,49 @@ install_chart_releaser() {
 
     echo 'Adding cr directory to PATH...'
     export PATH="$install_dir:$PATH"
+}
+
+push_files() {
+    local release_name="$1"
+    local branch_name="feature/${release_name}"
+    local base_branch="gh-pages"
+
+    # Fetch the latest state of the remote branches
+    git fetch origin
+
+    # Create a new branch from the latest commit of the gh-pages branch
+    echo "Creating new branch '$branch_name' from '$base_branch'..."
+    gh api -X POST /repos/solarwinds/swi-k8s-opentelemetry-collector/git/refs \
+        --field ref="refs/heads/$branch_name" \
+        --field sha="$(git rev-parse "origin/$base_branch")"
+
+    # Get the SHA of the current index.yaml in the base branch
+    SHA=$(gh api repos/solarwinds/swi-k8s-opentelemetry-collector/contents/index.yaml?ref="$base_branch" \
+        --jq '.sha')
+
+    MESSAGE="New release $release_name"
+    CONTENT=$(base64 -i .cr-index/index.yaml)
+
+    # Push new index.yaml to the feature branch
+    echo "Pushing new index.yaml to branch '$branch_name'..."
+    gh api --method PUT /repos/solarwinds/swi-k8s-opentelemetry-collector/contents/index.yaml \
+        --field message="$MESSAGE" \
+        --field content="$CONTENT" \
+        --field encoding="base64" \
+        --field branch="$branch_name" \
+        --field sha="$SHA"
+}
+
+create_pr() {
+    local release_name="$1"
+    local branch_name="feature/${release_name}"
+    local base_branch="gh-pages"
+
+    # Create a pull request
+    echo "Creating a pull request from '$branch_name' into '$base_branch'..."
+    gh pr create --base "$base_branch" --head "$branch_name" \
+        --title "Update Helm Chart for $release_name" \
+        --body "This PR updates the Helm chart index.yaml with the latest release $release_name."
 }
 
 main "$@"
