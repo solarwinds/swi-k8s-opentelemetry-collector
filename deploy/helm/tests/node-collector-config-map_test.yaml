@@ -8,6 +8,13 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Node collector config should match snapshot when autodiscovery is disabled
+    template: node-collector-config-map.yaml
+    set:
+      otel.metrics.autodiscovery.prometheusEndpoints.enabled: false
+    asserts:
+      - matchSnapshot:
+          path: data
   - it: Node collector config should match snapshot when fargate is enabled
     template: node-collector-config-map.yaml
     set:
