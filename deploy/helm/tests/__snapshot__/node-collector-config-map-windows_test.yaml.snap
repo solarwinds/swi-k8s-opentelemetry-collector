@@ -150,6 +150,13 @@ Node collector config for windows nodes should match snapshot when using default
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        experimental_metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum
+            metric2: k8s.istio_request_duration_milliseconds_count
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -889,9 +896,9 @@ Node collector config for windows nodes should match snapshot when using default
             statements:
             - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
               == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
+            - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
             - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
             - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
-            - set(name, "k8s.istio_request_duration_milliseconds.rate") where name == "k8s.istio_request_duration_milliseconds_sum"
             - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
             - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
             - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
@@ -1108,6 +1115,7 @@ Node collector config for windows nodes should match snapshot when using default
             - memory_limiter
             - metricstransform/rename
             - transform/istio-metrics
+            - experimental_metricsgeneration/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
