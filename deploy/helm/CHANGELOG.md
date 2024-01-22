@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.16] - 2024-01-22
+
+### Fixed
+
+- Fixed restarts of the collector when automatic discovery and scraping of prometheus endpoints (`otel.metrics.autodiscovery.prometheusEndpoints.enabled`) was enabled on a Fargate environment
+
 ## [3.2.0-alpha.15] - 2024-01-17
 
 ### Fixed
