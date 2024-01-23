@@ -300,6 +300,8 @@ processors:
           - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
           - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
           - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
+          - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name == "k8s.istio_request_duration_milliseconds_sum"
+          - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name == "k8s.istio_request_duration_milliseconds_count"
   
   metricstransform/istio-metrics:
     transforms:
@@ -324,7 +326,8 @@ processors:
       metrics:
         - k8s.istio_request_bytes.rate
         - k8s.istio_response_bytes.rate
-        - k8s.istio_request_duration_milliseconds_sum
+        - k8s.istio_request_duration_milliseconds_sum_temp
+        - k8s.istio_request_duration_milliseconds_count_temp
         - k8s.istio_requests.rate
         - k8s.istio_tcp_sent_bytes.rate
         - k8s.istio_tcp_received_bytes.rate
@@ -339,7 +342,8 @@ processors:
     metrics:
       - k8s.istio_request_bytes.rate
       - k8s.istio_response_bytes.rate
-      - k8s.istio_request_duration_milliseconds_sum
+      - k8s.istio_request_duration_milliseconds_sum_temp
+      - k8s.istio_request_duration_milliseconds_count_temp
       - k8s.istio_requests.rate
       - k8s.istio_tcp_sent_bytes.rate
       - k8s.istio_tcp_received_bytes.rate
@@ -348,8 +352,8 @@ processors:
     rules:
       - name: k8s.istio_request_duration_milliseconds.rate
         type: calculate
-        metric1: k8s.istio_request_duration_milliseconds_sum
-        metric2: k8s.istio_request_duration_milliseconds_count
+        metric1: k8s.istio_request_duration_milliseconds_sum_temp
+        metric2: k8s.istio_request_duration_milliseconds_count_temp
         operation: divide
 
 
@@ -649,6 +653,9 @@ service:
         - deltatorate/discovery
 {{- end }}
         - groupbyattrs/common-all
+{{- if .Values.otel.metrics.filter }}
+        - filter/metrics
+{{- end }}
         - resource/all
       receivers:
         - receiver_creator/discovery
