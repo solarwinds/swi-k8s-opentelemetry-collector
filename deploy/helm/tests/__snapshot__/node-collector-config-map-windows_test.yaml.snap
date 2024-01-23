@@ -104,7 +104,8 @@ Node collector config for windows nodes should match snapshot when using default
             metrics:
             - k8s.istio_request_bytes.rate
             - k8s.istio_response_bytes.rate
-            - k8s.istio_request_duration_milliseconds.rate
+            - k8s.istio_request_duration_milliseconds_sum_temp
+            - k8s.istio_request_duration_milliseconds_count_temp
             - k8s.istio_requests.rate
             - k8s.istio_tcp_sent_bytes.rate
             - k8s.istio_tcp_received_bytes.rate
@@ -146,10 +147,18 @@ Node collector config for windows nodes should match snapshot when using default
           metrics:
           - k8s.istio_request_bytes.rate
           - k8s.istio_response_bytes.rate
-          - k8s.istio_request_duration_milliseconds.rate
+          - k8s.istio_request_duration_milliseconds_sum_temp
+          - k8s.istio_request_duration_milliseconds_count_temp
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        experimental_metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -889,12 +898,16 @@ Node collector config for windows nodes should match snapshot when using default
             statements:
             - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
               == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
+            - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
             - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
             - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
-            - set(name, "k8s.istio_request_duration_milliseconds.rate") where name == "k8s.istio_request_duration_milliseconds_sum"
             - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
             - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
             - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
+            - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name ==
+              "k8s.istio_request_duration_milliseconds_sum"
+            - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name
+              == "k8s.istio_request_duration_milliseconds_count"
         transform/syslogify:
           error_mode: ignore
           log_statements:
@@ -1111,7 +1124,9 @@ Node collector config for windows nodes should match snapshot when using default
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
+            - experimental_metricsgeneration/istio-metrics
             - groupbyattrs/common-all
+            - filter/metrics
             - resource/all
             receivers:
             - receiver_creator/discovery
