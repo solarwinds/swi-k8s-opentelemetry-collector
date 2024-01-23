@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [3.2.0-alpha.16] - 2024-01-22
+## [3.2.0-alpha.17] - 2024-01-23
 
 ### Fixed
 
 - Fixed how `k8s.istio_request_duration_milliseconds.rate` metric is calculated
+
+## [3.2.0-alpha.16] - 2024-01-22
+
+### Fixed
+
+- Fixed restarts of the collector when automatic discovery and scraping of prometheus endpoints (`otel.metrics.autodiscovery.prometheusEndpoints.enabled`) was enabled on a Fargate environment
 
 ## [3.2.0-alpha.15] - 2024-01-17
 

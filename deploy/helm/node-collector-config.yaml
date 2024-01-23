@@ -687,6 +687,8 @@ service:
         - resource/all
       receivers:
         - receiver_creator/node
+{{- end }}
+{{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     metrics:
       exporters:
         - otlp
