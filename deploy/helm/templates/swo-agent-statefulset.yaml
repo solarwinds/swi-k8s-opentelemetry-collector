@@ -30,8 +30,16 @@ spec:
     spec:
       securityContext: {}
       nodeSelector:
+      {{- if .Values.swoagent.nodeSelector }}
+        {{ toYaml .Values.swoagent.nodeSelector | nindent 8 }}
+      {{- else }}
         kubernetes.io/arch: amd64
         kubernetes.io/os: linux
+      {{- end }}
+      {{- if .Values.swoagent.affinity }}
+      affinity:
+        {{- toYaml .Values.swoagent.affinity | nindent 8 }}
+      {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}

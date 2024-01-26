@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Added option to configure `nodeSelector` and `affinity` for SWO Agent
+
 ### Changed
 
 - Upgraded collector image to `0.10.0` which brings following changes:
