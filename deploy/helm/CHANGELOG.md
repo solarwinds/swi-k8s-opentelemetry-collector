@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.2.0-alpha.18] - 2024-01-26
+
+### Added
+
+- Ability to setup nodeSelector and affinity for swoagent 
+
 ## [3.2.0-alpha.17] - 2024-01-23
 
 ### Fixed
