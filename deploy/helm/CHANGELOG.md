@@ -10,15 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.2.0] - 2024-02-01
 
 ### Added
-- Publish custom Istio metrics, when available: `k8s.istio_request_bytes.delta`, `k8s.istio_response_bytes.delta`, `k8s.istio_requests.rate`, `k8s.istio_tcp_sent_bytes.rate`, `k8s.istio_tcp_received_bytes.rate`, `k8s.istio_requests.delta`, `k8s.istio_tcp_sent_bytes.delta`, `k8s.istio_tcp_received_bytes.delta`
-- Publish custom Istio metrics, when available: `k8s.istio_request_bytes.rate`, `k8s.istio_response_bytes.rate` and `k8s.istio_request_duration_milliseconds.rate`.
+- Publish custom Istio metrics, when available: `k8s.istio_request_bytes.delta`, `k8s.istio_response_bytes.delta`, `k8s.istio_requests.rate`, `k8s.istio_tcp_sent_bytes.rate`, `k8s.istio_tcp_received_bytes.rate`, `k8s.istio_requests.delta`, `k8s.istio_tcp_sent_bytes.delta`, `k8s.istio_tcp_received_bytes.delta`, `k8s.istio_request_bytes.rate`, `k8s.istio_response_bytes.rate` and `k8s.istio_request_duration_milliseconds.rate`.
 - Added `otel.metrics.autodiscovery.prometheusEndpoints.podMonitors` configuration option. Define if you want to monitor applications that do not have prometheus annotations.
 - Added Windows Server 2019 support
-- Images can be overriden by setting `global.azure.images.<image_key>` in `values.yaml`
+- Support for ARM64
 - Added `otel.api_token` to allow setting API token for OTEL collector through `values.yaml`
 
 ### Changed
-- Disable opencost metrics by default
 - Upgraded OTEL collector image to `0.9.2` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.2)) which brings following changes
   - Bumped 3rd party dependencies and Docker images
   - OTEL upgraded to v0.91.0
@@ -27,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - removing `k8s.kube_daemonset_labels`, `k8s.kube_deployment_labels` and `k8s.kube_statefulset_labels` metrics (they were redundant anyway)
 
 ### Fixed
-- how `k8s.istio_request_duration_milliseconds.rate` metric is calculated
 - restarts of the collector when automatic discovery and scraping of prometheus endpoints (`otel.metrics.autodiscovery.prometheusEndpoints.enabled`) was enabled on a Fargate environment
 - Make sure discoverd histogram metrics are not sent to SWO
 - Fixed usage of `ebpfNetworkMonitoring.k8sCollector.relay.image.pullPolicy`
