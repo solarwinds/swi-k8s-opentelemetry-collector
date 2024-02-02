@@ -7,29 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [3.2.0] - 2024-02-01
+## [3.2.0] - 2024-02-02
 
 ### Added
-- Publish custom Istio metrics, when available: `k8s.istio_request_bytes.delta`, `k8s.istio_response_bytes.delta`, `k8s.istio_requests.rate`, `k8s.istio_tcp_sent_bytes.rate`, `k8s.istio_tcp_received_bytes.rate`, `k8s.istio_requests.delta`, `k8s.istio_tcp_sent_bytes.delta`, `k8s.istio_tcp_received_bytes.delta`, `k8s.istio_request_bytes.rate`, `k8s.istio_response_bytes.rate` and `k8s.istio_request_duration_milliseconds.rate`.
-- Added `otel.metrics.autodiscovery.prometheusEndpoints.podMonitors` configuration option. Define if you want to monitor applications that do not have prometheus annotations.
+
+- Added Linux ARM64 support
 - Added Windows Server 2019 support
-- Support for ARM64
+- Added option to deploy OpenCost collector
+  - Can be enabled by setting `openconst.enabled` to `true` in `values.yaml`
+- Added option to pull images from ACR by setting `global.azure.images.<image_key>` in `values.yaml` when running in AKS
 - Added `otel.api_token` to allow setting API token for OTEL collector through `values.yaml`
+- Added `otel.metrics.autodiscovery.prometheusEndpoints.podMonitors` configuration option. Define if you want to monitor applications that do not have Prometheus annotations.
+- Started publishing custom Istio metrics, when available: `k8s.istio_request_bytes.delta`, `k8s.istio_response_bytes.delta`, `k8s.istio_requests.rate`, `k8s.istio_tcp_sent_bytes.rate`, `k8s.istio_tcp_received_bytes.rate`, `k8s.istio_requests.delta`, `k8s.istio_tcp_sent_bytes.delta`, `k8s.istio_tcp_received_bytes.delta`, `k8s.istio_request_bytes.rate`, `k8s.istio_response_bytes.rate` and `k8s.istio_request_duration_milliseconds.rate`
 
 ### Changed
-- Upgraded OTEL collector image to `0.9.2` (see [Release notes](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.2)) which brings following changes
+
+- Upgraded OTEL collector image to `0.9.2` which brings following changes
+  - see Release notes for
+    [0.8.11](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.11),
+    [0.8.12](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.12),
+    [0.8.13](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.8.13),
+    [0.9.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.0),
+    [0.9.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.1),
+    [0.9.2](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.9.2)
+  - Switched from `scratch` base image to `distroless`
   - Bumped 3rd party dependencies and Docker images
   - OTEL upgraded to v0.91.0
-- Upgraded `otel/opentelemetry-ebpf-*` images to `v0.10.1`
-- Upgraded kube-state-metrics to 5.15.2
-  - removing `k8s.kube_daemonset_labels`, `k8s.kube_deployment_labels` and `k8s.kube_statefulset_labels` metrics (they were redundant anyway)
+- Adjusted node-collector memory limits for better performance
+- Removed sha256 from image references to enable multiarch support
+- Removed `k8s.kube_daemonset_labels`, `k8s.kube_deployment_labels` and `k8s.kube_statefulset_labels` metrics (they were redundant anyway)
+  - There are no longer published by the updated `kube-state-metrics`
+- Stopped sending histogram metrics to SWO
+- Added PVC for SWO Agent, when enabled
 
 ### Fixed
-- restarts of the collector when automatic discovery and scraping of prometheus endpoints (`otel.metrics.autodiscovery.prometheusEndpoints.enabled`) was enabled on a Fargate environment
-- Make sure discoverd histogram metrics are not sent to SWO
+
+- Fixed autoupdate job
 - Fixed usage of `ebpfNetworkMonitoring.k8sCollector.relay.image.pullPolicy`
-- Fixed rendering on FluxCD, removing helm version constraint
-- Removing sha256 from image pulls as it does not allow multi arch images
+- Fixed restarts of the collector when automatic discovery and scraping of prometheus endpoints (`otel.metrics.autodiscovery.prometheusEndpoints.enabled`) was disabled or enabled on a Fargate environment
 
 ## [3.2.0-alpha.17] - 2024-01-23
 
