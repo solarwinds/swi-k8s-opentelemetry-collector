@@ -27,7 +27,7 @@ FROM base as wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-FROM gcr.io/distroless/static-debian12@sha256:4a2c1a51ae5e10ec4758a0f981be3ce5d6ac55445828463fce8dff3a355e0b75
+FROM gcr.io/distroless/static-debian12@sha256:2eb0c793360d26aace9b88fb9cf1a4f680140e7fb7d68d86de1fe63dbc1a7660
 
 ARG USER_UID=10001
 USER ${USER_UID}
