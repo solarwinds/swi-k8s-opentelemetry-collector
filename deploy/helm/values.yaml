@@ -22,13 +22,13 @@ otel:
   https_proxy_url: ""
 
   image:
-    repository: solarwinds/swi-opentelemetry-collector
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/solarwinds/solarwinds/swi-opentelemetry-collector
     # if not set appVersion field from Chart.yaml is used
     tag: ""
     pullPolicy: IfNotPresent
 
   windows:
-    enabled: true
+    enabled: false
     image:
       repository: solarwinds/swi-opentelemetry-collector
       # if not set appVersion field from Chart.yaml is used
@@ -120,7 +120,7 @@ otel:
         filter:
 
     # Check if SWI OTEL endpoint is reachable
-    swi_endpoint_check: true
+    swi_endpoint_check: false
 
     # Check if Prometheus endpoint is reachable
     prometheus_check: false
@@ -539,6 +539,9 @@ autoupdate:
 # commonLabels:
 
 kube-state-metrics:
+  image:
+    registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+    repository: solarwinds/kube-state-metrics/kube-state-metrics
   enabled: true
   service:
     annotations:
