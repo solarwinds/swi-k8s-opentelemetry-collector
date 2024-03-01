@@ -17,6 +17,7 @@ exporters:
 {{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
       storage: file_storage/sending_queue
 {{- end }}
+    timeout: {{ .Values.otel.node_collector.timeout }}
 extensions:
   file_storage/checkpoints:
 {{ toYaml .Values.otel.logs.filestorage | indent 4 }}

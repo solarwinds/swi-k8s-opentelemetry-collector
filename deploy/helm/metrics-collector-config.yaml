@@ -16,6 +16,7 @@ exporters:
       queue_size: {{ .Values.otel.metrics.sending_queue.queue_size }}
 {{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
       storage: file_storage/sending_queue
+    timeout: {{ .Values.otel.metrics.timeout }}
 {{- end }}
 extensions:
 {{- if .Values.otel.metrics.sending_queue.offload_to_disk }}

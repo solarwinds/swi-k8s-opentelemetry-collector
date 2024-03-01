@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.3.0-alpha.1]
+
+### Added
+
+- Added option to configure `timeout`, which is time to wait per individual attempt to send data to SWO.
+  - default is `15s` (previously was `5s`) avoiding unnecessary retries when backend takes time to respond
+
 ## [3.2.0] - 2024-02-02
 
 ### Added
