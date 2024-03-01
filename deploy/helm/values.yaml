@@ -79,6 +79,9 @@ otel:
       # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
       max_elapsed_time: 300s
 
+    # Time to wait per individual attempt to send data to SWO
+    timeout: 15s
+
   # Configuration for metrics collection
   metrics:
     # Define whether metrics will be collected and sent
@@ -109,7 +112,6 @@ otel:
         #    - rule: labels["example"] == "value"
         #      metrics_path: "/metrics"
         #      endpoint_port: 8080
-
 
         customTransformations:
           # list of metrics that are counters should be converted to rate
@@ -162,6 +164,9 @@ otel:
 
       # How often the metrics are scraped from Prometheus
       scrape_interval: 60s
+
+    # Time to wait per individual attempt to send data to SWO
+    timeout: 15s
 
     # Configuration for endpoint on which metrics collector receives OpenTelemetry metrics
     otlp_endpoint:
@@ -324,6 +329,9 @@ otel:
 
       # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
       max_elapsed_time: 300s
+
+    # Time to wait per individual attempt to send data to SWO
+    timeout: 15s
 
     # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
     # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
