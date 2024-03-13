@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: test asserts
+tests:
+  - it: should fail when deprecated OTEL endpoint is provided
+    set:
+      otel.endpoint: otel-collector.dc-01.cloud.solarwinds.com
+    asserts:
+      - failedTemplate:
+          errorMessage: The provided OTEL endpoint address ('otel-collector.dc-01.cloud.solarwinds.com') has been deprecated. Please provide a new one (https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm).
