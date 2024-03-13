@@ -8,4 +8,8 @@ WARNING: you rely on bundled Prometheus, but it was removed in this version. To 
 WARNING: You have enabled autodiscovery of prometheus endpoints, so `extra_scrape_metrics` is ignored. If you are sure that those metrics won't be covered by autodiscovery set `otel.metrics.force_extra_scrape_metrics` to `true`.
 
 {{- end -}}
+{{- if (mustRegexMatch "otel-collector\\.dc-\\d\\d\\.cloud\\.solarwinds\\.com" .Values.otel.endpoint) -}}
+WARNING: The provided OTEL endpoint address ({{ quote .Values.otel.endpoint }}) has been deprecated. Please switch to a new one as soon as possible.
+         A list of available endpoints: https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm
 
+{{- end -}}

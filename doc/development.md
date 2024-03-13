@@ -167,6 +167,10 @@ helm unittest deploy/helm
 helm unittest -u deploy/helm
 ```
 
+### Integration with VS Code
+
+To enable code completion when writing new tests, install a VS Code extension providing a YAML Language server, like `redhat.vscode-yaml`.
+
 ## Integration tests
 Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
 
