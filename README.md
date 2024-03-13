@@ -113,3 +113,34 @@ otel:
           - key: k8s.namespace.name
             value: ^.*$
 ```
+
+## Receive 3d party metrics 
+
+SWO K8s Collector has otlp service endpoint which is able to receive and send metrics into SWO. All incoming metrics are decorated with prefix `k8s.` and properly associated with current cluster.
+
+Service endpoint is provided in format
+```
+"<chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317"
+```
+
+### OpenTelemetry Collector configuration example
+In case you want to send data from your [OpenTelementry Collector](https://github.com/open-telemetry/opentelemetry-collector-contrib) into SWO you can either send them directly into [public otlp endpoint](https://documentation.solarwinds.com/en/success_center/observability/content/configure/configure-otel-directly.htm) or you can send them via our swo k8s collector to have better binding. To do that add following exporter into your configuration. 
+
+```yaml
+config:
+ exporters:
+   otlp:
+     endpoint: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
+```
+
+### Telegraf configuration example
+ [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics. 
+
+Telegraf metrics can be sent into our endpoint by adding following fragment to your values.yaml
+ 
+ ```yaml
+config:
+  outputs:  
+    - opentelemetry:
+        service_address: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
+ ```
