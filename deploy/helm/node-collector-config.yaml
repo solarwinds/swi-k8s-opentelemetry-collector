@@ -369,6 +369,7 @@ connectors:
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
   journald:
+    files: ["/*/log/journal/**/*"]
     units:
       - kubelet
       - docker
