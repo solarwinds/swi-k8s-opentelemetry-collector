@@ -17,6 +17,7 @@ exporters:
 {{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
       storage: file_storage/sending_queue
 {{- end }}
+    timeout: {{ .Values.otel.node_collector.timeout }}
 extensions:
   file_storage/checkpoints:
 {{ toYaml .Values.otel.logs.filestorage | indent 4 }}
@@ -368,6 +369,7 @@ connectors:
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
   journald:
+    files: ["/*/log/journal/**/*"]
     units:
       - kubelet
       - docker

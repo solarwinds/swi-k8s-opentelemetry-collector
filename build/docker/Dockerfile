@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.21.5-bookworm as base
+FROM docker.io/library/golang:1.22.1-bookworm as base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
@@ -27,7 +27,7 @@ FROM base as wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-FROM gcr.io/distroless/static-debian12@sha256:4a2c1a51ae5e10ec4758a0f981be3ce5d6ac55445828463fce8dff3a355e0b75
+FROM gcr.io/distroless/static-debian12@sha256:6dcc833df2a475be1a3d7fc951de90ac91a2cb0be237c7578b88722e48f2e56f
 
 ARG USER_UID=10001
 USER ${USER_UID}

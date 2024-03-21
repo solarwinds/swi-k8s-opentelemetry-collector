@@ -19,6 +19,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             enabled: true
             num_consumers: 20
             queue_size: 1000
+          timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -1043,6 +1044,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
           start_at: end
           storage: file_storage/checkpoints
         journald:
+          files:
+          - /*/log/journal/**/*
           units:
           - kubelet
           - docker
@@ -1181,6 +1184,7 @@ Node collector config should match snapshot when fargate is enabled:
             enabled: true
             num_consumers: 20
             queue_size: 1000
+          timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -2202,6 +2206,8 @@ Node collector config should match snapshot when fargate is enabled:
           start_at: end
           storage: file_storage/checkpoints
         journald:
+          files:
+          - /*/log/journal/**/*
           units:
           - kubelet
           - docker
@@ -2314,6 +2320,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             enabled: true
             num_consumers: 20
             queue_size: 1000
+          timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -3330,6 +3337,8 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           start_at: end
           storage: file_storage/checkpoints
         journald:
+          files:
+          - /*/log/journal/**/*
           units:
           - kubelet
           - docker
@@ -3396,6 +3405,7 @@ Node collector config should match snapshot when using default values:
             enabled: true
             num_consumers: 20
             queue_size: 1000
+          timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -4420,6 +4430,8 @@ Node collector config should match snapshot when using default values:
           start_at: end
           storage: file_storage/checkpoints
         journald:
+          files:
+          - /*/log/journal/**/*
           units:
           - kubelet
           - docker
