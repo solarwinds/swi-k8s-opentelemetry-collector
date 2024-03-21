@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.3.0-alpha.2] - 2024-03-21
+
 ### Fixed
 - Fixed Journal log collection on EKS (and other environments where journal logs are stored in `/var/log/journal`)
 
-## [3.3.0-alpha.1]
+## [3.3.0-alpha.1] - 2024-03-13
 
 ### Added
 
