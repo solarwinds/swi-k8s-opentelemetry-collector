@@ -16,7 +16,7 @@ RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else 
 FROM base as tests
 RUN cd src/processor/swmetricstransformprocessor && go test ./...
 
-FROM debian:12.4 as journal
+FROM debian:12.5 as journal
 RUN apt update
 RUN apt install -y systemd
 COPY /build/docker/copy-journalbinary.sh /script.sh
