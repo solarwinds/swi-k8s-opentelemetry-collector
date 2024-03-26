@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.3.0-alpha.3] - 2024-03-27
+
+### Changed
+
+- Container logs from AWS EKS Fargate clusters are now sent to SWO as-is. `fluentbit.io/parser` and `fluentbit.io/exclude` annotations are ignored. This both fixes an issue with "empty" JSON logs sent to SWO and aligns the behavior with non-Fargate container logs.
+
 ## [3.3.0-alpha.2] - 2024-03-21
 
 ### Fixed
+
 - Fixed Journal log collection on EKS (and other environments where journal logs are stored in `/var/log/journal`)
 
 ## [3.3.0-alpha.1] - 2024-03-13
