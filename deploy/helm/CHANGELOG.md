@@ -5,17 +5,18 @@ All notable changes to Helm charts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [3.3.0-alpha.4] - 2024-04-10
 
 ### Changed
 
-- Added validation schema for the provided Helm configuration
+- Added validation schema for the provided Helm chart configuration.
 
 ## [3.3.0-alpha.3] - 2024-03-27
 
 ### Changed
 
 - Container logs from AWS EKS Fargate clusters are now sent to SWO as-is. `fluentbit.io/parser` and `fluentbit.io/exclude` annotations are ignored. This both fixes an issue with "empty" JSON logs sent to SWO and aligns the behavior with non-Fargate container logs.
+  This change is applied only to Pods that are started after the new `k8s collector` is deployed to the k8s cluster.
 
 ## [3.3.0-alpha.2] - 2024-03-21
 

@@ -1,5 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Configuration validation schema for Helm chart swo-k8s-collector. For more information, see https://github.com/solarwinds/swi-k8s-opentelemetry-collector/blob/master/deploy/helm/values.yaml.",
     "type": "object",
     "definitions": {
         "collectorBatch": {
@@ -395,12 +396,12 @@
             "description": "Cluster identification.",
             "properties": {
                 "name": {
-                    "type": "string",
-                    "description": "The display name for the cluster entity in SolarWinds Observability."
+                    "description": "The display name for the cluster entity in SolarWinds Observability.",
+                    "type": "string"
                 },
                 "uid": {
-                    "type": "string",
-                    "description": "A unique ID that follows the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx."
+                    "description": "A unique ID that follows the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
+                    "type": "string"
                 }
             },
             "required": [
@@ -408,6 +409,9 @@
                 "uid"
             ],
             "additionalProperties": false
+        },
+        "commonLabels": {
+            "$ref": "#/definitions/k8sLabels"
         },
         "ebpfNetworkMonitoring": {
             "description": "If enabled, deploys opentelemetry-network monitoring to the cluster.",
@@ -628,6 +632,9 @@
                         },
                         "k8s_instrumentation": {
                             "$ref": "#/definitions/collectorK8sLabelsAnnotationsInstrumentation"
+                        },
+                        "filter": {
+                            "type": "object"
                         },
                         "memory_ballast": {
                             "$ref": "#/definitions/collectorMemoryBallast"
