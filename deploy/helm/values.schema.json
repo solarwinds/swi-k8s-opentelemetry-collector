@@ -1,0 +1,1112 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "definitions": {
+        "collectorBatch": {
+            "description": "Batching configuration for OTEL collector. More info: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor/README.md.",
+            "type": "object",
+            "properties": {
+                "send_batch_max_size": {
+                    "type": "integer"
+                },
+                "send_batch_size": {
+                    "type": "integer"
+                },
+                "timeout": {
+                    "type": "string"
+                }
+            }
+        },
+        "collectorK8sLabelsAnnotationsInstrumentation": {
+            "description": "Label and Annotation instrumentation configuration for OTEL collector.",
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "excludePattern": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "labels": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "excludePattern": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "collectorMemoryBallast": {
+            "description": "Memory ballast configuration for OTEL collector. More info: https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/ballastextension/README.md.",
+            "type": "object",
+            "properties": {
+                "size_mib": {
+                    "type": "integer"
+                }
+            }
+        },
+        "collectorMemoryLimiter": {
+            "description": "Memory limiter configuration for OTEL collector. More info: https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor/README.md.",
+            "type": "object",
+            "properties": {
+                "check_interval": {
+                    "type": "string"
+                },
+                "limit_mib": {
+                    "type": "integer"
+                },
+                "spike_limit_mib": {
+                    "type": "integer"
+                }
+            }
+        },
+        "collectorRetryOnFailure": {
+            "description": "Retry configuration for sending data to OTEL endpoint. More info: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "initial_interval": {
+                    "type": "string"
+                },
+                "max_elapsed_time": {
+                    "type": "string"
+                },
+                "max_interval": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "collectorSendingQueue": {
+            "description": "Send configuration for sending data to OTEL endpoint. More info: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "num_consumers": {
+                    "type": "integer"
+                },
+                "queue_size": {
+                    "type": "integer"
+                }
+            }
+        },
+        "collectorTimeout": {
+            "description": "Timeout for each attempt to send data to OTEL endpoint. More info: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/exporterhelper/README.md.",
+            "type": "string"
+        },
+        "collectorTelemetry": {
+            "description": "Telemetry configuration for OTEL collector. More info: https://github.com/open-telemetry/opentelemetry.io/blob/main/content/en/docs/collector/configuration.md#telemetry.",
+            "type": "object",
+            "properties": {
+                "logs": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "level": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "metrics": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "address": {
+                            "type": "string"
+                        },
+                        "podMonitor": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "additionalLabels": {
+                                    "$ref": "#/definitions/k8sLabels"
+                                },
+                                "interval": {
+                                    "type": "string"
+                                },
+                                "namespace": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "scrapeTimeout": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "ebpfTelemetry": {
+            "description": "Telemetry configuration for opentelemetry-network.",
+            "type": "object",
+            "properties": {
+                "logs": {
+                    "type": "object",
+                    "properties": {
+                        "level": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            }
+        },
+        "imageDefinition": {
+            "description": "Container image definition.",
+            "type": "object",
+            "properties": {
+                "repository": {
+                    "description": "Image repository. Example: `solarwinds/swi-opentelemetry-collector`, `docker.io/solarwinds/swi-opentelemetry-collector`, `docker.io/solarwinds/swi-opentelemetry-collector:0.9.2`.",
+                    "type": "string"
+                },
+                "tag": {
+                    "description": "Image tag. Example: `0.9.2` - use when the `repository` does not already include `tag`.",
+                    "type": "string"
+                },
+                "pullPolicy": {
+                    "$ref": "#/definitions/k8sImagePullPolicy"
+                }
+            },
+            "additionalProperties": false
+        },
+        "imageDigest": {
+            "description": "Image digest.",
+            "type": "string"
+        },
+        "imageRegistry": {
+            "description": "Image registry.",
+            "type": "string"
+        },
+        "imageRepository": {
+            "description": "Image repository.",
+            "type": "string"
+        },
+        "imageTag": {
+            "description": "Image tag.",
+            "type": "string"
+        },
+        "k8sAffinity": {
+            "description": "Scheduling affinity. More info: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity.",
+            "type": "object",
+            "properties": {
+                "nodeAffinity": {
+                    "type": "object"
+                },
+                "podAffinity": {
+                    "type": "object"
+                },
+                "podAntiAffinity": {
+                    "type": "object"
+                }
+            }
+        },
+        "k8sImagePullPolicy": {
+            "description": "Image pull policy. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images.",
+            "type": [
+                "string",
+                "null"
+            ],
+            "enum": [
+                "Always",
+                "Never",
+                "IfNotPresent",
+                ""
+            ]
+        },
+        "k8sLabels": {
+            "description": "Kubernetes labels. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "k8sNodeSelector": {
+            "description": "NodeSelector definition. More info: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector",
+            "$ref": "#/definitions/k8sLabels"
+        },
+        "k8sResourceRequirements": {
+            "description": "Container resource requirements. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.",
+            "type": "object",
+            "properties": {
+                "limits": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": [
+                            "string",
+                            "number"
+                        ]
+                    }
+                },
+                "requests": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": [
+                            "string",
+                            "number"
+                        ]
+                    }
+                }
+            }
+        },
+        "k8sTerminationGracePeriod": {
+            "description": "Pod graceful termination period. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination.",
+            "type": "integer"
+        },
+        "k8sTolerations": {
+            "description": "Pod tolerations. More info: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "effect": {
+                        "type": "string"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "operator": {
+                        "type": "string"
+                    },
+                    "tolerationSeconds": {
+                        "type": "integer"
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "port": {
+            "description": "Port number.",
+            "type": "integer"
+        },
+        "schedule": {
+            "description": "Schedule in Cron format. More info: https://en.wikipedia.org/wiki/Cron.",
+            "type": "string"
+        }
+    },
+    "properties": {
+        "autoupdate": {
+            "description": "If enabled it creates CronJob that will periodically check for new versions of the Helm chart and upgrade if available.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "devel": {
+                    "type": "boolean"
+                },
+                "image": {
+                    "$ref": "#/definitions/imageDefinition"
+                },
+                "schedule": {
+                    "$ref": "#/definitions/schedule"
+                }
+            },
+            "additionalProperties": false
+        },
+        "aws_fargate": {
+            "description": "Enable support for AWS EKS Fargate environment.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "logs": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "filters": {
+                            "type": "string"
+                        },
+                        "region": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "if": {
+                "properties": {
+                    "enabled": {
+                        "const": true
+                    },
+                    "logs": {
+                        "properties": {
+                            "enabled": {
+                                "const": true
+                            }
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "logs": {
+                        "properties": {
+                            "region": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "region"
+                        ]
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
+        "cluster": {
+            "type": "object",
+            "description": "Cluster identification.",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The display name for the cluster entity in SolarWinds Observability."
+                },
+                "uid": {
+                    "type": "string",
+                    "description": "A unique ID that follows the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx."
+                }
+            },
+            "required": [
+                "name",
+                "uid"
+            ],
+            "additionalProperties": false
+        },
+        "ebpfNetworkMonitoring": {
+            "description": "If enabled, deploys opentelemetry-network monitoring to the cluster.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "k8sCollector": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "relay": {
+                            "type": "object",
+                            "properties": {
+                                "image": {
+                                    "$ref": "#/definitions/imageDefinition"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/ebpfTelemetry"
+                        },
+                        "watcher": {
+                            "type": "object",
+                            "properties": {
+                                "image": {
+                                    "$ref": "#/definitions/imageDefinition"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "kernelCollector": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "affinity": {
+                            "$ref": "#/definitions/k8sAffinity"
+                        },
+                        "image": {
+                            "$ref": "#/definitions/imageDefinition"
+                        },
+                        "nodeSelector": {
+                            "$ref": "#/definitions/k8sNodeSelector"
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/k8sResourceRequirements"
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/ebpfTelemetry"
+                        },
+                        "tolerations": {
+                            "$ref": "#/definitions/k8sTolerations"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "reducer": {
+                    "type": "object",
+                    "properties": {
+                        "disableMetrics": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "enableIdIdGeneration": {
+                            "type": "boolean"
+                        },
+                        "enableMetrics": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "image": {
+                            "$ref": "#/definitions/imageDefinition"
+                        },
+                        "numAggregationShards": {
+                            "type": "integer"
+                        },
+                        "numIngestShards": {
+                            "type": "integer"
+                        },
+                        "numMatchingShards": {
+                            "type": "integer"
+                        },
+                        "telemetry": {
+                            "type": "object",
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ebpfTelemetry"
+                                },
+                                {
+                                    "properties": {
+                                        "metrics": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "telemetryPort": {
+                            "$ref": "#/definitions/port"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "fullnameOverride": {
+            "type": "string"
+        },
+        "imagePullSecrets": {
+            "type": "array"
+        },
+        "kube-state-metrics": {
+            "description": "If enabled, deploys kube-state-metrics to the cluster.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "image": {
+                    "type": "object",
+                    "registry": {
+                        "$ref": "#/definitions/imageRegistry"
+                    },
+                    "repository": {
+                        "$ref": "#/definitions/imageRepository"
+                    },
+                    "tag": {
+                        "$ref": "#/definitions/imageTag"
+                    },
+                    "pullPolicy": {
+                        "$ref": "#/definitions/k8sImagePullPolicy"
+                    },
+                    "sha": {
+                        "$ref": "#/definitions/imageDigest"
+                    }
+                }
+            }
+        },
+        "nameOverride": {
+            "type": "string"
+        },
+        "opencost": {
+            "description": "If enabled, deploys opencost to the cluster.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "opencost": {
+                    "type": "object",
+                    "properties": {
+                        "exporter": {
+                            "type": "object",
+                            "properties": {
+                                "image": {
+                                    "type": "object",
+                                    "properties": {
+                                        "pullPolicy": {
+                                            "$ref": "#/definitions/k8sImagePullPolicy"
+                                        },
+                                        "registry": {
+                                            "$ref": "#/definitions/imageRegistry"
+                                        },
+                                        "repository": {
+                                            "$ref": "#/definitions/imageRepository"
+                                        },
+                                        "tag": {
+                                            "$ref": "#/definitions/imageTag"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "otel": {
+            "type": "object",
+            "properties": {
+                "api_token": {
+                    "type": "string"
+                },
+                "endpoint": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": "object",
+                    "properties": {
+                        "affinity": {
+                            "$ref": "#/definitions/k8sAffinity"
+                        },
+                        "batch": {
+                            "$ref": "#/definitions/collectorBatch"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "k8s_instrumentation": {
+                            "$ref": "#/definitions/collectorK8sLabelsAnnotationsInstrumentation"
+                        },
+                        "memory_ballast": {
+                            "$ref": "#/definitions/collectorMemoryBallast"
+                        },
+                        "memory_limiter": {
+                            "$ref": "#/definitions/collectorMemoryLimiter"
+                        },
+                        "nodeSelector": {
+                            "$ref": "#/definitions/k8sNodeSelector"
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/k8sResourceRequirements"
+                        },
+                        "retry_on_failure": {
+                            "$ref": "#/definitions/collectorRetryOnFailure"
+                        },
+                        "sending_queue": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/collectorSendingQueue"
+                                },
+                                {
+                                    "properties": {
+                                        "offload_to_disk": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/collectorTelemetry"
+                        },
+                        "terminationGracePeriodSeconds": {
+                            "$ref": "#/definitions/k8sTerminationGracePeriod"
+                        },
+                        "timeout": {
+                            "$ref": "#/definitions/collectorTimeout"
+                        },
+                        "tolerations": {
+                            "$ref": "#/definitions/k8sTolerations"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "https_proxy_url": {
+                    "type": "string"
+                },
+                "image": {
+                    "$ref": "#/definitions/imageDefinition"
+                },
+                "init_images": {
+                    "type": "object",
+                    "properties": {
+                        "busy_box": {
+                            "$ref": "#/definitions/imageDefinition"
+                        },
+                        "swi_endpoint_check": {
+                            "$ref": "#/definitions/imageDefinition"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "logs": {
+                    "type": "object",
+                    "properties": {
+                        "affinity": {
+                            "$ref": "#/definitions/k8sAffinity"
+                        },
+                        "batch": {
+                            "$ref": "#/definitions/collectorBatch"
+                        },
+                        "container": {
+                            "type": "boolean"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "filestorage": {
+                            "type": "object",
+                            "properties": {
+                                "directory": {
+                                    "type": "string"
+                                },
+                                "timeout": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "filter": {
+                            "type": "object"
+                        },
+                        "journal": {
+                            "type": "boolean"
+                        },
+                        "memory_ballast": {
+                            "$ref": "#/definitions/collectorMemoryBallast"
+                        },
+                        "memory_limiter": {
+                            "$ref": "#/definitions/collectorMemoryLimiter"
+                        },
+                        "nodeSelector": {
+                            "$ref": "#/definitions/k8sNodeSelector"
+                        },
+                        "receiver": {
+                            "type": "object",
+                            "properties": {
+                                "encoding": {
+                                    "type": "string"
+                                },
+                                "fingerprint_size": {
+                                    "type": "string"
+                                },
+                                "max_concurrent_files": {
+                                    "type": "integer"
+                                },
+                                "max_log_size": {
+                                    "type": "string"
+                                },
+                                "poll_interval": {
+                                    "type": "string"
+                                },
+                                "start_at": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/k8sResourceRequirements"
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/collectorTelemetry"
+                        },
+                        "tolerations": {
+                            "$ref": "#/definitions/k8sTolerations"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "metrics": {
+                    "type": "object",
+                    "properties": {
+                        "affinity": {
+                            "$ref": "#/definitions/k8sAffinity"
+                        },
+                        "autodiscovery": {
+                            "type": "object",
+                            "properties": {
+                                "prometheusEndpoints": {
+                                    "type": "object",
+                                    "properties": {
+                                        "additionalRules": {
+                                            "type": "string"
+                                        },
+                                        "customTransformations": {
+                                            "type": "object",
+                                            "properties": {
+                                                "counterToRate": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        },
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "filter": {
+                                            "type": "object"
+                                        },
+                                        "podMonitors": {
+                                            "type": "object",
+                                            "properties": {
+                                                "rules": {
+                                                    "type": "array"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "batch": {
+                            "$ref": "#/definitions/collectorBatch"
+                        },
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "extra_scrape_metrics": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "filter": {
+                            "type": "object"
+                        },
+                        "force_extra_scrape_metrics": {
+                            "type": "boolean"
+                        },
+                        "k8s_instrumentation": {
+                            "$ref": "#/definitions/collectorK8sLabelsAnnotationsInstrumentation"
+                        },
+                        "kube-state-metrics": {
+                            "type": "object",
+                            "properties": {
+                                "scheme": {
+                                    "type": "string"
+                                },
+                                "scrape_interval": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "livenessProbe": {
+                            "type": "object",
+                            "properties": {
+                                "initialDelaySeconds": {
+                                    "type": "integer"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "memory_ballast": {
+                            "$ref": "#/definitions/collectorMemoryBallast"
+                        },
+                        "memory_limiter": {
+                            "$ref": "#/definitions/collectorMemoryLimiter"
+                        },
+                        "nodeSelector": {
+                            "$ref": "#/definitions/k8sNodeSelector"
+                        },
+                        "otlp_endpoint": {
+                            "type": "object",
+                            "properties": {
+                                "port": {
+                                    "$ref": "#/definitions/port"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "prometheus": {
+                            "type": "object",
+                            "properties": {
+                                "scheme": {
+                                    "type": "string"
+                                },
+                                "scrape_interval": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "prometheus_check": {
+                            "type": "boolean"
+                        },
+                        "readinessProbe": {
+                            "type": "object",
+                            "properties": {
+                                "initialDelaySeconds": {
+                                    "type": "integer"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/k8sResourceRequirements"
+                        },
+                        "retry_on_failure": {
+                            "$ref": "#/definitions/collectorRetryOnFailure"
+                        },
+                        "sending_queue": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/collectorSendingQueue"
+                                },
+                                {
+                                    "properties": {
+                                        "offload_to_disk": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "swi_endpoint_check": {
+                            "type": "boolean"
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/collectorTelemetry"
+                        },
+                        "terminationGracePeriodSeconds": {
+                            "$ref": "#/definitions/k8sTerminationGracePeriod"
+                        },
+                        "timeout": {
+                            "$ref": "#/definitions/collectorTimeout"
+                        },
+                        "tolerations": {
+                            "$ref": "#/definitions/k8sTolerations"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "node_collector": {
+                    "type": "object",
+                    "properties": {
+                        "retry_on_failure": {
+                            "$ref": "#/definitions/collectorRetryOnFailure"
+                        },
+                        "sending_queue": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/collectorSendingQueue"
+                                },
+                                {
+                                    "properties": {
+                                        "persistent_storage": {
+                                            "type": "object",
+                                            "properties": {
+                                                "directory": {
+                                                    "type": "string"
+                                                },
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "terminationGracePeriodSeconds": {
+                            "$ref": "#/definitions/k8sTerminationGracePeriod"
+                        },
+                        "timeout": {
+                            "$ref": "#/definitions/collectorTimeout"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "tls_insecure": {
+                    "type": "boolean"
+                },
+                "windows": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "image": {
+                            "$ref": "#/definitions/imageDefinition"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "required": [
+                "endpoint"
+            ],
+            "additionalProperties": false
+        },
+        "prometheus": {
+            "description": "Prometheus is deployed only in case `opencost` section is enabled. Otherwise this section can be ignored.",
+            "type": "object",
+            "properties": {
+                "configmapReload": {
+                    "type": "object",
+                    "properties": {
+                        "prometheus": {
+                            "type": "object",
+                            "properties": {
+                                "image": {
+                                    "type": "object",
+                                    "properties": {
+                                        "digest": {
+                                            "$ref": "#/definitions/imageDigest"
+                                        },
+                                        "pullPolicy": {
+                                            "$ref": "#/definitions/k8sImagePullPolicy"
+                                        },
+                                        "repository": {
+                                            "$ref": "#/definitions/imageRepository"
+                                        },
+                                        "tag": {
+                                            "$ref": "#/definitions/imageTag"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "server": {
+                    "type": "object",
+                    "properties": {
+                        "image": {
+                            "type": "object",
+                            "properties": {
+                                "digest": {
+                                    "$ref": "#/definitions/imageDigest"
+                                },
+                                "pullPolicy": {
+                                    "$ref": "#/definitions/k8sImagePullPolicy"
+                                },
+                                "repository": {
+                                    "$ref": "#/definitions/imageRepository"
+                                },
+                                "tag": {
+                                    "$ref": "#/definitions/imageTag"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "prometheus-node-exporter": {
+            "description": "Node exporter is deployed only in case `opencost` section is enabled. Otherwise this section can be ignored.",
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "object",
+                    "registry": {
+                        "$ref": "#/definitions/imageRegistry"
+                    },
+                    "repository": {
+                        "$ref": "#/definitions/imageRepository"
+                    },
+                    "tag": {
+                        "$ref": "#/definitions/imageTag"
+                    },
+                    "pullPolicy": {
+                        "$ref": "#/definitions/k8sImagePullPolicy"
+                    },
+                    "digest": {
+                        "$ref": "#/definitions/imageDigest"
+                    }
+                }
+            }
+        },
+        "swoagent": {
+            "description": "Whether the SWO Agent should be deployed as part of this chart. If not, SWO Integrations are not available.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "image": {
+                    "$ref": "#/definitions/imageDefinition"
+                },
+                "resources": {
+                    "$ref": "#/definitions/k8sResourceRequirements"
+                }
+            },
+            "additionalProperties": false
+        },
+        "aks":{
+            "type":"boolean"
+        },
+        "global": {
+            "type": "object"
+        }
+    },
+    "required": [
+        "cluster",
+        "otel"
+    ],
+    "additionalProperties": false
+}

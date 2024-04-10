@@ -149,10 +149,10 @@ jobs:
         run: helm dependency build deploy/helm
 
       - name: Lint helm
-        run: helm lint deploy/helm
+        run: helm lint deploy/helm --with-subcharts
 
       - name: Lint template
-        run: helm template deploy/helm
+        run: helm template deploy/helm --include-crds --no-hooks
 
       - name: Install Unit test plugin
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git

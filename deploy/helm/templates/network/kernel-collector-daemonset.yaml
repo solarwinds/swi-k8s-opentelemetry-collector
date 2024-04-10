@@ -55,7 +55,7 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-reducer
-          image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box" "busybox:1.36.1") }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box") }}"
           imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
           command: ['sh', '-c', 'until nc -zv $EBPF_NET_INTAKE_HOST $EBPF_NET_INTAKE_PORT; do echo "Waiting for reducer endpoint..."; sleep 5; done;']
           env:
@@ -65,8 +65,8 @@ spec:
               value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
       containers:
         - name: swi-kernel-collector
-          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.kernelCollector (tuple "image" "ebpf_kernel_collector") "otel/opentelemetry-ebpf-kernel-collector:v0.10.1") }}"
-          imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.kernelCollector.image.pullPolicy | default "IfNotPresent" }}
+          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.kernelCollector (tuple "image" "ebpf_kernel_collector")) }}"
+          imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.kernelCollector.image.pullPolicy }}
           args:
             - --config-file=/etc/network-explorer/config.yaml
             - --disable-nomad-metadata
