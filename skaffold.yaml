@@ -37,7 +37,7 @@ deploy:
             name: "cluster name"
             uid: "cluster-uid-123456789"
           opencost:
-            enabled: true
+            enabled: false
           otel:
             endpoint: timeseries-mock-service:9082
             tls_insecure: true
@@ -87,6 +87,8 @@ deploy:
               sending_queue:
                 offload_to_disk: true
             logs:
+              journal: false
+              count_logs: true
               filter:
                 include:
                   record_attributes:
