@@ -7,7 +7,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 # array of pair "name: secret"
-imagePullSecrets:
+imagePullSecrets: []
 
 otel:
   # e.g. otel.collector.na-01.cloud.solarwinds.com:443
@@ -38,13 +38,13 @@ otel:
 
   init_images:
     swi_endpoint_check:
-      repository: ""
-      tag: ""
+      repository: "fullstorydev/grpcurl"
+      tag: "v1.8.9"
       pullPolicy: IfNotPresent
 
     busy_box:
-      repository: ""
-      tag: ""
+      repository: "busybox"
+      tag: "1.36.1"
       pullPolicy: IfNotPresent
 
   node_collector:
@@ -103,7 +103,7 @@ otel:
         #   `labels` - map of labels set on the pod
         #   `annotations` - map of annotations set on the pod
         # Example: namespace == "test-namespace" && labels["app"] == "test-app"
-        additionalRules:
+        additionalRules: ""
 
         podMonitors:
           rules: []
@@ -116,16 +116,16 @@ otel:
 
         customTransformations:
           # list of metrics that are counters should be converted to rate
-          counterToRate:
+          counterToRate: []
 
         # This filter is applied after metric processing, it is the place where metrics could be filtered out
         # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-        filter:
+        filter: {}
 
     # Check if SWI OTEL endpoint is reachable
     swi_endpoint_check: true
 
-    # Check if Prometheus endpoint is reachable
+    # Check if Prometheus endpoint (provided by otel.metrics.prometheus.url) is reachable
     prometheus_check: false
 
     sending_queue:
@@ -238,7 +238,7 @@ otel:
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
       annotations:
         # Set 'enabled' to true to instrument Kubernetes annotations.
@@ -247,7 +247,7 @@ otel:
         # Provide a regular expression pattern to exclude specific annotations from instrumentation.
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
@@ -263,7 +263,7 @@ otel:
           enabled: false
 
           # Additional labels
-          additionalLabels:
+          additionalLabels: {}
           # key: value
 
           # Override namespace (default is the same as K8s collector)
@@ -367,7 +367,7 @@ otel:
           enabled: false
 
           # Additional labels
-          additionalLabels:
+          additionalLabels: {}
           # key: value
 
           # Override namespace (default is the same as K8s collector)
@@ -389,7 +389,7 @@ otel:
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
       annotations:
         # Set 'enabled' to true to instrument Kubernetes annotations.
@@ -398,13 +398,14 @@ otel:
         # Provide a regular expression pattern to exclude specific annotations from instrumentation.
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
     # Scheduling configurations
     # By default: set to run on linux amd64 nodes
     nodeSelector: {}
     tolerations: []
     affinity: {}
+
     terminationGracePeriodSeconds: 600
 
   # Configuration for Logs collection
@@ -470,7 +471,7 @@ otel:
           enabled: false
 
           # Additional labels
-          additionalLabels:
+          additionalLabels: {}
           # key: value
 
           # Override namespace (default is the same as K8s collector)
@@ -540,8 +541,8 @@ autoupdate:
   devel: false
 
   image:
-    repository: ""
-    tag: ""
+    repository: "alpine/k8s"
+    tag: "1.27.8"
     pullPolicy: IfNotPresent
 
 # Set labels to every deployed resource
@@ -591,7 +592,7 @@ swoagent:
   enabled: false
   image:
     repository: solarwinds/swo-agent
-    tag: ""
+    tag: "v2.6.28"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -615,7 +616,7 @@ aws_fargate:
     # Include additional FluentBit filters
     # see https://docs.fluentbit.io/manual/pipeline/filters
     # NOTE: The FluentBit configuration expects four spaces as indentation within sections
-    filters:
+    filters: ""
 
 ebpfNetworkMonitoring:
   enabled: false
@@ -627,8 +628,8 @@ ebpfNetworkMonitoring:
         level: "warning"
 
     image:
-      repository: ""
-      tag: ""
+      repository: "otel/opentelemetry-ebpf-kernel-collector"
+      tag: "v0.10.1"
       pullPolicy: IfNotPresent
 
     resources:
@@ -651,14 +652,14 @@ ebpfNetworkMonitoring:
 
     watcher:
       image:
-        repository: ""
-        tag: ""
+        repository: "otel/opentelemetry-ebpf-k8s-watcher"
+        tag: "v0.10.1"
         pullPolicy: IfNotPresent
 
     relay:
       image:
-        repository: ""
-        tag: ""
+        repository: "otel/opentelemetry-ebpf-k8s-relay"
+        tag: "v0.10.1"
         pullPolicy: IfNotPresent
   reducer:
     disableMetrics: []
@@ -685,8 +686,8 @@ ebpfNetworkMonitoring:
         enabled: false
 
     image:
-      repository: ""
-      tag: ""
+      repository: "otel/opentelemetry-ebpf-reducer"
+      tag: "v0.10.1"
       pullPolicy: IfNotPresent
 
 # Prometheus is deployed only in case opencost section is enabled. Otherwise this section can be ignored.

@@ -8,6 +8,7 @@
 - [Develop against remote prometheus](#develop-against-remote-prometheus)
 - [Integration tests](#integration-tests)
 - [Updating Chart dependencies](#updating-chart-dependencies)
+- [Updating Chart configuration](#updating-chart-configuration)
 - [Publishing](#publishing)
 
 ## Contribution Guidelines
@@ -198,6 +199,24 @@ To update a dependency of the Helm chart:
 
 3. Commit changes in [deploy/helm/Chart.lock](../deploy/helm/Chart.lock).
 4. *(Optional)* Delete `*.tgz` files in `/deploy/helm/charts/` - they will be re-downloaded automatically as needed.
+
+## Updating Chart configuration
+
+First and foremost, any changes to the default `values.yaml` or how the configuration required by the Helm templates must be backwards compatible. Breaking existing configurations prepared for previous versions of the software should be avoided, if possible.
+
+The Helm chart contains a JSON schema for the validation of the provided configuration [values.schema.json](../deploy/helm/values.schema.json).
+
+To use it during development, reference it by your YAML parser. For example, for software that supports the language server protocol, add `# yaml-language-server: $schema=values.schema.json` as a first line in your `values.yaml` file, adjusting the path (local, or URL) accordingly.
+
+To verify that the changes are compatible with the current schema, it's suggested to run also:
+
+```shell
+helm lint -f <values_yaml_for_testing> .\deploy\helm\ --with-subcharts
+```
+
+Basic linting is part of the build pipeline, though.
+
+The Helm chart is bundled also in AKS/EKS addons. Make sure that any changes are reflected there, too.
 
 ## Publishing
 
