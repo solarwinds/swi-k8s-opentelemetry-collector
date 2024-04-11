@@ -365,6 +365,15 @@ connectors:
 {{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
   forward/logs-exporter:
 {{- end }}
+{{- if .Values.otel.logs.count_logs }}
+  count/pod-logs:
+    logs:
+      k8s.log.count:
+        description: "Number of log records processed"
+        attributes:
+          - key: k8s.namespace.name
+          - key: k8s.pod.name
+{{- end }}
 
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
@@ -602,6 +611,9 @@ service:
     logs/container:
       exporters:
         - forward/logs-exporter
+{{- if .Values.otel.logs.count_logs }}
+        - count/pod-logs
+{{- end }}
       processors:
         - memory_limiter
 {{- if .Values.otel.logs.filter }}
@@ -707,6 +719,9 @@ service:
         - batch/metrics
       receivers:
         - forward/metric-exporter
+{{- if .Values.otel.logs.count_logs }}
+        - count/pod-logs
+{{- end }}
 {{- end }}
   telemetry:
 {{- if .Values.otel.logs.telemetry.logs.enabled }}
