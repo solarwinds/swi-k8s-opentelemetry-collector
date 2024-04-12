@@ -40,7 +40,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.91.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.91.0
 	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor v0.0.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.91.0
 	go.opentelemetry.io/collector/connector v0.91.0
 	go.opentelemetry.io/collector/connector/forwardconnector v0.91.0
