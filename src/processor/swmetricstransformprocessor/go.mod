@@ -3,7 +3,7 @@ module github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetrics
 go 1.21
 
 require (
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.91.0
 	go.opentelemetry.io/collector/confmap v0.91.0
 	go.opentelemetry.io/collector/consumer v0.91.0
