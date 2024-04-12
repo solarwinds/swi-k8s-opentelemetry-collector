@@ -222,6 +222,10 @@ The Helm chart is bundled also in AKS/EKS addons. Make sure that any changes are
 
 ### Docker image
 
+Before proceeding:
+
+- Make sure that you updated binary version in `src/cmd/main.go`
+
 Customized Otel Collector image is getting published to <https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector>.
 
 Steps to publish new version:
