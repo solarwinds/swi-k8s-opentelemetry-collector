@@ -1,5 +1,3 @@
-# Please see the documentation for all configuration options:
-# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -29,9 +27,20 @@ updates:
     schedule:
       interval: weekly
       day: sunday
+    allow:
+      # Allow both direct and indirect updates for all packages
+      - dependency-type: "all"
     ignore:
       - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
       - dependency-name: "go.opentelemetry.io/collector*"
+    groups:
+      minor-and-patch:
+        applies-to: security-updates
+        patterns:
+        - "*"
+        update-types:
+        - "patch"
+        - "minor"
   - package-ecosystem: gomod
     directory: /src/processor/k8sattributesprocessor
     labels:
