@@ -4,17 +4,16 @@ COPY ["./src/", "./src/"]
 
 FROM base as builder
 
-COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
-RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.91.0
-RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
+RUN cd src/cmd && CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -trimpath -o ../../swi-k8s-opentelemetry-collector "-ldflags=-s -w"
 
 # create vendor folder (for mend scanning)
 SHELL ["/bin/bash", "-c"]
 ARG CREATE_VENDOR_DIR
 RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else go mod vendor ; fi
 
-FROM base as tests
-RUN cd src/processor/swmetricstransformprocessor && go test ./...
+FROM builder as tests
+# run all tests for all go modules in `src` folder
+CMD cd src && find . -name go.mod -execdir go test ./... \;
 
 FROM debian:12.5 as journal
 RUN apt update

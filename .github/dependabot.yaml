@@ -20,39 +20,39 @@ updates:
     schedule:
       interval: weekly
       day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm/templates
+  - package-ecosystem: gomod
+    directory: /src/cmd
     labels:
       - dependencies
-      - docker
+      - go
       - Skip Changelog
     schedule:
       interval: weekly
       day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm/templates/network
+    ignore:
+      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
+      - dependency-name: "go.opentelemetry.io/collector*"
+  - package-ecosystem: gomod
+    directory: /src/processor/k8sattributesprocessor
     labels:
       - dependencies
-      - docker
+      - go
       - Skip Changelog
     schedule:
       interval: weekly
       day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm/templates/autoupdate
+    ignore:
+      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
+      - dependency-name: "go.opentelemetry.io/collector*"
+  - package-ecosystem: gomod
+    directory: /src/processor/swmetricstransformprocessor
     labels:
       - dependencies
-      - docker
+      - go
       - Skip Changelog
     schedule:
       interval: weekly
       day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm
-    labels:
-      - dependencies
-      - docker
-      - Skip Changelog
-    schedule:
-      interval: weekly
-      day: sunday
+    ignore:
+      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
+      - dependency-name: "go.opentelemetry.io/collector*"
