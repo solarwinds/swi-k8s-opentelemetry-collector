@@ -1,0 +1,49 @@
+name: Tidy Go Modules
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  tidy-and-commit:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' && contains(github.event.pull_request.labels.*.name, 'otel component')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.21'
+
+      - name: Run go mod tidy
+        working-directory: ${{ github.workspace }}/src/cmd
+        run: go mod tidy
+
+      - name: Commit and push go.sum via GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          base_branch="${{ github.base_ref }}"
+          branch_name="${{ github.head_ref }}"
+          gh auth setup-git
+          SHA=$(gh api repos/${{ github.repository }}/contents/src/cmd/go.sum?ref="$base_branch" --jq '.sha')
+          CONTENT=$(base64 -w 0 src/cmd/go.sum)
+          MESSAGE="Run go mod tidy"
+          echo "Pushing updated go.sum to branch '$branch_name'..."
+          gh api --method PUT /repos/${{ github.repository }}/contents/src/cmd/go.sum \
+              --field message="$MESSAGE" \
+              --field content="$CONTENT" \
+              --field encoding="base64" \
+              --field branch="$branch_name" \
+              --field sha="$SHA"
