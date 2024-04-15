@@ -27,6 +27,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor/internal/metadata"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
@@ -38,7 +39,7 @@ import (
 func TestType(t *testing.T) {
 	factory := NewFactory()
 	pType := factory.Type()
-	assert.Equal(t, pType, component.Type(typeStr))
+	assert.Equal(t, pType, component.Type(metadata.Type))
 }
 
 func TestCreateDefaultConfig(t *testing.T) {

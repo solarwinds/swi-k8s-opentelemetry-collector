@@ -70,7 +70,7 @@ func (f *FakeInformer) SetTransform(_ cache.TransformFunc) error {
 }
 
 func (f *FakeInformer) GetStore() cache.Store {
-	return cache.NewStore(func(obj any) (string, error) { return "", nil })
+	return cache.NewStore(func(_ any) (string, error) { return "", nil })
 }
 
 func (f *FakeInformer) GetController() cache.Controller {
@@ -95,7 +95,7 @@ func (f *FakeNamespaceInformer) AddEventHandlerWithResyncPeriod(_ cache.Resource
 }
 
 func (f *FakeNamespaceInformer) GetStore() cache.Store {
-	return cache.NewStore(func(obj any) (string, error) { return "", nil })
+	return cache.NewStore(func(_ any) (string, error) { return "", nil })
 }
 
 func (f *FakeNamespaceInformer) GetController() cache.Controller {
@@ -160,7 +160,7 @@ func (f *NoOpInformer) SetTransform(_ cache.TransformFunc) error {
 }
 
 func (f *NoOpInformer) GetStore() cache.Store {
-	return cache.NewStore(func(obj any) (string, error) { return "", nil })
+	return cache.NewStore(func(_ any) (string, error) { return "", nil })
 }
 
 func (f *NoOpInformer) GetController() cache.Controller {

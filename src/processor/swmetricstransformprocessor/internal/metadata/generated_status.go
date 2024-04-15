@@ -6,24 +6,20 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
-
 )
 
 var (
-	Type = component.MustNewType("k8sattributes")
+	Type = component.MustNewType("swmetricstransform")
 )
 
-
 const (
-	LogsStability    = component.StabilityLevelBeta
 	MetricsStability = component.StabilityLevelBeta
-	TracesStability  = component.StabilityLevelBeta
 )
 
 func Meter(settings component.TelemetrySettings) metric.Meter {
-	return settings.MeterProvider.Meter("otelcol/k8sattributes")
+	return settings.MeterProvider.Meter("otelcol/metricstransform")
 }
 
 func Tracer(settings component.TelemetrySettings) trace.Tracer {
-	return settings.TracerProvider.Tracer("otelcol/k8sattributes")
+	return settings.TracerProvider.Tracer("otelcol/metricstransform")
 }
