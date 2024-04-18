@@ -26,11 +26,17 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor/internal/metadata"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
+)
+
+const (
+	// The value of "type" key in configuration.
+	typeStr = "swmetricstransform"
+	// The stability level of the processor.
+	stability = component.StabilityLevelBeta
 )
 
 var consumerCapabilities = consumer.Capabilities{MutatesData: true}
@@ -38,9 +44,9 @@ var consumerCapabilities = consumer.Capabilities{MutatesData: true}
 // NewFactory returns a new factory for the Metrics Transform processor.
 func NewFactory() processor.Factory {
 	return processor.NewFactory(
-		metadata.Type,
+		typeStr,
 		createDefaultConfig,
-		processor.WithMetrics(createMetricsProcessor, metadata.MetricsStability))
+		processor.WithMetrics(createMetricsProcessor, stability))
 }
 
 func createDefaultConfig() component.Config {

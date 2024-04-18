@@ -15,7 +15,7 @@ func (rac *ResourceAttributeConfig) Unmarshal(parser *confmap.Conf) error {
 	if parser == nil {
 		return nil
 	}
-	err := parser.Unmarshal(rac)
+	err := parser.Unmarshal(rac, confmap.WithErrorUnused())
 	if err != nil {
 		return err
 	}

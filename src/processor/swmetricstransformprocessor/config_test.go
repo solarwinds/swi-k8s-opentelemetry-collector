@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor/internal/metadata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
@@ -39,7 +38,7 @@ func TestLoadingFullConfig(t *testing.T) {
 	}{
 		{
 			configFile: "config_full.yaml",
-			id:         component.NewID(metadata.Type),
+			id:         component.NewID(typeStr),
 			expCfg: &Config{
 				Transforms: []Transform{
 					{
@@ -55,7 +54,7 @@ func TestLoadingFullConfig(t *testing.T) {
 		},
 		{
 			configFile: "config_full.yaml",
-			id:         component.NewIDWithName(metadata.Type, "multiple"),
+			id:         component.NewIDWithName(typeStr, "multiple"),
 			expCfg: &Config{
 				Transforms: []Transform{
 					{
@@ -144,7 +143,7 @@ func TestLoadingFullConfig(t *testing.T) {
 		},
 		{
 			configFile: "config_deprecated.yaml",
-			id:         component.NewID(metadata.Type),
+			id:         component.NewID(typeStr),
 			expCfg: &Config{
 				Transforms: []Transform{
 					{
