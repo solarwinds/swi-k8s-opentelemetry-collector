@@ -13,7 +13,6 @@ def setup_function():
 def teardown_function():
     run_shell_command(f'kubectl delete pod {pod_name} -n default')
 
-@pytest.mark.skip(reason="temporarily disabled to allow upgrade to OTEL Collector 0.94.0 and newer")
 def test_logs_generated():
     retry_until_ok(url, assert_test_log_found, print_failure)
 
