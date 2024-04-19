@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.3.0-alpha.5] - 2024-04-19
+
 ### Added
 
-- Added option to configure `nodeSelector` and `affinity` for SWO Agent
+- Added option to configure `nodeSelector` and `affinity` for SWO Agent.
 
 ### Changed
 
-- SWO Agent StatefulSet has now environment variables regarding CLUSTER_UID, CLUSTER_NAME. So it may instrument those information to the metrics in the future.
+- Added environment variables `CLUSTER_UID`, `CLUSTER_NAME` and `MANIFEST_VERSION` to the SWO Agent StatefulSet. Future SWO Agent plugins may include them in their metrics.
 - Upgraded collector image to `0.10.0` which brings following changes:
   - See Release notes for [0.10.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.0).
   - Bumped 3rd party dependencies and Docker images.
