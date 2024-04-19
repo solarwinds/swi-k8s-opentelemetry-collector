@@ -9,7 +9,7 @@ RUN cd src/cmd && CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -trimpath -o 
 # create vendor folder (for mend scanning)
 SHELL ["/bin/bash", "-c"]
 ARG CREATE_VENDOR_DIR
-RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else cd src/cmd && go mod vendor -o ../vendor ; fi
+RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else cd src/cmd && go mod vendor -o /src/vendor ; fi
 
 FROM builder as tests
 # run all tests for all go modules in `src` folder
