@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- SWO Agent StatefulSet has now environment variables regarding CLUSTER_UID, CLUSTER_NAME. So it may instrument those information to the metrics in the future.
 - Upgraded collector image to `0.10.0` which brings following changes:
   - See Release notes for [0.10.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.0).
   - Bumped 3rd party dependencies and Docker images.

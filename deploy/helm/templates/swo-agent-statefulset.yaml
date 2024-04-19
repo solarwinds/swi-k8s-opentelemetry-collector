@@ -58,6 +58,21 @@ spec:
                 secretKeyRef:
                   name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
+            - name: CLUSTER_UID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: CLUSTER_UID
+            - name: CLUSTER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: CLUSTER_NAME
+            - name: MANIFEST_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: MANIFEST_VERSION
           volumeMounts:
             - name: uams-client-workdir
               mountPath: /uamsclient/workdir
