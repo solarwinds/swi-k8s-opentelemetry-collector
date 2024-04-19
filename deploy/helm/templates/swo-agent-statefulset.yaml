@@ -50,6 +50,9 @@ spec:
                 secretKeyRef:
                   name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
           volumeMounts:
             - name: uams-client-workdir
               mountPath: /uamsclient/workdir
