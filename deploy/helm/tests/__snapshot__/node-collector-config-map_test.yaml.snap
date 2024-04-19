@@ -993,6 +993,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             combine_with: ""
             id: merge-docker-lines
             is_last_entry: body.log matches "\n$"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             source_identifier: attributes["log.file.path"]
             type: recombine
@@ -1000,6 +1001,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             combine_with: ""
             id: merge-cri-lines
             is_last_entry: body.logtag == "F"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             overwrite_with: newest
             source_identifier: attributes["log.file.path"]
@@ -1008,6 +1010,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             combine_with: ""
             id: merge-multiline-logs
             is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
+            max_unmatched_batch_size: 1
             output: extract-metadata-from-filepath
             source_identifier: attributes["log.file.path"]
             type: recombine
@@ -2155,6 +2158,7 @@ Node collector config should match snapshot when fargate is enabled:
             combine_with: ""
             id: merge-docker-lines
             is_last_entry: body.log matches "\n$"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             source_identifier: attributes["log.file.path"]
             type: recombine
@@ -2162,6 +2166,7 @@ Node collector config should match snapshot when fargate is enabled:
             combine_with: ""
             id: merge-cri-lines
             is_last_entry: body.logtag == "F"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             overwrite_with: newest
             source_identifier: attributes["log.file.path"]
@@ -2170,6 +2175,7 @@ Node collector config should match snapshot when fargate is enabled:
             combine_with: ""
             id: merge-multiline-logs
             is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
+            max_unmatched_batch_size: 1
             output: extract-metadata-from-filepath
             source_identifier: attributes["log.file.path"]
             type: recombine
@@ -3286,6 +3292,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             combine_with: ""
             id: merge-docker-lines
             is_last_entry: body.log matches "\n$"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             source_identifier: attributes["log.file.path"]
             type: recombine
@@ -3293,6 +3300,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             combine_with: ""
             id: merge-cri-lines
             is_last_entry: body.logtag == "F"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             overwrite_with: newest
             source_identifier: attributes["log.file.path"]
@@ -3301,6 +3309,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             combine_with: ""
             id: merge-multiline-logs
             is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
+            max_unmatched_batch_size: 1
             output: extract-metadata-from-filepath
             source_identifier: attributes["log.file.path"]
             type: recombine
@@ -4379,6 +4388,7 @@ Node collector config should match snapshot when using default values:
             combine_with: ""
             id: merge-docker-lines
             is_last_entry: body.log matches "\n$"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             source_identifier: attributes["log.file.path"]
             type: recombine
@@ -4386,6 +4396,7 @@ Node collector config should match snapshot when using default values:
             combine_with: ""
             id: merge-cri-lines
             is_last_entry: body.logtag == "F"
+            max_unmatched_batch_size: 1
             output: merge-multiline-logs
             overwrite_with: newest
             source_identifier: attributes["log.file.path"]
@@ -4394,6 +4405,7 @@ Node collector config should match snapshot when using default values:
             combine_with: ""
             id: merge-multiline-logs
             is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
+            max_unmatched_batch_size: 1
             output: extract-metadata-from-filepath
             source_identifier: attributes["log.file.path"]
             type: recombine
