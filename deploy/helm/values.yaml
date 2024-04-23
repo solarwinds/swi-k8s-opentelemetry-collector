@@ -457,6 +457,30 @@ otel:
       send_batch_max_size: 512
       timeout: 1s
 
+    # k8s_instrumentation controls the automatic extraction of Kubernetes metadata from resources.
+    # It instruments OpenTelemetry (OTEL) resources being sent.
+    k8s_instrumentation:
+      labels:
+        # Set 'enabled' to true to instrument Kubernetes labels.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific labels from instrumentation.
+        # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        # by default all labels are excluded
+        excludePattern: "k8s\\.\\w+\\.labels\\..*"
+
+      annotations:
+        # Set 'enabled' to true to instrument Kubernetes annotations.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific annotations from instrumentation.
+        # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        # by default all annotations are excluded
+        excludePattern: "k8s\\.\\w+\\.annotations\\..*"
+
+
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
     telemetry:
