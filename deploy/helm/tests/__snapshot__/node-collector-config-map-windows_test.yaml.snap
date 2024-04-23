@@ -782,6 +782,14 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/k8sattributes_logs_annotations_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.annotations\..*
+        resource/k8sattributes_logs_labels_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.labels\..*
         resource/metrics:
           attributes:
           - action: delete
@@ -1106,6 +1114,9 @@ Node collector config for windows nodes should match snapshot when using default
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
+            - k8sattributes
+            - resource/k8sattributes_logs_labels_filter
+            - resource/k8sattributes_logs_annotations_filter
             receivers:
             - filelog
           metrics:

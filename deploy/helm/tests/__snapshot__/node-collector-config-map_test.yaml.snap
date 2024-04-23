@@ -802,6 +802,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/k8sattributes_logs_annotations_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.annotations\..*
+        resource/k8sattributes_logs_labels_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.labels\..*
         resource/metrics:
           attributes:
           - action: delete
@@ -1113,6 +1121,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
+            - k8sattributes
+            - resource/k8sattributes_logs_labels_filter
+            - resource/k8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -1967,6 +1978,14 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/k8sattributes_logs_annotations_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.annotations\..*
+        resource/k8sattributes_logs_labels_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.labels\..*
         resource/metrics:
           attributes:
           - action: delete
@@ -2261,6 +2280,9 @@ Node collector config should match snapshot when fargate is enabled:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
+            - k8sattributes
+            - resource/k8sattributes_logs_labels_filter
+            - resource/k8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -3101,6 +3123,14 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/k8sattributes_logs_annotations_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.annotations\..*
+        resource/k8sattributes_logs_labels_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.labels\..*
         resource/metrics:
           attributes:
           - action: delete
@@ -3374,6 +3404,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
+            - k8sattributes
+            - resource/k8sattributes_logs_labels_filter
+            - resource/k8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -4197,6 +4230,14 @@ Node collector config should match snapshot when using default values:
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/k8sattributes_logs_annotations_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.annotations\..*
+        resource/k8sattributes_logs_labels_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.labels\..*
         resource/metrics:
           attributes:
           - action: delete
@@ -4528,6 +4569,9 @@ Node collector config should match snapshot when using default values:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
+            - k8sattributes
+            - resource/k8sattributes_logs_labels_filter
+            - resource/k8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
