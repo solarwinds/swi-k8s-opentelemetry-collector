@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.3.0] - 2024-04-26
+
+### Added
+
+- Added instrumentation of workload attributes to collected logs (`k8s.deployment.name` etc.). Instrumentation of labels and annotations is disabled by default.
+- Added option to configure `nodeSelector` and `affinity` for the SWO Agent.
+- Added option to configure timeout for each attempt to send data to SWO OTEL endpoint.
+  - The default is `15s` (previously it was `5s`) to avoid unnecessary retries when the endpoint takes its time to respond.
+
+### Changed
+
+- Added environment variables `CLUSTER_UID`, `CLUSTER_NAME` and `MANIFEST_VERSION` to the SWO Agent StatefulSet. Future SWO Agent plugins may include them in their metrics.
+- Upgraded collector image to `0.10.0` which brings following changes:
+  - See Release notes for [0.10.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.0).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.98.0.
+  - ⚠️ Dropped support for several Windows versions that are out of support. The minimum requirement is now Windows 10 or Windows Server 2016. This is caused by the update of Go (and the OTEL Collector).
+- Added validation schema for the provided Helm chart configuration.
+  - ⚠️ If an incorrect configuration is provided, the installation/update of the Helm release will end in error. The previous versions simply ignored the incorrect parts.
+- Container logs from AWS EKS Fargate clusters are now sent to SWO as-is. `fluentbit.io/parser` and `fluentbit.io/exclude` annotations are ignored. This both fixes an issue with "empty" JSON logs sent to SWO and aligns the behavior with non-Fargate container logs.
+  This change is applied only to Pods that are started after the new `k8s collector` is deployed to the k8s cluster.
+- Added validation of the OTEL endpoint provided in `values.yaml`. In case a deprecated endpoint is detected, report an warning during chart installation/update.
+
+### Fixed
+
+- Fixed Journal log collection on EKS (and other environments where journal logs are stored in `/var/log/journal`)
+
 ## [3.3.0-alpha.6] - 2024-04-23
 
 ### Added
