@@ -444,7 +444,7 @@ groupbyattrs/all:
     - replicaset
     - job_name
     - cronjob
-    - git_version
+    - sw.k8s.cluster.version
     - internal_ip
     - job_condition
     - persistentvolumeclaim
@@ -494,10 +494,6 @@ resource/metrics:
 
     - key: k8s.cluster.name
       value: ${CLUSTER_NAME}
-      action: insert
-
-    - key: sw.k8s.cluster.version
-      from_attribute: git_version
       action: insert
 
     # k8s.node.name
