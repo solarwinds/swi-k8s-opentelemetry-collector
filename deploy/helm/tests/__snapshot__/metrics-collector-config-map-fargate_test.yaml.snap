@@ -684,7 +684,7 @@ Metrics config should match snapshot when using default values:
           - replicaset
           - job_name
           - cronjob
-          - git_version
+          - sw.k8s.cluster.version
           - internal_ip
           - job_condition
           - persistentvolumeclaim
@@ -1684,6 +1684,9 @@ Metrics config should match snapshot when using default values:
               aggregation_type: sum
               label_set:
               - git_version
+            - action: update_label
+              label: git_version
+              new_label: sw.k8s.cluster.version
           - action: update
             include: k8s.kubernetes_build_info
             new_name: k8s.kubernetes_build_info_temp
@@ -1770,9 +1773,6 @@ Metrics config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
-          - action: insert
-            from_attribute: git_version
-            key: sw.k8s.cluster.version
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
