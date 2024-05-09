@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.4.0-alpha.1] - 2024-05-09
+
 ### Fixed
 
 - Only `k8s.cluster.version` metric has attribute `sw.k8s.cluster.version`
