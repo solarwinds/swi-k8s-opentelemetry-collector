@@ -145,9 +145,6 @@ service:
         - otlp
       processors:
         - memory_limiter
-{{- if .Values.otel.events.filter }}
-        - filter
-{{- end}}
         - transform/severity
         - transform/namespace
         - transform/entity_attributes
@@ -160,6 +157,9 @@ service:
         - resource/k8sattributes_annotations_filter
 {{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
+{{- if .Values.otel.events.filter }}
+        - filter
+{{- end}}
         - batch
       receivers:
         - k8s_events

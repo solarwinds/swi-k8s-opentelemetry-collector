@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.4.0-alpha.2] - 2024-05-16
+
+### Changed
+
+- Changed the `otel.metrics.filter`, `otel.logs.filter` and `otel.events.filter` settings to be able to access resource attributes like `k8s.deployment.name`, ...
+  - This is a breaking change if anyone was using them before to include only metrics/logs/events with a specific non-resource attribute.
+
 ## [3.4.0-alpha.1] - 2024-05-09
 
 ### Fixed

@@ -620,9 +620,6 @@ service:
         - forward/logs-exporter
       processors:
         - memory_limiter
-{{- if .Values.otel.logs.filter }}
-        - filter/logs
-{{- end }}
         - transform/syslogify
         - groupbyattrs/common-all
         - resource/container
@@ -653,6 +650,9 @@ service:
         - otlp
       processors:
         - memory_limiter
+{{- if .Values.otel.logs.filter }}
+        - filter/logs
+{{- end }}
         - batch/logs
       receivers:
         - forward/logs-exporter
@@ -678,9 +678,6 @@ service:
         - deltatorate/discovery
 {{- end }}
         - groupbyattrs/common-all
-{{- if .Values.otel.metrics.filter }}
-        - filter/metrics
-{{- end }}
         - resource/all
       receivers:
         - receiver_creator/discovery
@@ -705,9 +702,6 @@ service:
         - groupbyattrs/node
         - groupbyattrs/pod
         - groupbyattrs/all
-{{- if .Values.otel.metrics.filter }}
-        - filter/metrics
-{{- end }}
         - resource/metrics
         - resource/all
       receivers:
@@ -726,6 +720,9 @@ service:
 {{- end }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
         - resource/k8sattributes_annotations_filter
+{{- end }}
+{{- if .Values.otel.metrics.filter }}
+        - filter/metrics
 {{- end }}
         - batch/metrics
       receivers:
