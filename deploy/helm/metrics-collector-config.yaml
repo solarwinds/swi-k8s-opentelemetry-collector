@@ -1274,6 +1274,9 @@ service:
         - groupbyattrs/pod
         - metricstransform/aggregate_pod_level
         - groupbyattrs/all
+{{- if .Values.otel.metrics.filter }}
+        - filter
+{{- end }}
         - resource/metrics
         - k8sattributes
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
@@ -1283,9 +1286,6 @@ service:
         - resource/k8sattributes_annotations_filter
 {{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
-{{- if .Values.otel.metrics.filter }}
-        - filter
-{{- end }}
       receivers:
         - forward/prometheus
     metrics:

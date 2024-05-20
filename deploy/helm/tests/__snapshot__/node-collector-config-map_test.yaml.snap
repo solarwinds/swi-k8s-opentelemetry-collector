@@ -168,7 +168,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
           logs:
             include:
               match_type: regexp
-              resource_attributes:
+              record_attributes:
               - key: k8s.namespace.name
                 value: ^kube-.*$
         filter/metrics:
@@ -1106,7 +1106,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - otlp
             processors:
             - memory_limiter
-            - filter/logs
             - batch/logs
             receivers:
             - forward/logs-exporter
@@ -1115,6 +1114,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - forward/logs-exporter
             processors:
             - memory_limiter
+            - filter/logs
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
@@ -1139,7 +1139,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - memory_limiter
             - filter/histograms
             - k8sattributes
-            - filter/metrics
             - batch/metrics
             receivers:
             - forward/metric-exporter
@@ -1162,6 +1161,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - groupbyattrs/node
             - groupbyattrs/pod
             - groupbyattrs/all
+            - filter/metrics
             - resource/metrics
             - resource/all
             receivers:
@@ -1341,7 +1341,7 @@ Node collector config should match snapshot when fargate is enabled:
           logs:
             include:
               match_type: regexp
-              resource_attributes:
+              record_attributes:
               - key: k8s.namespace.name
                 value: ^kube-.*$
         filter/metrics:
@@ -2262,7 +2262,6 @@ Node collector config should match snapshot when fargate is enabled:
             - otlp
             processors:
             - memory_limiter
-            - filter/logs
             - batch/logs
             receivers:
             - forward/logs-exporter
@@ -2271,6 +2270,7 @@ Node collector config should match snapshot when fargate is enabled:
             - forward/logs-exporter
             processors:
             - memory_limiter
+            - filter/logs
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
@@ -2295,7 +2295,6 @@ Node collector config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/histograms
             - k8sattributes
-            - filter/metrics
             - batch/metrics
             receivers:
             - forward/metric-exporter
@@ -2311,6 +2310,7 @@ Node collector config should match snapshot when fargate is enabled:
             - deltatorate/istio-metrics
             - experimental_metricsgeneration/istio-metrics
             - groupbyattrs/common-all
+            - filter/metrics
             - resource/all
             receivers:
             - receiver_creator/discovery
@@ -2483,7 +2483,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           logs:
             include:
               match_type: regexp
-              resource_attributes:
+              record_attributes:
               - key: k8s.namespace.name
                 value: ^kube-.*$
         filter/metrics:
@@ -3383,7 +3383,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - otlp
             processors:
             - memory_limiter
-            - filter/logs
             - batch/logs
             receivers:
             - forward/logs-exporter
@@ -3392,6 +3391,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - forward/logs-exporter
             processors:
             - memory_limiter
+            - filter/logs
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
@@ -3587,7 +3587,7 @@ Node collector config should match snapshot when using default values:
           logs:
             include:
               match_type: regexp
-              resource_attributes:
+              record_attributes:
               - key: k8s.namespace.name
                 value: ^kube-.*$
         filter/metrics:
@@ -4545,7 +4545,6 @@ Node collector config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
-            - filter/logs
             - batch/logs
             receivers:
             - forward/logs-exporter
@@ -4554,6 +4553,7 @@ Node collector config should match snapshot when using default values:
             - forward/logs-exporter
             processors:
             - memory_limiter
+            - filter/logs
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
@@ -4578,7 +4578,6 @@ Node collector config should match snapshot when using default values:
             - memory_limiter
             - filter/histograms
             - k8sattributes
-            - filter/metrics
             - batch/metrics
             receivers:
             - forward/metric-exporter
@@ -4594,6 +4593,7 @@ Node collector config should match snapshot when using default values:
             - deltatorate/istio-metrics
             - experimental_metricsgeneration/istio-metrics
             - groupbyattrs/common-all
+            - filter/metrics
             - resource/all
             receivers:
             - receiver_creator/discovery
@@ -4616,6 +4616,7 @@ Node collector config should match snapshot when using default values:
             - groupbyattrs/node
             - groupbyattrs/pod
             - groupbyattrs/all
+            - filter/metrics
             - resource/metrics
             - resource/all
             receivers:
