@@ -178,16 +178,13 @@ processors:
         new_name: k8s.$${1}
 
   # Transformations done on all metrics before any grouping
-  swmetricstransform/preprocessing:
+  metricstransform/preprocessing:
     transforms:
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "Ready" }
         action: insert
         new_name: k8s.kube_node_status_ready
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             value_actions:
@@ -205,9 +202,6 @@ processors:
         action: insert
         new_name: k8s.deployment.condition.available
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             new_label: sw.k8s.deployment.condition.available
@@ -216,9 +210,6 @@ processors:
         action: insert
         new_name: k8s.deployment.condition.progressing
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             new_label: sw.k8s.deployment.condition.progressing
@@ -227,44 +218,13 @@ processors:
         action: insert
         new_name: k8s.deployment.condition.replicafailure
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             new_label: sw.k8s.deployment.condition.replicafailure
-      - include: k8s.kube_pod_status_reason
-        action: update
-        new_name: k8s.pod.status.reason
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
-      - include: k8s.kube_pod_status_phase
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
-      - include: k8s.kube_pod_start_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_pod_completion_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
       - include: k8s.kube_persistentvolume_status_phase
         action: insert
         new_name: k8s.persistentvolume.status.phase
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: phase
             new_label: sw.k8s.persistentvolume.status
@@ -272,75 +232,10 @@ processors:
         action: insert
         new_name: k8s.persistentvolumeclaim.status.phase
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: phase
             new_label: sw.k8s.persistentvolumeclaim.status
-      - include: k8s.kube_node_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_pod_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_deployment_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_daemonset_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_namespace_status_phase
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
-      - include: k8s.kube_namespace_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_statefulset_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_job_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_job_status_completion_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_job_status_start_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
 
-  metricstransform/preprocessing:
-    transforms:  
       {{- include "common-config.metricstransform-preprocessing-cadvisor" . | nindent 6 }}
       # Container metrics
       - include: k8s.kube_pod_container_resource_limits
@@ -681,14 +576,38 @@ processors:
           - action: update_label
             label: owner_name
             new_label: cronjob
-  swmetricstransform/postprocessing:
-    transforms:
-      - include: k8s.container.status
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
+
+  filter/preprocessing:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "k8s.kube_node_status_ready" and value_double != 1'
+        - 'metric.name == "k8s.deployment.condition.available" and value_double != 1'
+        - 'metric.name == "k8s.deployment.condition.progressing" and value_double != 1'
+        - 'metric.name == "k8s.deployment.condition.replicafailure" and value_double != 1'
+        - 'metric.name == "k8s.pod.status.reason" and value_double != 1'
+        - 'metric.name == "k8s.kube_pod_status_phase" and value_double != 1'
+        - 'metric.name == "k8s.kube_pod_start_time" and value_double == 0'
+        - 'metric.name == "k8s.kube_pod_completion_time" and value_double == 0'
+        - 'metric.name == "k8s.persistentvolume.status.phase" and value_double != 1'
+        - 'metric.name == "k8s.persistentvolumeclaim.status.phase" and value_double != 1'
+        - 'metric.name == "k8s.kube_node_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_pod_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_deployment_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_daemonset_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_namespace_status_phase" and value_double != 1'
+        - 'metric.name == "k8s.kube_namespace_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_statefulset_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_job_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_job_status_completion_time" and value_double == 0'
+        - 'metric.name == "k8s.kube_job_status_start_time" and value_double == 0'
+  
+  filter/preprocessing-cadvisor:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "k8s.container.status" and value_double != 1'
+
   cumulativetodelta:
     include:
       metrics:
@@ -1259,9 +1178,9 @@ service:
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
-        - swmetricstransform/preprocessing
         - metricstransform/preprocessing
-        - swmetricstransform/postprocessing
+        - filter/preprocessing
+        - filter/preprocessing-cadvisor
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
         - attributes/attributes_pod_status

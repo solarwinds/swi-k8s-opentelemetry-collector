@@ -37,7 +37,6 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.98.0
-	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor v0.0.1
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.98.0
 	go.opentelemetry.io/collector/connector v0.98.0
@@ -282,5 +281,3 @@ require (
 )
 
 replace github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.98.0 => ../processor/k8sattributesprocessor
-
-replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor v0.0.1 => ../processor/swmetricstransformprocessor

@@ -607,6 +607,38 @@ Metrics config should match snapshot when using default values:
               - ^kube_endpoint_created$
               - ^kube_endpoint_ports$
               - ^kube_endpoint_address$
+        filter/preprocessing:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - metric.name == "k8s.kube_node_status_ready" and value_double != 1
+            - metric.name == "k8s.deployment.condition.available" and value_double != 1
+            - metric.name == "k8s.deployment.condition.progressing" and value_double !=
+              1
+            - metric.name == "k8s.deployment.condition.replicafailure" and value_double
+              != 1
+            - metric.name == "k8s.pod.status.reason" and value_double != 1
+            - metric.name == "k8s.kube_pod_status_phase" and value_double != 1
+            - metric.name == "k8s.kube_pod_start_time" and value_double == 0
+            - metric.name == "k8s.kube_pod_completion_time" and value_double == 0
+            - metric.name == "k8s.persistentvolume.status.phase" and value_double != 1
+            - metric.name == "k8s.persistentvolumeclaim.status.phase" and value_double !=
+              1
+            - metric.name == "k8s.kube_node_created" and value_double == 0
+            - metric.name == "k8s.kube_pod_created" and value_double == 0
+            - metric.name == "k8s.kube_deployment_created" and value_double == 0
+            - metric.name == "k8s.kube_daemonset_created" and value_double == 0
+            - metric.name == "k8s.kube_namespace_status_phase" and value_double != 1
+            - metric.name == "k8s.kube_namespace_created" and value_double == 0
+            - metric.name == "k8s.kube_statefulset_created" and value_double == 0
+            - metric.name == "k8s.kube_job_created" and value_double == 0
+            - metric.name == "k8s.kube_job_status_completion_time" and value_double == 0
+            - metric.name == "k8s.kube_job_status_start_time" and value_double == 0
+        filter/preprocessing-cadvisor:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - metric.name == "k8s.container.status" and value_double != 1
         filter/prometheus-node-metrics:
           metrics:
             include:
@@ -917,6 +949,65 @@ Metrics config should match snapshot when using default values:
               label_set: []
         metricstransform/preprocessing:
           transforms:
+          - action: insert
+            experimental_match_labels:
+              condition: Ready
+            include: k8s.kube_node_status_condition
+            new_name: k8s.kube_node_status_ready
+            operations:
+            - action: update_label
+              label: status
+              value_actions:
+              - new_value: Ready
+                value: "true"
+              - new_value: NotReady
+                value: "false"
+              - new_value: Unknown
+                value: unknown
+            - action: update_label
+              label: status
+              new_label: sw.k8s.node.status
+          - action: insert
+            experimental_match_labels:
+              condition: Available
+            include: k8s.kube_deployment_status_condition
+            new_name: k8s.deployment.condition.available
+            operations:
+            - action: update_label
+              label: status
+              new_label: sw.k8s.deployment.condition.available
+          - action: insert
+            experimental_match_labels:
+              condition: Progressing
+            include: k8s.kube_deployment_status_condition
+            new_name: k8s.deployment.condition.progressing
+            operations:
+            - action: update_label
+              label: status
+              new_label: sw.k8s.deployment.condition.progressing
+          - action: insert
+            experimental_match_labels:
+              condition: ReplicaFailure
+            include: k8s.kube_deployment_status_condition
+            new_name: k8s.deployment.condition.replicafailure
+            operations:
+            - action: update_label
+              label: status
+              new_label: sw.k8s.deployment.condition.replicafailure
+          - action: insert
+            include: k8s.kube_persistentvolume_status_phase
+            new_name: k8s.persistentvolume.status.phase
+            operations:
+            - action: update_label
+              label: phase
+              new_label: sw.k8s.persistentvolume.status
+          - action: insert
+            include: k8s.kube_persistentvolumeclaim_status_phase
+            new_name: k8s.persistentvolumeclaim.status.phase
+            operations:
+            - action: update_label
+              label: phase
+              new_label: sw.k8s.persistentvolumeclaim.status
           - action: insert
             include: k8s.container_fs_reads_total
             new_name: k8s.container_fs_reads_total_temp
@@ -1871,178 +1962,6 @@ Metrics config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
-        swmetricstransform/postprocessing:
-          transforms:
-          - action: update
-            include: k8s.container.status
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-        swmetricstransform/preprocessing:
-          transforms:
-          - action: insert
-            experimental_match_labels:
-              condition: Ready
-            include: k8s.kube_node_status_condition
-            new_name: k8s.kube_node_status_ready
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-            - action: update_label
-              label: status
-              value_actions:
-              - new_value: Ready
-                value: "true"
-              - new_value: NotReady
-                value: "false"
-              - new_value: Unknown
-                value: unknown
-            - action: update_label
-              label: status
-              new_label: sw.k8s.node.status
-          - action: insert
-            experimental_match_labels:
-              condition: Available
-            include: k8s.kube_deployment_status_condition
-            new_name: k8s.deployment.condition.available
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-            - action: update_label
-              label: status
-              new_label: sw.k8s.deployment.condition.available
-          - action: insert
-            experimental_match_labels:
-              condition: Progressing
-            include: k8s.kube_deployment_status_condition
-            new_name: k8s.deployment.condition.progressing
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-            - action: update_label
-              label: status
-              new_label: sw.k8s.deployment.condition.progressing
-          - action: insert
-            experimental_match_labels:
-              condition: ReplicaFailure
-            include: k8s.kube_deployment_status_condition
-            new_name: k8s.deployment.condition.replicafailure
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-            - action: update_label
-              label: status
-              new_label: sw.k8s.deployment.condition.replicafailure
-          - action: update
-            include: k8s.kube_pod_status_reason
-            new_name: k8s.pod.status.reason
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-          - action: update
-            include: k8s.kube_pod_status_phase
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-          - action: update
-            include: k8s.kube_pod_start_time
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_pod_completion_time
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: insert
-            include: k8s.kube_persistentvolume_status_phase
-            new_name: k8s.persistentvolume.status.phase
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-            - action: update_label
-              label: phase
-              new_label: sw.k8s.persistentvolume.status
-          - action: insert
-            include: k8s.kube_persistentvolumeclaim_status_phase
-            new_name: k8s.persistentvolumeclaim.status.phase
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-            - action: update_label
-              label: phase
-              new_label: sw.k8s.persistentvolumeclaim.status
-          - action: update
-            include: k8s.kube_node_created
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_pod_created
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_deployment_created
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_daemonset_created
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_namespace_status_phase
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 1
-              datapoint_value_action: include
-          - action: update
-            include: k8s.kube_namespace_created
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_statefulset_created
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_job_created
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_job_status_completion_time
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
-          - action: update
-            include: k8s.kube_job_status_start_time
-            operations:
-            - action: filter_datapoints
-              datapoint_value: 0
-              datapoint_value_action: exclude
         transform:
           metric_statements:
           - context: datapoint
@@ -2258,9 +2177,9 @@ Metrics config should match snapshot when using default values:
             - attributes/identify_init_container
             - attributes/identify_standard_container
             - metricstransform/rename
-            - swmetricstransform/preprocessing
             - metricstransform/preprocessing
-            - swmetricstransform/postprocessing
+            - filter/preprocessing
+            - filter/preprocessing-cadvisor
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - attributes/attributes_pod_status
