@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Type = component.MustNewType("k8sattributes")
+	Type = component.MustNewType("swk8sattributes")
 )
 
 
@@ -21,9 +21,9 @@ const (
 )
 
 func Meter(settings component.TelemetrySettings) metric.Meter {
-	return settings.MeterProvider.Meter("otelcol/k8sattributes")
+	return settings.MeterProvider.Meter("otelcol/swk8sattributes")
 }
 
 func Tracer(settings component.TelemetrySettings) trace.Tracer {
-	return settings.TracerProvider.Tracer("otelcol/k8sattributes")
+	return settings.TracerProvider.Tracer("otelcol/swk8sattributes")
 }

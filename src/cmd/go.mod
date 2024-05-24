@@ -25,7 +25,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.98.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.98.0
+	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricsgenerationprocessor v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.98.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.98.0
@@ -281,6 +281,6 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.98.0 => ../processor/k8sattributesprocessor
+replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.98.0 => ../processor/k8sattributesprocessor
 
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor v0.0.1 => ../processor/swmetricstransformprocessor
