@@ -704,195 +704,6 @@ Metrics config should match snapshot when using default values:
           keys:
           - namespace
           - pod
-        k8sattributes:
-          auth_type: serviceAccount
-          cronjob:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.cronjob.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.annotations.$$1
-              labels:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.labels.$$1
-          daemonset:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.daemonset.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.annotations.$$1
-              labels:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.labels.$$1
-          deployment:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.deployment.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.annotations.$$1
-              labels:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.labels.$$1
-          extract:
-            annotations:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.annotations.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.annotations.$$1
-            labels:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.labels.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.labels.$$1
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-            - k8s.node.name
-          job:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.job.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.annotations.$$1
-              labels:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.labels.$$1
-          node:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.node.name
-            extract:
-              annotations:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.annotations.$$1
-              labels:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.labels.$$1
-          passthrough: false
-          persistentvolume:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.persistentvolume.name
-            extract:
-              annotations:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.annotations.$$1
-              labels:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.labels.$$1
-          persistentvolumeclaim:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.persistentvolumeclaim.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.annotations.$$1
-              labels:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.labels.$$1
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
-          replicaset:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.replicaset.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.annotations.$$1
-              labels:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.labels.$$1
-          service:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.service.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.annotations.$$1
-              labels:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.labels.$$1
-          set_object_existence: true
-          statefulset:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.statefulset.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.annotations.$$1
-              labels:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.labels.$$1
         memory_limiter:
           check_interval: 1s
           limit_mib: 2560
@@ -1871,6 +1682,195 @@ Metrics config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        swk8sattributes:
+          auth_type: serviceAccount
+          cronjob:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.cronjob.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: cronjob
+                key_regex: (.*)
+                tag_name: k8s.cronjob.annotations.$$1
+              labels:
+              - from: cronjob
+                key_regex: (.*)
+                tag_name: k8s.cronjob.labels.$$1
+          daemonset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.daemonset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: daemonset
+                key_regex: (.*)
+                tag_name: k8s.daemonset.annotations.$$1
+              labels:
+              - from: daemonset
+                key_regex: (.*)
+                tag_name: k8s.daemonset.labels.$$1
+          deployment:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.deployment.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: deployment
+                key_regex: (.*)
+                tag_name: k8s.deployment.annotations.$$1
+              labels:
+              - from: deployment
+                key_regex: (.*)
+                tag_name: k8s.deployment.labels.$$1
+          extract:
+            annotations:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.annotations.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.annotations.$$1
+            labels:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.labels.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.labels.$$1
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+            - k8s.node.name
+          job:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.job.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: job
+                key_regex: (.*)
+                tag_name: k8s.job.annotations.$$1
+              labels:
+              - from: job
+                key_regex: (.*)
+                tag_name: k8s.job.labels.$$1
+          node:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.node.name
+            extract:
+              annotations:
+              - from: node
+                key_regex: (.*)
+                tag_name: k8s.node.annotations.$$1
+              labels:
+              - from: node
+                key_regex: (.*)
+                tag_name: k8s.node.labels.$$1
+          passthrough: false
+          persistentvolume:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolume.name
+            extract:
+              annotations:
+              - from: persistentvolume
+                key_regex: (.*)
+                tag_name: k8s.persistentvolume.annotations.$$1
+              labels:
+              - from: persistentvolume
+                key_regex: (.*)
+                tag_name: k8s.persistentvolume.labels.$$1
+          persistentvolumeclaim:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolumeclaim.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: persistentvolumeclaim
+                key_regex: (.*)
+                tag_name: k8s.persistentvolumeclaim.annotations.$$1
+              labels:
+              - from: persistentvolumeclaim
+                key_regex: (.*)
+                tag_name: k8s.persistentvolumeclaim.labels.$$1
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          replicaset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.replicaset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: replicaset
+                key_regex: (.*)
+                tag_name: k8s.replicaset.annotations.$$1
+              labels:
+              - from: replicaset
+                key_regex: (.*)
+                tag_name: k8s.replicaset.labels.$$1
+          service:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.service.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.annotations.$$1
+              labels:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.labels.$$1
+          set_object_existence: true
+          statefulset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.statefulset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              annotations:
+              - from: statefulset
+                key_regex: (.*)
+                tag_name: k8s.statefulset.annotations.$$1
+              labels:
+              - from: statefulset
+                key_regex: (.*)
+                tag_name: k8s.statefulset.labels.$$1
         swmetricstransform/postprocessing:
           transforms:
           - action: update
@@ -2274,7 +2274,7 @@ Metrics config should match snapshot when using default values:
             - metricstransform/aggregate_pod_level
             - groupbyattrs/all
             - resource/metrics
-            - k8sattributes
+            - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter
             receivers:
