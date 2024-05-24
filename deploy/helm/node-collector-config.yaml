@@ -75,12 +75,6 @@ processors:
     transforms:
       {{- include "common-config.metricstransform-preprocessing-cadvisor" . | nindent 6 }}
 
-  filter/preprocessing-cadvisor:
-    error_mode: ignore
-    metrics:
-      datapoint:
-        - 'metric.name == "k8s.container.status" and value_double != 1'
-
   {{- include "common-config.filter-remove-internal-post-processing" . | nindent 2 }}
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
 
@@ -701,7 +695,6 @@ service:
         - transform/unify_node_attribute
         - metricstransform/rename
         - metricstransform/preprocessing
-        - filter/preprocessing-cadvisor
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
         - cumulativetodelta/cadvisor

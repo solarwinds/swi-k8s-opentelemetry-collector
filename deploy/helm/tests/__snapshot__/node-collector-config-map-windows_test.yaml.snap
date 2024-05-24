@@ -178,11 +178,6 @@ Node collector config for windows nodes should match snapshot when using default
               metric_names:
               - .*_temp
               - apiserver_request_total
-        filter/preprocessing-cadvisor:
-          error_mode: ignore
-          metrics:
-            datapoint:
-            - metric.name == "k8s.container.status" and value_double != 1
         filter/receiver:
           metrics:
             exclude:
@@ -1159,7 +1154,6 @@ Node collector config for windows nodes should match snapshot when using default
             - transform/unify_node_attribute
             - metricstransform/rename
             - metricstransform/preprocessing
-            - filter/preprocessing-cadvisor
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor

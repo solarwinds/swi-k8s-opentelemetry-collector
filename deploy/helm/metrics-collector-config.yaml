@@ -601,11 +601,6 @@ processors:
         - 'metric.name == "k8s.kube_job_created" and value_double == 0'
         - 'metric.name == "k8s.kube_job_status_completion_time" and value_double == 0'
         - 'metric.name == "k8s.kube_job_status_start_time" and value_double == 0'
-  
-  filter/preprocessing-cadvisor:
-    error_mode: ignore
-    metrics:
-      datapoint:
         - 'metric.name == "k8s.container.status" and value_double != 1'
 
   cumulativetodelta:
@@ -1180,7 +1175,6 @@ service:
         - metricstransform/rename
         - metricstransform/preprocessing
         - filter/preprocessing
-        - filter/preprocessing-cadvisor
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
         - attributes/attributes_pod_status
