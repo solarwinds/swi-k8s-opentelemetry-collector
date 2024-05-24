@@ -1,4 +1,4 @@
-module github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor
+module github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor
 
 go 1.22
 
