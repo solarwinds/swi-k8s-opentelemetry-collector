@@ -257,39 +257,6 @@ Node collector config for windows nodes should match snapshot when using default
           keys:
           - namespace
           - pod
-        k8sattributes:
-          auth_type: serviceAccount
-          extract:
-            annotations:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.annotations.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.annotations.$$1
-            labels:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.labels.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.labels.$$1
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -782,14 +749,6 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
-        resource/k8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/k8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         resource/metrics:
           attributes:
           - action: delete
@@ -898,6 +857,47 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/swk8sattributes_logs_annotations_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.annotations\..*
+        resource/swk8sattributes_logs_labels_filter:
+          attributes:
+          - action: delete
+            pattern: k8s\.\w+\.labels\..*
+        swk8sattributes:
+          auth_type: serviceAccount
+          extract:
+            annotations:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.annotations.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.annotations.$$1
+            labels:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.labels.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.labels.$$1
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -1111,9 +1111,9 @@ Node collector config for windows nodes should match snapshot when using default
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
-            - resource/k8sattributes_logs_labels_filter
-            - resource/k8sattributes_logs_annotations_filter
+            - swk8sattributes
+            - resource/swk8sattributes_logs_labels_filter
+            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           metrics:
@@ -1122,7 +1122,7 @@ Node collector config for windows nodes should match snapshot when using default
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - swk8sattributes
             - filter/metrics
             - batch/metrics
             receivers:
