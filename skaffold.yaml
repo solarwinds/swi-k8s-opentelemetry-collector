@@ -88,15 +88,8 @@ deploy:
                 offload_to_disk: true
             logs:
               filter:
-                include:
-                  resource_attributes:
-                    - key: k8s.namespace.name
-                      value: "^.*$"
-                exclude:
-                  match_type: strict
-                  resource_attributes:
-                    - key: k8s.namespace.name
-                      value: "test-namespace"
+                log_record:
+                  - resource.attributes["k8s.namespace.name"] == "test-namespace"
         upgradeOnChange: true
       
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent

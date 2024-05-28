@@ -617,3 +617,14 @@ resource/metrics:
       from_attribute: persistentvolumeclaim
       action: insert
 {{- end }}
+
+{{- define "common-config.filter-remove-temporary-metrics" -}}
+# Remove metrics
+filter/remove_temporary_metrics:
+  metrics:
+    exclude:
+      match_type: regexp
+      metric_names:
+        - .*_temp
+        - apiserver_request_total
+{{- end }}

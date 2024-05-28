@@ -505,13 +505,6 @@ Metrics config should match snapshot when fargate is enabled:
             operation: percent
             type: calculate
             unit: Percent
-        filter:
-          metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
         filter/ebpf:
           metrics:
             exclude:
@@ -681,6 +674,13 @@ Metrics config should match snapshot when fargate is enabled:
             datapoint:
             - attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*")
               == true
+        filter/remove_temporary_metrics:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - .*_temp
+              - apiserver_request_total
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -2190,7 +2190,7 @@ Metrics config should match snapshot when fargate is enabled:
             - resource/metrics
             - k8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - filter
+            - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
           metrics/prometheus-node-metrics:
@@ -2754,13 +2754,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             operation: percent
             type: calculate
             unit: Percent
-        filter:
-          metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
         filter/ebpf:
           metrics:
             exclude:
@@ -2930,6 +2923,13 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             datapoint:
             - attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*")
               == true
+        filter/remove_temporary_metrics:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - .*_temp
+              - apiserver_request_total
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -4374,7 +4374,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - resource/metrics
             - k8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - filter
+            - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
           metrics/prometheus-node-metrics:
@@ -4945,13 +4945,6 @@ Metrics config should match snapshot when using default values:
             operation: percent
             type: calculate
             unit: Percent
-        filter:
-          metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
         filter/ebpf:
           metrics:
             exclude:
@@ -5121,6 +5114,13 @@ Metrics config should match snapshot when using default values:
             datapoint:
             - attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*")
               == true
+        filter/remove_temporary_metrics:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - .*_temp
+              - apiserver_request_total
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -6550,7 +6550,7 @@ Metrics config should match snapshot when using default values:
             - resource/metrics
             - k8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - filter
+            - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
           metrics/prometheus-node-metrics:

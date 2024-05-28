@@ -166,18 +166,8 @@ Node collector config for windows nodes should match snapshot when using default
             - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/logs:
           logs:
-            include:
-              match_type: regexp
-              resource_attributes:
-              - key: k8s.namespace.name
-                value: ^kube-.*$
-        filter/metrics:
-          metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            log_record:
+            - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
         filter/receiver:
           metrics:
             exclude:
@@ -198,6 +188,13 @@ Node collector config for windows nodes should match snapshot when using default
             datapoint:
             - attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*")
               == true
+        filter/remove_temporary_metrics:
+          metrics:
+            exclude:
+              match_type: regexp
+              metric_names:
+              - .*_temp
+              - apiserver_request_total
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -1123,7 +1120,7 @@ Node collector config for windows nodes should match snapshot when using default
             - memory_limiter
             - filter/histograms
             - k8sattributes
-            - filter/metrics
+            - filter/remove_temporary_metrics
             - batch/metrics
             receivers:
             - forward/metric-exporter

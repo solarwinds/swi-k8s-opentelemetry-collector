@@ -8,3 +8,24 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Custom events filter with old syntax
+    template: events-collector-config-map.yaml
+    set:
+      otel.events.filter:
+        include:
+          match_type: regexp
+          record_attributes:
+            - key: k8s.namespace.name
+              value: ^.*$
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Custom events filter with new syntax
+    template: events-collector-config-map.yaml
+    set:
+      otel.events.filter:
+        log_record:
+          - not(IsMatch(resource.attributes["k8s.namespace.name"], "^.*$"))
+    asserts:
+      - matchSnapshot:
+          path: data
