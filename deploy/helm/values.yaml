@@ -185,12 +185,7 @@ otel:
 
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    filter:
-      exclude:
-        match_type: regexp
-        metric_names:
-          - .*_temp
-          - apiserver_request_total
+    filter: {}
 
     # Use this configuration to scrape extra metrics from Prometheus. Multiple metrics can be specified.
     # See format in https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors
@@ -294,7 +289,7 @@ otel:
 
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    # filter:
+    filter: {}
 
     # Batching configuration for events
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
@@ -440,15 +435,21 @@ otel:
 
     # This filter is applied after initial log processing, it is the place where logs could be filtered out
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    filter:
-      include:
-        match_type: regexp
-        # a log has to match all expressions in the list to be included
-        # see https://github.com/google/re2/wiki/Syntax for regexp syntax
-        resource_attributes:
-          # allow only system namespaces (kube-system, kube-public)
-          - key: k8s.namespace.name
-            value: ^kube-.*$
+    # default (prior to k8s collector 4.0.0):
+      # filter:
+      #   include:
+      #     match_type: regexp
+      #     # a log has to match all expressions in the list to be included
+      #     # see https://github.com/google/re2/wiki/Syntax for regexp syntax
+      #     record_attributes:
+      #       # allow only system namespaces (kube-system, kube-public)
+      #       - key: k8s.namespace.name
+      #         value: ^kube-.*$
+    # default (since k8s collector 4.0.0):
+      # filter:
+      #   log_record:
+      #     - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
+    filter: {}
 
     # Batching configuration for logs
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference

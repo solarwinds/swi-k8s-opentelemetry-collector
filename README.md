@@ -109,7 +109,7 @@ otel:
     filter:
       include:
         match_type: regexp
-        resource_attributes:
+        record_attributes:
           - key: k8s.namespace.name
             value: ^.*$
 ```
