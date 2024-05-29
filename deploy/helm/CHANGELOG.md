@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - As a followup to 3.4.0-alpha.2, the `otel.metrics.filter`, `otel.logs.filter` and `otel.events.filter` are now again backwards compatible. If a customer is using the [old filtering syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.96.0/processor/filterprocessor#alternative-config-options), they behave like in 3.3.0 and previous versions. If a customer switches to using the [new syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration), some of the attributes, like `k8s.deployment.name`, become resource attributes.
+- Removed use of `swmetricstransform` (replaced with `filterprocessor`)
 
 ## [3.4.0-alpha.2] - 2024-05-16
 

@@ -35,7 +35,6 @@ import (
 	receivercreator "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator"
 	simpleprometheusreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver"
 	windowseventlogreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver"
-	swmetricstransformprocessor "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor"
 	"go.opentelemetry.io/collector/connector"
 	forwardconnector "go.opentelemetry.io/collector/connector/forwardconnector"
 	"go.opentelemetry.io/collector/exporter"
@@ -98,7 +97,6 @@ func components() (otelcol.Factories, error) {
 		filterprocessor.NewFactory(),
 		attributesprocessor.NewFactory(),
 		k8sattributesprocessor.NewFactory(),
-		swmetricstransformprocessor.NewFactory(),
 	)
 	if err != nil {
 		return otelcol.Factories{}, err
