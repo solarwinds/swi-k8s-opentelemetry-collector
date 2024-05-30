@@ -635,6 +635,9 @@ service:
 {{- if not (empty .Values.otel.logs.k8s_instrumentation.annotations.excludePattern) }}
         - resource/k8sattributes_logs_annotations_filter
 {{- end }}
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
+        - filter/logs
+{{- end }}
       receivers:
         - filelog
 {{- end }}
@@ -655,9 +658,6 @@ service:
         - otlp
       processors:
         - memory_limiter
-{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
-        - filter/logs
-{{- end }}
         - batch/logs
       receivers:
         - forward/logs-exporter
