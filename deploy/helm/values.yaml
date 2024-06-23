@@ -284,8 +284,20 @@ otel:
 
   # Configuration for Events collection
   events:
-    # Define whether events will be collected and sent
+    # If false none of the events will be collected
     enabled: true
+
+    # If true, the k8s events will be collected
+    k8s_events: true
+
+    # Configuration that allows to watch for changes in k8s resources and send full manifests to SWO upon change
+    manifests:
+      enabled: false
+
+      # Apart of watching for changes in k8s resources, all resources are periodically pulled
+      # this is mainly to catch resources that were created before the collector was deployed and also to catch 
+      # resources that were created during the time when the collector was down (or something unexpected happen)
+      pull_every: 60m
 
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
