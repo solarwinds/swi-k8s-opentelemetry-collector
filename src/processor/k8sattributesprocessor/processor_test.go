@@ -38,7 +38,6 @@ import (
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processortest"
 	conventions "go.opentelemetry.io/collector/semconv/v1.8.0"
-	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
@@ -60,7 +59,7 @@ func newTracesProcessor(cfg component.Config, next consumer.Traces, errFunc func
 
 	opts := options
 	opts = append(opts, withKubeClientProvider(newFakeClient))
-	set := processortest.NewNopCreateSettings()
+	set := processortest.NewNopSettings()
 	set.ReportStatus = func(event *component.StatusEvent) {
 		errFunc(event.Err())
 	}
@@ -76,7 +75,7 @@ func newTracesProcessor(cfg component.Config, next consumer.Traces, errFunc func
 func newMetricsProcessor(cfg component.Config, nextMetricsConsumer consumer.Metrics, errFunc func(error), options ...option) (processor.Metrics, error) {
 	opts := options
 	opts = append(opts, withKubeClientProvider(newFakeClient))
-	set := processortest.NewNopCreateSettings()
+	set := processortest.NewNopSettings()
 	set.ReportStatus = func(event *component.StatusEvent) {
 		errFunc(event.Err())
 	}
@@ -92,7 +91,7 @@ func newMetricsProcessor(cfg component.Config, nextMetricsConsumer consumer.Metr
 func newLogsProcessor(cfg component.Config, nextLogsConsumer consumer.Logs, errFunc func(error), options ...option) (processor.Logs, error) {
 	opts := options
 	opts = append(opts, withKubeClientProvider(newFakeClient))
-	set := processortest.NewNopCreateSettings()
+	set := processortest.NewNopSettings()
 	set.ReportStatus = func(event *component.StatusEvent) {
 		errFunc(event.Err())
 	}
@@ -108,7 +107,7 @@ func newLogsProcessor(cfg component.Config, nextLogsConsumer consumer.Logs, errF
 // withKubeClientProvider sets the specific implementation for getting K8s Client instances
 func withKubeClientProvider(kcp kube.ClientProvider) option {
 	return func(p *kubernetesprocessor) error {
-		return p.initKubeClient(p.logger, kcp)
+		return p.initKubeClient(p.telemetrySettings, kcp)
 	}
 }
 
@@ -240,7 +239,7 @@ func TestNewProcessor(t *testing.T) {
 
 func TestProcessorBadClientProvider(t *testing.T) {
 	clientProvider := func(
-		_ *zap.Logger,
+		_ component.TelemetrySettings,
 		_ k8sconfig.APIConfig,
 		_ kube.ExtractionRules,
 		_ kube.Filters,

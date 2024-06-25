@@ -29,6 +29,7 @@ import (
 
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swmetricstransformprocessor/internal/metadata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/confmap/confmaptest"
@@ -113,11 +114,11 @@ func TestCreateProcessors(t *testing.T) {
 
 				sub, err := cm.Sub(k)
 				assert.NoError(t, err)
-				assert.NoError(t, component.UnmarshalConfig(sub, cfg))
+				require.NoError(t, sub.Unmarshal(cfg))
 
 				tp, tErr := factory.CreateTracesProcessor(
 					context.Background(),
-					processortest.NewNopCreateSettings(),
+					processortest.NewNopSettings(),
 					cfg, consumertest.NewNop(),
 				)
 				// Not implemented error
@@ -126,7 +127,7 @@ func TestCreateProcessors(t *testing.T) {
 
 				mp, mErr := factory.CreateMetricsProcessor(
 					context.Background(),
-					processortest.NewNopCreateSettings(),
+					processortest.NewNopSettings(),
 					cfg,
 					consumertest.NewNop(),
 				)
