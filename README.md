@@ -34,8 +34,8 @@ Walk through Add Kubernetes wizard in [SolarWinds Observability](https://documen
 
 ## Limitations
 
-- Supported Kubernetes version: 1.18 and higher.
-  - Local Kubernetes deployments (e.q. Minikube) are not supported (although most of the functionality may be working).
+- Each Kubernetes version is supported for 15 months after its initial release. For example, version 1.27 released on April 11, 2023 is supported until July 11, 2024. For release dates for individual Kubernetes versions, see [Patch Releases](https://kubernetes.io/releases/patch-releases/#detailed-release-history-for-active-branches) in Kubernetes documentation. 
+  - Local Kubernetes deployments (e.q. Minikube, Docker Desktop) are not supported (although most of the functionality may be working).
   - Note: since Kubernetes v1.24 Docker container runtime will not be reporting pod level network metrics (`kubenet` and other network plumbing was removed from upstream as part of the dockershim removal/deprecation)
 - Supported architectures: Linux x86-64 (`amd64`), Linux ARM (`arm64`), Windows x86-64 (`amd64`).
 

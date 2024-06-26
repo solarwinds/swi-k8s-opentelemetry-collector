@@ -71,14 +71,12 @@ push_files() {
         --jq '.sha')
 
     MESSAGE="New release $release_name"
-    CONTENT=$(base64 -i .cr-index/index.yaml)
 
     # Push new index.yaml to the feature branch
     echo "Pushing new index.yaml to branch '$branch_name'..."
     gh api --method PUT /repos/solarwinds/swi-k8s-opentelemetry-collector/contents/index.yaml \
         --field message="$MESSAGE" \
-        --field content="$CONTENT" \
-        --field encoding="base64" \
+        --field content=@<(base64 -i .cr-index/index.yaml) \
         --field branch="$branch_name" \
         --field sha="$SHA"
 }

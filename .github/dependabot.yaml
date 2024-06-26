@@ -25,14 +25,15 @@ updates:
       - go
       - Skip Changelog
     schedule:
-      interval: weekly
-      day: sunday
+      interval: "daily"
     allow:
       # Allow both direct and indirect updates for all packages
       - dependency-type: "all"
     ignore:
       - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
       - dependency-name: "go.opentelemetry.io/collector*"
+    # Disable version updates
+    open-pull-requests-limit: 0
     groups:
       minor-and-patch:
         applies-to: security-updates
@@ -41,27 +42,3 @@ updates:
         update-types:
         - "patch"
         - "minor"
-  - package-ecosystem: gomod
-    directory: /src/processor/k8sattributesprocessor
-    labels:
-      - dependencies
-      - go
-      - Skip Changelog
-    schedule:
-      interval: weekly
-      day: sunday
-    ignore:
-      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
-      - dependency-name: "go.opentelemetry.io/collector*"
-  - package-ecosystem: gomod
-    directory: /src/processor/swmetricstransformprocessor
-    labels:
-      - dependencies
-      - go
-      - Skip Changelog
-    schedule:
-      interval: weekly
-      day: sunday
-    ignore:
-      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
-      - dependency-name: "go.opentelemetry.io/collector*"
