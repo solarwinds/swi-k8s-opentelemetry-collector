@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.4.0-alpha.3] - 2024-06-27
+
+### Changed
+
+- Reverted changes from 3.4.0-alpha.2. They are available in the 4.x branch.
+- Upgraded collector image to `0.10.1` which brings following changes:
+  - See Release notes for [0.10.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.1).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.103.0.
+- Upgraded SWO Agent image to `v2.8.85`
+
+## [4.0.0-alpha.2] - 2024-05-30
+
+## Fixed
+
+- Filtering journal logs stopped working in 3.4.0-alpha.2
+
+## [4.0.0-alpha.1] - 2024-05-30
+
+### Changed
+
+- As a followup to 3.4.0-alpha.2, the `otel.metrics.filter`, `otel.logs.filter` and `otel.events.filter` are now again backwards compatible. If a customer is using the [old filtering syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.96.0/processor/filterprocessor#alternative-config-options), they behave like in 3.3.0 and previous versions. If a customer switches to using the [new syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration), some of the attributes, like `k8s.deployment.name`, become resource attributes.
+
+## [3.4.0-alpha.2] - 2024-05-16
+
+### Changed
+
+- Changed the `otel.metrics.filter`, `otel.logs.filter` and `otel.events.filter` settings to be able to access resource attributes like `k8s.deployment.name`, ...
+  - This is a breaking change if anyone was using them before to include only metrics/logs/events with a specific non-resource attribute.
+
 ## [3.4.0-alpha.1] - 2024-05-09
 
 ### Fixed
