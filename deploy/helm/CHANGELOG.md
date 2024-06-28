@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.4.0] - 2024-06-28
+
+### Changed
+
+- Upgraded collector image to `0.10.1` which brings following changes:
+  - See Release notes for [0.10.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.1).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.103.0.
+- Upgraded SWO Agent image to `v2.8.85`
+
+### Fixed
+
+- Only metric `k8s.cluster.version` metric is supposed to have attribute `sw.k8s.cluster.version`
+
+## [3.4.0-alpha.3] - 2024-06-27
+
+### Changed
+
+- Reverted changes from 3.4.0-alpha.2. They are available in the 4.x branch.
+- Upgraded collector image to `0.10.1` which brings following changes:
+  - See Release notes for [0.10.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.1).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.103.0.
+- Upgraded SWO Agent image to `v2.8.85`
+
 ## [4.0.0-alpha.2] - 2024-05-30
 
 ## Fixed
