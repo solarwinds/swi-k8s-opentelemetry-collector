@@ -19,6 +19,13 @@ import (
 	"log"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/envprovider"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
+	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
+	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/otelcol"
 )
 
@@ -29,13 +36,32 @@ func main() {
 		Version:     "0.11.0",
 	}
 
-	if err := run(otelcol.CollectorSettings{BuildInfo: info, Factories: components}); err != nil {
+	set := otelcol.CollectorSettings{
+		BuildInfo: info,
+		Factories: components,
+		ConfigProviderSettings: otelcol.ConfigProviderSettings{
+			ResolverSettings: confmap.ResolverSettings{
+				ProviderFactories: []confmap.ProviderFactory{
+					envprovider.NewFactory(),
+					fileprovider.NewFactory(),
+					httpprovider.NewFactory(),
+					httpsprovider.NewFactory(),
+					yamlprovider.NewFactory(),
+				},
+				ConverterFactories: []confmap.ConverterFactory{
+					expandconverter.NewFactory(),
+				},
+			},
+		},
+	}
+
+	if err := run(set); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func runInteractive(params otelcol.CollectorSettings) error {
-	cmd := otelcol.NewCommand(params)
+	cmd := otelcol.NewCommandMustSetProvider(params)
 	if err := cmd.Execute(); err != nil {
 		log.Fatalf("collector server run finished with error: %v", err)
 	}
