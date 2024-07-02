@@ -679,6 +679,20 @@ Events config should match snapshot when using default values:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        groupbyattrs/manifest:
+          keys:
+          - k8s.pod.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.replicaset.name
+          - k8s.daemonset.name
+          - k8s.job.name
+          - k8s.cronjob.name
+          - k8s.node.name
+          - k8s.namespace.name
+          - k8s.service.name
+          - k8s.persistentvolume.name
+          - k8s.persistentvolumeclaim.name
         k8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -842,6 +856,23 @@ Events config should match snapshot when using default values:
           - action: insert
             key: sw.k8s.log.type
             value: event
+        resource/manifest:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: manifest
         transform/cleanup_attributes_for_nonexisting_entities:
           log_statements:
           - context: log
@@ -894,6 +925,42 @@ Events config should match snapshot when using default values:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
+        transform/manifest:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+              != nil
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+              == "Pod"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
+              == "Deployment"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
+              == "StatefulSet"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
+              == "ReplicaSet"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
+              == "DaemonSet"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+              == "Job"
+            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
+              == "CronJob"
+            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+              == "Node"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
+              == "Service"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
+              body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
+              where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - delete_key(attributes, "k8s.resource.name")
+            - delete_key(attributes, "event.name")
+            - delete_key(attributes, "event.domain")
+            - set(body, body.string)
         transform/namespace:
           log_statements:
           - context: log
@@ -947,6 +1014,64 @@ Events config should match snapshot when using default values:
               or attributes["k8s.event.reason"] == "Unhealthy"
       receivers:
         k8s_events: null
+        k8sobjects:
+          auth_type: serviceAccount
+          objects:
+          - interval: 60m
+            mode: pull
+            name: pods
+          - mode: watch
+            name: pods
+          - interval: 60m
+            mode: pull
+            name: deployments
+          - mode: watch
+            name: deployments
+          - interval: 60m
+            mode: pull
+            name: statefulsets
+          - mode: watch
+            name: statefulsets
+          - interval: 60m
+            mode: pull
+            name: replicasets
+          - mode: watch
+            name: replicasets
+          - interval: 60m
+            mode: pull
+            name: daemonsets
+          - mode: watch
+            name: daemonsets
+          - interval: 60m
+            mode: pull
+            name: jobs
+          - mode: watch
+            name: jobs
+          - interval: 60m
+            mode: pull
+            name: cronjobs
+          - mode: watch
+            name: cronjobs
+          - interval: 60m
+            mode: pull
+            name: nodes
+          - mode: watch
+            name: nodes
+          - interval: 60m
+            mode: pull
+            name: services
+          - mode: watch
+            name: services
+          - interval: 60m
+            mode: pull
+            name: persistentvolumes
+          - mode: watch
+            name: persistentvolumes
+          - interval: 60m
+            mode: pull
+            name: persistentvolumeclaims
+          - mode: watch
+            name: persistentvolumeclaims
       service:
         extensions:
         - health_check
@@ -966,6 +1091,19 @@ Events config should match snapshot when using default values:
             - batch
             receivers:
             - k8s_events
+          logs/manifests:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/manifest
+            - groupbyattrs/manifest
+            - resource/manifest
+            - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
+            - batch
+            receivers:
+            - k8sobjects
         telemetry:
           logs:
             level: info
