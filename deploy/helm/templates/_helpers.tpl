@@ -337,9 +337,6 @@ include:
 {{- end }}
 
 {{- define "defaultLogsFilter" -}}
-# allow only system namespaces (kube-system, kube-public)
-log_record:
-  - 'not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))'
 {{- end }}
 
 {{/*
