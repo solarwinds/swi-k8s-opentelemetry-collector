@@ -361,6 +361,9 @@ YAML with the filter.
 {{- if .Values.otel.logs.filter -}}
 {{- $filter = deepCopy .Values.otel.logs.filter -}}
 {{- end -}}
+
+{{- if or $defaultFilter $filter -}}
 {{- merge $filter (fromYaml $defaultFilter) | toYaml -}}
+{{- end -}}
 
 {{- end -}}
