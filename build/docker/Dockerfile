@@ -15,7 +15,7 @@ FROM builder as tests
 # run all tests for all go modules in `src` folder
 CMD cd src && find . -name go.mod -execdir go test ./... \;
 
-FROM debian:12.5 as journal
+FROM debian:12.6 as journal
 RUN apt update
 RUN apt install -y systemd
 COPY /build/docker/copy-journalbinary.sh /script.sh
