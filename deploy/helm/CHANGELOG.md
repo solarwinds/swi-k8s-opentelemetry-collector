@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+
+## [4.0.0-alpha.4] - 2024-07-04
+
+### Changed
+
+- By default we are now gathering all logs.
+
+
 ## [4.0.0-alpha.3] - 2024-06-25
 
-## Added
+### Added
 
 - Watching all supported resources and sending their full manifests to SWO.
   - Disabled by default, can be enabled by setting `otel.manifests.enabled` to true.

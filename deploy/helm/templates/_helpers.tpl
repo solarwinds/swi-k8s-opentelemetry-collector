@@ -337,9 +337,6 @@ include:
 {{- end }}
 
 {{- define "defaultLogsFilter" -}}
-# allow only system namespaces (kube-system, kube-public)
-log_record:
-  - 'not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))'
 {{- end }}
 
 {{/*
@@ -364,6 +361,9 @@ YAML with the filter.
 {{- if .Values.otel.logs.filter -}}
 {{- $filter = deepCopy .Values.otel.logs.filter -}}
 {{- end -}}
+
+{{- if or $defaultFilter $filter -}}
 {{- merge $filter (fromYaml $defaultFilter) | toYaml -}}
+{{- end -}}
 
 {{- end -}}
