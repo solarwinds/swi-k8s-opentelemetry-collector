@@ -1760,23 +1760,20 @@ Metrics config should match snapshot when using default values:
             - action: aggregate_labels
               aggregation_type: sum
               label_set: []
-          - action: insert
+          - action: update
             experimental_match_labels:
               scrape_job: .*apiservers.*
             include: k8s.kubernetes_build_info
             match_type: regexp
             new_name: k8s.cluster.version
             operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set:
-              - git_version
             - action: update_label
               label: git_version
               new_label: sw.k8s.cluster.version
-          - action: update
-            include: k8s.kubernetes_build_info
-            new_name: k8s.kubernetes_build_info_temp
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - sw.k8s.cluster.version
           - action: insert
             experimental_match_labels:
               code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
