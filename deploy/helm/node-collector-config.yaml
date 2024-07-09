@@ -636,7 +636,9 @@ service:
         - resource/k8sattributes_logs_annotations_filter
 {{- end }}
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
+{{- if (include "logsFilter" .) }}
         - filter/logs
+{{- end }}
 {{- end }}
       receivers:
         - filelog
