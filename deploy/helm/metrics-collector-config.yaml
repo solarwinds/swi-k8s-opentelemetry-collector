@@ -531,7 +531,7 @@ processors:
             label_set: []
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
-        action: update
+        action: insert
         match_type: regexp
         experimental_match_labels: { "scrape_job": '.*apiservers.*' }
         new_name: k8s.cluster.version
@@ -542,6 +542,9 @@ processors:
           - action: aggregate_labels
             label_set: [sw.k8s.cluster.version]
             aggregation_type: sum
+      - include: k8s.kubernetes_build_info
+        action: update
+        new_name: k8s.kubernetes_build_info_temp
       # Prometheus metrics
       - include: apiserver_request_total
         action: insert
