@@ -122,6 +122,7 @@ processors:
             - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolume"
             - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress"
 
             # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
             - delete_key(attributes, "k8s.resource.name")
@@ -146,6 +147,7 @@ processors:
       - k8s.service.name
       - k8s.persistentvolume.name
       - k8s.persistentvolumeclaim.name
+      - k8s.ingress.name
 {{- end }}
 
   resource/events:
@@ -231,6 +233,7 @@ receivers:
   "services"
   "persistentvolumes"
   "persistentvolumeclaims"
+  "ingresses"
 }}
 {{- $root := . }}
 {{- range $index, $resource := $arrayOfWatchedResources }}

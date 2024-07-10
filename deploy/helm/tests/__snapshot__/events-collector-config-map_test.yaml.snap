@@ -693,6 +693,7 @@ Events config should match snapshot when using default values:
           - k8s.service.name
           - k8s.persistentvolume.name
           - k8s.persistentvolumeclaim.name
+          - k8s.ingress.name
         k8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -957,6 +958,8 @@ Events config should match snapshot when using default values:
             - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress"
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
@@ -1072,6 +1075,11 @@ Events config should match snapshot when using default values:
             name: persistentvolumeclaims
           - mode: watch
             name: persistentvolumeclaims
+          - interval: 60m
+            mode: pull
+            name: ingresses
+          - mode: watch
+            name: ingresses
       service:
         extensions:
         - health_check
