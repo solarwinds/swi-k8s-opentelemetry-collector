@@ -8,11 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 
-## [4.0.0-alpha.4] - 2024-07-04
+## [4.0.0-alpha.4] - 2024-07-11
+
+### Added
+
+- Collect manifests also for Ingresses.
 
 ### Changed
 
 - By default we are now gathering all logs.
+- Fix collector version on metric k8s.cluster.vetrsion
 
 
 ## [4.0.0-alpha.3] - 2024-06-25
