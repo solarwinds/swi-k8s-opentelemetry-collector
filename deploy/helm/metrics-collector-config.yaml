@@ -641,12 +641,12 @@ processors:
         experimental_match_labels: { "scrape_job": '.*apiservers.*' }
         new_name: k8s.cluster.version
         operations:
-          - action: aggregate_labels
-            label_set: [git_version]
-            aggregation_type: sum
           - action: update_label
             label: git_version
-            new_label: sw.k8s.cluster.version            
+            new_label: sw.k8s.cluster.version
+          - action: aggregate_labels
+            label_set: [sw.k8s.cluster.version]
+            aggregation_type: sum
       - include: k8s.kubernetes_build_info
         action: update
         new_name: k8s.kubernetes_build_info_temp
