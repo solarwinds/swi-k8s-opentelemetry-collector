@@ -170,14 +170,12 @@ Custom logs filter with new syntax:
             - not(IsMatch(resource.attributes["k8s.namespace.name"], "^.*$"))
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -190,11 +188,9 @@ Custom logs filter with new syntax:
               == true
         filter/remove_temporary_metrics:
           metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -1381,14 +1377,12 @@ Custom logs filter with old syntax:
                 value: ^.*$
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -1401,11 +1395,9 @@ Custom logs filter with old syntax:
               == true
         filter/remove_temporary_metrics:
           metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -2585,14 +2577,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -2605,11 +2595,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
               == true
         filter/remove_temporary_metrics:
           metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -3750,14 +3738,12 @@ Node collector config should match snapshot when fargate is enabled:
             - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -3770,11 +3756,9 @@ Node collector config should match snapshot when fargate is enabled:
               == true
         filter/remove_temporary_metrics:
           metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -4884,14 +4868,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -4904,11 +4886,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               == true
         filter/remove_temporary_metrics:
           metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -5980,14 +5960,12 @@ Node collector config should match snapshot when using default values:
             - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -6000,11 +5978,9 @@ Node collector config should match snapshot when using default values:
               == true
         filter/remove_temporary_metrics:
           metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version

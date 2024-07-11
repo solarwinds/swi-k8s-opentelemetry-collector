@@ -166,14 +166,12 @@ Node collector config for windows nodes should match snapshot when using default
             - type == METRIC_DATA_TYPE_HISTOGRAM
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -186,11 +184,9 @@ Node collector config for windows nodes should match snapshot when using default
               == true
         filter/remove_temporary_metrics:
           metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
