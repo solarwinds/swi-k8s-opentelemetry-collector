@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- internal configuration of filterprocessor is using OTTL syntax now. 
+
 
 ## [4.0.0-alpha.4] - 2024-07-11
 
