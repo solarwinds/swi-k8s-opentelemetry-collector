@@ -123,6 +123,7 @@ processors:
             - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
             - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress"
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
 
             # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
             - delete_key(attributes, "k8s.resource.name")
