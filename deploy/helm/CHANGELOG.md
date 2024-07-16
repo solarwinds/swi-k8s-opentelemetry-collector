@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+
+## [4.0.0-alpha.5] - 2024-07-16
+
+### Added
+
+- Added k8s.object.kind to manifest events.
+
 ### Changed
 
-- internal configuration of filterprocessor is using OTTL syntax now. 
+- Internal configuration of filterprocessor is using OTTL syntax now. 
 
 
 ## [4.0.0-alpha.4] - 2024-07-11
