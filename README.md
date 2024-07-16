@@ -101,7 +101,8 @@ Processors included in the collector:
 
 Once deployed to a Kubernetes cluster, the logs collection and processing configuration is stored as a ConfigMap under the `logs.config` key.
 
-To avoid processing an excessive amount of data, the `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
+#### Version v3.x 
+The `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
 
 ```yaml
 otel:
@@ -112,6 +113,17 @@ otel:
         record_attributes:
           - key: k8s.namespace.name
             value: ^.*$
+```
+
+#### Version v4.x 
+The `swo-k8s-collector` collects all logs by default which might be intensive. To avoid processing an excessive amount of data, the `swo-k8s-collector` can define filter which will drop all unwanted logs. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs only from `kube-*` namespace:
+
+```yaml
+otel:
+  logs:
+    filter:
+      log_record:
+        - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
 ```
 
 ## Receive 3d party metrics 
