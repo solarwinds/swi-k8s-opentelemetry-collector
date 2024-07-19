@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.0-alpha.6] - 2024-07-22
+
+### Changed
+
+- Internal `k8sattributes` has been renamed to `swk8sattributes`
 
 ## [4.0.0-alpha.5] - 2024-07-16
 
