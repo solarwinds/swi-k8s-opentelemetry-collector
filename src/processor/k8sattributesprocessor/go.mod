@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig v0.103.0
+	github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.103.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector v0.103.0
 	go.opentelemetry.io/collector/component v0.103.0
@@ -94,3 +94,5 @@ replace github.com/openshift/api v3.9.0+incompatible => github.com/openshift/api
 
 // ambiguous import: found package cloud.google.com/go/compute/metadata in multiple modules
 replace cloud.google.com/go v0.54.0 => cloud.google.com/go v0.110.10
+
+replace github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.103.0 => ../../internal/k8sconfig
