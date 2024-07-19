@@ -164,30 +164,14 @@ Node collector config for windows nodes should match snapshot when using default
           metrics:
             metric:
             - type == METRIC_DATA_TYPE_HISTOGRAM
-        filter/logs:
-          logs:
-            include:
-              match_type: regexp
-              resource_attributes:
-              - key: k8s.namespace.name
-                value: ^kube-.*$
-        filter/metrics:
-          metrics:
-            exclude:
-              match_type: regexp
-              metric_names:
-              - .*_temp
-              - apiserver_request_total
         filter/receiver:
           metrics:
-            exclude:
-              match_type: strict
-              metric_names:
-              - scrape_duration_seconds
-              - scrape_samples_post_metric_relabeling
-              - scrape_samples_scraped
-              - scrape_series_added
-              - up
+            metric:
+            - name == "scrape_duration_seconds"
+            - name == "scrape_samples_post_metric_relabeling"
+            - name == "scrape_samples_scraped"
+            - name == "scrape_series_added"
+            - name == "up"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -198,6 +182,11 @@ Node collector config for windows nodes should match snapshot when using default
             datapoint:
             - attributes["container"] == "POD" and IsMatch(metric.name, "container_network_.*|k8s.container.*")
               == true
+        filter/remove_temporary_metrics:
+          metrics:
+            metric:
+            - IsMatch(name , ".*_temp")
+            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -1099,7 +1088,6 @@ Node collector config for windows nodes should match snapshot when using default
             - otlp
             processors:
             - memory_limiter
-            - filter/logs
             - batch/logs
             receivers:
             - forward/logs-exporter

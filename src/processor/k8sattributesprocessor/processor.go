@@ -30,7 +30,7 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.8.0"
 	"go.uber.org/zap"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 )
 
@@ -55,13 +55,13 @@ type kubernetesprocessor struct {
 	resources map[string]*kubernetesProcessorResource
 }
 
-func (kp *kubernetesprocessor) initKubeClient(logger *zap.Logger, kubeClient kube.ClientProvider) error {
+func (kp *kubernetesprocessor) initKubeClient(set component.TelemetrySettings, kubeClient kube.ClientProvider) error {
 	if kubeClient == nil {
 		kubeClient = kube.New
 	}
 	if !kp.passthroughMode {
 		kc, err := kubeClient(
-			logger,
+			set,
 			kp.apiConfig,
 			kp.rules,
 			kp.filters,
@@ -103,7 +103,7 @@ func (kp *kubernetesprocessor) Start(_ context.Context, _ component.Host) error 
 
 	// This might have been set by an option already
 	if kp.kc == nil {
-		err := kp.initKubeClient(kp.logger, kubeClientProvider)
+		err := kp.initKubeClient(kp.telemetrySettings, kubeClientProvider)
 		if err != nil {
 			kp.telemetrySettings.ReportStatus(component.NewFatalErrorEvent(err))
 			return nil

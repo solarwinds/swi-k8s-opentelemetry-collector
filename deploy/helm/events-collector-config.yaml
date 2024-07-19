@@ -36,6 +36,11 @@ processors:
     logs:
 {{ toYaml .Values.otel.events.filter | indent 6 }}
 {{- end }}
+{{- if .Values.otel.manifests.filter }}
+  filter/manifests:
+    logs:
+{{ toYaml .Values.otel.manifests.filter | indent 6 }}
+{{- end }}
   transform/severity:
     log_statements:
       - context: log
@@ -88,6 +93,64 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.job.found")
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
+{{- if .Values.otel.manifests.enabled }}
+  transform/manifest:
+      error_mode: ignore
+      log_statements:
+        - context: log
+          statements:
+            # set event namespace where it will be stored in SWO.
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            
+            # Add new attribute `watch-type` with type of the change - "ADDED", "MODIFIED", "DELETED"
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"] != nil
+
+            # in watch mode body has `object` attribute with the manifest, in pull mode body is the manifest
+            # flaten body structure to have only raw manifest in body in all the cases
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+
+            # set attributes for the resource
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"] == "Pod"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"] == "Deployment"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"] == "StatefulSet"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"] == "ReplicaSet"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"] == "DaemonSet"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"] == "Job"
+            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"] == "CronJob"
+            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"] == "Node"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"] == "Service"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress"
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
+
+            # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
+            - delete_key(attributes, "k8s.resource.name")
+            - delete_key(attributes, "event.name")
+            - delete_key(attributes, "event.domain")
+
+            # convert body to string
+            - set(body, body.string)
+{{- end }}
+{{- if .Values.otel.manifests.enabled }}
+  groupbyattrs/manifest:
+    keys:
+      - k8s.pod.name
+      - k8s.deployment.name
+      - k8s.statefulset.name
+      - k8s.replicaset.name
+      - k8s.daemonset.name
+      - k8s.job.name
+      - k8s.cronjob.name
+      - k8s.node.name
+      - k8s.namespace.name
+      - k8s.service.name
+      - k8s.persistentvolume.name
+      - k8s.persistentvolumeclaim.name
+      - k8s.ingress.name
+{{- end }}
+
   resource/events:
     attributes:
       # Collector and Manifest version
@@ -111,6 +174,31 @@ processors:
       - key: sw.k8s.log.type
         value: event
         action: insert
+{{- if .Values.otel.manifests.enabled }}
+  resource/manifest:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+
+      - key: sw.k8s.log.type
+        value: manifest
+        action: insert
+{{- end }}
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   swk8sattributes:
@@ -130,7 +218,33 @@ processors:
 
 receivers:
   k8s_events:
-
+{{- if .Values.otel.manifests.enabled }}
+  k8sobjects:
+    auth_type: serviceAccount
+    objects:
+{{- $arrayOfWatchedResources := list 
+  "pods" 
+  "deployments" 
+  "statefulsets" 
+  "replicasets" 
+  "daemonsets" 
+  "jobs" 
+  "cronjobs" 
+  "nodes" 
+  "services"
+  "persistentvolumes"
+  "persistentvolumeclaims"
+  "ingresses"
+}}
+{{- $root := . }}
+{{- range $index, $resource := $arrayOfWatchedResources }}
+      - name: {{ $resource }}
+        mode: pull
+        interval: {{ quote $root.Values.otel.manifests.pull_every }}
+      - name : {{ $resource }}
+        mode: watch
+{{- end }}
+{{- end }}
 service:
   extensions:
 {{- if .Values.otel.events.sending_queue.offload_to_disk }}
@@ -145,6 +259,9 @@ service:
         - otlp
       processors:
         - memory_limiter
+{{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "true") }}
+        - filter
+{{- end }}
         - transform/severity
         - transform/namespace
         - transform/entity_attributes
@@ -157,12 +274,36 @@ service:
         - resource/swk8sattributes_annotations_filter
 {{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
-{{- if .Values.otel.events.filter }}
+{{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "false") }}
         - filter
-{{- end}}
+{{- end }}
         - batch
       receivers:
         - k8s_events
+{{- end }}
+{{- if .Values.otel.manifests.enabled }}
+    logs/manifests:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - transform/manifest
+        - groupbyattrs/manifest
+        - resource/manifest
+        - k8sattributes
+{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
+        - resource/k8sattributes_labels_filter
+{{- end }}
+{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
+        - resource/k8sattributes_annotations_filter
+{{- end }}
+        - transform/cleanup_attributes_for_nonexisting_entities
+{{- if .Values.otel.manifests.filter }}
+        - filter/manifests
+{{- end }}
+        - batch
+      receivers:
+        - k8sobjects
 {{- end }}
   telemetry:
 {{- if .Values.otel.events.telemetry.logs.enabled }}

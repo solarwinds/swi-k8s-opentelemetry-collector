@@ -18,13 +18,13 @@
 package swk8sattributesprocessor
 
 import (
-	"go.uber.org/zap"
+	"go.opentelemetry.io/collector/component"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 )
 
@@ -49,7 +49,7 @@ func selectors() (labels.Selector, fields.Selector) {
 
 // newFakeClient instantiates a new FakeClient object and satisfies the ClientProvider type
 func newFakeClient(
-	_ *zap.Logger,
+	_ component.TelemetrySettings,
 	apiCfg k8sconfig.APIConfig,
 	rules kube.ExtractionRules,
 	filters kube.Filters,

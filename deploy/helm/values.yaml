@@ -185,12 +185,7 @@ otel:
 
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    filter:
-      exclude:
-        match_type: regexp
-        metric_names:
-          - .*_temp
-          - apiserver_request_total
+    filter: {}
 
     # Use this configuration to scrape extra metrics from Prometheus. Multiple metrics can be specified.
     # See format in https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors
@@ -289,12 +284,12 @@ otel:
 
   # Configuration for Events collection
   events:
-    # Define whether events will be collected and sent
+    # If false none of the events will be collected
     enabled: true
 
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    # filter:
+    filter: {}
 
     # Batching configuration for events
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
@@ -440,15 +435,18 @@ otel:
 
     # This filter is applied after initial log processing, it is the place where logs could be filtered out
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    filter:
-      include:
-        match_type: regexp
-        # a log has to match all expressions in the list to be included
-        # see https://github.com/google/re2/wiki/Syntax for regexp syntax
-        resource_attributes:
-          # allow only system namespaces (kube-system, kube-public)
-          - key: k8s.namespace.name
-            value: ^kube-.*$
+    # default (prior to k8s collector 4.0.0):
+      # filter:
+      #   include:
+      #     match_type: regexp
+      #     # a log has to match all expressions in the list to be included
+      #     # see https://github.com/google/re2/wiki/Syntax for regexp syntax
+      #     record_attributes:
+      #       # allow only system namespaces (kube-system, kube-public)
+      #       - key: k8s.namespace.name
+      #         value: ^kube-.*$
+    # default (since k8s collector 4.0.0) is to collect all logs 
+    filter: {}
 
     # Batching configuration for logs
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
@@ -549,6 +547,19 @@ otel:
       directory: /var/lib/swo/checkpoints
       timeout: 5s
 
+  # Configuration that allows to watch for changes in k8s resources and send full manifests to SWO upon change
+  manifests:
+    enabled: false
+
+    # Apart of watching for changes in k8s resources, all resources are periodically pulled
+    # this is mainly to catch resources that were created before the collector was deployed and also to catch 
+    # resources that were created during the time when the collector was down (or something unexpected happen)
+    pull_every: 60m
+
+    # This filter is applied after manifest processing, it is the place where manifest events could be filtered out
+    # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    filter: {}
+
 cluster:
   name: <CLUSTER_NAME>
   uid: <CLUSTER_UID>
@@ -616,7 +627,7 @@ swoagent:
   enabled: false
   image:
     repository: solarwinds/swo-agent
-    tag: "v2.6.28"
+    tag: "v2.8.85"
     pullPolicy: IfNotPresent
   resources:
     limits:
