@@ -306,3 +306,64 @@ Define name for the Secret
 {{- "solarwinds-api-token" }}
 {{- end }}
 {{- end -}}
+
+{{/*
+Check the used filtering version
+
+Usage:
+{{ isDeprecatedFilterSyntax (.Values.otel.events.filter) }}
+*/}}
+{{- define "isDeprecatedFilterSyntax" -}}
+{{- if . -}}
+{{- if or (index . "include") (index . "exclude") -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{- define "defaultDeprecatedLogsFilter" -}}
+include:
+  match_type: regexp
+  # a log has to match all expressions in the list to be included
+  # see https://github.com/google/re2/wiki/Syntax for regexp syntax
+  record_attributes:
+    # allow only system namespaces (kube-system, kube-public)
+    - key: k8s.namespace.name
+      value: ^kube-.*$
+{{- end }}
+
+{{- define "defaultLogsFilter" -}}
+{{- end }}
+
+{{/*
+Get the log filter.
+The filter is a merge from the default filter and the user defined one.
+The default filter's syntax is chosen based on the syntax of the user defined filter.
+
+Usage:
+{{ include "logsFilter" . }}
+
+Returns:
+YAML with the filter.
+*/}}
+{{- define "logsFilter" -}}
+
+{{- $defaultFilter := (include "defaultLogsFilter" .) -}}
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" -}}
+{{- $defaultFilter = (include "defaultDeprecatedLogsFilter" .) -}}
+{{- end -}}
+
+{{- $filter := dict -}}
+{{- if .Values.otel.logs.filter -}}
+{{- $filter = deepCopy .Values.otel.logs.filter -}}
+{{- end -}}
+
+{{- if or $defaultFilter $filter -}}
+{{- merge $filter (fromYaml $defaultFilter) | toYaml -}}
+{{- end -}}
+
+{{- end -}}

@@ -84,19 +84,18 @@ deploy:
                         metrics_path: "/custom_metrics"
                         endpoint_port: 8081
             events:
+              enabled: true
               sending_queue:
                 offload_to_disk: true
+            manifests:
+              enabled: true
+              pull_every: 1m
             logs:
+              # journal on Docker Desktop is not supported
+              journal: false
               filter:
-                include:
-                  resource_attributes:
-                    - key: k8s.namespace.name
-                      value: "^.*$"
-                exclude:
-                  match_type: strict
-                  resource_attributes:
-                    - key: k8s.namespace.name
-                      value: "test-namespace"
+                log_record:
+                  - resource.attributes["k8s.namespace.name"] == "test-namespace"
         upgradeOnChange: true
       
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent

@@ -42,11 +42,11 @@ processors:
   memory_limiter:
 {{ toYaml .Values.otel.logs.memory_limiter | indent 4 }}
 
-{{- if .Values.otel.logs.filter }}
+{{- if (include "logsFilter" .) }}
   # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
   filter/logs:
     logs:
-{{ toYaml .Values.otel.logs.filter | indent 6 }}
+{{ include "logsFilter" . | indent 6 }}
 {{- end }}
 
   {{- include "common-config.filter-reciever" . | nindent 2 }}
@@ -97,6 +97,8 @@ processors:
     metrics:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
 {{- end }}
+
+{{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
 
   {{- include "common-config.resource-metrics" . | nindent 2 }}
 
@@ -620,6 +622,9 @@ service:
         - forward/logs-exporter
       processors:
         - memory_limiter
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" }}
+        - filter/logs
+{{- end }}
         - transform/syslogify
         - groupbyattrs/common-all
         - resource/container
@@ -629,6 +634,11 @@ service:
 {{- end }}
 {{- if not (empty .Values.otel.logs.k8s_instrumentation.annotations.excludePattern) }}
         - resource/k8sattributes_logs_annotations_filter
+{{- end }}
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
+{{- if (include "logsFilter" .) }}
+        - filter/logs
+{{- end }}
 {{- end }}
       receivers:
         - filelog
@@ -650,9 +660,6 @@ service:
         - otlp
       processors:
         - memory_limiter
-{{- if .Values.otel.logs.filter }}
-        - filter/logs
-{{- end }}
         - batch/logs
       receivers:
         - forward/logs-exporter
@@ -724,6 +731,7 @@ service:
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}
+        - filter/remove_temporary_metrics
         - batch/metrics
       receivers:
         - forward/metric-exporter

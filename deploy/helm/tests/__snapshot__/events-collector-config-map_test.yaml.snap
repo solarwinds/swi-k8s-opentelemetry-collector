@@ -1,4 +1,4 @@
-Events config should match snapshot when using default values:
+Custom events filter with new syntax:
   1: |
     events.config: |-
       exporters:
@@ -26,6 +26,10 @@ Events config should match snapshot when using default values:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        filter:
+          logs:
+            log_record:
+            - not(IsMatch(resource.attributes["k8s.namespace.name"], "^.*$"))
         k8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -310,9 +314,805 @@ Events config should match snapshot when using default values:
             - resource/events
             - k8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
+            - filter
             - batch
             receivers:
             - k8s_events
+        telemetry:
+          logs:
+            level: info
+          metrics:
+            address: 0.0.0.0:8888
+Custom events filter with old syntax:
+  1: |
+    events.config: |-
+      exporters:
+        otlp:
+          endpoint: ${OTEL_ENVOY_ADDRESS}
+          headers:
+            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          retry_on_failure:
+            enabled: true
+            initial_interval: 10s
+            max_elapsed_time: 300s
+            max_interval: 30s
+          sending_queue:
+            enabled: true
+            num_consumers: 10
+            queue_size: 1000
+          tls:
+            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      extensions:
+        health_check: {}
+        memory_ballast:
+          size_mib: 300
+      processors:
+        batch:
+          send_batch_max_size: 512
+          send_batch_size: 512
+          timeout: 1s
+        filter:
+          logs:
+            include:
+              match_type: regexp
+              record_attributes:
+              - key: k8s.namespace.name
+                value: ^.*$
+        k8sattributes:
+          auth_type: serviceAccount
+          cronjob:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.cronjob.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: cronjob
+                key_regex: (.*)
+                tag_name: k8s.cronjob.labels.$$1
+          daemonset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.daemonset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: daemonset
+                key_regex: (.*)
+                tag_name: k8s.daemonset.labels.$$1
+          deployment:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.deployment.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: deployment
+                key_regex: (.*)
+                tag_name: k8s.deployment.labels.$$1
+          extract:
+            labels:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.labels.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.labels.$$1
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+            - k8s.node.name
+          job:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.job.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: job
+                key_regex: (.*)
+                tag_name: k8s.job.labels.$$1
+          node:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.node.name
+            extract:
+              labels:
+              - from: node
+                key_regex: (.*)
+                tag_name: k8s.node.labels.$$1
+          passthrough: false
+          persistentvolume:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolume.name
+            extract:
+              labels:
+              - from: persistentvolume
+                key_regex: (.*)
+                tag_name: k8s.persistentvolume.labels.$$1
+          persistentvolumeclaim:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolumeclaim.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: persistentvolumeclaim
+                key_regex: (.*)
+                tag_name: k8s.persistentvolumeclaim.labels.$$1
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          replicaset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.replicaset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: replicaset
+                key_regex: (.*)
+                tag_name: k8s.replicaset.labels.$$1
+          service:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.service.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.labels.$$1
+          set_object_existence: true
+          statefulset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.statefulset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: statefulset
+                key_regex: (.*)
+                tag_name: k8s.statefulset.labels.$$1
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 512
+          spike_limit_mib: 128
+        resource/events:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: event
+        transform/cleanup_attributes_for_nonexisting_entities:
+          log_statements:
+          - context: log
+            statements:
+            - delete_key(resource.attributes, "k8s.pod.name") where resource.attributes["sw.k8s.pod.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.deployment.name") where resource.attributes["sw.k8s.deployment.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.statefulset.name") where resource.attributes["sw.k8s.statefulset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.replicaset.name") where resource.attributes["sw.k8s.replicaset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.daemonset.name") where resource.attributes["sw.k8s.daemonset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.job.name") where resource.attributes["sw.k8s.job.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.cronjob.name") where resource.attributes["sw.k8s.cronjob.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
+              == "false"
+            - delete_key(resource.attributes, "sw.k8s.pod.found")
+            - delete_key(resource.attributes, "sw.k8s.deployment.found")
+            - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+            - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+            - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+            - delete_key(resource.attributes, "sw.k8s.job.found")
+            - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+            - delete_key(resource.attributes, "sw.k8s.node.found")
+        transform/entity_attributes:
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Pod"
+            - set(resource.attributes["k8s.deployment.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Deployment"
+            - set(resource.attributes["k8s.statefulset.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "StatefulSet"
+            - set(resource.attributes["k8s.replicaset.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "ReplicaSet"
+            - set(resource.attributes["k8s.daemonset.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "DaemonSet"
+            - set(resource.attributes["k8s.job.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Job"
+            - set(resource.attributes["k8s.cronjob.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "CronJob"
+            - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"])
+              where attributes["k8s.namespace.name"] != nil
+            - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
+              != nil
+        transform/namespace:
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/severity:
+          log_statements:
+          - context: log
+            statements:
+            - set(severity_text, "Error") where attributes["k8s.event.reason"] == "Failed"
+              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
+              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
+              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
+              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
+              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
+              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
+              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
+              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(severity_number, 17) where attributes["k8s.event.reason"] == "Failed"
+              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
+              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
+              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
+              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
+              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
+              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
+              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
+              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(severity_text, "Warning") where attributes["k8s.event.reason"] == "ProbeWarning"
+              or attributes["k8s.event.reason"] == "Unhealthy"
+            - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
+              or attributes["k8s.event.reason"] == "Unhealthy"
+      receivers:
+        k8s_events: null
+      service:
+        extensions:
+        - health_check
+        - memory_ballast
+        pipelines:
+          logs:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - filter
+            - transform/severity
+            - transform/namespace
+            - transform/entity_attributes
+            - resource/events
+            - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
+            - batch
+            receivers:
+            - k8s_events
+        telemetry:
+          logs:
+            level: info
+          metrics:
+            address: 0.0.0.0:8888
+Events config should match snapshot when using default values:
+  1: |
+    events.config: |-
+      exporters:
+        otlp:
+          endpoint: ${OTEL_ENVOY_ADDRESS}
+          headers:
+            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          retry_on_failure:
+            enabled: true
+            initial_interval: 10s
+            max_elapsed_time: 300s
+            max_interval: 30s
+          sending_queue:
+            enabled: true
+            num_consumers: 10
+            queue_size: 1000
+          tls:
+            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      extensions:
+        health_check: {}
+        memory_ballast:
+          size_mib: 300
+      processors:
+        batch:
+          send_batch_max_size: 512
+          send_batch_size: 512
+          timeout: 1s
+        groupbyattrs/manifest:
+          keys:
+          - k8s.pod.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.replicaset.name
+          - k8s.daemonset.name
+          - k8s.job.name
+          - k8s.cronjob.name
+          - k8s.node.name
+          - k8s.namespace.name
+          - k8s.service.name
+          - k8s.persistentvolume.name
+          - k8s.persistentvolumeclaim.name
+          - k8s.ingress.name
+        k8sattributes:
+          auth_type: serviceAccount
+          cronjob:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.cronjob.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: cronjob
+                key_regex: (.*)
+                tag_name: k8s.cronjob.labels.$$1
+          daemonset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.daemonset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: daemonset
+                key_regex: (.*)
+                tag_name: k8s.daemonset.labels.$$1
+          deployment:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.deployment.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: deployment
+                key_regex: (.*)
+                tag_name: k8s.deployment.labels.$$1
+          extract:
+            labels:
+            - from: pod
+              key_regex: (.*)
+              tag_name: k8s.pod.labels.$$1
+            - from: namespace
+              key_regex: (.*)
+              tag_name: k8s.namespace.labels.$$1
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+            - k8s.node.name
+          job:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.job.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: job
+                key_regex: (.*)
+                tag_name: k8s.job.labels.$$1
+          node:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.node.name
+            extract:
+              labels:
+              - from: node
+                key_regex: (.*)
+                tag_name: k8s.node.labels.$$1
+          passthrough: false
+          persistentvolume:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolume.name
+            extract:
+              labels:
+              - from: persistentvolume
+                key_regex: (.*)
+                tag_name: k8s.persistentvolume.labels.$$1
+          persistentvolumeclaim:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolumeclaim.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: persistentvolumeclaim
+                key_regex: (.*)
+                tag_name: k8s.persistentvolumeclaim.labels.$$1
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          replicaset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.replicaset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: replicaset
+                key_regex: (.*)
+                tag_name: k8s.replicaset.labels.$$1
+          service:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.service.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: service
+                key_regex: (.*)
+                tag_name: k8s.service.labels.$$1
+          set_object_existence: true
+          statefulset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.statefulset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract:
+              labels:
+              - from: statefulset
+                key_regex: (.*)
+                tag_name: k8s.statefulset.labels.$$1
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 512
+          spike_limit_mib: 128
+        resource/events:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: event
+        resource/manifest:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: manifest
+        transform/cleanup_attributes_for_nonexisting_entities:
+          log_statements:
+          - context: log
+            statements:
+            - delete_key(resource.attributes, "k8s.pod.name") where resource.attributes["sw.k8s.pod.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.deployment.name") where resource.attributes["sw.k8s.deployment.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.statefulset.name") where resource.attributes["sw.k8s.statefulset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.replicaset.name") where resource.attributes["sw.k8s.replicaset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.daemonset.name") where resource.attributes["sw.k8s.daemonset.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.job.name") where resource.attributes["sw.k8s.job.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.cronjob.name") where resource.attributes["sw.k8s.cronjob.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
+              == "false"
+            - delete_key(resource.attributes, "sw.k8s.pod.found")
+            - delete_key(resource.attributes, "sw.k8s.deployment.found")
+            - delete_key(resource.attributes, "sw.k8s.statefulset.found")
+            - delete_key(resource.attributes, "sw.k8s.replicaset.found")
+            - delete_key(resource.attributes, "sw.k8s.daemonset.found")
+            - delete_key(resource.attributes, "sw.k8s.job.found")
+            - delete_key(resource.attributes, "sw.k8s.cronjob.found")
+            - delete_key(resource.attributes, "sw.k8s.node.found")
+        transform/entity_attributes:
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Pod"
+            - set(resource.attributes["k8s.deployment.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Deployment"
+            - set(resource.attributes["k8s.statefulset.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "StatefulSet"
+            - set(resource.attributes["k8s.replicaset.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "ReplicaSet"
+            - set(resource.attributes["k8s.daemonset.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "DaemonSet"
+            - set(resource.attributes["k8s.job.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Job"
+            - set(resource.attributes["k8s.cronjob.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "CronJob"
+            - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"])
+              where attributes["k8s.namespace.name"] != nil
+            - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
+              != nil
+        transform/manifest:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+              != nil
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+              == "Pod"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
+              == "Deployment"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
+              == "StatefulSet"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
+              == "ReplicaSet"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
+              == "DaemonSet"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+              == "Job"
+            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
+              == "CronJob"
+            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+              == "Node"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
+              == "Service"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
+              body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
+              where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress"
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
+            - delete_key(attributes, "k8s.resource.name")
+            - delete_key(attributes, "event.name")
+            - delete_key(attributes, "event.domain")
+            - set(body, body.string)
+        transform/namespace:
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/severity:
+          log_statements:
+          - context: log
+            statements:
+            - set(severity_text, "Error") where attributes["k8s.event.reason"] == "Failed"
+              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
+              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
+              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
+              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
+              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
+              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
+              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
+              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(severity_number, 17) where attributes["k8s.event.reason"] == "Failed"
+              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
+              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
+              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
+              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
+              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
+              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
+              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
+              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(severity_text, "Warning") where attributes["k8s.event.reason"] == "ProbeWarning"
+              or attributes["k8s.event.reason"] == "Unhealthy"
+            - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
+              or attributes["k8s.event.reason"] == "Unhealthy"
+      receivers:
+        k8s_events: null
+        k8sobjects:
+          auth_type: serviceAccount
+          objects:
+          - interval: 60m
+            mode: pull
+            name: pods
+          - mode: watch
+            name: pods
+          - interval: 60m
+            mode: pull
+            name: deployments
+          - mode: watch
+            name: deployments
+          - interval: 60m
+            mode: pull
+            name: statefulsets
+          - mode: watch
+            name: statefulsets
+          - interval: 60m
+            mode: pull
+            name: replicasets
+          - mode: watch
+            name: replicasets
+          - interval: 60m
+            mode: pull
+            name: daemonsets
+          - mode: watch
+            name: daemonsets
+          - interval: 60m
+            mode: pull
+            name: jobs
+          - mode: watch
+            name: jobs
+          - interval: 60m
+            mode: pull
+            name: cronjobs
+          - mode: watch
+            name: cronjobs
+          - interval: 60m
+            mode: pull
+            name: nodes
+          - mode: watch
+            name: nodes
+          - interval: 60m
+            mode: pull
+            name: services
+          - mode: watch
+            name: services
+          - interval: 60m
+            mode: pull
+            name: persistentvolumes
+          - mode: watch
+            name: persistentvolumes
+          - interval: 60m
+            mode: pull
+            name: persistentvolumeclaims
+          - mode: watch
+            name: persistentvolumeclaims
+          - interval: 60m
+            mode: pull
+            name: ingresses
+          - mode: watch
+            name: ingresses
+      service:
+        extensions:
+        - health_check
+        - memory_ballast
+        pipelines:
+          logs:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/severity
+            - transform/namespace
+            - transform/entity_attributes
+            - resource/events
+            - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
+            - batch
+            receivers:
+            - k8s_events
+          logs/manifests:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/manifest
+            - groupbyattrs/manifest
+            - resource/manifest
+            - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
+            - batch
+            receivers:
+            - k8sobjects
         telemetry:
           logs:
             level: info

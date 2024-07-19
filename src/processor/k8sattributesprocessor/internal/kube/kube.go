@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"time"
 
-	"go.uber.org/zap"
+	"go.opentelemetry.io/collector/component"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/kubernetes"
@@ -109,7 +109,7 @@ type Client interface {
 
 // ClientProvider defines a func type that returns a new Client.
 type ClientProvider func(
-	*zap.Logger,
+	component.TelemetrySettings,
 	k8sconfig.APIConfig,
 	ExtractionRules,
 	Filters,

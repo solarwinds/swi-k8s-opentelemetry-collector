@@ -4,12 +4,66 @@ WARNING: you rely on bundled Prometheus, but it was removed in this version. To 
 
 {{- end -}}
 {{- end -}}
+
 {{- if and .Values.otel.metrics.extra_scrape_metrics (and .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled (not .Values.otel.metrics.force_extra_scrape_metrics)) -}}
 WARNING: You have enabled autodiscovery of prometheus endpoints, so `extra_scrape_metrics` is ignored. If you are sure that those metrics won't be covered by autodiscovery set `otel.metrics.force_extra_scrape_metrics` to `true`.
 
 {{- end -}}
+
 {{- if (mustRegexMatch "otel-collector\\.dc-\\d\\d\\.cloud\\.solarwinds\\.com" .Values.otel.endpoint) -}}
 WARNING: The provided OTEL endpoint address ({{ quote .Values.otel.endpoint }}) has been deprecated. Please switch to a new one as soon as possible.
          A list of available endpoints: https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm
 
+{{- end -}}
+
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "true" -}}
+WARNING: The provided custom configuration for `otel.events.filter` is using a deprecated syntax. Consider updating the configuration to use the new syntax (https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration).
+         Additionally, when using the new syntax, some of the event-level attributes are available at the resource level, instead.
+
+         For example, a custom filter configuration looking like this:
+
+          filter:
+            include:
+            match_type: regexp
+            record_attributes:
+              - key: k8s.namespace.name
+                value: ^kube-.*$
+
+         should be replaced by this:
+
+          filter:
+            log_record:
+              - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
+{{- println -}}
+{{- end -}}
+
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" -}}
+WARNING: The provided custom configuration for `otel.logs.filter` is using a deprecated syntax. Consider updating the configuration to use the new syntax (https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration).
+         Additionally, when using the new syntax, some of the log-level attributes are available at the resource level, instead.
+
+         For example, a custom filter configuration looking like this:
+
+          filter:
+            include:
+            match_type: regexp
+            record_attributes:
+              - key: k8s.namespace.name
+                value: ^kube-.*$
+
+         should be replaced by this:
+
+          filter:
+            log_record:
+              - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
+{{- println -}}
+{{- end -}}
+
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.metrics.filter) "true" -}}
+WARNING: The provided custom configuration for `otel.metrics.filter` is using a deprecated syntax. Consider updating the configuration to use the new syntax (https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration).
+{{- println -}}
+{{- end -}}
+
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter) "true" -}}
+WARNING: The provided custom configuration for `otel.otel.metrics.autodiscovery.prometheusEndpoints.filter` is using a deprecated syntax. Consider updating the configuration to use the new syntax (https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration).
+{{- println -}}
 {{- end -}}

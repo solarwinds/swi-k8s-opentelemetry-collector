@@ -15,11 +15,12 @@
 package kube // import "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 
 import (
+	"context"
 	"strings"
 	"time"
 
-	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/observability"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
@@ -56,10 +57,10 @@ func NewWatchStatefulSetClient(
 		MetadataFromStatefulSet,
 		conventions.AttributeK8SStatefulSetName,
 		conventions.AttributeK8SStatefulSetUID,
-		observability.RecordStatefulSetTableSize,
-		observability.RecordStatefulSetAdded,
-		observability.RecordStatefulSetUpdated,
-		observability.RecordStatefulSetDeleted,
+		client.telemetryBuilder.OtelsvcK8sStatefulSetTableSize,
+		client.telemetryBuilder.OtelsvcK8sPodAdded,
+		client.telemetryBuilder.OtelsvcK8sPodUpdated,
+		client.telemetryBuilder.OtelsvcK8sPodDeleted,
 		newStatefulSetSharedInformer,
 	)
 }
@@ -74,10 +75,10 @@ func NewWatchDeploymentClient(
 		MetadataFromDeployment,
 		conventions.AttributeK8SDeploymentName,
 		conventions.AttributeK8SDeploymentUID,
-		observability.RecordDeploymentTableSize,
-		observability.RecordDeploymentAdded,
-		observability.RecordDeploymentUpdated,
-		observability.RecordDeploymentDeleted,
+		client.telemetryBuilder.OtelsvcK8sDeploymentTableSize,
+		client.telemetryBuilder.OtelsvcK8sDeploymentAdded,
+		client.telemetryBuilder.OtelsvcK8sDeploymentUpdated,
+		client.telemetryBuilder.OtelsvcK8sDeploymentDeleted,
 		newDeploymentSharedInformer,
 	)
 }
@@ -91,10 +92,10 @@ func NewWatchReplicaSetClient(
 		MetadataFromReplicaSet,
 		conventions.AttributeK8SReplicaSetName,
 		conventions.AttributeK8SReplicaSetUID,
-		observability.RecordReplicaSetTableSize,
-		observability.RecordReplicaSetAdded,
-		observability.RecordReplicaSetUpdated,
-		observability.RecordReplicaSetDeleted,
+		client.telemetryBuilder.OtelsvcK8sReplicasetTableSize,
+		client.telemetryBuilder.OtelsvcK8sReplicasetAdded,
+		client.telemetryBuilder.OtelsvcK8sReplicasetUpdated,
+		client.telemetryBuilder.OtelsvcK8sReplicasetDeleted,
 		newReplicaSetSharedInformer,
 	)
 }
@@ -108,10 +109,10 @@ func NewWatchDaemonSetClient(
 		MetadataFromDaemonSet,
 		conventions.AttributeK8SDaemonSetName,
 		conventions.AttributeK8SDaemonSetUID,
-		observability.RecordDaemonSetTableSize,
-		observability.RecordDaemonSetAdded,
-		observability.RecordDaemonSetUpdated,
-		observability.RecordDaemonSetDeleted,
+		client.telemetryBuilder.OtelsvcK8sDaemonSetTableSize,
+		client.telemetryBuilder.OtelsvcK8sDaemonSetAdded,
+		client.telemetryBuilder.OtelsvcK8sDaemonSetUpdated,
+		client.telemetryBuilder.OtelsvcK8sDaemonSetDeleted,
 		newDaemonSetSharedInformer,
 	)
 }
@@ -125,10 +126,10 @@ func NewWatchJobClient(
 		MetadataFromJob,
 		conventions.AttributeK8SJobName,
 		conventions.AttributeK8SJobUID,
-		observability.RecordJobTableSize,
-		observability.RecordJobAdded,
-		observability.RecordJobUpdated,
-		observability.RecordJobDeleted,
+		client.telemetryBuilder.OtelsvcK8sJobTableSize,
+		client.telemetryBuilder.OtelsvcK8sJobAdded,
+		client.telemetryBuilder.OtelsvcK8sJobUpdated,
+		client.telemetryBuilder.OtelsvcK8sJobDeleted,
 		newJobSharedInformer,
 	)
 }
@@ -142,10 +143,10 @@ func NewWatchCronJobClient(
 		MetadataFromCronJob,
 		conventions.AttributeK8SCronJobName,
 		conventions.AttributeK8SCronJobUID,
-		observability.RecordCronJobTableSize,
-		observability.RecordCronJobAdded,
-		observability.RecordCronJobUpdated,
-		observability.RecordCronJobDeleted,
+		client.telemetryBuilder.OtelsvcK8sCronJobTableSize,
+		client.telemetryBuilder.OtelsvcK8sCronJobAdded,
+		client.telemetryBuilder.OtelsvcK8sCronJobUpdated,
+		client.telemetryBuilder.OtelsvcK8sCronJobDeleted,
 		newCronJobSharedInformer,
 	)
 }
@@ -159,10 +160,10 @@ func NewWatchNodeClient(
 		MetadataFromNode,
 		conventions.AttributeK8SNodeName,
 		conventions.AttributeK8SNodeUID,
-		observability.RecordNodeTableSize,
-		observability.RecordNodeAdded,
-		observability.RecordNodeUpdated,
-		observability.RecordNodeDeleted,
+		client.telemetryBuilder.OtelsvcK8sNodeTableSize,
+		client.telemetryBuilder.OtelsvcK8sNodeAdded,
+		client.telemetryBuilder.OtelsvcK8sNodeUpdated,
+		client.telemetryBuilder.OtelsvcK8sNodeDeleted,
 		newNodeSharedInformer,
 	)
 }
@@ -176,10 +177,10 @@ func NewWatchPersistentVolumeClient(
 		MetadataFromPersistentVolume,
 		"k8s.persistentvolume.name",
 		"k8s.persistentvolume.uid",
-		observability.RecordPersistentVolumeTableSize,
-		observability.RecordPersistentVolumeAdded,
-		observability.RecordPersistentVolumeUpdated,
-		observability.RecordPersistentVolumeDeleted,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeTableSize,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeAdded,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeUpdated,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeDeleted,
 		newPersistentVolumeSharedInformer,
 	)
 }
@@ -193,10 +194,10 @@ func NewWatchPersistentVolumeClaimClient(
 		MetadataFromPersistentVolumeClaim,
 		"k8s.persistentvolumeclaim.name",
 		"k8s.persistentvolumeclaim.uid",
-		observability.RecordPersistentVolumeClaimTableSize,
-		observability.RecordPersistentVolumeClaimAdded,
-		observability.RecordPersistentVolumeClaimUpdated,
-		observability.RecordPersistentVolumeClaimDeleted,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeClaimTableSize,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeClaimAdded,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeClaimUpdated,
+		client.telemetryBuilder.OtelsvcK8sPersistentVolumeClaimDeleted,
 		newPersistentVolumeClaimSharedInformer,
 	)
 }
@@ -210,10 +211,10 @@ func NewWatchServiceClient(
 		MetadataFromService,
 		"k8s.service.name",
 		"k8s.service.uid",
-		observability.RecordServiceTableSize,
-		observability.RecordServiceAdded,
-		observability.RecordServiceUpdated,
-		observability.RecordServiceDeleted,
+		client.telemetryBuilder.OtelsvcK8sServiceTableSize,
+		client.telemetryBuilder.OtelsvcK8sServiceAdded,
+		client.telemetryBuilder.OtelsvcK8sServiceUpdated,
+		client.telemetryBuilder.OtelsvcK8sServiceDeleted,
 		newServiceSharedInformer,
 	)
 }
@@ -225,10 +226,10 @@ func NewWatchResourceClient[T KubernetesResource](
 	resourceType string,
 	nameConvention string,
 	uuidConvention string,
-	observabilityTableSizeFunc func(tableSize int64),
-	observabilityResourceAdded func(),
-	observabilityResourceUpdated func(),
-	observabilityResourceDeleted func(),
+	observabilityTableSize metric.Int64Gauge,
+	observabilityResourceAdded metric.Int64Counter,
+	observabilityResourceUpdated metric.Int64Counter,
+	observabilityResourceDeleted metric.Int64Counter,
 	informerProvider InformerProvider) (*WatchResourceClient[T], error) {
 	c := &WatchResourceClient[T]{
 		client: client,
@@ -238,13 +239,15 @@ func NewWatchResourceClient[T KubernetesResource](
 		Associations: clientResource.Associations,
 		Exclude:      clientResource.Excludes,
 
-		nameConvention:               nameConvention,
-		uuidConvention:               uuidConvention,
-		resourceType:                 resourceType,
-		observabilityTableSizeFunc:   observabilityTableSizeFunc,
-		observabilityResourceAdded:   observabilityResourceAdded,
-		observabilityResourceUpdated: observabilityResourceUpdated,
-		observabilityResourceDeleted: observabilityResourceDeleted,
+		nameConvention: nameConvention,
+		uuidConvention: uuidConvention,
+		resourceType:   resourceType,
+		observabilityTableSizeFunc: func(tableSize int64) {
+			observabilityTableSize.Record(context.Background(), tableSize)
+		},
+		observabilityResourceAdded:   func() { observabilityResourceAdded.Add(context.Background(), 1) },
+		observabilityResourceUpdated: func() { observabilityResourceUpdated.Add(context.Background(), 1) },
+		observabilityResourceDeleted: func() { observabilityResourceDeleted.Add(context.Background(), 1) },
 	}
 	go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
 

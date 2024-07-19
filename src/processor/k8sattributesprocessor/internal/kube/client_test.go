@@ -24,7 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/featuregate"
+	"go.opentelemetry.io/collector/component/componenttest"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -128,19 +128,19 @@ func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj an
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, map[string]*ClientResource{})
+	c, err := New(componenttest.NewNopTelemetrySettings(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, map[string]*ClientResource{})
 	assert.Error(t, err)
 	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
 	assert.Nil(t, c)
 
-	c, err = New(zap.NewNop(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, map[string]*ClientResource{})
+	c, err = New(componenttest.NewNopTelemetrySettings(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, map[string]*ClientResource{})
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
 
 func TestBadFilters(t *testing.T) {
 	c, err := New(
-		zap.NewNop(),
+		componenttest.NewNopTelemetrySettings(),
 		k8sconfig.APIConfig{},
 		ExtractionRules{},
 		Filters{Fields: []FieldFilter{{Op: selection.Exists}}},
@@ -195,7 +195,7 @@ func TestConstructorErrors(t *testing.T) {
 			return nil, fmt.Errorf("error creating k8s client")
 		}
 		c, err := New(
-			zap.NewNop(),
+			componenttest.NewNopTelemetrySettings(),
 			apiCfg,
 			er,
 			ff,
@@ -537,115 +537,6 @@ func TestHandlerWrongType(t *testing.T) {
 	}
 }
 
-func TestRFC3339FeatureGate(t *testing.T) {
-	err := featuregate.GlobalRegistry().Set(enableRFC3339Timestamp.ID(), true)
-	require.NoError(t, err)
-
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
-	// Disable saving ip into k8s.pod.ip
-	c.Associations[0].Sources[0].Name = ""
-
-	pod := &api_v1.Pod{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:              "auth-service-abc12-xyz3",
-			UID:               "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			Namespace:         "ns1",
-			CreationTimestamp: meta_v1.Now(),
-			Labels: map[string]string{
-				"label1": "lv1",
-				"label2": "k1=v1 k5=v5 extra!",
-			},
-			Annotations: map[string]string{
-				"annotation1": "av1",
-			},
-			OwnerReferences: []meta_v1.OwnerReference{
-				{
-					APIVersion: "apps/v1",
-					Kind:       "ReplicaSet",
-					Name:       "auth-service-66f5996c7c",
-					UID:        "207ea729-c779-401d-8347-008ecbc137e3",
-				},
-				{
-					APIVersion: "apps/v1",
-					Kind:       "DaemonSet",
-					Name:       "auth-daemonset",
-					UID:        "c94d3814-2253-427a-ab13-2cf609e4dafa",
-				},
-				{
-					APIVersion: "batch/v1",
-					Kind:       "Job",
-					Name:       "auth-cronjob-27667920",
-					UID:        "59f27ac1-5c71-42e5-abe9-2c499d603706",
-				},
-				{
-					APIVersion: "apps/v1",
-					Kind:       "StatefulSet",
-					Name:       "pi-statefulset",
-					UID:        "03755eb1-6175-47d5-afd5-05cfc30244d7",
-				},
-			},
-		},
-		Spec: api_v1.PodSpec{
-			NodeName: "node1",
-			Hostname: "host1",
-		},
-		Status: api_v1.PodStatus{
-			PodIP: "1.1.1.1",
-		},
-	}
-
-	rfc3339ts, err := pod.GetCreationTimestamp().MarshalText()
-	require.NoError(t, err)
-
-	testCases := []struct {
-		name       string
-		rules      ExtractionRules
-		attributes map[string]string
-	}{{
-		name: "metadata",
-		rules: ExtractionRules{
-			Deployment:  true,
-			Namespace:   true,
-			PodName:     true,
-			PodUID:      true,
-			PodHostName: true,
-			Node:        true,
-			StartTime:   true,
-		},
-		attributes: map[string]string{
-			"k8s.deployment.name": "auth-service",
-			"k8s.namespace.name":  "ns1",
-			"k8s.node.name":       "node1",
-			"k8s.pod.name":        "auth-service-abc12-xyz3",
-			"k8s.pod.hostname":    "host1",
-			"k8s.pod.uid":         "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			"k8s.pod.start_time":  string(rfc3339ts),
-		},
-	},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			c.Rules = tc.rules
-
-			// manually call the data removal functions here
-			// normally the informer does this, but fully emulating the informer in this test is annoying
-			transformedPod := removeUnnecessaryPodData(pod, c.Rules)
-			c.handlePodAdd(transformedPod)
-			p, ok := c.GetPod(newPodIdentifier("connection", "", pod.Status.PodIP))
-			require.True(t, ok)
-
-			assert.Equal(t, len(tc.attributes), len(p.Attributes))
-			for k, v := range tc.attributes {
-				got, ok := p.Attributes[k]
-				assert.True(t, ok)
-				assert.Equal(t, v, got)
-			}
-		})
-	}
-	err = featuregate.GlobalRegistry().Set(enableRFC3339Timestamp.ID(), false)
-	require.NoError(t, err)
-}
-
 func TestExtractionRules(t *testing.T) {
 	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
 
@@ -807,7 +698,11 @@ func TestExtractionRules(t *testing.T) {
 			"k8s.pod.name":        "auth-service-abc12-xyz3",
 			"k8s.pod.hostname":    "host1",
 			"k8s.pod.uid":         "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-			"k8s.pod.start_time":  pod.GetCreationTimestamp().String(),
+			"k8s.pod.start_time": func() string {
+				b, err := pod.GetCreationTimestamp().MarshalText()
+				require.NoError(t, err)
+				return string(b)
+			}(),
 		},
 	}, {
 		name: "labels",
@@ -1539,8 +1434,9 @@ func TestExtractNamespaceLabelsAnnotations(t *testing.T) {
 }
 
 func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters) (*WatchClient, *observer.ObservedLogs) {
+	set := componenttest.NewNopTelemetrySettings()
 	observedLogger, logs := observer.New(zapcore.WarnLevel)
-	logger := zap.New(observedLogger)
+	set.Logger = zap.New(observedLogger)
 	exclude := Excludes{
 		Pods: []ExcludePods{
 			{Name: regexp.MustCompile(`jaeger-agent`)},
@@ -1566,7 +1462,7 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 	}
 
 	c, err := New(
-		logger,
+		set,
 		k8sconfig.APIConfig{},
 		e,
 		f,
