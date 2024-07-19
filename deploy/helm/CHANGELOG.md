@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [3.4.1] - 2024-07-19
+
+### Changed
+
+- Upgraded collector image to `0.10.2` which brings following changes:
+  - Bumped 3rd party dependencies and Docker images.
+- Upgraded SWO Agent image to `v2.8.90`
+
+### Fixed
+
+- Additional improvements to cluster version detection
+
 ## [3.4.0] - 2024-06-28
 
 ### Changed
