@@ -30,7 +30,28 @@ Custom events filter with new syntax:
           logs:
             log_record:
             - not(IsMatch(resource.attributes["k8s.namespace.name"], "^.*$"))
-        k8sattributes:
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 512
+          spike_limit_mib: 128
+        resource/events:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: event
+        swk8sattributes:
           auth_type: serviceAccount
           cronjob:
             association:
@@ -172,27 +193,6 @@ Custom events filter with new syntax:
               - from: statefulset
                 key_regex: (.*)
                 tag_name: k8s.statefulset.labels.$$1
-        memory_limiter:
-          check_interval: 1s
-          limit_mib: 512
-          spike_limit_mib: 128
-        resource/events:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
-            key: sw.k8s.log.type
-            value: event
         transform/cleanup_attributes_for_nonexisting_entities:
           log_statements:
           - context: log
@@ -312,7 +312,7 @@ Custom events filter with new syntax:
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter
             - batch
@@ -358,7 +358,28 @@ Custom events filter with old syntax:
               record_attributes:
               - key: k8s.namespace.name
                 value: ^.*$
-        k8sattributes:
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 512
+          spike_limit_mib: 128
+        resource/events:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: event
+        swk8sattributes:
           auth_type: serviceAccount
           cronjob:
             association:
@@ -500,27 +521,6 @@ Custom events filter with old syntax:
               - from: statefulset
                 key_regex: (.*)
                 tag_name: k8s.statefulset.labels.$$1
-        memory_limiter:
-          check_interval: 1s
-          limit_mib: 512
-          spike_limit_mib: 128
-        resource/events:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
-            key: sw.k8s.log.type
-            value: event
         transform/cleanup_attributes_for_nonexisting_entities:
           log_statements:
           - context: log
@@ -641,7 +641,7 @@ Custom events filter with old syntax:
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - batch
             receivers:
@@ -679,6 +679,21 @@ Events config should match snapshot when using default values:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        groupbyattrs/manifest:
+          keys:
+          - k8s.pod.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.replicaset.name
+          - k8s.daemonset.name
+          - k8s.job.name
+          - k8s.cronjob.name
+          - k8s.node.name
+          - k8s.namespace.name
+          - k8s.service.name
+          - k8s.persistentvolume.name
+          - k8s.persistentvolumeclaim.name
+          - k8s.ingress.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -700,6 +715,23 @@ Events config should match snapshot when using default values:
           - action: insert
             key: sw.k8s.log.type
             value: event
+        resource/manifest:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: manifest
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
