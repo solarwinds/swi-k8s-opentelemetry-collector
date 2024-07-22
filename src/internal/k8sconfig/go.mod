@@ -1,6 +1,6 @@
 module github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig
 
-go 1.21.0
+go 1.22.0
 
 require (
 	github.com/openshift/client-go v0.0.0-20210521082421-73d9475a9142
