@@ -1,15 +1,15 @@
-FROM docker.io/library/golang:1.22.5-nanoserver-ltsc2022@sha256:0a134b8e83206a9b0d5374bea6982335727b3a1a375e53fe3917ba5faae59cf6 as base
+FROM docker.io/library/golang:1.22.5-nanoserver-ltsc2022@sha256:0a134b8e83206a9b0d5374bea6982335727b3a1a375e53fe3917ba5faae59cf6 AS base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
-FROM base as builder
+FROM base AS builder
 
 ARG CGO_ENABLED=0
 ARG GOEXPERIMENT=boringcrypto
 
 RUN cd src/cmd && go build -trimpath -o ../../swi-k8s-opentelemetry-collector "-ldflags=-s -w"
 
-FROM base as wrapper
+FROM base AS wrapper
 WORKDIR /src/src/wrapper
 
 ARG CGO_ENABLED=0
