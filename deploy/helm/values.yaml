@@ -185,6 +185,12 @@ otel:
 
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # but we need to add a condition that allows data without namespace attribute to be collected.
+    # filter:
+    #   metric:
+    #     - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo") or resource.attributes["k8s.namespace.name"] == nil)
     filter: {}
 
     # Use this configuration to scrape extra metrics from Prometheus. Multiple metrics can be specified.
@@ -289,6 +295,12 @@ otel:
 
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # but we need to add a condition that allows data without namespace attribute to be collected.
+    # filter:
+    #   log_record:
+    #     - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo") or resource.attributes["k8s.namespace.name"] == nil)
     filter: {}
 
     # Batching configuration for events
@@ -445,7 +457,14 @@ otel:
       #       # allow only system namespaces (kube-system, kube-public)
       #       - key: k8s.namespace.name
       #         value: ^kube-.*$
-    # default (since k8s collector 4.0.0) is to collect all logs 
+    # default (since k8s collector 4.0.0) is to collect all logs     
+    #
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # but we need to add a condition that allows data without namespace attribute to be collected.
+    # filter:
+    #   log_record:
+    #     - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo") or resource.attributes["k8s.namespace.name"] == nil)
     filter: {}
 
     # Batching configuration for logs
