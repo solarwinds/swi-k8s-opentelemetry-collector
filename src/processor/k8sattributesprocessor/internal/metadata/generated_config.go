@@ -40,6 +40,7 @@ type ResourceAttributesConfig struct {
 	K8sNamespaceName   ResourceAttributeConfig `mapstructure:"k8s.namespace.name"`
 	K8sNodeName        ResourceAttributeConfig `mapstructure:"k8s.node.name"`
 	K8sPodHostname     ResourceAttributeConfig `mapstructure:"k8s.pod.hostname"`
+	K8sPodIP           ResourceAttributeConfig `mapstructure:"k8s.pod.ip"`
 	K8sPodName         ResourceAttributeConfig `mapstructure:"k8s.pod.name"`
 	K8sPodStartTime    ResourceAttributeConfig `mapstructure:"k8s.pod.start_time"`
 	K8sPodUID          ResourceAttributeConfig `mapstructure:"k8s.pod.uid"`
@@ -94,6 +95,9 @@ func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 			Enabled: true,
 		},
 		K8sPodHostname: ResourceAttributeConfig{
+			Enabled: false,
+		},
+		K8sPodIP: ResourceAttributeConfig{
 			Enabled: false,
 		},
 		K8sPodName: ResourceAttributeConfig{

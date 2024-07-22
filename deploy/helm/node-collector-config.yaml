@@ -25,7 +25,8 @@ extensions:
   file_storage/sending_queue:
     directory: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
 {{- end }}
-  health_check: {}
+  health_check:
+    endpoint: 0.0.0.0:13133
 {{- if .Values.otel.logs.memory_ballast }}
   memory_ballast:
 {{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
