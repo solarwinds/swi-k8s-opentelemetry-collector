@@ -14,9 +14,7 @@
 
 module github.com/solarwinds/swi-k8s-opentelemetry-collector
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.22
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.103.0
