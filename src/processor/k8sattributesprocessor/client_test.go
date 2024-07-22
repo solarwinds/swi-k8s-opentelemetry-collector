@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
-package k8sattributesprocessor
+package swk8sattributesprocessor
 
 import (
 	"go.opentelemetry.io/collector/component"
@@ -24,8 +24,8 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 )
 
 // fakeClient is used as a replacement for WatchClient in test cases.

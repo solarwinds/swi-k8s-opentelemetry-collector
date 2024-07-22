@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
-package k8sattributesprocessor
+package swk8sattributesprocessor
 
 import (
 	"context"

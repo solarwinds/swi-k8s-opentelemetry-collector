@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Type = component.MustNewType("k8sattributes")
+	Type = component.MustNewType("swk8sattributes")
 )
 
 

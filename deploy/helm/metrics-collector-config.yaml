@@ -28,16 +28,16 @@ extensions:
 {{ toYaml .Values.otel.metrics.memory_ballast | indent 4 }}
 
 processors:
-  k8sattributes:
+  swk8sattributes:
 {{ include "common.k8s-instrumentation" (tuple . .Values.otel.metrics.k8s_instrumentation.annotations.enabled .Values.otel.metrics.k8s_instrumentation.labels.enabled "true") | indent 4 }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-  resource/k8sattributes_labels_filter:
+  resource/swk8sattributes_labels_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.labels.excludePattern }}
 {{- end }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-  resource/k8sattributes_annotations_filter:
+  resource/swk8sattributes_annotations_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
@@ -1191,12 +1191,12 @@ service:
         - metricstransform/aggregate_pod_level
         - groupbyattrs/all
         - resource/metrics
-        - k8sattributes
+        - swk8sattributes
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-        - resource/k8sattributes_labels_filter
+        - resource/swk8sattributes_labels_filter
 {{- end }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/k8sattributes_annotations_filter
+        - resource/swk8sattributes_annotations_filter
 {{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
 {{- if .Values.otel.metrics.filter }}

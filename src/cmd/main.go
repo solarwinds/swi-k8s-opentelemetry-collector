@@ -33,7 +33,7 @@ func main() {
 	info := component.BuildInfo{
 		Command:     "swi-k8s-opentelemetry-collector",
 		Description: "SolarWinds distribution for OpenTelemetry",
-		Version:     "0.11.1",
+		Version:     "0.11.2",
 	}
 
 	set := otelcol.CollectorSettings{

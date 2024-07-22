@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
-package k8sattributesprocessor
+package swk8sattributesprocessor
 
 import (
 	"context"
@@ -39,8 +39,8 @@ import (
 	"go.opentelemetry.io/collector/processor/processortest"
 	conventions "go.opentelemetry.io/collector/semconv/v1.8.0"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 )
 
 func newPodIdentifier(from string, name string, value string) kube.PodIdentifier {

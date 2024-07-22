@@ -25,7 +25,6 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.103.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricsgenerationprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor v0.103.0
@@ -38,6 +37,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.103.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.103.0
+	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.103.0
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/component v0.103.0
 	go.opentelemetry.io/collector/confmap/converter/expandconverter v0.103.0
@@ -60,6 +60,8 @@ require (
 	go.opentelemetry.io/collector/receiver/otlpreceiver v0.103.0
 	golang.org/x/sys v0.21.0
 )
+
+require go.opentelemetry.io/collector/confmap v0.103.0
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
@@ -200,6 +202,7 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.25 // indirect
 	github.com/shirou/gopsutil/v4 v4.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
+	github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.103.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -221,13 +224,6 @@ require (
 	go.opentelemetry.io/collector/config/configtelemetry v0.103.0 // indirect
 	go.opentelemetry.io/collector/config/configtls v0.103.0 // indirect
 	go.opentelemetry.io/collector/config/internal v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/converter/expandconverter v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/envprovider v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/httpprovider v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/httpsprovider v0.103.0 // indirect
-	go.opentelemetry.io/collector/confmap/provider/yamlprovider v0.103.0 // indirect
 	go.opentelemetry.io/collector/consumer v0.103.0 // indirect
 	go.opentelemetry.io/collector/extension/auth v0.103.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.10.0 // indirect
@@ -287,4 +283,6 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.103.0 => ../processor/k8sattributesprocessor
+replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.103.0 => ../processor/k8sattributesprocessor
+
+replace github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.103.0 => ../internal/k8sconfig
