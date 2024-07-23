@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Breaking: Add validation of the OTEL endpoint provided in `values.yaml`. In case a deprecated endpoint is detected, report an error during chart installation/update.
+
 ## [4.0.0-alpha.6] - 2024-07-22
 
 ### Changed

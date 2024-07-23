@@ -10,12 +10,6 @@ WARNING: You have enabled autodiscovery of prometheus endpoints, so `extra_scrap
 
 {{- end -}}
 
-{{- if (mustRegexMatch "otel-collector\\.dc-\\d\\d\\.cloud\\.solarwinds\\.com" .Values.otel.endpoint) -}}
-WARNING: The provided OTEL endpoint address ({{ quote .Values.otel.endpoint }}) has been deprecated. Please switch to a new one as soon as possible.
-         A list of available endpoints: https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm
-
-{{- end -}}
-
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "true" -}}
 WARNING: The provided custom configuration for `otel.events.filter` is using a deprecated syntax. Consider updating the configuration to use the new syntax (https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration).
          Additionally, when using the new syntax, some of the event-level attributes are available at the resource level, instead.
