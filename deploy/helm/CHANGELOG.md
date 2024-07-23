@@ -7,15 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.0-alpha.7] - 2024-07-23
+
 ### Changed
 
 - Breaking: Add validation of the OTEL endpoint provided in `values.yaml`. In case a deprecated endpoint is detected, report an error during chart installation/update.
+- Upgraded collector image to `0.11.3` which brings following changes:
+  - See Release notes for [0.11.3](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.3).
+  - Upgraded OTEL Collector to v0.105.0.
+- Upgraded SWO Agent image to `v2.8.90`
 
 ## [4.0.0-alpha.6] - 2024-07-22
 
 ### Changed
 
-- Internal `k8sattributes` has been renamed to `swk8sattributes`
+- Upgraded collector image to `0.11.2` which brings following changes:
+  - See Release notes for [0.11.2](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.2).
+  - Bumped 3rd party dependencies and Docker images.
+  - Internal `k8sattributes` has been renamed to `swk8sattributes`
+
+## [3.4.1] - 2024-07-19
+
+### Changed
+
+- Upgraded collector image to `0.10.2` which brings following changes:
+  - Bumped 3rd party dependencies and Docker images.
+- Upgraded SWO Agent image to `v2.8.90`
+
+### Fixed
+
+- Additional improvements to cluster version detection
 
 ## [4.0.0-alpha.5] - 2024-07-16
 
@@ -25,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Internal configuration of filterprocessor is using OTTL syntax now. 
+- Internal configuration of filterprocessor is using OTTL syntax now.
 
 
 ## [4.0.0-alpha.4] - 2024-07-11
