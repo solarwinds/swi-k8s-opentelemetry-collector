@@ -41,6 +41,8 @@ deploy:
           otel:
             endpoint: timeseries-mock-service:9082
             tls_insecure: true
+            # OTEL collector requires the SOLARWINDS_API_TOKEN env variable to be set to some not empty string
+            api_token: "not_set"
             image:
               repository: "swi-k8s-opentelemetry-collector"
               tag: ""
@@ -84,19 +86,18 @@ deploy:
                         metrics_path: "/custom_metrics"
                         endpoint_port: 8081
             events:
+              enabled: true
               sending_queue:
                 offload_to_disk: true
+            manifests:
+              enabled: true
+              pull_every: 1m
             logs:
+              # journal on Docker Desktop is not supported
+              journal: false
               filter:
-                include:
-                  record_attributes:
-                    - key: k8s.namespace.name
-                      value: "^.*$"
-                exclude:
-                  match_type: strict
-                  record_attributes:
-                    - key: k8s.namespace.name
-                      value: "test-namespace"
+                log_record:
+                  - resource.attributes["k8s.namespace.name"] == "test-namespace"
         upgradeOnChange: true
       
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
@@ -189,11 +190,25 @@ profiles:
       - image: swi-k8s-opentelemetry-collector
         structureTests:
           - './build/docker/structure-test.yaml'
+      - image: swi-k8s-opentelemetry-collector-tests
+        custom:
+          - command: docker run --rm $IMAGE
+            timeoutSeconds: 300
+            dependencies:
+              paths:
+                - ./src/**
     patches:
     - op: remove
       path: /deploy/helm/releases/1
     - op: remove
       path: /portForward/1
+    - op: add
+      path: /build/artifacts/-
+      value:
+        image: swi-k8s-opentelemetry-collector-tests
+        docker:
+          dockerfile: build/docker/Dockerfile
+          target: tests
     deploy:
       kubeContext: default
   - name: ci-helm-e2e

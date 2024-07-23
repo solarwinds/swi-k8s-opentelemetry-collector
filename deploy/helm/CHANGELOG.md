@@ -11,7 +11,162 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Breaking: Add validation of the OTEL endpoint provided in `values.yaml`. In case a deprecated endpoint is detected, report an error during chart installation/update.
 
-## [3.3.0-alpha.1]
+## [4.0.0-alpha.6] - 2024-07-22
+
+### Changed
+
+- Internal `k8sattributes` has been renamed to `swk8sattributes`
+
+## [4.0.0-alpha.5] - 2024-07-16
+
+### Added
+
+- Added k8s.object.kind to manifest events.
+
+### Changed
+
+- Internal configuration of filterprocessor is using OTTL syntax now. 
+
+
+## [4.0.0-alpha.4] - 2024-07-11
+
+### Added
+
+- Collect manifests also for Ingresses.
+
+### Changed
+
+- By default we are now gathering all logs.
+- Fix collector version on metric k8s.cluster.vetrsion
+
+
+## [4.0.0-alpha.3] - 2024-06-25
+
+### Added
+
+- Watching all supported resources and sending their full manifests to SWO.
+  - Disabled by default, can be enabled by setting `otel.manifests.enabled` to true.
+  - Runs in event collector, so require `otel.events.enabled` set to true.
+
+## [3.4.0] - 2024-06-28
+
+### Changed
+
+- Upgraded collector image to `0.10.1` which brings following changes:
+  - See Release notes for [0.10.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.1).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.103.0.
+- Upgraded SWO Agent image to `v2.8.85`
+
+### Fixed
+
+- Only metric `k8s.cluster.version` metric is supposed to have attribute `sw.k8s.cluster.version`
+
+## [3.4.0-alpha.3] - 2024-06-27
+
+### Changed
+
+- Reverted changes from 3.4.0-alpha.2. They are available in the 4.x branch.
+- Upgraded collector image to `0.10.1` which brings following changes:
+  - See Release notes for [0.10.1](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.1).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.103.0.
+- Upgraded SWO Agent image to `v2.8.85`
+
+## [4.0.0-alpha.2] - 2024-05-30
+
+## Fixed
+
+- Filtering journal logs stopped working in 3.4.0-alpha.2
+
+## [4.0.0-alpha.1] - 2024-05-30
+
+### Changed
+
+- As a followup to 3.4.0-alpha.2, the `otel.metrics.filter`, `otel.logs.filter` and `otel.events.filter` are now again backwards compatible. If a customer is using the [old filtering syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.96.0/processor/filterprocessor#alternative-config-options), they behave like in 3.3.0 and previous versions. If a customer switches to using the [new syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration), some of the attributes, like `k8s.deployment.name`, become resource attributes.
+- Removed use of `swmetricstransform` (replaced with `filterprocessor`)
+
+## [3.4.0-alpha.2] - 2024-05-16
+
+### Changed
+
+- Changed the `otel.metrics.filter`, `otel.logs.filter` and `otel.events.filter` settings to be able to access resource attributes like `k8s.deployment.name`, ...
+  - This is a breaking change if anyone was using them before to include only metrics/logs/events with a specific non-resource attribute.
+
+## [3.4.0-alpha.1] - 2024-05-09
+
+### Fixed
+
+- Only `k8s.cluster.version` metric has attribute `sw.k8s.cluster.version`
+
+## [3.3.0] - 2024-04-26
+
+### Added
+
+- Added instrumentation of workload attributes to collected logs (`k8s.deployment.name` etc.). Instrumentation of labels and annotations is disabled by default.
+- Added option to configure `nodeSelector` and `affinity` for the SWO Agent.
+- Added option to configure timeout for each attempt to send data to SWO OTEL endpoint.
+  - The default is `15s` (previously it was `5s`) to avoid unnecessary retries when the endpoint takes its time to respond.
+
+### Changed
+
+- Added environment variables `CLUSTER_UID`, `CLUSTER_NAME` and `MANIFEST_VERSION` to the SWO Agent StatefulSet. Future SWO Agent plugins may include them in their metrics.
+- Upgraded collector image to `0.10.0` which brings following changes:
+  - See Release notes for [0.10.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.0).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.98.0.
+  - ⚠️ Dropped support for several Windows versions that are out of support. The minimum requirement is now Windows 10 or Windows Server 2016. This is caused by the update of Go (and the OTEL Collector).
+- Added validation schema for the provided Helm chart configuration.
+  - ⚠️ If an incorrect configuration is provided, the installation/update of the Helm release will end in error. The previous versions simply ignored the incorrect parts.
+- Container logs from AWS EKS Fargate clusters are now sent to SWO as-is. `fluentbit.io/parser` and `fluentbit.io/exclude` annotations are ignored. This both fixes an issue with "empty" JSON logs sent to SWO and aligns the behavior with non-Fargate container logs.
+  This change is applied only to Pods that are started after the new `k8s collector` is deployed to the k8s cluster.
+- Added validation of the OTEL endpoint provided in `values.yaml`. In case a deprecated endpoint is detected, report an warning during chart installation/update.
+
+### Fixed
+
+- Fixed Journal log collection on EKS (and other environments where journal logs are stored in `/var/log/journal`)
+
+## [3.3.0-alpha.6] - 2024-04-23
+
+### Added
+
+- Added instrumentation of workload attributes on logs (`k8s.deployment.name` etc.). Instrumentation of labels and annotations is disabled by default.
+
+## [3.3.0-alpha.5] - 2024-04-19
+
+### Added
+
+- Added option to configure `nodeSelector` and `affinity` for SWO Agent.
+
+### Changed
+
+- Added environment variables `CLUSTER_UID`, `CLUSTER_NAME` and `MANIFEST_VERSION` to the SWO Agent StatefulSet. Future SWO Agent plugins may include them in their metrics.
+- Upgraded collector image to `0.10.0` which brings following changes:
+  - See Release notes for [0.10.0](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.10.0).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.98.0.
+  - ⚠️ Dropped support for several Windows versions that are out of support. The minimum requirement is now Windows 10 or Windows Server 2016. This is caused by the update of Go (and the OTEL Collector).
+
+## [3.3.0-alpha.4] - 2024-04-10
+
+### Changed
+
+- Added validation schema for the provided Helm chart configuration.
+
+## [3.3.0-alpha.3] - 2024-03-27
+
+### Changed
+
+- Container logs from AWS EKS Fargate clusters are now sent to SWO as-is. `fluentbit.io/parser` and `fluentbit.io/exclude` annotations are ignored. This both fixes an issue with "empty" JSON logs sent to SWO and aligns the behavior with non-Fargate container logs.
+  This change is applied only to Pods that are started after the new `k8s collector` is deployed to the k8s cluster.
+
+## [3.3.0-alpha.2] - 2024-03-21
+
+### Fixed
+
+- Fixed Journal log collection on EKS (and other environments where journal logs are stored in `/var/log/journal`)
+
+## [3.3.0-alpha.1] - 2024-03-13
 
 ### Added
 

@@ -1,33 +1,32 @@
-FROM docker.io/library/golang:1.22.0-bookworm as base
+FROM docker.io/library/golang:1.22.5-bookworm AS base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
-FROM base as builder
+FROM base AS builder
 
-COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
-RUN GO111MODULE=on go install go.opentelemetry.io/collector/cmd/builder@v0.91.0
-RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
+RUN cd src/cmd && CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -trimpath -o ../../swi-k8s-opentelemetry-collector "-ldflags=-s -w"
 
 # create vendor folder (for mend scanning)
 SHELL ["/bin/bash", "-c"]
 ARG CREATE_VENDOR_DIR
-RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else go mod vendor ; fi
+RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else cd src/cmd && go mod vendor -o /src/vendor ; fi
 
-FROM base as tests
-RUN cd src/processor/swmetricstransformprocessor && go test ./...
+FROM builder AS tests
+# run all tests for all go modules in `src` folder
+CMD cd src && find . -name go.mod -execdir go test ./... \;
 
-FROM debian:12.4 as journal
+FROM debian:12.6 AS journal
 RUN apt update
 RUN apt install -y systemd
 COPY /build/docker/copy-journalbinary.sh /script.sh
 RUN chmod +x /script.sh
 RUN /script.sh
 
-FROM base as wrapper
+FROM base AS wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-FROM gcr.io/distroless/static-debian12@sha256:4a2c1a51ae5e10ec4758a0f981be3ce5d6ac55445828463fce8dff3a355e0b75
+FROM gcr.io/distroless/static-debian12@sha256:ce46866b3a5170db3b49364900fb3168dc0833dfb46c26da5c77f22abb01d8c3
 
 ARG USER_UID=10001
 USER ${USER_UID}

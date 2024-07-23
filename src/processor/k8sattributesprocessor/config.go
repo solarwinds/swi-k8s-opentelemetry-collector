@@ -15,14 +15,14 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
-package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor"
+package swk8sattributesprocessor // import "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor"
 
 import (
 	"fmt"
 	"regexp"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 )
 
@@ -131,7 +131,8 @@ func (cfg *Config) Validate() error {
 	for _, field := range cfg.Extract.Metadata {
 		switch field {
 		case conventions.AttributeK8SNamespaceName, conventions.AttributeK8SPodName, conventions.AttributeK8SPodUID,
-			specPodHostName, metadataPodStartTime, conventions.AttributeK8SDeploymentName, conventions.AttributeK8SDeploymentUID,
+			specPodHostName, metadataPodStartTime, metadataPodIP,
+			conventions.AttributeK8SDeploymentName, conventions.AttributeK8SDeploymentUID,
 			conventions.AttributeK8SReplicaSetName, conventions.AttributeK8SReplicaSetUID, conventions.AttributeK8SDaemonSetName,
 			conventions.AttributeK8SDaemonSetUID, conventions.AttributeK8SStatefulSetName, conventions.AttributeK8SStatefulSetUID,
 			conventions.AttributeK8SContainerName, conventions.AttributeK8SJobName, conventions.AttributeK8SJobUID,

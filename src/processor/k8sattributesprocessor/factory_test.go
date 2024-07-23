@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
-package k8sattributesprocessor
+package swk8sattributesprocessor
 
 import (
 	"context"
@@ -41,7 +41,7 @@ func TestCreateProcessor(t *testing.T) {
 	kubeClientProvider = newFakeClient
 
 	cfg := factory.CreateDefaultConfig()
-	params := processortest.NewNopCreateSettings()
+	params := processortest.NewNopSettings()
 
 	tp, err := factory.CreateTracesProcessor(context.Background(), params, cfg, consumertest.NewNop())
 	assert.NotNil(t, tp)

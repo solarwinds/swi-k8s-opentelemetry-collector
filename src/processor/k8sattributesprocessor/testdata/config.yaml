@@ -1,5 +1,5 @@
-k8sattributes:
-k8sattributes/2:
+swk8sattributes:
+swk8sattributes/2:
   passthrough: false
   set_object_existence: true
   auth_type: "kubeConfig"
@@ -15,6 +15,7 @@ k8sattributes/2:
       # extract the following well-known metadata fields from pods and namespaces
       - k8s.pod.name
       - k8s.pod.uid
+      - k8s.pod.ip
       - k8s.deployment.name
       - k8s.namespace.name
       - k8s.node.name
@@ -256,7 +257,7 @@ k8sattributes/2:
       - name: jaeger-agent
       - name: jaeger-collector
 
-k8sattributes/3:
+swk8sattributes/3:
   passthrough: false
   auth_type: "kubeConfig"
   extract:
@@ -267,14 +268,14 @@ k8sattributes/3:
       - key_regex: opentel.* # extracts Keys & values of labels matching regex `opentel.*`
         from: pod
 
-k8sattributes/4:
+swk8sattributes/4:
   auth_type: "kubeConfig"
   extract:
     metadata:
       # the following metadata field has been depracated
       - k8s.cluster.name
 
-k8sattributes/too_many_sources:
+swk8sattributes/too_many_sources:
   pod_association:
     - sources:
         - from: resource_attribute
@@ -288,35 +289,35 @@ k8sattributes/too_many_sources:
         - from: connection
           name: ip
 
-k8sattributes/bad_keys_labels:
+swk8sattributes/bad_keys_labels:
   extract:
     labels:
       - tag_name: l1
         key: label1
         key_regex: label\d
 
-k8sattributes/bad_keys_annotations:
+swk8sattributes/bad_keys_annotations:
   extract:
     annotations:
       - tag_name: a1
         key: annotation1
         key_regex: annotation\d
 
-k8sattributes/bad_from_labels:
+swk8sattributes/bad_from_labels:
   extract:
     labels:
       - tag_name: a1
         key: label1
         from: unknown
 
-k8sattributes/bad_from_annotations:
+swk8sattributes/bad_from_annotations:
   extract:
     annotations:
       - tag_name: a1
         key: annotation1
         from: unknown
 
-k8sattributes/bad_regex_labels:
+swk8sattributes/bad_regex_labels:
   extract:
     labels:
       - tag_name: a1
@@ -324,7 +325,7 @@ k8sattributes/bad_regex_labels:
         from: pod
         regex: "["
 
-k8sattributes/bad_regex_annotations:
+swk8sattributes/bad_regex_annotations:
   extract:
     annotations:
       - tag_name: a1
@@ -332,14 +333,14 @@ k8sattributes/bad_regex_annotations:
         from: pod
         regex: "["
 
-k8sattributes/bad_keyregex_labels:
+swk8sattributes/bad_keyregex_labels:
   extract:
     labels:
       - tag_name: a1
         from: pod
         key_regex: "["
 
-k8sattributes/bad_keyregex_annotations:
+swk8sattributes/bad_keyregex_annotations:
   extract:
     annotations:
       - tag_name: a1
@@ -347,7 +348,7 @@ k8sattributes/bad_keyregex_annotations:
         key_regex: "["
 
 
-k8sattributes/bad_regex_groups_labels:
+swk8sattributes/bad_regex_groups_labels:
   extract:
     labels:
       - tag_name: a1
@@ -355,7 +356,7 @@ k8sattributes/bad_regex_groups_labels:
         from: pod
         regex: "((.*)*)"
 
-k8sattributes/bad_regex_groups_annotations:
+swk8sattributes/bad_regex_groups_annotations:
   extract:
     annotations:
       - tag_name: a1
@@ -364,7 +365,7 @@ k8sattributes/bad_regex_groups_annotations:
         regex: "((.*)*)"
 
 
-k8sattributes/bad_regex_name_labels:
+swk8sattributes/bad_regex_name_labels:
   extract:
     labels:
       - tag_name: a1
@@ -372,7 +373,7 @@ k8sattributes/bad_regex_name_labels:
         from: pod
         regex: "field=(?P<notvalue>.+)"
 
-k8sattributes/bad_regex_name_annotations:
+swk8sattributes/bad_regex_name_annotations:
   extract:
     annotations:
       - tag_name: a1
@@ -380,14 +381,14 @@ k8sattributes/bad_regex_name_annotations:
         from: pod
         regex: "field=(?P<notvalue>.+)"
 
-k8sattributes/bad_filter_label_op:
+swk8sattributes/bad_filter_label_op:
   filter:
     labels:
       - key: label
         value: v1
         op: "unknown"
 
-k8sattributes/bad_filter_field_op:
+swk8sattributes/bad_filter_field_op:
   filter:
     fields:
       - key: field

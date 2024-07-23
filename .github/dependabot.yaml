@@ -1,5 +1,3 @@
-# Please see the documentation for all configuration options:
-# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -20,39 +18,27 @@ updates:
     schedule:
       interval: weekly
       day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm/templates
+  - package-ecosystem: gomod
+    directory: /src/cmd
     labels:
       - dependencies
-      - docker
+      - go
       - Skip Changelog
     schedule:
-      interval: weekly
-      day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm/templates/network
-    labels:
-      - dependencies
-      - docker
-      - Skip Changelog
-    schedule:
-      interval: weekly
-      day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm/templates/autoupdate
-    labels:
-      - dependencies
-      - docker
-      - Skip Changelog
-    schedule:
-      interval: weekly
-      day: sunday
-  - package-ecosystem: docker
-    directory: /deploy/helm
-    labels:
-      - dependencies
-      - docker
-      - Skip Changelog
-    schedule:
-      interval: weekly
-      day: sunday
+      interval: "daily"
+    allow:
+      # Allow both direct and indirect updates for all packages
+      - dependency-type: "all"
+    ignore:
+      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
+      - dependency-name: "go.opentelemetry.io/collector*"
+    # Disable version updates
+    open-pull-requests-limit: 0
+    groups:
+      minor-and-patch:
+        applies-to: security-updates
+        patterns:
+        - "*"
+        update-types:
+        - "patch"
+        - "minor"

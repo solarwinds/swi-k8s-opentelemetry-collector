@@ -25,7 +25,8 @@ extensions:
   file_storage/sending_queue:
     directory: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
 {{- end }}
-  health_check: {}
+  health_check:
+    endpoint: 0.0.0.0:13133
 {{- if .Values.otel.logs.memory_ballast }}
   memory_ballast:
 {{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
@@ -42,11 +43,11 @@ processors:
   memory_limiter:
 {{ toYaml .Values.otel.logs.memory_limiter | indent 4 }}
 
-{{- if .Values.otel.logs.filter }}
+{{- if (include "logsFilter" .) }}
   # For more all the options about the filtering see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
   filter/logs:
     logs:
-{{ toYaml .Values.otel.logs.filter | indent 6 }}
+{{ include "logsFilter" . | indent 6 }}
 {{- end }}
 
   {{- include "common-config.filter-reciever" . | nindent 2 }}
@@ -98,19 +99,34 @@ processors:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
 {{- end }}
 
+{{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
+
   {{- include "common-config.resource-metrics" . | nindent 2 }}
 
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-  resource/k8sattributes_labels_filter:
+  resource/swk8sattributes_labels_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.labels.excludePattern }}
 {{- end }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-  resource/k8sattributes_annotations_filter:
+  resource/swk8sattributes_annotations_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
+{{- end }}
+
+{{- if not (empty .Values.otel.logs.k8s_instrumentation.labels.excludePattern) }}
+  resource/swk8sattributes_logs_labels_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.logs.k8s_instrumentation.labels.excludePattern }}
+{{- end }}
+{{- if not (empty .Values.otel.logs.k8s_instrumentation.annotations.excludePattern) }}
+  resource/swk8sattributes_logs_annotations_filter:
+    attributes:
+      - action: delete
+        pattern: {{ .Values.otel.logs.k8s_instrumentation.annotations.excludePattern }}
 {{- end }}
 
   groupbyattrs/common-all:
@@ -222,7 +238,7 @@ processors:
   batch/metrics:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
-  k8sattributes:
+  swk8sattributes:
     auth_type: "serviceAccount"
     passthrough: false
     filter:
@@ -369,6 +385,7 @@ connectors:
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
   journald:
+    files: ["/*/log/journal/**/*"]
     units:
       - kubelet
       - docker
@@ -439,6 +456,7 @@ receivers:
         combine_field: body.log
         combine_with: ""
         is_last_entry: body.log matches "\n$"
+        max_unmatched_batch_size: 1
 
       # Merge log lines split by CRI logging drivers.
       - type: recombine
@@ -449,6 +467,7 @@ receivers:
         combine_with: ""
         is_last_entry: body.logtag == "F"
         overwrite_with: newest
+        max_unmatched_batch_size: 1
 
       # Merges incoming log records into multiline logs.
       - type: recombine
@@ -458,6 +477,7 @@ receivers:
         combine_field: body.log
         combine_with: ""
         is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
+        max_unmatched_batch_size: 1
 
       # Extract metadata from file path
       - type: regex_parser
@@ -603,12 +623,24 @@ service:
         - forward/logs-exporter
       processors:
         - memory_limiter
-{{- if .Values.otel.logs.filter }}
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" }}
         - filter/logs
 {{- end }}
         - transform/syslogify
         - groupbyattrs/common-all
         - resource/container
+        - swk8sattributes
+{{- if not (empty .Values.otel.logs.k8s_instrumentation.labels.excludePattern) }}
+        - resource/swk8sattributes_logs_labels_filter
+{{- end }}
+{{- if not (empty .Values.otel.logs.k8s_instrumentation.annotations.excludePattern) }}
+        - resource/swk8sattributes_logs_annotations_filter
+{{- end }}
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
+{{- if (include "logsFilter" .) }}
+        - filter/logs
+{{- end }}
+{{- end }}
       receivers:
         - filelog
 {{- end }}
@@ -654,9 +686,6 @@ service:
         - deltatorate/discovery
 {{- end }}
         - groupbyattrs/common-all
-{{- if .Values.otel.metrics.filter }}
-        - filter/metrics
-{{- end }}
         - resource/all
       receivers:
         - receiver_creator/discovery
@@ -681,9 +710,6 @@ service:
         - groupbyattrs/node
         - groupbyattrs/pod
         - groupbyattrs/all
-{{- if .Values.otel.metrics.filter }}
-        - filter/metrics
-{{- end }}
         - resource/metrics
         - resource/all
       receivers:
@@ -696,13 +722,17 @@ service:
       processors:
         - memory_limiter
         - filter/histograms
-        - k8sattributes
+        - swk8sattributes
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-        - resource/k8sattributes_labels_filter
+        - resource/swk8sattributes_labels_filter
 {{- end }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/k8sattributes_annotations_filter
+        - resource/swk8sattributes_annotations_filter
 {{- end }}
+{{- if .Values.otel.metrics.filter }}
+        - filter/metrics
+{{- end }}
+        - filter/remove_temporary_metrics
         - batch/metrics
       receivers:
         - forward/metric-exporter

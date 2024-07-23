@@ -23,21 +23,22 @@ extensions:
   file_storage/sending_queue:
     directory: /var/lib/swo/sending_queue
 {{- end }}
-  health_check: {}
+  health_check:
+    endpoint: 0.0.0.0:13133
   memory_ballast:
 {{ toYaml .Values.otel.metrics.memory_ballast | indent 4 }}
 
 processors:
-  k8sattributes:
+  swk8sattributes:
 {{ include "common.k8s-instrumentation" (tuple . .Values.otel.metrics.k8s_instrumentation.annotations.enabled .Values.otel.metrics.k8s_instrumentation.labels.enabled "true") | indent 4 }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-  resource/k8sattributes_labels_filter:
+  resource/swk8sattributes_labels_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.labels.excludePattern }}
 {{- end }}
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-  resource/k8sattributes_annotations_filter:
+  resource/swk8sattributes_annotations_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
@@ -178,16 +179,13 @@ processors:
         new_name: k8s.$${1}
 
   # Transformations done on all metrics before any grouping
-  swmetricstransform/preprocessing:
+  metricstransform/preprocessing:
     transforms:
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "Ready" }
         action: insert
         new_name: k8s.kube_node_status_ready
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             value_actions:
@@ -205,9 +203,6 @@ processors:
         action: insert
         new_name: k8s.deployment.condition.available
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             new_label: sw.k8s.deployment.condition.available
@@ -216,9 +211,6 @@ processors:
         action: insert
         new_name: k8s.deployment.condition.progressing
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             new_label: sw.k8s.deployment.condition.progressing
@@ -227,44 +219,13 @@ processors:
         action: insert
         new_name: k8s.deployment.condition.replicafailure
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: status
             new_label: sw.k8s.deployment.condition.replicafailure
-      - include: k8s.kube_pod_status_reason
-        action: update
-        new_name: k8s.pod.status.reason
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
-      - include: k8s.kube_pod_status_phase
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
-      - include: k8s.kube_pod_start_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_pod_completion_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
       - include: k8s.kube_persistentvolume_status_phase
         action: insert
         new_name: k8s.persistentvolume.status.phase
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: phase
             new_label: sw.k8s.persistentvolume.status
@@ -272,75 +233,10 @@ processors:
         action: insert
         new_name: k8s.persistentvolumeclaim.status.phase
         operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
           - action: update_label
             label: phase
             new_label: sw.k8s.persistentvolumeclaim.status
-      - include: k8s.kube_node_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_pod_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_deployment_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_daemonset_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_namespace_status_phase
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
-      - include: k8s.kube_namespace_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_statefulset_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_job_created
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_job_status_completion_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
-      - include: k8s.kube_job_status_start_time
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 0
-            datapoint_value_action: exclude
 
-  metricstransform/preprocessing:
-    transforms:  
       {{- include "common-config.metricstransform-preprocessing-cadvisor" . | nindent 6 }}
       # Container metrics
       - include: k8s.kube_pod_container_resource_limits
@@ -641,8 +537,11 @@ processors:
         experimental_match_labels: { "scrape_job": '.*apiservers.*' }
         new_name: k8s.cluster.version
         operations:
+          - action: update_label
+            label: git_version
+            new_label: sw.k8s.cluster.version
           - action: aggregate_labels
-            label_set: [git_version]
+            label_set: [sw.k8s.cluster.version]
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
         action: update
@@ -678,14 +577,33 @@ processors:
           - action: update_label
             label: owner_name
             new_label: cronjob
-  swmetricstransform/postprocessing:
-    transforms:
-      - include: k8s.container.status
-        action: update
-        operations:
-          - action: filter_datapoints
-            datapoint_value: 1
-            datapoint_value_action: include
+
+  filter/preprocessing:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'metric.name == "k8s.kube_node_status_ready" and value_double != 1'
+        - 'metric.name == "k8s.deployment.condition.available" and value_double != 1'
+        - 'metric.name == "k8s.deployment.condition.progressing" and value_double != 1'
+        - 'metric.name == "k8s.deployment.condition.replicafailure" and value_double != 1'
+        - 'metric.name == "k8s.pod.status.reason" and value_double != 1'
+        - 'metric.name == "k8s.kube_pod_status_phase" and value_double != 1'
+        - 'metric.name == "k8s.kube_pod_start_time" and value_double == 0'
+        - 'metric.name == "k8s.kube_pod_completion_time" and value_double == 0'
+        - 'metric.name == "k8s.persistentvolume.status.phase" and value_double != 1'
+        - 'metric.name == "k8s.persistentvolumeclaim.status.phase" and value_double != 1'
+        - 'metric.name == "k8s.kube_node_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_pod_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_deployment_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_daemonset_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_namespace_status_phase" and value_double != 1'
+        - 'metric.name == "k8s.kube_namespace_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_statefulset_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_job_created" and value_double == 0'
+        - 'metric.name == "k8s.kube_job_status_completion_time" and value_double == 0'
+        - 'metric.name == "k8s.kube_job_status_start_time" and value_double == 0'
+        - 'metric.name == "k8s.container.status" and value_double != 1'
+
   cumulativetodelta:
     include:
       metrics:
@@ -764,7 +682,7 @@ processors:
       - replicaset
       - job_name
       - cronjob
-      - git_version
+      - sw.k8s.cluster.version
       - internal_ip
       - job_condition
       - persistentvolumeclaim
@@ -782,6 +700,8 @@ processors:
     metrics:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
 {{- end }}
+
+{{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
 
 {{- include "common-config.filter-reciever" . | nindent 2 }}
 
@@ -881,136 +801,137 @@ processors:
 {{- if .Values.opencost.enabled }}
   filter/opencost-metrics:
     metrics:
-      include:
-        match_type: regexp
-        metric_names:
-          - "^container_cpu_allocation$"
-          - "^container_gpu_allocation$"
-          - "^container_memory_allocation_bytes$"
-          - "^pod_pvc_allocation$"
-          - "^node_gpu_count$"
-          - "^kubecost_.*$"
-          - "^.*_cost$"
+      metric:
+        - |
+          not(
+          name == "container_cpu_allocation" or
+          name == "container_gpu_allocation" or
+          name == "container_memory_allocation_bytes" or
+          name == "pod_pvc_allocation" or
+          name == "node_gpu_count" or
+          IsMatch(name, "^kubecost_.*$") or
+          IsMatch(name, "^.*_cost$") 
+          )
 {{- end }}
   filter/kube-state-metrics:
     metrics:
-      include:
-        match_type: regexp
-        metric_names:
-          - "^kube_deployment_created$"
-          - "^kube_daemonset_created$"
-          - "^kube_namespace_created$"
-          - "^kube_node_info$"
-          - "^kube_node_created$"
-          - "^kube_node_status_capacity$"
-          - "^kube_node_status_condition$"
-          - "^kube_pod_created$"
-          - "^kube_pod_info$"
-          - "^kube_pod_owner$"
-          - "^kube_pod_completion_time$"
-          - "^kube_pod_status_phase$"
-          - "^kube_pod_status_ready$"
-          - "^kube_pod_status_reason$"
-          - "^kube_pod_start_time$"
-          - "^kube_pod_container_.*$"
-          - "^kube_pod_init_container_.*$"
-          - "^kube_namespace_status_phase$"
-          - "^kube_deployment_spec_replicas$"
-          - "^kube_deployment_spec_paused$"
-          - "^kube_deployment_status_replicas$"
-          - "^kube_deployment_status_replicas_ready$"
-          - "^kube_deployment_status_replicas_available$"
-          - "^kube_deployment_status_replicas_updated$"
-          - "^kube_deployment_status_replicas_unavailable$"
-          - "^kube_deployment_status_condition$"
-          - "^kube_replicaset_owner$"
-          - "^kube_replicaset_created$"
-          - "^kube_replicaset_spec_replicas$"
-          - "^kube_replicaset_status_ready_replicas$"
-          - "^kube_replicaset_status_replicas$"
-          - "^kube_statefulset_replicas$"
-          - "^kube_statefulset_status_replicas_ready$"
-          - "^kube_statefulset_status_replicas_current$"
-          - "^kube_statefulset_status_replicas_updated$"
-          - "^kube_statefulset_created$"
-          - "^kube_daemonset_status_current_number_scheduled$"
-          - "^kube_daemonset_status_desired_number_scheduled$"
-          - "^kube_daemonset_status_updated_number_scheduled$"
-          - "^kube_daemonset_status_number_available$"
-          - "^kube_daemonset_status_number_misscheduled$"
-          - "^kube_daemonset_status_number_ready$"
-          - "^kube_daemonset_status_number_unavailable$"
-          - "^kube_resourcequota$"
-          - "^kube_node_status_allocatable$"
-          - "^kube_node_spec_unschedulable$"
-          - "^kube_job_info$"
-          - "^kube_job_owner$"
-          - "^kube_job_created$"
-          - "^kube_job_complete$"
-          - "^kube_job_failed$"
-          - "^kube_job_status_active$"
-          - "^kube_job_status_succeeded$"
-          - "^kube_job_status_failed$"
-          - "^kube_job_status_start_time$"
-          - "^kube_job_status_completion_time$"
-          - "^kube_job_spec_completions$"
-          - "^kube_job_spec_parallelism$"
-          - "^kube_persistentvolume_capacity_bytes$"
-          - "^kube_persistentvolume_info$"
-          - "^kube_persistentvolume_status_phase$"
-          - "^kube_persistentvolume_claim_ref$"
-          - "^kube_persistentvolume_created$"
-          - "^kube_persistentvolumeclaim_info$"
-          - "^kube_persistentvolumeclaim_access_mode$"
-          - "^kube_persistentvolumeclaim_status_phase$"
-          - "^kube_persistentvolumeclaim_resource_requests_storage_bytes$"
-          - "^kube_persistentvolumeclaim_created$"
-          - "^kube_pod_spec_volumes_persistentvolumeclaims_info$"
-          - "^kube_service_info$"
-          - "^kube_service_created$"
-          - "^kube_service_spec_type$"
-          - "^kube_service_spec_external_ip$"
-          - "^kube_service_status_load_balancer_ingress$"
-          - "^kube_endpoint_address_not_ready$"
-          - "^kube_endpoint_address_available$"
-          - "^kube_endpoint_info$"
-          - "^kube_endpoint_created$"
-          - "^kube_endpoint_ports$"
-          - "^kube_endpoint_address$"
+      metric:
+        - |
+          not(
+          name == "kube_deployment_created" or
+          name == "kube_deployment_created" or
+          name == "kube_daemonset_created" or
+          name == "kube_namespace_created" or
+          name == "kube_node_info" or
+          name == "kube_node_created" or
+          name == "kube_node_status_capacity" or
+          name == "kube_node_status_condition" or
+          name == "kube_pod_created" or
+          name == "kube_pod_info" or
+          name == "kube_pod_owner" or
+          name == "kube_pod_completion_time" or
+          name == "kube_pod_status_phase" or
+          name == "kube_pod_status_ready" or
+          name == "kube_pod_status_reason" or
+          name == "kube_pod_start_time" or 
+          IsMatch(name, "^kube_pod_container_.*$") or 
+          IsMatch(name, "^kube_pod_init_container_.*$") or 
+          name == "kube_namespace_status_phase" or
+          name == "kube_deployment_spec_replicas" or
+          name == "kube_deployment_spec_paused" or
+          name == "kube_deployment_status_replicas" or
+          name == "kube_deployment_status_replicas_ready" or
+          name == "kube_deployment_status_replicas_available" or
+          name == "kube_deployment_status_replicas_updated" or
+          name == "kube_deployment_status_replicas_unavailable" or
+          name == "kube_deployment_status_condition" or
+          name == "kube_replicaset_owner" or
+          name == "kube_replicaset_created" or
+          name == "kube_replicaset_spec_replicas" or
+          name == "kube_replicaset_status_ready_replicas" or
+          name == "kube_replicaset_status_replicas" or
+          name == "kube_statefulset_replicas" or
+          name == "kube_statefulset_status_replicas_ready" or
+          name == "kube_statefulset_status_replicas_current" or
+          name == "kube_statefulset_status_replicas_updated" or
+          name == "kube_statefulset_created" or
+          name == "kube_daemonset_status_current_number_scheduled" or
+          name == "kube_daemonset_status_desired_number_scheduled" or
+          name == "kube_daemonset_status_updated_number_scheduled" or
+          name == "kube_daemonset_status_number_available" or
+          name == "kube_daemonset_status_number_misscheduled" or
+          name == "kube_daemonset_status_number_ready" or
+          name == "kube_daemonset_status_number_unavailable" or
+          name == "kube_resourcequota" or
+          name == "kube_node_status_allocatable" or
+          name == "kube_node_spec_unschedulable" or
+          name == "kube_job_info" or
+          name == "kube_job_owner" or
+          name == "kube_job_created" or
+          name == "kube_job_complete" or
+          name == "kube_job_failed" or
+          name == "kube_job_status_active" or
+          name == "kube_job_status_succeeded" or
+          name == "kube_job_status_failed" or
+          name == "kube_job_status_start_time" or
+          name == "kube_job_status_completion_time" or
+          name == "kube_job_spec_completions" or
+          name == "kube_job_spec_parallelism" or
+          name == "kube_persistentvolume_capacity_bytes" or
+          name == "kube_persistentvolume_info" or
+          name == "kube_persistentvolume_status_phase" or
+          name == "kube_persistentvolume_claim_ref" or
+          name == "kube_persistentvolume_created" or
+          name == "kube_persistentvolumeclaim_info" or
+          name == "kube_persistentvolumeclaim_access_mode" or
+          name == "kube_persistentvolumeclaim_status_phase" or
+          name == "kube_persistentvolumeclaim_resource_requests_storage_bytes" or
+          name == "kube_persistentvolumeclaim_created" or
+          name == "kube_pod_spec_volumes_persistentvolumeclaims_info" or
+          name == "kube_service_info" or
+          name == "kube_service_created" or
+          name == "kube_service_spec_type" or
+          name == "kube_service_spec_external_ip" or
+          name == "kube_service_status_load_balancer_ingress" or
+          name == "kube_endpoint_address_not_ready" or
+          name == "kube_endpoint_address_available" or
+          name == "kube_endpoint_info" or
+          name == "kube_endpoint_created" or
+          name == "kube_endpoint_ports" or
+          name == "kube_endpoint_address"
+          )
   filter/ebpf:
     metrics:
-      exclude:
-        match_type: regexp
-        metric_names:
-          - "^ebpf_net.*$"
+      metric:
+        - 'IsMatch(name, "^ebpf_net.*$")'
 
   filter/prometheus-node-metrics:
     metrics:
-      include:
-        match_type: regexp
-        metric_names:
-          - "^container_cpu_usage_seconds_total$"
-          - "^container_spec_cpu_quota$"
-          - "^container_spec_cpu_period$"
-          - "^container_memory_working_set_bytes$"
-          - "^container_spec_memory_limit_bytes$"
-          - "^container_cpu_cfs_throttled_periods_total$"
-          - "^container_cpu_cfs_periods_total$"
-          - "^container_fs_reads_total$"
-          - "^container_fs_writes_total$"
-          - "^container_fs_reads_bytes_total$"
-          - "^container_fs_writes_bytes_total$"
-          - "^container_fs_usage_bytes$"
-          - "^container_network_receive_bytes_total$"
-          - "^container_network_transmit_bytes_total$"
-          - "^container_network_receive_packets_total$"
-          - "^container_network_transmit_packets_total$"
-          - "^container_network_receive_packets_dropped_total$"
-          - "^container_network_transmit_packets_dropped_total$"
-          - "^apiserver_request_total$"
-          - "^kubelet_volume_stats_available_percent$"
-          - "^kubernetes_build_info$"
-
+      metric:
+        - |
+          not(
+          name == "container_cpu_usage_seconds_total" or
+          name == "container_spec_cpu_quota" or
+          name == "container_spec_cpu_period" or
+          name == "container_memory_working_set_bytes" or
+          name == "container_spec_memory_limit_bytes" or
+          name == "container_cpu_cfs_throttled_periods_total" or
+          name == "container_cpu_cfs_periods_total" or
+          name == "container_fs_reads_total" or
+          name == "container_fs_writes_total" or
+          name == "container_fs_reads_bytes_total" or
+          name == "container_fs_writes_bytes_total" or
+          name == "container_fs_usage_bytes" or
+          name == "container_network_receive_bytes_total" or
+          name == "container_network_transmit_bytes_total" or
+          name == "container_network_receive_packets_total" or
+          name == "container_network_transmit_packets_total" or
+          name == "container_network_receive_packets_dropped_total" or
+          name == "container_network_transmit_packets_dropped_total" or
+          name == "apiserver_request_total" or
+          name == "kubelet_volume_stats_available_percent" or
+          name == "kubernetes_build_info"
+          )
   filter/histograms:
     metrics:
       metric:
@@ -1256,9 +1177,8 @@ service:
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
-        - swmetricstransform/preprocessing
         - metricstransform/preprocessing
-        - swmetricstransform/postprocessing
+        - filter/preprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
         - attributes/attributes_pod_status
@@ -1271,18 +1191,19 @@ service:
         - groupbyattrs/pod
         - metricstransform/aggregate_pod_level
         - groupbyattrs/all
+        - resource/metrics
+        - swk8sattributes
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
+        - resource/swk8sattributes_labels_filter
+{{- end }}
+{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
+        - resource/swk8sattributes_annotations_filter
+{{- end }}
+        - transform/cleanup_attributes_for_nonexisting_entities
 {{- if .Values.otel.metrics.filter }}
         - filter
 {{- end }}
-        - resource/metrics
-        - k8sattributes
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-        - resource/k8sattributes_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/k8sattributes_annotations_filter
-{{- end }}
-        - transform/cleanup_attributes_for_nonexisting_entities
+        - filter/remove_temporary_metrics
       receivers:
         - forward/prometheus
     metrics:

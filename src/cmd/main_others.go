@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
-// Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
+//go:build !windows
 
-package observability
+package main
+
+import "go.opentelemetry.io/collector/otelcol"
+
+func run(params otelcol.CollectorSettings) error {
+	return runInteractive(params)
+}

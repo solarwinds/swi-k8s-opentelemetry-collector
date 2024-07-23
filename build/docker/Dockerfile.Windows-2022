@@ -1,18 +1,15 @@
-FROM docker.io/library/golang:1.22.0-nanoserver-ltsc2022@sha256:60e3fe06e1d8e460a686b03c3d61c178a0ad719fc687e4dd4df71b242caf8def as base
+FROM docker.io/library/golang:1.22.5-nanoserver-ltsc2022@sha256:0a134b8e83206a9b0d5374bea6982335727b3a1a375e53fe3917ba5faae59cf6 AS base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
-FROM base as builder
-
-COPY /build/swi-k8s-opentelemetry-collector.yaml /src/swi-k8s-opentelemetry-collector.yaml
-RUN go install go.opentelemetry.io/collector/cmd/builder@v0.91.0
+FROM base AS builder
 
 ARG CGO_ENABLED=0
 ARG GOEXPERIMENT=boringcrypto
 
-RUN /go/bin/builder --config ./swi-k8s-opentelemetry-collector.yaml --output-path ./
+RUN cd src/cmd && go build -trimpath -o ../../swi-k8s-opentelemetry-collector "-ldflags=-s -w"
 
-FROM base as wrapper
+FROM base AS wrapper
 WORKDIR /src/src/wrapper
 
 ARG CGO_ENABLED=0

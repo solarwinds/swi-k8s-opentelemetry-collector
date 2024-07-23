@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
-package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor"
+package swk8sattributesprocessor // import "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor"
 
 import (
 	"fmt"
@@ -25,9 +25,9 @@ import (
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/metadata"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/metadata"
 )
 
 const (
@@ -35,6 +35,7 @@ const (
 	filterOPNotEquals    = "not-equals"
 	filterOPExists       = "exists"
 	filterOPDoesNotExist = "does-not-exist"
+	metadataPodIP        = "k8s.pod.ip"
 	metadataPodStartTime = "k8s.pod.start_time"
 	specPodHostName      = "k8s.pod.hostname"
 	// TODO: use k8s.cluster.uid from semconv when available, and replace clusterUID with conventions.AttributeClusterUid
@@ -128,6 +129,9 @@ func enabledAttributes() (attributes []string) {
 	if defaultConfig.K8sPodUID.Enabled {
 		attributes = append(attributes, conventions.AttributeK8SPodUID)
 	}
+	if defaultConfig.K8sPodIP.Enabled {
+		attributes = append(attributes, metadataPodIP)
+	}
 	if defaultConfig.K8sReplicasetName.Enabled {
 		attributes = append(attributes, conventions.AttributeK8SReplicaSetName)
 	}
@@ -159,6 +163,8 @@ func withExtractMetadata(fields ...string) option {
 				p.rules.PodHostName = true
 			case metadataPodStartTime:
 				p.rules.StartTime = true
+			case metadataPodIP:
+				p.rules.PodIP = true
 			case conventions.AttributeK8SDeploymentName:
 				p.rules.Deployment = true
 			case conventions.AttributeK8SReplicaSetName:

@@ -7,7 +7,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 # array of pair "name: secret"
-imagePullSecrets:
+imagePullSecrets: []
 
 otel:
   # e.g. otel.collector.na-01.cloud.solarwinds.com:443
@@ -38,13 +38,13 @@ otel:
 
   init_images:
     swi_endpoint_check:
-      repository: ""
-      tag: ""
+      repository: "fullstorydev/grpcurl"
+      tag: "v1.8.9"
       pullPolicy: IfNotPresent
 
     busy_box:
-      repository: ""
-      tag: ""
+      repository: "busybox"
+      tag: "1.36.1"
       pullPolicy: IfNotPresent
 
   node_collector:
@@ -103,7 +103,7 @@ otel:
         #   `labels` - map of labels set on the pod
         #   `annotations` - map of annotations set on the pod
         # Example: namespace == "test-namespace" && labels["app"] == "test-app"
-        additionalRules:
+        additionalRules: ""
 
         podMonitors:
           rules: []
@@ -116,16 +116,16 @@ otel:
 
         customTransformations:
           # list of metrics that are counters should be converted to rate
-          counterToRate:
+          counterToRate: []
 
         # This filter is applied after metric processing, it is the place where metrics could be filtered out
         # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-        filter:
+        filter: {}
 
     # Check if SWI OTEL endpoint is reachable
     swi_endpoint_check: true
 
-    # Check if Prometheus endpoint is reachable
+    # Check if Prometheus endpoint (provided by otel.metrics.prometheus.url) is reachable
     prometheus_check: false
 
     sending_queue:
@@ -185,12 +185,13 @@ otel:
 
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    filter:
-      exclude:
-        match_type: regexp
-        metric_names:
-          - .*_temp
-          - apiserver_request_total
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # but we need to add a condition that allows data without namespace attribute to be collected.
+    # filter:
+    #   metric:
+    #     - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo") or resource.attributes["k8s.namespace.name"] == nil)
+    filter: {}
 
     # Use this configuration to scrape extra metrics from Prometheus. Multiple metrics can be specified.
     # See format in https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors
@@ -238,7 +239,7 @@ otel:
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
       annotations:
         # Set 'enabled' to true to instrument Kubernetes annotations.
@@ -247,7 +248,7 @@ otel:
         # Provide a regular expression pattern to exclude specific annotations from instrumentation.
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
@@ -263,7 +264,7 @@ otel:
           enabled: false
 
           # Additional labels
-          additionalLabels:
+          additionalLabels: {}
           # key: value
 
           # Override namespace (default is the same as K8s collector)
@@ -289,12 +290,18 @@ otel:
 
   # Configuration for Events collection
   events:
-    # Define whether events will be collected and sent
+    # If false none of the events will be collected
     enabled: true
 
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # but we need to add a condition that allows data without namespace attribute to be collected.
     # filter:
+    #   log_record:
+    #     - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo") or resource.attributes["k8s.namespace.name"] == nil)
+    filter: {}
 
     # Batching configuration for events
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
@@ -367,7 +374,7 @@ otel:
           enabled: false
 
           # Additional labels
-          additionalLabels:
+          additionalLabels: {}
           # key: value
 
           # Override namespace (default is the same as K8s collector)
@@ -389,7 +396,7 @@ otel:
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
       annotations:
         # Set 'enabled' to true to instrument Kubernetes annotations.
@@ -398,13 +405,14 @@ otel:
         # Provide a regular expression pattern to exclude specific annotations from instrumentation.
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
-        excludePattern:
+        excludePattern: ""
 
     # Scheduling configurations
     # By default: set to run on linux amd64 nodes
     nodeSelector: {}
     tolerations: []
     affinity: {}
+
     terminationGracePeriodSeconds: 600
 
   # Configuration for Logs collection
@@ -439,15 +447,25 @@ otel:
 
     # This filter is applied after initial log processing, it is the place where logs could be filtered out
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    filter:
-      include:
-        match_type: regexp
-        # a log has to match all expressions in the list to be included
-        # see https://github.com/google/re2/wiki/Syntax for regexp syntax
-        record_attributes:
-          # allow only system namespaces (kube-system, kube-public)
-          - key: k8s.namespace.name
-            value: ^kube-.*$
+    # default (prior to k8s collector 4.0.0):
+      # filter:
+      #   include:
+      #     match_type: regexp
+      #     # a log has to match all expressions in the list to be included
+      #     # see https://github.com/google/re2/wiki/Syntax for regexp syntax
+      #     record_attributes:
+      #       # allow only system namespaces (kube-system, kube-public)
+      #       - key: k8s.namespace.name
+      #         value: ^kube-.*$
+    # default (since k8s collector 4.0.0) is to collect all logs     
+    #
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # but we need to add a condition that allows data without namespace attribute to be collected.
+    # filter:
+    #   log_record:
+    #     - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo") or resource.attributes["k8s.namespace.name"] == nil)
+    filter: {}
 
     # Batching configuration for logs
     # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
@@ -455,6 +473,30 @@ otel:
       send_batch_size: 512
       send_batch_max_size: 512
       timeout: 1s
+
+    # k8s_instrumentation controls the automatic extraction of Kubernetes metadata from resources.
+    # It instruments OpenTelemetry (OTEL) resources being sent.
+    k8s_instrumentation:
+      labels:
+        # Set 'enabled' to true to instrument Kubernetes labels.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific labels from instrumentation.
+        # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        # by default all labels are excluded
+        excludePattern: "k8s\\.\\w+\\.labels\\..*"
+
+      annotations:
+        # Set 'enabled' to true to instrument Kubernetes annotations.
+        enabled: true
+
+        # Provide a regular expression pattern to exclude specific annotations from instrumentation.
+        # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
+        # excludePattern: ".*internal.*|.*private.*"
+        # by default all annotations are excluded
+        excludePattern: "k8s\\.\\w+\\.annotations\\..*"
+
 
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
@@ -470,7 +512,7 @@ otel:
           enabled: false
 
           # Additional labels
-          additionalLabels:
+          additionalLabels: {}
           # key: value
 
           # Override namespace (default is the same as K8s collector)
@@ -524,6 +566,19 @@ otel:
       directory: /var/lib/swo/checkpoints
       timeout: 5s
 
+  # Configuration that allows to watch for changes in k8s resources and send full manifests to SWO upon change
+  manifests:
+    enabled: false
+
+    # Apart of watching for changes in k8s resources, all resources are periodically pulled
+    # this is mainly to catch resources that were created before the collector was deployed and also to catch 
+    # resources that were created during the time when the collector was down (or something unexpected happen)
+    pull_every: 60m
+
+    # This filter is applied after manifest processing, it is the place where manifest events could be filtered out
+    # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
+    filter: {}
+
 cluster:
   name: <CLUSTER_NAME>
   uid: <CLUSTER_UID>
@@ -540,8 +595,8 @@ autoupdate:
   devel: false
 
   image:
-    repository: ""
-    tag: ""
+    repository: "alpine/k8s"
+    tag: "1.27.8"
     pullPolicy: IfNotPresent
 
 # Set labels to every deployed resource
@@ -591,7 +646,7 @@ swoagent:
   enabled: false
   image:
     repository: solarwinds/swo-agent
-    tag: ""
+    tag: "v2.8.85"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -599,6 +654,8 @@ swoagent:
     requests:
       memory: 800Mi
       cpu: 100m
+  nodeSelector: {}
+  affinity: {}
 
 aws_fargate:
   # Enable support for AWS EKS Fargate environment
@@ -615,7 +672,7 @@ aws_fargate:
     # Include additional FluentBit filters
     # see https://docs.fluentbit.io/manual/pipeline/filters
     # NOTE: The FluentBit configuration expects four spaces as indentation within sections
-    filters:
+    filters: ""
 
 ebpfNetworkMonitoring:
   enabled: false
@@ -627,8 +684,8 @@ ebpfNetworkMonitoring:
         level: "warning"
 
     image:
-      repository: ""
-      tag: ""
+      repository: "otel/opentelemetry-ebpf-kernel-collector"
+      tag: "v0.10.1"
       pullPolicy: IfNotPresent
 
     resources:
@@ -651,14 +708,14 @@ ebpfNetworkMonitoring:
 
     watcher:
       image:
-        repository: ""
-        tag: ""
+        repository: "otel/opentelemetry-ebpf-k8s-watcher"
+        tag: "v0.10.1"
         pullPolicy: IfNotPresent
 
     relay:
       image:
-        repository: ""
-        tag: ""
+        repository: "otel/opentelemetry-ebpf-k8s-relay"
+        tag: "v0.10.1"
         pullPolicy: IfNotPresent
   reducer:
     disableMetrics: []
@@ -685,8 +742,8 @@ ebpfNetworkMonitoring:
         enabled: false
 
     image:
-      repository: ""
-      tag: ""
+      repository: "otel/opentelemetry-ebpf-reducer"
+      tag: "v0.10.1"
       pullPolicy: IfNotPresent
 
 # Prometheus is deployed only in case opencost section is enabled. Otherwise this section can be ignored.

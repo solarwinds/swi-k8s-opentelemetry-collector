@@ -9,8 +9,6 @@ Fargate logging ConfigMap spec should include additional filters when they are c
       [FILTER]
           Name kubernetes
           Match kube.*
-          Merge_Log On
-          Keep_Log Off
           Buffer_Size 0
           Kube_Meta_Cache_TTL 300s
           Labels Off
@@ -24,7 +22,7 @@ Fargate logging ConfigMap spec should include additional filters when they are c
           Match *
           Add sw.k8s.cluster.uid <CLUSTER_UID>
           Add sw.k8s.log.type container
-          Add sw.k8s.agent.manifest.version "3.3.0-alpha.1"
+          Add sw.k8s.agent.manifest.version "4.0.0-alpha.6"
     flb_log_cw: "false"
     output.conf: |
       [OUTPUT]
@@ -53,8 +51,6 @@ Fargate logging ConfigMap spec should match snapshot when Fargate logging is ena
       [FILTER]
           Name kubernetes
           Match kube.*
-          Merge_Log On
-          Keep_Log Off
           Buffer_Size 0
           Kube_Meta_Cache_TTL 300s
           Labels Off
@@ -64,7 +60,7 @@ Fargate logging ConfigMap spec should match snapshot when Fargate logging is ena
           Match *
           Add sw.k8s.cluster.uid <CLUSTER_UID>
           Add sw.k8s.log.type container
-          Add sw.k8s.agent.manifest.version "3.3.0-alpha.1"
+          Add sw.k8s.agent.manifest.version "4.0.0-alpha.6"
     flb_log_cw: "false"
     output.conf: |
       [OUTPUT]

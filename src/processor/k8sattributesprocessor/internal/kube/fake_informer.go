@@ -15,7 +15,7 @@
 // Source: https://github.com/open-telemetry/opentelemetry-collector-contrib
 // Changes customizing the original source code: see CHANGELOG.md in deploy/helm directory
 
-package kube // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
+package kube // import "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 
 import (
 	"sync"
@@ -70,7 +70,7 @@ func (f *FakeInformer) SetTransform(_ cache.TransformFunc) error {
 }
 
 func (f *FakeInformer) GetStore() cache.Store {
-	return cache.NewStore(func(obj any) (string, error) { return "", nil })
+	return cache.NewStore(func(_ any) (string, error) { return "", nil })
 }
 
 func (f *FakeInformer) GetController() cache.Controller {
@@ -95,7 +95,7 @@ func (f *FakeNamespaceInformer) AddEventHandlerWithResyncPeriod(_ cache.Resource
 }
 
 func (f *FakeNamespaceInformer) GetStore() cache.Store {
-	return cache.NewStore(func(obj any) (string, error) { return "", nil })
+	return cache.NewStore(func(_ any) (string, error) { return "", nil })
 }
 
 func (f *FakeNamespaceInformer) GetController() cache.Controller {
@@ -160,7 +160,7 @@ func (f *NoOpInformer) SetTransform(_ cache.TransformFunc) error {
 }
 
 func (f *NoOpInformer) GetStore() cache.Store {
-	return cache.NewStore(func(obj any) (string, error) { return "", nil })
+	return cache.NewStore(func(_ any) (string, error) { return "", nil })
 }
 
 func (f *NoOpInformer) GetController() cache.Controller {

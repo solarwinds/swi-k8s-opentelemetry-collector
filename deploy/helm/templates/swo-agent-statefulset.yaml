@@ -30,15 +30,23 @@ spec:
     spec:
       securityContext: {}
       nodeSelector:
+      {{- if .Values.swoagent.nodeSelector }}
+        {{ toYaml .Values.swoagent.nodeSelector | nindent 8 }}
+      {{- else }}
         kubernetes.io/arch: amd64
         kubernetes.io/os: linux
+      {{- end }}
+      {{- if .Values.swoagent.affinity }}
+      affinity:
+        {{- toYaml .Values.swoagent.affinity | nindent 8 }}
+      {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
       {{- end }}
       containers:
         - name: swo-agent
-          image: "{{ include "common.image" (tuple . .Values.swoagent (tuple "image" "swoagent") "solarwinds/swo-agent:v2.6.28") }}"
+          image: "{{ include "common.image" (tuple . .Values.swoagent (tuple "image" "swoagent")) }}"
           imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
@@ -50,6 +58,21 @@ spec:
                 secretKeyRef:
                   name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
+            - name: CLUSTER_UID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: CLUSTER_UID
+            - name: CLUSTER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: CLUSTER_NAME
+            - name: MANIFEST_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: MANIFEST_VERSION
           volumeMounts:
             - name: uams-client-workdir
               mountPath: /uamsclient/workdir

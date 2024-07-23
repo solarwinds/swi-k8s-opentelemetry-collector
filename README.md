@@ -34,8 +34,8 @@ Walk through Add Kubernetes wizard in [SolarWinds Observability](https://documen
 
 ## Limitations
 
-- Supported Kubernetes version: 1.18 and higher.
-  - Local Kubernetes deployments (e.q. Minikube) are not supported (although most of the functionality may be working).
+- Each Kubernetes version is supported for 15 months after its initial release. For example, version 1.27 released on April 11, 2023 is supported until July 11, 2024. For release dates for individual Kubernetes versions, see [Patch Releases](https://kubernetes.io/releases/patch-releases/#detailed-release-history-for-active-branches) in Kubernetes documentation. 
+  - Local Kubernetes deployments (e.q. Minikube, Docker Desktop) are not supported (although most of the functionality may be working).
   - Note: since Kubernetes v1.24 Docker container runtime will not be reporting pod level network metrics (`kubenet` and other network plumbing was removed from upstream as part of the dockershim removal/deprecation)
 - Supported architectures: Linux x86-64 (`amd64`), Linux ARM (`arm64`), Windows x86-64 (`amd64`).
 
@@ -101,7 +101,8 @@ Processors included in the collector:
 
 Once deployed to a Kubernetes cluster, the logs collection and processing configuration is stored as a ConfigMap under the `logs.config` key.
 
-To avoid processing an excessive amount of data, the `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
+#### Version v3.x 
+The `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
 
 ```yaml
 otel:
@@ -113,3 +114,45 @@ otel:
           - key: k8s.namespace.name
             value: ^.*$
 ```
+
+#### Version v4.x 
+The `swo-k8s-collector` collects all logs by default which might be intensive. To avoid processing an excessive amount of data, the `swo-k8s-collector` can define filter which will drop all unwanted logs. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs only from `kube-*` namespace:
+
+```yaml
+otel:
+  logs:
+    filter:
+      log_record:
+        - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
+```
+
+## Receive 3d party metrics 
+
+SWO K8s Collector has otlp service endpoint which is able to receive and send metrics into SWO. All incoming metrics are decorated with prefix `k8s.` and properly associated with current cluster.
+
+Service endpoint is provided in format
+```
+"<chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317"
+```
+
+### OpenTelemetry Collector configuration example
+In case you want to send data from your [OpenTelementry Collector](https://github.com/open-telemetry/opentelemetry-collector-contrib) into SWO you can either send them directly into [public otlp endpoint](https://documentation.solarwinds.com/en/success_center/observability/content/configure/configure-otel-directly.htm) or you can send them via our swo k8s collector to have better binding. To do that add following exporter into your configuration. 
+
+```yaml
+config:
+ exporters:
+   otlp:
+     endpoint: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
+```
+
+### Telegraf configuration example
+ [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics. 
+
+Telegraf metrics can be sent into our endpoint by adding following fragment to your values.yaml
+ 
+ ```yaml
+config:
+  outputs:  
+    - opentelemetry:
+        service_address: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
+ ```
