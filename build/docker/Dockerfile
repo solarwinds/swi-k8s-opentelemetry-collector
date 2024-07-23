@@ -1,8 +1,8 @@
-FROM docker.io/library/golang:1.22.5-bookworm as base
+FROM docker.io/library/golang:1.22.5-bookworm AS base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
-FROM base as builder
+FROM base AS builder
 
 RUN cd src/cmd && CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -trimpath -o ../../swi-k8s-opentelemetry-collector "-ldflags=-s -w"
 
@@ -11,18 +11,18 @@ SHELL ["/bin/bash", "-c"]
 ARG CREATE_VENDOR_DIR
 RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else cd src/cmd && go mod vendor -o /src/vendor ; fi
 
-FROM builder as tests
+FROM builder AS tests
 # run all tests for all go modules in `src` folder
 CMD cd src && find . -name go.mod -execdir go test ./... \;
 
-FROM debian:12.6 as journal
+FROM debian:12.6 AS journal
 RUN apt update
 RUN apt install -y systemd
 COPY /build/docker/copy-journalbinary.sh /script.sh
 RUN chmod +x /script.sh
 RUN /script.sh
 
-FROM base as wrapper
+FROM base AS wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 

@@ -33,7 +33,7 @@ func main() {
 	info := component.BuildInfo{
 		Command:     "swi-k8s-opentelemetry-collector",
 		Description: "SolarWinds distribution for OpenTelemetry",
-		Version:     "0.11.2",
+		Version:     "0.11.3",
 	}
 
 	set := otelcol.CollectorSettings{
@@ -61,7 +61,7 @@ func main() {
 }
 
 func runInteractive(params otelcol.CollectorSettings) error {
-	cmd := otelcol.NewCommandMustSetProvider(params)
+	cmd := otelcol.NewCommand(params)
 	if err := cmd.Execute(); err != nil {
 		log.Fatalf("collector server run finished with error: %v", err)
 	}
