@@ -26,7 +26,7 @@ func main() {
 	info := component.BuildInfo{
 		Command:     "swi-k8s-opentelemetry-collector",
 		Description: "SolarWinds distribution for OpenTelemetry",
-		Version:     "0.10.2",
+		Version:     "0.10.3",
 	}
 
 	if err := run(otelcol.CollectorSettings{BuildInfo: info, Factories: components}); err != nil {
