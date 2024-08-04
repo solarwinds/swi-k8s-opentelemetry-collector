@@ -938,3 +938,17 @@ opencost:
         serviceName: "{{ .Release.Name }}-prometheus-server"
     ui:
       enabled: false
+
+operator:
+  enabled: false
+  manager:
+    image:
+      repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+      tag: "0.105.0"
+    collectorImage:
+      repository: "solarwinds/swi-opentelemetry-collector"
+      tag: 0.11.3
+  admissionWebhooks:
+    certManager:
+      enabled: true
+    

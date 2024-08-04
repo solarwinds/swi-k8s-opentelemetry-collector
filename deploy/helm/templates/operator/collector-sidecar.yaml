@@ -1,0 +1,12 @@
+{{- if .Values.otel.events.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" (tuple . "-pods-config") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+data:
+  events.config: |
+{{ tpl (.Files.Get "pod-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
+{{- end }}
