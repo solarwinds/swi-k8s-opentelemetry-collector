@@ -51,7 +51,6 @@ require (
 	go.opentelemetry.io/collector/exporter v0.107.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.107.0
 	go.opentelemetry.io/collector/extension v0.107.0
-	go.opentelemetry.io/collector/extension/ballastextension v0.107.0
 	go.opentelemetry.io/collector/otelcol v0.107.0
 	go.opentelemetry.io/collector/processor v0.107.0
 	go.opentelemetry.io/collector/processor/batchprocessor v0.107.0
