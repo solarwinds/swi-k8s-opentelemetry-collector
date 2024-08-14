@@ -20,7 +20,6 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
-	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
 	"go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/confmap/provider/httpprovider"
@@ -33,7 +32,7 @@ func main() {
 	info := component.BuildInfo{
 		Command:     "swi-k8s-opentelemetry-collector",
 		Description: "SolarWinds distribution for OpenTelemetry",
-		Version:     "0.11.3",
+		Version:     "0.11.4",
 	}
 
 	set := otelcol.CollectorSettings{
@@ -47,9 +46,6 @@ func main() {
 					httpprovider.NewFactory(),
 					httpsprovider.NewFactory(),
 					yamlprovider.NewFactory(),
-				},
-				ConverterFactories: []confmap.ConverterFactory{
-					expandconverter.NewFactory(),
 				},
 			},
 		},

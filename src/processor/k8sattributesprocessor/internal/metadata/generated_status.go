@@ -8,6 +8,7 @@ import (
 
 var (
 	Type = component.MustNewType("swk8sattributes")
+	ScopeName = "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor"
 )
 
 

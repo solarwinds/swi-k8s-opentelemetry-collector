@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `restart_policy` to the `kube_pod_init_container_info` metric.
   - Added new metric `kube_pod_container_status_last_terminated_timestamp`.
   - For the list of all changes see the respective Git repositories.
+- Upgraded collector image to `0.11.4` which brings following changes:
+  - See Release notes for [0.11.4](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.4).
+  - Upgraded OTEL Collector to v0.107.0.
 
 
 ## [4.0.0-alpha.7] - 2024-07-23

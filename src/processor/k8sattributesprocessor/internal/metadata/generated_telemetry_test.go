@@ -49,14 +49,14 @@ func TestProviders(t *testing.T) {
 
 	meter := Meter(set)
 	if m, ok := meter.(mockMeter); ok {
-		require.Equal(t, "otelcol/k8sattributes", m.name)
+		require.Equal(t, "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor", m.name)
 	} else {
 		require.Fail(t, "returned Meter not mockMeter")
 	}
 
 	tracer := Tracer(set)
 	if m, ok := tracer.(mockTracer); ok {
-		require.Equal(t, "otelcol/k8sattributes", m.name)
+		require.Equal(t, "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor", m.name)
 	} else {
 		require.Fail(t, "returned Meter not mockTracer")
 	}
