@@ -101,6 +101,10 @@ spec:
                   name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
                   optional: true
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-common-env") }}

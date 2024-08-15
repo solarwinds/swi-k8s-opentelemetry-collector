@@ -25,8 +25,6 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
-  memory_ballast:
-{{ toYaml .Values.otel.metrics.memory_ballast | indent 4 }}
 
 processors:
   swk8sattributes:
@@ -1108,7 +1106,6 @@ service:
     - file_storage/sending_queue
 {{- end }}
     - health_check
-    - memory_ballast
   pipelines:
     metrics/otlp:
       exporters:

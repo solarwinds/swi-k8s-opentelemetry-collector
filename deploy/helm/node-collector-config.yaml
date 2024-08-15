@@ -27,10 +27,6 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
-{{- if .Values.otel.logs.memory_ballast }}
-  memory_ballast:
-{{ toYaml .Values.otel.logs.memory_ballast | indent 4 }}
-{{- end }}
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
   k8s_observer:
     auth_type: serviceAccount
@@ -609,9 +605,6 @@ service:
     - file_storage/sending_queue
 {{- end}}
     - health_check
-{{- if .Values.otel.logs.memory_ballast }}
-    - memory_ballast
-{{- end}}
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     - k8s_observer
 {{- end}}

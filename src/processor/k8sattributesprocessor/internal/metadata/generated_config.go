@@ -27,6 +27,7 @@ func (rac *ResourceAttributeConfig) Unmarshal(parser *confmap.Conf) error {
 type ResourceAttributesConfig struct {
 	ContainerID        ResourceAttributeConfig `mapstructure:"container.id"`
 	ContainerImageName ResourceAttributeConfig `mapstructure:"container.image.name"`
+	ContainerImageRepoDigests ResourceAttributeConfig `mapstructure:"container.image.repo_digests"`
 	ContainerImageTag  ResourceAttributeConfig `mapstructure:"container.image.tag"`
 	K8sClusterUID      ResourceAttributeConfig `mapstructure:"k8s.cluster.uid"`
 	K8sContainerName   ResourceAttributeConfig `mapstructure:"k8s.container.name"`
@@ -57,6 +58,9 @@ func DefaultResourceAttributesConfig() ResourceAttributesConfig {
 		},
 		ContainerImageName: ResourceAttributeConfig{
 			Enabled: true,
+		},
+		ContainerImageRepoDigests: ResourceAttributeConfig{
+			Enabled: false,
 		},
 		ContainerImageTag: ResourceAttributeConfig{
 			Enabled: true,

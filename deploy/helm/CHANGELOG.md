@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Upgraded the `kube-state-metrics` subchart from `5.15.2` to [5.25.1](https://github.com/prometheus-community/helm-charts/releases/tag/kube-state-metrics-5.25.1) which brought the following changes:
+  - Upgraded the `kube-state-metrics` image to [2.13.0](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.13.0).
+  - Added `restart_policy` to the `kube_pod_init_container_info` metric.
+  - Added new metric `kube_pod_container_status_last_terminated_timestamp`.
+  - For the list of all changes see the respective Git repositories.
+- Upgraded collector image to `0.11.4` which brings following changes:
+  - See Release notes for [0.11.4](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.4).
+  - Upgraded OTEL Collector to v0.107.0.
+  - Removed deprecated `ballastextension`. The collector now uses environment variable `GOMEMLIMIT`.
+- Upgraded SWO Agent image to `v2.9.3`
+
+### Fixed
+
+- Fixed a typo in filter syntax warning
+
+
 ## [4.0.0-alpha.7] - 2024-07-23
 
 ### Changed

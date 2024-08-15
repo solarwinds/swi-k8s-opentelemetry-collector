@@ -128,6 +128,7 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_pod_container_state_started | Gauge | seconds | Start time in unix timestamp for a pod container | native |
 | k8s.kube_pod_container_status_last_terminated_exitcode | Gauge |  | Describes the exit code for the last container in terminated state | native |
 | k8s.kube_pod_container_status_last_terminated_reason | Gauge  | | Describes the last reason the container was in terminated state | native |
+| k8s.kube_pod_container_status_last_terminated_timestamp | Gauge | seconds | Last terminated time for a pod container in unix timestamp | native |
 | k8s.kube_pod_container_status_ready | Gauge |  | Describes whether the containers readiness check succeeded | native |
 | k8s.kube_pod_container_status_restarts_total | Counter |  | The number of container restarts per container | native |
 | k8s.kube_pod_container_status_running | Gauge |  | Describes whether the container is currently in running state | native |
