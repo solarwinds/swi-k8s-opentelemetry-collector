@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.0-alpha.8] - 2024-08-15
+
 ### Changed
 
 - Upgraded the `kube-state-metrics` subchart from `5.15.2` to [5.25.1](https://github.com/prometheus-community/helm-charts/releases/tag/kube-state-metrics-5.25.1) which brought the following changes:
