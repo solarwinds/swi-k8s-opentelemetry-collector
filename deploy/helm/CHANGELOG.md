@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Added `otel.http_proxy_url` to support HTTP proxy
+
 ## [4.0.0-alpha.8] - 2024-08-15
 
 ### Changed
