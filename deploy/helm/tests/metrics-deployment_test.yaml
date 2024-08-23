@@ -92,6 +92,14 @@ tests:
     - equal:
           path: spec.template.spec.initContainers[0].image
           value: azurek8s.azure.io/marketplaceimages/owngrpcurl:v1.2.3@abcd
+  - it: otel-endpoint-check should be disabled when proxy is enabled
+    template: metrics-deployment.yaml
+    set:
+      otel.metrics.swi_endpoint_check: true
+      otel.https_proxy_url: "http://example.com"
+    asserts:
+    - notExists:
+        path: spec.template.spec.initContainers
   - it: Image prometheus-check should be correct in default state
     template: metrics-deployment.yaml
     set:

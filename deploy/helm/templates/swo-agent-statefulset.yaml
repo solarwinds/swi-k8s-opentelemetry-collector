@@ -73,6 +73,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "common.fullname" (tuple . "-common-env") }}
                   key: MANIFEST_VERSION
+            - name: HTTPS_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: HTTPS_PROXY
+                  optional: true
           volumeMounts:
             - name: uams-client-workdir
               mountPath: /uamsclient/workdir

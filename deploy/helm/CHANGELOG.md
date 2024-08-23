@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Added workaround for a bug introduced in OTEL Collector to v0.106.0.
+- Adjusted setting `otel.https_proxy_url` to be applied also to SWO Agent and to disable SolarWinds Observability OTEL endpoint check init container.
 
 ## [4.0.0-alpha.8] - 2024-08-15
 
