@@ -235,8 +235,10 @@ receivers:
   "persistentvolumes"
   "persistentvolumeclaims"
   "ingresses"
-  "virtualservices"
 }}
+{{- if .Capabilities.APIVersions.Has "networking.istio.io/v1alpha3" -}}
+{{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
+{{- end }}
 {{- $root := . }}
 {{- range $index, $resource := $arrayOfWatchedResources }}
       - name: {{ $resource }}
