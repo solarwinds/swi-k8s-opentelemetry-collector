@@ -697,7 +697,8 @@ Metrics config should match snapshot when fargate is enabled:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
         metricstransform/aggregate_pod_level:
           transforms:
           - action: insert
@@ -706,7 +707,8 @@ Metrics config should match snapshot when fargate is enabled:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
         metricstransform/preprocessing:
           transforms:
           - action: insert
@@ -1453,77 +1455,88 @@ Metrics config should match snapshot when fargate is enabled:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.kube_node_info
             new_name: k8s.cluster.nodes
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.status.condition.ready
             new_name: k8s.cluster.nodes.ready
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.status.condition.ready
             new_name: k8s.cluster.nodes.ready.avg
             operations:
             - action: aggregate_labels
               aggregation_type: mean
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.container.spec.memory.requests
             new_name: k8s.cluster.spec.memory.requests
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.container.spec.cpu.requests
             new_name: k8s.cluster.spec.cpu.requests
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.pod.status.phase.running_temp
             new_name: k8s.cluster.pods.running
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.cpu.capacity
             new_name: k8s.cluster.cpu.capacity
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.cpu.allocatable
             new_name: k8s.cluster.cpu.allocatable
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.memory.capacity
             new_name: k8s.cluster.memory.capacity
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.memory.allocatable
             new_name: k8s.cluster.memory.allocatable
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             experimental_match_labels:
               scrape_job: .*apiservers.*
@@ -1553,14 +1566,16 @@ Metrics config should match snapshot when fargate is enabled:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: apiserver_request_total
             new_name: apiserver_request_total_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             experimental_match_labels:
               owner_is_controller: "true"
@@ -2898,7 +2913,8 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
         metricstransform/aggregate_pod_level:
           transforms:
           - action: insert
@@ -2907,7 +2923,8 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
         metricstransform/preprocessing:
           transforms:
           - action: insert
@@ -3654,77 +3671,88 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.kube_node_info
             new_name: k8s.cluster.nodes
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.status.condition.ready
             new_name: k8s.cluster.nodes.ready
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.status.condition.ready
             new_name: k8s.cluster.nodes.ready.avg
             operations:
             - action: aggregate_labels
               aggregation_type: mean
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.container.spec.memory.requests
             new_name: k8s.cluster.spec.memory.requests
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.container.spec.cpu.requests
             new_name: k8s.cluster.spec.cpu.requests
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.pod.status.phase.running_temp
             new_name: k8s.cluster.pods.running
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.cpu.capacity
             new_name: k8s.cluster.cpu.capacity
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.cpu.allocatable
             new_name: k8s.cluster.cpu.allocatable
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.memory.capacity
             new_name: k8s.cluster.memory.capacity
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.memory.allocatable
             new_name: k8s.cluster.memory.allocatable
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             experimental_match_labels:
               scrape_job: .*apiservers.*
@@ -3754,14 +3782,16 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: apiserver_request_total
             new_name: apiserver_request_total_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             experimental_match_labels:
               owner_is_controller: "true"
@@ -5041,7 +5071,8 @@ Metrics config should match snapshot when using default values:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
         metricstransform/aggregate_pod_level:
           transforms:
           - action: insert
@@ -5050,7 +5081,8 @@ Metrics config should match snapshot when using default values:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
         metricstransform/preprocessing:
           transforms:
           - action: insert
@@ -5797,77 +5829,88 @@ Metrics config should match snapshot when using default values:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.kube_node_info
             new_name: k8s.cluster.nodes
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.status.condition.ready
             new_name: k8s.cluster.nodes.ready
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.status.condition.ready
             new_name: k8s.cluster.nodes.ready.avg
             operations:
             - action: aggregate_labels
               aggregation_type: mean
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.container.spec.memory.requests
             new_name: k8s.cluster.spec.memory.requests
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.container.spec.cpu.requests
             new_name: k8s.cluster.spec.cpu.requests
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.pod.status.phase.running_temp
             new_name: k8s.cluster.pods.running
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.cpu.capacity
             new_name: k8s.cluster.cpu.capacity
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.cpu.allocatable
             new_name: k8s.cluster.cpu.allocatable
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.memory.capacity
             new_name: k8s.cluster.memory.capacity
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: k8s.node.memory.allocatable
             new_name: k8s.cluster.memory.allocatable
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             experimental_match_labels:
               scrape_job: .*apiservers.*
@@ -5897,14 +5940,16 @@ Metrics config should match snapshot when using default values:
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             include: apiserver_request_total
             new_name: apiserver_request_total_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: []
+              label_set:
+              - dummy_label_workaround
           - action: insert
             experimental_match_labels:
               owner_is_controller: "true"

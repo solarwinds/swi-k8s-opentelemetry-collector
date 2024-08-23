@@ -15,18 +15,18 @@ Development documentation: [development.md](doc/development.md)
 
 This repository contains:
 
-- Source files for Helm chart `swo-k8s-collector`, used for collecting metrics (provided by existing Prometheus server), events and logs and exporting them to SolarWinds Observability platform.
+- Source files for Helm chart `swo-k8s-collector`, used for collecting metrics, events and logs and exporting them to SolarWinds Observability platform.
 - Dockerfile for an image published to Docker hub, that is deployed as part of Kubernetes monitoring
 - All related sources that are built into that:
-  - Custom OpenTelemetry Collector processors  
+  - Custom OpenTelemetry Collector processors
   - OpenTelemetry Collector configuration
 
 Components that are being deployed:
 
 - Service account - identity of deployed pods
-- Deployment - customized OpenTelemetry Collector deployment, configured to poll Prometheus instance(s)
+- Deployments - customized OpenTelemetry Collector deployments, configured to poll Kubernetes metrics and events
 - ConfigMap - configuration of OpenTelemetry Collector
-- DaemonSet - customized OpenTelemetry Collector deployment, configured to poll container logs
+- DaemonSet - customized OpenTelemetry Collector deployment, configured to poll container logs and Prometheus metrics exposed by k8s workloads
 
 ## Installation
 
@@ -47,61 +47,39 @@ Internally, it contains [OpenTelemetry Collector configuration](https://opentele
 
 **WARNING: Custom modifications to OpenTelemetry Collector configurations can lead to unexpected `swo-k8s-collector` behavior, data loss, and subsequent entity ingestion failures on the Solarwinds Observability platform side.**
 
+### Mandatory configuration
+
+In order to deploy the Helm chart, you need to prepare:
+
+- A secret called `solarwinds-api-token` with API token for sending data to SolarWinds Observability
+- A Helm chart configuration:
+
+  ```yaml
+  otel:
+      endpoint: <solarwinds-observability-otel-endpoint>
+  cluster:
+      name: <cluster-display-name>
+      uid: <unique-cluster-identifier>
+  ```
+
 ### Metrics
 
-The `swo-k8s-collector` collects metrics from a Prometheus instance. To configure its address, set
+By default, the `swo-k8s-collector` collects a subset of `kube-state-metrics` metrics and metrics exposed by workloads that are annotated with `prometheus.io/scrape: true`.
 
-```yaml
-otel:
-  metrics:
-    prometheus:
-      url: <some_address>
-```
-
-Alternatively, **for testing purposes**, you can also let the collector deploy a Prometheus server for you.
-
-```yaml
-prometheus:
-  enabled: true
-```
+To configure the autodiscovery, see settings in the `otel.metrics.autodiscovery.prometheusEndpoints` section of the [values.yaml](deploy/helm/values.yaml).
 
 Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
 
-In order to reduce the size of the collected data, the `swo-k8s-collector` collects only selected metrics that are key for successful entity ingestion on the SolarWinds Observability side. The list of observed metrics can be extended by setting `otel.metrics.extra_scrape_metrics` value. Example:
-
-```yaml
-otel:
-  metrics:
-    extra_scrape_metrics:
-      - node_cpu_seconds_total
-      - node_cpu_guest_seconds_total
-```
-
-The list of metrics collected by default: [exported_metrics.md](doc/exported_metrics.md)
+In order to reduce the size of the collected data, the `swo-k8s-collector` collects only selected `kube-state-metrics` metrics that are key for successful entity ingestion on the SolarWinds Observability side. The list of metrics collected by default: [exported_metrics.md](doc/exported_metrics.md)
 
 Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
-
-Processors included in the collector:
-
-- [attributes](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/attributesprocessor)
-- [batch](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor)
-- [cumulativetodelta](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/cumulativetodeltaprocessor)
-- [deltatorate](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/deltatorateprocessor)
-- [experimental_metricsgeneration](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricsgenerationprocessor)
-- [filter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor)
-- [groupbyattrs](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/groupbyattrsprocessor)
-- [memory_limiter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor)
-- [metricstransform](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/metricstransformprocessor)
-- [prometheustypeconvert](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/prometheustypeconverterprocessor)
-- [resource](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourceprocessor)
-- [transform](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/transformprocessor)
-- [swmetricstransform](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/src/processor/swmetricstransformprocessor)
 
 ### Logs
 
 Once deployed to a Kubernetes cluster, the logs collection and processing configuration is stored as a ConfigMap under the `logs.config` key.
 
-#### Version v3.x 
+#### Version v3.x
+
 The `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
 
 ```yaml
@@ -115,8 +93,11 @@ otel:
             value: ^.*$
 ```
 
-#### Version v4.x 
-The `swo-k8s-collector` collects all logs by default which might be intensive. To avoid processing an excessive amount of data, the `swo-k8s-collector` can define filter which will drop all unwanted logs. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs only from `kube-*` namespace:
+#### Version v4.x
+
+The `swo-k8s-collector` collects all logs by default which might be intensive. To avoid processing an excessive amount of data, the `swo-k8s-collector` can define filter which will drop all unwanted logs. This behavior can be modified by setting `otel.logs.filter` value.
+
+An example for scraping container logs only from `kube-*` namespace:
 
 ```yaml
 otel:
@@ -126,33 +107,49 @@ otel:
         - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
 ```
 
-## Receive 3d party metrics 
+An example for scraping container logs only from namespaces `my-custom-namespace` or `my-other-namespace` while excluding istio logs related to some of the successful HTTP requests:
 
-SWO K8s Collector has otlp service endpoint which is able to receive and send metrics into SWO. All incoming metrics are decorated with prefix `k8s.` and properly associated with current cluster.
+```yaml
+otel:
+  logs:
+    filter:
+      log_record:
+        - not(IsMatch(resource.attributes["k8s.namespace.name"], "(^my-custom-namespace$)|(^my-other-namespace$)"))
+        - |
+          resource.attributes["k8s.container.name"] == "istio-proxy" and
+          IsMatch(body, "\\[[^\\]]*\\] \"\\S+ \\S+ HTTP/\\d(\\.\\d)*\" 200.*")
+```
+
+## Receive 3rd party metrics
+
+SWO K8s Collector has an OTEL service endpoint which is able to receive and send metrics into SWO. All incoming metrics are decorated with prefix `k8s.` and properly associated with current cluster.
 
 Service endpoint is provided in format
-```
+
+```text
 "<chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317"
 ```
 
 ### OpenTelemetry Collector configuration example
-In case you want to send data from your [OpenTelementry Collector](https://github.com/open-telemetry/opentelemetry-collector-contrib) into SWO you can either send them directly into [public otlp endpoint](https://documentation.solarwinds.com/en/success_center/observability/content/configure/configure-otel-directly.htm) or you can send them via our swo k8s collector to have better binding. To do that add following exporter into your configuration. 
+
+In case you want to send data from your own [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector-contrib) into SWO you can either send them directly into [public OTLP endpoint](https://documentation.solarwinds.com/en/success_center/observability/content/configure/configure-otel-directly.htm) or you can send them via our `swo-k8s-collector` to have better binding to other data available in SolarWinds Observability. To do that add following exporter into your configuration.
 
 ```yaml
 config:
- exporters:
-   otlp:
-     endpoint: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
+  exporters:
+    otlp:
+      endpoint: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
 ```
 
 ### Telegraf configuration example
- [Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics. 
 
-Telegraf metrics can be sent into our endpoint by adding following fragment to your values.yaml
- 
- ```yaml
+[Telegraf](https://github.com/influxdata/telegraf) is a plugin-driven server agent used for collecting and reporting metrics.
+
+Telegraf metrics can be sent into our endpoint by adding following fragment to your `values.yaml`
+
+```yaml
 config:
-  outputs:  
+  outputs:
     - opentelemetry:
         service_address: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
- ```
+```
