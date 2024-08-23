@@ -41,11 +41,6 @@
   ```shell
   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
   ```
-- OpenCost community Helm repo 
-
-  ``` shell
-  helm repo add opencost https://opencost.github.io/opencost-helm-chart
-  ```
 
 - [Docker desktop](https://www.docker.com/products/docker-desktop) with Kubernetes enabled
 

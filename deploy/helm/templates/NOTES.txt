@@ -1,7 +1,7 @@
 {{- if and .Values.otel.metrics.extra_scrape_metrics .Values.prometheus -}}
 {{- if .Values.prometheus.enabled -}}
-WARNING: you rely on bundled Prometheus, but it was removed in this version. To scrape custom metrics you can deploy your own instance of Prometheus and set `.otel.metrics.prometheus.url`.
-
+WARNING: Prometheus is no longer included in this chart. To scrape custom metrics from your own instance, please set `.otel.metrics.prometheus.url`.
+{{- println -}}
 {{- end -}}
 {{- end -}}
 
@@ -74,5 +74,20 @@ WARNING: Configuration `otel.metrics.memory_ballast` was deprecated. Please remo
 
 {{- if .Values.otel.logs.memory_ballast -}}
 WARNING: Configuration `otel.logs.memory_ballast` was deprecated. Please remove the custom configuration.
+{{- println -}}
+{{- end -}}
+
+{{- if .Values.prometheus -}}
+WARNING: Configuration `prometheus` was deprecated. Please remove the custom configuration.
+{{- println -}}
+{{- end -}}
+
+{{- if .Values.opencost -}}
+WARNING: Configuration `opencost` was deprecated. Please remove the custom configuration.
+{{- println -}}
+{{- end -}}
+
+{{- if index .Values "prometheus-node-exporter" -}}
+WARNING: Configuration `prometheus-node-exporter` was deprecated. Please remove the custom configuration.
 {{- println -}}
 {{- end -}}
