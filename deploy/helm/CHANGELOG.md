@@ -24,12 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - See Release notes for [0.11.4](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.4).
   - Upgraded OTEL Collector to v0.107.0.
   - Removed deprecated `ballastextension`. The collector now uses environment variable `GOMEMLIMIT`.
+  - Bumped Go builder image to 1.22.6.
 - Upgraded SWO Agent image to `v2.9.3`
 
 ### Fixed
 
 - Fixed a typo in filter syntax warning
 
+## [3.4.2] - 2024-07-31
+
+### Changed
+
+- Upgraded collector image to `0.10.3` which brings following changes:
+  - Bumped 3rd party dependencies and Docker images.
 
 ## [4.0.0-alpha.7] - 2024-07-23
 
