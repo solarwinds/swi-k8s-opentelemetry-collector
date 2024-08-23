@@ -236,7 +236,7 @@ receivers:
   "persistentvolumeclaims"
   "ingresses"
 }}
-{{- if .Capabilities.APIVersions.Has "networking.istio.io/v1alpha3" -}}
+{{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
 {{- end }}
 {{- $root := . }}
