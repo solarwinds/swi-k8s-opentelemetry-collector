@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Upgraded grpcurl image to `v1.9.1`
+
 ### Fixed
 
 - Added workaround for a bug introduced in OTEL Collector to v0.106.0.
