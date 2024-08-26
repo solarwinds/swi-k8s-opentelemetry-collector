@@ -457,77 +457,88 @@ processors:
         new_name: k8s.cluster.pods
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.kube_node_info
         action: insert
         new_name: k8s.cluster.nodes
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.node.status.condition.ready
         action: insert
         new_name: k8s.cluster.nodes.ready
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.node.status.condition.ready
         action: insert
         new_name: k8s.cluster.nodes.ready.avg
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: mean
       - include: k8s.container.spec.memory.requests
         action: insert
         new_name: k8s.cluster.spec.memory.requests
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.container.spec.cpu.requests
         action: insert
         new_name: k8s.cluster.spec.cpu.requests
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.pod.status.phase.running_temp
         action: insert
         new_name: k8s.cluster.pods.running
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.node.cpu.capacity
         action: insert
         new_name: k8s.cluster.cpu.capacity
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.node.cpu.allocatable
         action: insert
         new_name: k8s.cluster.cpu.allocatable
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.node.memory.capacity
         action: insert
         new_name: k8s.cluster.memory.capacity
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.node.memory.allocatable
         action: insert
         new_name: k8s.cluster.memory.allocatable
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
         action: insert
@@ -556,14 +567,16 @@ processors:
         new_name: apiserver_request_not_failed_temp
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
       - include: apiserver_request_total
         action: insert
         new_name: apiserver_request_total_temp
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
 
       # Job metrics
@@ -633,7 +646,8 @@ processors:
         new_name: k8s.node.pods
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
   groupbyattrs/pod:
     keys:
@@ -647,7 +661,8 @@ processors:
         new_name: k8s.pod.containers
         operations:
           - action: aggregate_labels
-            label_set: []
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
             aggregation_type: sum
   groupbyattrs/all:
     keys:
@@ -796,21 +811,6 @@ processors:
 
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
-{{- if .Values.opencost.enabled }}
-  filter/opencost-metrics:
-    metrics:
-      metric:
-        - |
-          not(
-          name == "container_cpu_allocation" or
-          name == "container_gpu_allocation" or
-          name == "container_memory_allocation_bytes" or
-          name == "pod_pvc_allocation" or
-          name == "node_gpu_count" or
-          IsMatch(name, "^kubecost_.*$") or
-          IsMatch(name, "^.*_cost$") 
-          )
-{{- end }}
   filter/kube-state-metrics:
     metrics:
       metric:
@@ -944,21 +944,6 @@ receivers:
     protocols:
       grpc:
         endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
-{{- if .Values.opencost.enabled }}
-  prometheus/opencost:
-    config:
-      scrape_configs:
-        - job_name: opencost
-          honor_timestamps: false
-          honor_labels: true
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          scrape_timeout: 10s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-              - ${OPENCOST_URL}
-{{- end }}
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
   prometheus/prometheus-server:
     config:
@@ -1127,17 +1112,6 @@ service:
         - memory_limiter
       receivers:
         - prometheus/prometheus-server
-{{- end }}
-{{- if .Values.opencost.enabled }}
-    metrics/opencost:
-      exporters:
-        - forward/prometheus
-      processors:
-        - memory_limiter
-        - filter/opencost-metrics
-        - metricstransform/rename-otel
-      receivers:
-        - prometheus/opencost
 {{- end }}
     metrics/kubestatemetrics:
       exporters:

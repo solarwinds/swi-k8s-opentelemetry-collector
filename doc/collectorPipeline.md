@@ -24,13 +24,6 @@ stateDiagram-v2
       mc_r2 --> mc_e2 : processors
     }
 
-    mc_metricsOpencostPipeline: 'metrics/opencost' pipeline
-    state mc_metricsOpencostPipeline {
-      mc_r3: 'prometheus/opencost' receiver
-      mc_e3: 'forward/prometheus' connector
-      mc_r3 --> mc_e3 : processors
-    }
-
     mc_metricsOtlpPipeline: 'metrics/otlp' pipeline
     state mc_metricsOtlpPipeline {
       mc_r4: 'otlp' receiver
@@ -63,7 +56,6 @@ stateDiagram-v2
     mc_metricsPrometheusPipeline --> mc_metricsPipeline
 
     mc_metricsKubestatemetricsPipeline --> mc_metricsPrometheusPipeline
-    mc_metricsOpencostPipeline --> mc_metricsPrometheusPipeline
     mc_metricsPrometheusNodeMetricsPipeline --> mc_metricsPrometheusPipeline
     mc_metricsPrometheusServerPipeline --> mc_metricsPrometheusPipeline
   }
@@ -81,11 +73,9 @@ stateDiagram-v2
   }
 
   kubestatemetricsDeployment: KubeStateMetrics Deployment
-  opencostDeployment: OpenCost Deployment
   ebpfreducerDeployment: eBPF Reducer Deployment
 
   kubestatemetricsDeployment --> mc_metricsKubestatemetricsPipeline
-  opencostDeployment --> mc_metricsOpencostPipeline
   ebpfreducerDeployment --> mc_metricsOtlpPipeline
 
   nodeCollectorDaemonset: NodeCollector DaemonSet

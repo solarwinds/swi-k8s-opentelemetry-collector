@@ -61,7 +61,7 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: fullstorydev/grpcurl:v1.8.9
+          value: fullstorydev/grpcurl:v1.9.1
   - it: Image otel-endpoint-check should be correct when overriden repository
     template: metrics-deployment.yaml
     set:
@@ -70,7 +70,7 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: aws/test-grpcurl:v1.8.9
+          value: aws/test-grpcurl:v1.9.1
   - it: Image otel-endpoint-check should be correct when overriden tag
     template: metrics-deployment.yaml
     set:
@@ -92,6 +92,14 @@ tests:
     - equal:
           path: spec.template.spec.initContainers[0].image
           value: azurek8s.azure.io/marketplaceimages/owngrpcurl:v1.2.3@abcd
+  - it: otel-endpoint-check should be disabled when proxy is enabled
+    template: metrics-deployment.yaml
+    set:
+      otel.metrics.swi_endpoint_check: true
+      otel.https_proxy_url: "http://example.com"
+    asserts:
+    - notExists:
+        path: spec.template.spec.initContainers
   - it: Image prometheus-check should be correct in default state
     template: metrics-deployment.yaml
     set:
