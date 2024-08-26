@@ -811,21 +811,6 @@ processors:
 
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
-{{- if .Values.opencost.enabled }}
-  filter/opencost-metrics:
-    metrics:
-      metric:
-        - |
-          not(
-          name == "container_cpu_allocation" or
-          name == "container_gpu_allocation" or
-          name == "container_memory_allocation_bytes" or
-          name == "pod_pvc_allocation" or
-          name == "node_gpu_count" or
-          IsMatch(name, "^kubecost_.*$") or
-          IsMatch(name, "^.*_cost$") 
-          )
-{{- end }}
   filter/kube-state-metrics:
     metrics:
       metric:
@@ -959,21 +944,6 @@ receivers:
     protocols:
       grpc:
         endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
-{{- if .Values.opencost.enabled }}
-  prometheus/opencost:
-    config:
-      scrape_configs:
-        - job_name: opencost
-          honor_timestamps: false
-          honor_labels: true
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          scrape_timeout: 10s
-          metrics_path: /metrics
-          scheme: http
-          static_configs:
-            - targets:
-              - ${OPENCOST_URL}
-{{- end }}
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
   prometheus/prometheus-server:
     config:
@@ -1142,17 +1112,6 @@ service:
         - memory_limiter
       receivers:
         - prometheus/prometheus-server
-{{- end }}
-{{- if .Values.opencost.enabled }}
-    metrics/opencost:
-      exporters:
-        - forward/prometheus
-      processors:
-        - memory_limiter
-        - filter/opencost-metrics
-        - metricstransform/rename-otel
-      receivers:
-        - prometheus/opencost
 {{- end }}
     metrics/kubestatemetrics:
       exporters:

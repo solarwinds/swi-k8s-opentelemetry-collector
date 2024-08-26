@@ -47,7 +47,6 @@ jobs:
       - name: Add dependency chart repos
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add opencost https://opencost.github.io/opencost-helm-chart
 
       - name: Deploy services using Skaffold
         run: skaffold deploy --build-artifacts=/tmp/tags.json
@@ -116,7 +115,6 @@ jobs:
       - name: Add dependency chart repos
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add opencost https://opencost.github.io/opencost-helm-chart
 
       - name: Build
         run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
@@ -142,8 +140,6 @@ jobs:
       - name: Add dependency chart repos
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add opencost https://opencost.github.io/opencost-helm-chart
-
 
       - name: Download chart dependencies before linting
         run: helm dependency build deploy/helm
@@ -173,7 +169,6 @@ jobs:
       - name: Add dependency chart repos
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add opencost https://opencost.github.io/opencost-helm-chart
           helm repo add solarwinds https://helm.solarwinds.com
           helm repo update
 
@@ -245,7 +240,6 @@ jobs:
             --set cluster.uid=test-cluster \
             --set otel.endpoint=timeseries-mock-service:9082 \
             --set otel.api_token=not_set \
-            --set prometheus.enabled=true \
             --set autoupdate.enabled=true \
             --set autoupdate.devel=true \
             --set otel.metrics.swi_endpoint_check=false \

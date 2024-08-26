@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Upgraded grpcurl image to `v1.9.1`
+- Breaking: Removed `prometheus`, `prometheus-node-exporter` and `opencost` sub-charts.
 
 ### Fixed
 
