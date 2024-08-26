@@ -121,7 +121,8 @@ processors:
             - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolume"
             - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress"
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
 
             # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
@@ -148,6 +149,7 @@ processors:
       - k8s.persistentvolume.name
       - k8s.persistentvolumeclaim.name
       - k8s.ingress.name
+      - sw.k8s.ingress.type
 {{- end }}
 
   resource/events:
@@ -235,6 +237,9 @@ receivers:
   "persistentvolumeclaims"
   "ingresses"
 }}
+{{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
+{{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
+{{- end }}
 {{- $root := . }}
 {{- range $index, $resource := $arrayOfWatchedResources }}
       - name: {{ $resource }}

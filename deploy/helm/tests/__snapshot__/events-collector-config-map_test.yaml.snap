@@ -689,6 +689,7 @@ Events config should match snapshot when using default values:
           - k8s.persistentvolume.name
           - k8s.persistentvolumeclaim.name
           - k8s.ingress.name
+          - sw.k8s.ingress.type
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -954,7 +955,9 @@ Events config should match snapshot when using default values:
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
             - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress"
+              == "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
+              "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
