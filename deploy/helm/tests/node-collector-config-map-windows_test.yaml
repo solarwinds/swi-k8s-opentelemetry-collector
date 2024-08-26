@@ -9,3 +9,15 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Node collector config for windows nodes should match snapshot when using legacy filter
+    template: node-collector-config-map-windows.yaml
+    set:
+      otel.logs.filter:
+        include:
+          match_type: regexp
+          record_attributes:
+            - key: k8s.namespace.name
+              value: ^.*$
+    asserts:
+      - matchSnapshot:
+          path: data
