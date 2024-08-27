@@ -105,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - By default we are now gathering all logs.
-- Fix collector version on metric k8s.cluster.vetrsion
+- Fix collector version on metric `k8s.cluster.version`.
 
 
 ## [4.0.0-alpha.3] - 2024-06-25
