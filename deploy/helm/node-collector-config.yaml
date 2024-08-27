@@ -225,8 +225,13 @@ processors:
     log_statements:
       - context: log
         statements:
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" }}
           - set( attributes["host.name"], attributes["k8s.pod.name"])
           - set( attributes["service.name"], attributes["k8s.container.name"])
+{{- else }}
+          - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
+          - set( attributes["service.name"], resource.attributes["k8s.container.name"])
+{{- end }}
 
   batch/logs:
 {{ toYaml .Values.otel.logs.batch | indent 4 }}
@@ -405,6 +410,7 @@ receivers:
     fingerprint_size: {{ .Values.otel.logs.receiver.fingerprint_size }}
     encoding: {{ .Values.otel.logs.receiver.encoding }}
     poll_interval: {{ .Values.otel.logs.receiver.poll_interval }}
+{{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" }}
     operators:
       # Find out which format is used by kubernetes
       - type: router
@@ -511,6 +517,26 @@ receivers:
       - type: move
         from: body.log
         to: body
+{{- else }}
+    operators:
+# The 'container' operator has hardcoded that 'log.file.path' must use '/' as a separator, whic is not true on Windows
+{{- if (.isWindows) }}
+      - type: add
+        field: attributes["log.file.path.windows"]
+        value: 'EXPR(replace(attributes["log.file.path"], "\\", "/"))'
+      - type: remove
+        field: attributes["log.file.path"]
+      - type: move
+        from: attributes["log.file.path.windows"]
+        to: attributes["log.file.path"]
+{{- end }}
+      - id: container-parser
+        type: container
+      - type: remove
+        field: resource["k8s.container.restart_count"]
+      - type: remove
+        field: attributes["log.file.path"]
+{{- end }}
 
 {{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
   receiver_creator/discovery:

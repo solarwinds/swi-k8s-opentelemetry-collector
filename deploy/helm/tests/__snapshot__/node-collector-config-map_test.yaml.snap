@@ -933,8 +933,8 @@ Custom logs filter with new syntax:
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], attributes["k8s.pod.name"])
-            - set( attributes["service.name"], attributes["k8s.container.name"])
+            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -955,93 +955,12 @@ Custom logs filter with new syntax:
           max_concurrent_files: 10
           max_log_size: 1MiB
           operators:
-          - id: get-format
-            routes:
-            - expr: body matches "^\\{"
-              output: parser-docker
-            - expr: body matches "^[^ Z]+ "
-              output: parser-crio
-            - expr: body matches "^[^ Z]+Z"
-              output: parser-containerd
-            type: router
-          - id: parser-crio
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: "2006-01-02T15:04:05.999999999-07:00"
-              layout_type: gotime
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-containerd
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-docker
-            output: merge-docker-lines
-            parse_to: body
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: json_parser
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-docker-lines
-            is_last_entry: body.log matches "\n$"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-cri-lines
-            is_last_entry: body.logtag == "F"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            overwrite_with: newest
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-multiline-logs
-            is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
-            max_unmatched_batch_size: 1
-            output: extract-metadata-from-filepath
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - id: extract-metadata-from-filepath
-            parse_from: attributes["log.file.path"]
-            regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$
-            type: regex_parser
-          - from: body.stream
-            id: move-attributes
-            to: attributes["stream"]
-            type: move
-          - from: attributes.container_name
-            to: attributes["k8s.container.name"]
-            type: move
-          - from: attributes.namespace
-            to: attributes["k8s.namespace.name"]
-            type: move
-          - from: attributes.pod_name
-            to: attributes["k8s.pod.name"]
-            type: move
-          - field: attributes.run_id
+          - id: container-parser
+            type: container
+          - field: resource["k8s.container.restart_count"]
             type: remove
-          - from: attributes.uid
-            to: attributes["k8s.pod.uid"]
-            type: move
           - field: attributes["log.file.path"]
             type: remove
-          - field: body.time
-            type: remove
-          - from: body.log
-            to: body
-            type: move
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
@@ -3342,8 +3261,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], attributes["k8s.pod.name"])
-            - set( attributes["service.name"], attributes["k8s.container.name"])
+            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -3364,93 +3283,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
           max_concurrent_files: 10
           max_log_size: 1MiB
           operators:
-          - id: get-format
-            routes:
-            - expr: body matches "^\\{"
-              output: parser-docker
-            - expr: body matches "^[^ Z]+ "
-              output: parser-crio
-            - expr: body matches "^[^ Z]+Z"
-              output: parser-containerd
-            type: router
-          - id: parser-crio
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: "2006-01-02T15:04:05.999999999-07:00"
-              layout_type: gotime
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-containerd
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-docker
-            output: merge-docker-lines
-            parse_to: body
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: json_parser
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-docker-lines
-            is_last_entry: body.log matches "\n$"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-cri-lines
-            is_last_entry: body.logtag == "F"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            overwrite_with: newest
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-multiline-logs
-            is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
-            max_unmatched_batch_size: 1
-            output: extract-metadata-from-filepath
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - id: extract-metadata-from-filepath
-            parse_from: attributes["log.file.path"]
-            regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$
-            type: regex_parser
-          - from: body.stream
-            id: move-attributes
-            to: attributes["stream"]
-            type: move
-          - from: attributes.container_name
-            to: attributes["k8s.container.name"]
-            type: move
-          - from: attributes.namespace
-            to: attributes["k8s.namespace.name"]
-            type: move
-          - from: attributes.pod_name
-            to: attributes["k8s.pod.name"]
-            type: move
-          - field: attributes.run_id
+          - id: container-parser
+            type: container
+          - field: resource["k8s.container.restart_count"]
             type: remove
-          - from: attributes.uid
-            to: attributes["k8s.pod.uid"]
-            type: move
           - field: attributes["log.file.path"]
             type: remove
-          - field: body.time
-            type: remove
-          - from: body.log
-            to: body
-            type: move
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
@@ -4504,8 +4342,8 @@ Node collector config should match snapshot when fargate is enabled:
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], attributes["k8s.pod.name"])
-            - set( attributes["service.name"], attributes["k8s.container.name"])
+            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -4526,93 +4364,12 @@ Node collector config should match snapshot when fargate is enabled:
           max_concurrent_files: 10
           max_log_size: 1MiB
           operators:
-          - id: get-format
-            routes:
-            - expr: body matches "^\\{"
-              output: parser-docker
-            - expr: body matches "^[^ Z]+ "
-              output: parser-crio
-            - expr: body matches "^[^ Z]+Z"
-              output: parser-containerd
-            type: router
-          - id: parser-crio
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: "2006-01-02T15:04:05.999999999-07:00"
-              layout_type: gotime
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-containerd
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-docker
-            output: merge-docker-lines
-            parse_to: body
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: json_parser
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-docker-lines
-            is_last_entry: body.log matches "\n$"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-cri-lines
-            is_last_entry: body.logtag == "F"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            overwrite_with: newest
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-multiline-logs
-            is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
-            max_unmatched_batch_size: 1
-            output: extract-metadata-from-filepath
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - id: extract-metadata-from-filepath
-            parse_from: attributes["log.file.path"]
-            regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$
-            type: regex_parser
-          - from: body.stream
-            id: move-attributes
-            to: attributes["stream"]
-            type: move
-          - from: attributes.container_name
-            to: attributes["k8s.container.name"]
-            type: move
-          - from: attributes.namespace
-            to: attributes["k8s.namespace.name"]
-            type: move
-          - from: attributes.pod_name
-            to: attributes["k8s.pod.name"]
-            type: move
-          - field: attributes.run_id
+          - id: container-parser
+            type: container
+          - field: resource["k8s.container.restart_count"]
             type: remove
-          - from: attributes.uid
-            to: attributes["k8s.pod.uid"]
-            type: move
           - field: attributes["log.file.path"]
             type: remove
-          - field: body.time
-            type: remove
-          - from: body.log
-            to: body
-            type: move
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
@@ -5635,8 +5392,8 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], attributes["k8s.pod.name"])
-            - set( attributes["service.name"], attributes["k8s.container.name"])
+            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -5657,93 +5414,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           max_concurrent_files: 10
           max_log_size: 1MiB
           operators:
-          - id: get-format
-            routes:
-            - expr: body matches "^\\{"
-              output: parser-docker
-            - expr: body matches "^[^ Z]+ "
-              output: parser-crio
-            - expr: body matches "^[^ Z]+Z"
-              output: parser-containerd
-            type: router
-          - id: parser-crio
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: "2006-01-02T15:04:05.999999999-07:00"
-              layout_type: gotime
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-containerd
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-docker
-            output: merge-docker-lines
-            parse_to: body
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: json_parser
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-docker-lines
-            is_last_entry: body.log matches "\n$"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-cri-lines
-            is_last_entry: body.logtag == "F"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            overwrite_with: newest
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-multiline-logs
-            is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
-            max_unmatched_batch_size: 1
-            output: extract-metadata-from-filepath
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - id: extract-metadata-from-filepath
-            parse_from: attributes["log.file.path"]
-            regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$
-            type: regex_parser
-          - from: body.stream
-            id: move-attributes
-            to: attributes["stream"]
-            type: move
-          - from: attributes.container_name
-            to: attributes["k8s.container.name"]
-            type: move
-          - from: attributes.namespace
-            to: attributes["k8s.namespace.name"]
-            type: move
-          - from: attributes.pod_name
-            to: attributes["k8s.pod.name"]
-            type: move
-          - field: attributes.run_id
+          - id: container-parser
+            type: container
+          - field: resource["k8s.container.restart_count"]
             type: remove
-          - from: attributes.uid
-            to: attributes["k8s.pod.uid"]
-            type: move
           - field: attributes["log.file.path"]
             type: remove
-          - field: body.time
-            type: remove
-          - from: body.log
-            to: body
-            type: move
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
@@ -6728,8 +6404,8 @@ Node collector config should match snapshot when using default values:
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], attributes["k8s.pod.name"])
-            - set( attributes["service.name"], attributes["k8s.container.name"])
+            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -6750,93 +6426,12 @@ Node collector config should match snapshot when using default values:
           max_concurrent_files: 10
           max_log_size: 1MiB
           operators:
-          - id: get-format
-            routes:
-            - expr: body matches "^\\{"
-              output: parser-docker
-            - expr: body matches "^[^ Z]+ "
-              output: parser-crio
-            - expr: body matches "^[^ Z]+Z"
-              output: parser-containerd
-            type: router
-          - id: parser-crio
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: "2006-01-02T15:04:05.999999999-07:00"
-              layout_type: gotime
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-containerd
-            output: merge-cri-lines
-            parse_to: body
-            regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*)( |)(?P<log>.*)$
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: regex_parser
-          - id: parser-docker
-            output: merge-docker-lines
-            parse_to: body
-            timestamp:
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-              parse_from: body.time
-            type: json_parser
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-docker-lines
-            is_last_entry: body.log matches "\n$"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-cri-lines
-            is_last_entry: body.logtag == "F"
-            max_unmatched_batch_size: 1
-            output: merge-multiline-logs
-            overwrite_with: newest
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - combine_field: body.log
-            combine_with: ""
-            id: merge-multiline-logs
-            is_first_entry: body.log matches "^\\[?\\d{4}-\\d{1,2}-\\d{1,2}.\\d{2}:\\d{2}:\\d{2}.*"
-            max_unmatched_batch_size: 1
-            output: extract-metadata-from-filepath
-            source_identifier: attributes["log.file.path"]
-            type: recombine
-          - id: extract-metadata-from-filepath
-            parse_from: attributes["log.file.path"]
-            regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<run_id>\d+)\.log$
-            type: regex_parser
-          - from: body.stream
-            id: move-attributes
-            to: attributes["stream"]
-            type: move
-          - from: attributes.container_name
-            to: attributes["k8s.container.name"]
-            type: move
-          - from: attributes.namespace
-            to: attributes["k8s.namespace.name"]
-            type: move
-          - from: attributes.pod_name
-            to: attributes["k8s.pod.name"]
-            type: move
-          - field: attributes.run_id
+          - id: container-parser
+            type: container
+          - field: resource["k8s.container.restart_count"]
             type: remove
-          - from: attributes.uid
-            to: attributes["k8s.pod.uid"]
-            type: move
           - field: attributes["log.file.path"]
             type: remove
-          - field: body.time
-            type: remove
-          - from: body.log
-            to: body
-            type: move
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
