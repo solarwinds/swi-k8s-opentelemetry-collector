@@ -5,9 +5,14 @@ templates:
 tests:
   - it: Events config should match snapshot when using default values
     template: events-collector-config-map.yaml
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Events config should not contain manifest collection pipeline when disabled
+    template: events-collector-config-map.yaml
     set:
       otel.manifests:
-        enabled: true
+        enabled: false
     asserts:
       - matchSnapshot:
           path: data

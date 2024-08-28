@@ -7,9 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.0.0] - 2024-08-28
+
+### Highlights
+
+- Added collection of resource manifests.
+- Improved filtering abilities.
+- All container logs are collected by default.
+- **Breaking**: Added validation of the OTEL endpoint provided in `values.yaml`. Deprecated endpoints are rejected now.
+- **Breaking**: Removed deprecated `prometheus`, `prometheus-node-exporter` and `opencost` sub-charts.
+
+### Added
+
+- Observing changes to supported resources and sending their full manifests to SolarWinds Observability:
+  - The equivalent of `kubectl get <resource> <some-resource-name> -o=yaml --show-managed-fields`.
+  - The current list of watched resources: `pods`, `deployments`, `statefulsets`, `replicasets`, `daemonsets`, `jobs`, `cronjobs`, `nodes`, `services`, `persistentvolumes`, `persistentvolumeclaims`, `ingresses` and istio `virtualservices`.
+  - Enabled by default, can be enabled by setting `otel.manifests.enabled` to `true`.
+  - For now it runs in the event collector, so `otel.events.enabled` has to be set to `true` (default).
+
 ### Changed
 
-- Switched to using `container` parser in the `filelog` receiver for parsing container logs and their metadata
+- Changed the `otel.metrics.filter`, `otel.logs.filter` and `otel.events.filter` settings to be able to use OTTL syntax and access resource attributes:
+  - If a customer is using the [old filtering syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.96.0/processor/filterprocessor#alternative-config-options), they behave like in 3.x.x and previous versions of the `k8s collector`. If a customer switches to using the [new syntax](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor#configuration), some of the metric/log-level attributes, like `k8s.deployment.name`, become resource attributes.
+- Removed custom `swmetricstransform` processor (replaced with `filter`).
+- Switched to using `container` parser in the `filelog` receiver for parsing container logs and their metadata.
+- All container logs are collected by default.
+- Breaking: Removed `prometheus`, `prometheus-node-exporter` and `opencost` sub-charts.
+- Breaking: Added validation of the OTEL endpoint provided in `values.yaml`. In case a deprecated endpoint is detected, an error is reported during chart installation/upgrade. Only endpoints in format `otel.collector.xx-yy.cloud.solarwinds.com` are accepted. See [Data centers and endpoint URIs](https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm) for the list of supported endpoints.
+- Upgraded collector image to `0.11.4` which brings following changes:
+  - See Release notes for [0.11.4](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.4).
+  - Bumped 3rd party dependencies and Docker images.
+  - Upgraded OTEL Collector to v0.107.0.
+  - Removed deprecated `ballastextension`. The collector now uses environment variable `GOMEMLIMIT`.
+- Upgraded SWO Agent image to `v2.9.3`.
+- Upgraded `grpcurl` image to `v1.9.1`.
+- Upgraded the `kube-state-metrics` subchart from `5.15.2` to [5.25.1](https://github.com/prometheus-community/helm-charts/releases/tag/kube-state-metrics-5.25.1) which brought the following changes:
+  - Upgraded the `kube-state-metrics` image to [2.13.0](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.13.0).
+  - Added `restart_policy` to the `kube_pod_init_container_info` metric.
+  - Added new metric `kube_pod_container_status_last_terminated_timestamp`.
+  - For the list of all changes see the respective Git repositories.
+
+### Fixed
+
+- Adjusted setting `otel.https_proxy_url` to be applied also to SWO Agent and to disable SolarWinds Observability OTEL endpoint check init container.
 
 ## [4.0.0-alpha.9] - 2024-08-23
 
