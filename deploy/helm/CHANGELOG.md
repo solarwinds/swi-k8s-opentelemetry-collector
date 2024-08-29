@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Enabled the automatic deployment of the OTEL Network Collector to the cluster.
+
 ## [4.0.0] - 2024-08-28
 
 ### Highlights

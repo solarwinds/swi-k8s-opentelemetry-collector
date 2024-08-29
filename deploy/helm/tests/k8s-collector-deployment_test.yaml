@@ -4,10 +4,17 @@ templates:
   - network/k8s-collector-deployment.yaml
   - network/configmap.yaml
 tests:
-  - it: K8s Collector spec should match snapshot when using default values
+  - it: Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled
     template: network/k8s-collector-deployment.yaml
     set:
       ebpfNetworkMonitoring.enabled: true
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: Deployment should not be generated when ebpfNetworkMonitoring is disabled
+    template: network/k8s-collector-deployment.yaml
+    set:
+      ebpfNetworkMonitoring.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
