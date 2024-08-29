@@ -70,6 +70,13 @@ stateDiagram-v2
       ec_r1 --> ec_e1 : processors
     }
 
+  ec_manifestsPipeline: 'logs/manifests' pipeline
+    state ec_manifestsPipeline {
+      ec_r2: 'k8sobjects' receiver
+      ec_e2: 'otlp' exporter
+      ec_r2 --> ec_e2 : processors
+    }
+
   }
 
   kubestatemetricsDeployment: KubeStateMetrics Deployment
