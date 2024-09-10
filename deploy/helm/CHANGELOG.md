@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.1.0-alpha.2] - 2024-09-09
+
+### Changed
+- Upgraded collector image to `0.11.5` which brings following changes:
+  - See Release notes for [0.11.5](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.5).
+  - Bumped 3rd party dependencies and Docker images.
+
 ## [4.1.0-alpha.1] - 2024-09-03
 
 ### Changed
