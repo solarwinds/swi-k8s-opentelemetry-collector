@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Configuring `otel.events.k8s_instrumentation.labels.excludePattern` or `otel.events.k8s_instrumentation.annotations.excludePattern` might cause the events collector to fail when manifest collection is enabled.
+
 ## [4.1.0-alpha.2] - 2024-09-09
 
 ### Changed
