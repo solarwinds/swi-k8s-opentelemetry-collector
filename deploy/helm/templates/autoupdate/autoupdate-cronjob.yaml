@@ -17,6 +17,8 @@ spec:
           imagePullSecrets:
             {{- toYaml .Values.imagePullSecrets | nindent 12 }}
           {{- end }}
+          nodeSelector:
+            kubernetes.io/os: linux
           containers:
           - name: helm-upgrade
             image: "{{ include "common.image" (tuple . .Values.autoupdate (tuple "image" "autoupdate")) }}"
