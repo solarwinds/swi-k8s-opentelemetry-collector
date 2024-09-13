@@ -1,4 +1,4 @@
-name: Build and Test Helm
+name: Build and Release Helm
 
 on:
   push:
@@ -60,6 +60,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Deploy skaffold
         uses: ./.github/actions/deploy-skaffold
@@ -70,6 +72,13 @@ jobs:
       - name: Add dependency chart repos
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      
+      - name: Update Chart.yaml
+        run: |
+            export APP_VERSION=$(git tag --sort=version:refname | grep -E '^[0-9]+.[0-9]+.[0-9]+$' | tail -n 1)
+            export CHART_VERSION=$(git tag --sort=version:refname | grep -E  '^swo-k8s-collector-' | tail -n 1 | awk -F'swo-k8s-collector-' '{print $2}')
+            yq eval '.appVersion = env(APP_VERSION)' -i deploy/helm/Chart.yaml
+            yq eval '.version = env(CHART_VERSION)' -i deploy/helm/Chart.yaml
 
       - name: Build
         run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
