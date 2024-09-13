@@ -40,6 +40,8 @@ By default, the `swo-k8s-collector` collects a subset of `kube-state-metrics` me
 
 To configure the autodiscovery, see settings in the `otel.metrics.autodiscovery.prometheusEndpoints` section of the [values.yaml](values.yaml).
 
+Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
+
 Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
 
 ### Logs
