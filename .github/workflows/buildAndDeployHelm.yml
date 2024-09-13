@@ -71,6 +71,12 @@ jobs:
       - name: Deploy kubernetes
         uses: ./.github/actions/deploy-kubernetes
 
+      - name: Create Chart.yaml from template
+        run: |
+          CHART_VERSION=0.0.0-test
+          APP_VERSION=0.0.0
+          envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml        
+
       - name: Add dependency chart repos
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -113,6 +119,12 @@ jobs:
           EXPOSE 5000
           CMD ["python", "-m", "http.server", "5000"]
           EOF
+
+      - name: Create Chart.yaml from template
+        run: |
+          CHART_VERSION=0.0.0-test
+          APP_VERSION=0.0.0
+          envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml       
 
       - name: Package and build Helm repository image
         run: |
