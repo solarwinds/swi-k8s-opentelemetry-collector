@@ -8,7 +8,7 @@
 
 ## Installation
 
-Walk through `Add Kubernetes` in [SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/default.htm#cshid=gh-k8s-collector)
+Walk through `Add a Kubernetes cluster` in [SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/default.htm#cshid=gh-k8s-collector)
 
 
 ## Configuration
@@ -39,10 +39,6 @@ In order to deploy the Helm chart, you need to prepare:
 By default, the `swo-k8s-collector` collects a subset of `kube-state-metrics` metrics and metrics exposed by workloads that are annotated with `prometheus.io/scrape: true`.
 
 To configure the autodiscovery, see settings in the `otel.metrics.autodiscovery.prometheusEndpoints` section of the [values.yaml](values.yaml).
-
-Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
-
-In order to reduce the size of the collected data, the `swo-k8s-collector` collects only selected `kube-state-metrics` metrics that are key for successful entity ingestion on the SolarWinds Observability side. 
 
 Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
 
