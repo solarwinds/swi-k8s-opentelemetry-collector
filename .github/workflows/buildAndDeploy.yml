@@ -2,6 +2,8 @@ name: Build and Deploy
 
 on:
   push:
+    tags:
+      - '*.*.*'
     branches: 
       - master
       - release/**
@@ -10,9 +12,6 @@ on:
     branches: 
       - master
       - release/**
-
-  release:
-    types: [published]
 
   workflow_dispatch:
 
@@ -288,7 +287,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_and_test
     name: Deploy to docker hub
-    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
     environment:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
@@ -323,7 +322,7 @@ jobs:
     runs-on: windows-2022
     needs: build_and_test_windows
     name: Deploy to docker hub Windows
-    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
     environment:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
@@ -365,3 +364,37 @@ jobs:
         run: | 
           docker manifest push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver
 
+  create_release:
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    needs:
+      - deploy_dockerhub_windows
+      - deploy_dockerhub
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find previous tag
+        id: find_previous_tag
+        run: |
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          PREVIOUS_TAG=$(git tag --sort=version:refname | grep -B1 "^${CURRENT_TAG}$" | head -n 1)
+
+          echo "Current tag: $CURRENT_TAG"
+          echo "Previous tag: $PREVIOUS_TAG"
+          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
+          echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}  # Use the tag that triggered the workflow
+          release_name: ${{ github.ref }}
+          body: |
+            **Full Changelog**: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/compare/${{ env.PREVIOUS_TAG }}...${{ env.CURRENT_TAG}}
+          draft: false
+          prerelease: false
