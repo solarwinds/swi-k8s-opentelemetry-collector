@@ -66,6 +66,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Deploy skaffold
         uses: ./.github/actions/deploy-skaffold
@@ -76,8 +78,9 @@ jobs:
       - name: Create Chart.yaml from template
         env:
           CHART_VERSION: 0.0.0-test
-          APP_VERSION: 0.0.0
-        run: envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml
+        run: |
+          export APP_VERSION=$(git tag --sort=version:refname | grep -E '^[0-9]+.[0-9]+.[0-9]+$' | tail -n 1)
+          envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml
 
       - name: Add dependency chart repos
         run: |
