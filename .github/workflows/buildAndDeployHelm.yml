@@ -35,12 +35,6 @@ jobs:
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
-      - name: Create Chart.yaml from template
-        env:
-          CHART_VERSION: 0.0.0-test
-          APP_VERSION: 0.0.0
-        run: envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml  
-
       - name: Download chart dependencies before linting
         run: helm dependency build deploy/helm
 
@@ -80,7 +74,7 @@ jobs:
           CHART_VERSION: 0.0.0-test
         run: |
           export APP_VERSION=$(git tag --sort=version:refname | grep -E '^[0-9]+.[0-9]+.[0-9]+$' | tail -n 1)
-          envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml
+          yq eval '.appVersion = env(APP_VERSION' -i deploy/helm/Chart.yaml
 
       - name: Add dependency chart repos
         run: |
@@ -132,7 +126,8 @@ jobs:
         run: |
             export APP_VERSION=$(git tag --sort=version:refname | grep -E '^[0-9]+.[0-9]+.[0-9]+$' | tail -n 1)
             export CHART_VERSION=$(git tag --sort=version:refname | grep -E  '^swo-k8s-collector-' | tail -n 1 | awk -F'swo-k8s-collector-' '{print $2}')
-            envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml
+            yq eval '.appVersion = env(APP_VERSION' -i deploy/helm/Chart.yaml
+            yq eval '.version = env(CHART_VERSION)' -i deploy/helm/Chart.yaml
 
       - name: Package and build Helm repository image
         run: |
