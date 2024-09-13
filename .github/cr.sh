@@ -5,17 +5,27 @@ set -o nounset
 set -o pipefail
 
 main() {
-    install_chart_releaser
+    #install_chart_releaser
 
     rm -rf .cr-release-packages
     mkdir -p .cr-release-packages
 
     rm -rf .cr-index
     mkdir -p .cr-index
+    
+    APP_VERSION=$(git tag --sort=version:refname | grep -E '^[0-9]+.[0-9]+.[0-9]+$' | tail -n 1)
+    CHART_VERSION=$(git tag --sort=version:refname | grep -E  '^swo-k8s-collector-' | tail -n 1 | awk -F'swo-k8s-collector-' '{print $2}')
+    echo "App Version=$APP_VERSION"
+    echo "Chart Version=$CHART_VERSION"
+    
+    envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml
+
+    #rm deploy/helm/Chart.yaml.template
 
     echo "Packaging chart ..."
     cr package "deploy/helm"
 
+    exit 0
     echo 'Releasing chart...'
     cr upload -c "$(git rev-parse HEAD)"
 

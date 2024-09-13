@@ -1,0 +1,256 @@
+name: Build and Test Helm
+
+on:
+  push:
+    tags:
+      - 'swo-k8s-collector-*'      
+    paths-ignore:
+      - docs/**
+      - README.md
+      - deploy/helm/*.md
+      - build/**
+      - src/**
+    branches: 
+      - master
+      - release/**
+  pull_request:
+    branches: 
+      - master
+      - release/**
+
+jobs:
+  helm_verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.8.2
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      - name: Create Chart.yaml from template
+        run: |
+          CHART_VERSION=0.0.0
+          APP_VERSION=0.0.0
+          envsubst < deploy/helm/Chart.yaml.template > deploy/helm/Chart.yaml
+
+      - name: Download chart dependencies before linting
+        run: helm dependency build deploy/helm
+
+      - name: Lint helm
+        run: helm lint deploy/helm --with-subcharts
+
+      - name: Lint template
+        run: helm template deploy/helm --include-crds --no-hooks
+
+      - name: Install Unit test plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+      
+      - name: Run unit tests
+        run: helm unittest deploy/helm
+
+  # Verify whether Helm chart works with image published in DockerHub
+  helm_e2e:
+    runs-on: ubuntu-latest
+    needs: helm_verify
+    outputs:
+      image_tag: ${{ steps.generate-tag.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy skaffold
+        uses: ./.github/actions/deploy-skaffold
+
+      - name: Deploy kubernetes
+        uses: ./.github/actions/deploy-kubernetes
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      - name: Build
+        run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
+
+      - name: Deploy services using Skaffold
+        run: skaffold deploy -p=ci-helm-e2e --build-artifacts=/tmp/tags.json
+      
+      - name: Run integration tests
+        uses: ./.github/actions/run-integration-tests
+
+  helm_test_auto_update_against_last_published:
+    runs-on: ubuntu-latest
+    needs: helm_verify
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Kubernetes
+        uses: ./.github/actions/deploy-kubernetes
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add solarwinds https://helm.solarwinds.com
+          helm repo update
+
+      - name: Deploy mocks.yaml
+        run: kubectl apply -f tests/deploy/base/mocks.yaml
+
+
+      - name: Create Dockerfile with Helm repository
+        run: |
+          cat <<EOF > Dockerfile
+          FROM python:3.12-alpine3.19
+          WORKDIR /app
+          COPY . .
+          EXPOSE 5000
+          CMD ["python", "-m", "http.server", "5000"]
+          EOF
+
+      - name: Package and build Helm repository image
+        run: |
+          helm dependency build deploy/helm
+          helm package deploy/helm
+          helm repo index .
+          docker build -t helm-repo:latest .
+
+      - name: Deploy Helm repository in Kubernetes cluster
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: helm-repo
+          spec:
+            selector:
+              matchLabels:
+                app: helm-repo
+            replicas: 1
+            template:
+              metadata:
+                labels:
+                  app: helm-repo
+              spec:
+                containers:
+                - name: helm-repo
+                  image: helm-repo:latest
+                  imagePullPolicy: Never
+                  ports:
+                  - containerPort: 5000
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: helm-repo
+          spec:
+            selector:
+              app: helm-repo
+            ports:
+              - protocol: TCP
+                port: 5000
+                targetPort: 5000
+            type: ClusterIP
+          EOF
+
+      - name: Deploy swo-k8s-collector Helm chart
+        run: |
+          helm install swo-k8s-collector solarwinds/swo-k8s-collector \
+            --create-namespace \
+            --namespace swo-k8s-collector \
+            --set cluster.name=test-cluster \
+            --set cluster.uid=test-cluster \
+            --set otel.endpoint=timeseries-mock-service:9082 \
+            --set otel.api_token=not_set \
+            --set autoupdate.enabled=true \
+            --set autoupdate.devel=true \
+            --set otel.metrics.swi_endpoint_check=false \
+            --set otel.metrics.prometheus_check=false \
+            --set otel.metrics.resources.requests.memory=100Mi \
+            --set otel.events.resources.requests.memory=100Mi \
+            --set otel.logs.resources.requests.memory=100Mi \
+            --atomic
+
+      - name: Update AutoUpdate ConfigMap to use local Helm repository
+        run: |
+          kubectl get configmap swo-k8s-collector-autoupdate-script -n swo-k8s-collector -o yaml > autoupdate-script.yaml
+          sed -i 's|https://helm.solarwinds.com|http://helm-repo.default.svc.cluster.local:5000|' autoupdate-script.yaml
+          kubectl apply -f autoupdate-script.yaml
+          cat autoupdate-script.yaml
+
+      - name: Trigger helm-autoupdate CronJob and verify
+        run: |
+          # Trigger the CronJob
+          kubectl create job --from=cronjob/helm-autoupdate helm-autoupdate-manual-trigger -n swo-k8s-collector
+          
+          # Wait for the job to complete
+          kubectl wait --for=condition=complete --timeout=300s job/helm-autoupdate-manual-trigger -n swo-k8s-collector
+          
+          # Get the job's success and failure status
+          JOB_SUCCEEDED=$(kubectl get job helm-autoupdate-manual-trigger -n swo-k8s-collector -o=jsonpath='{.status.succeeded}')
+          JOB_FAILED=$(kubectl get job helm-autoupdate-manual-trigger -n swo-k8s-collector -o=jsonpath='{.status.failed}')
+
+          # Check if the job succeeded or failed
+          if [ "$JOB_SUCCEEDED" == "1" ]; then
+            echo "Job completed successfully."
+          elif [ "$JOB_FAILED" != "" ]; then
+            echo "Job failed."
+            exit 1
+          else
+            echo "Job did not complete successfully. Status is ambiguous."
+            exit 1
+          fi
+
+      - name: Trigger helm-autoupdate CronJob logs
+        if: ${{ always() }}
+        run: |
+          kubectl logs jobs/helm-autoupdate-manual-trigger -n swo-k8s-collector --all-containers=true
+
+
+  deploy_helm:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') && contains(github.ref, 'swo-k8s-collector')
+    needs:
+      - helm_e2e
+      - helm_test_auto_update_against_last_published
+    permissions:
+      contents: write # to push chart release and create a release (helm/chart-releaser-action)
+      id-token: write # needed for signing
+      pull-requests: write # needed to create pull-request
+    name: Deploy Helm chart to GitHub pages
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          
+          submodules: true
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3.5
+        with:
+          version: v3.9.2
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      - name: Set env
+        run: |
+          echo "CR_GIT_REPO=$(cut -d '/' -f 2 <<< $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+          echo "CR_OWNER=$(cut -d '/' -f 1 <<< $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+
+      - name: Run chart-releaser
+        env:
+          # for chart-releaser (it is required although probably not used)
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          # for gh cli
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          "./.github/cr.sh"
+        shell: bash
