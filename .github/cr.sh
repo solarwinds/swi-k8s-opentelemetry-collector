@@ -24,7 +24,6 @@ main() {
     echo "Packaging chart ..."
     cr package "deploy/helm"
 
-    exit 0
     echo 'Releasing chart...'
     cr upload -c "$(git rev-parse HEAD)"
 
