@@ -1,18 +1,22 @@
-name: Build and Deploy
+name: Build and Deploy Images
 
 on:
   push:
+    paths-ignore:
+      - docs/**
+      - README.md
+      - deploy/helm/*.md
+    tags:
+      - '*.*.*'
     branches: 
       - master
       - release/**
+
 
   pull_request:
     branches: 
       - master
       - release/**
-
-  release:
-    types: [published]
 
   workflow_dispatch:
 
@@ -56,7 +60,6 @@ jobs:
   
   build_and_test_windows:
     runs-on: windows-2022
-    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
     outputs:
       image_tag: ${{ steps.generate-tag.outputs.value }}
     steps:
@@ -95,200 +98,12 @@ jobs:
             swi-k8s-opentelemetry-collector-windows-ltsc2022.tar
             swi-k8s-opentelemetry-collector-windows-ltsc2019.tar
           retention-days: 2
-        
-
-  # Verify whether Helm chart works with image published in DockerHub
-  helm_e2e:
-    runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.generate-tag.outputs.value }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy skaffold
-        uses: ./.github/actions/deploy-skaffold
-
-      - name: Deploy kubernetes
-        uses: ./.github/actions/deploy-kubernetes
-
-      - name: Add dependency chart repos
-        run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-
-      - name: Build
-        run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
-
-      - name: Deploy services using Skaffold
-        run: skaffold deploy -p=ci-helm-e2e --build-artifacts=/tmp/tags.json
-      
-      - name: Run integration tests
-        uses: ./.github/actions/run-integration-tests
-
-
-  helm_verify:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: v3.8.2
-
-      - name: Add dependency chart repos
-        run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-
-      - name: Download chart dependencies before linting
-        run: helm dependency build deploy/helm
-
-      - name: Lint helm
-        run: helm lint deploy/helm --with-subcharts
-
-      - name: Lint template
-        run: helm template deploy/helm --include-crds --no-hooks
-
-      - name: Install Unit test plugin
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
-      
-      - name: Run unit tests
-        run: helm unittest deploy/helm
-
-  helm_test_auto_update_against_last_published:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy Kubernetes
-        uses: ./.github/actions/deploy-kubernetes
-
-      - name: Add dependency chart repos
-        run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add solarwinds https://helm.solarwinds.com
-          helm repo update
-
-      - name: Deploy mocks.yaml
-        run: kubectl apply -f tests/deploy/base/mocks.yaml
-
-
-      - name: Create Dockerfile with Helm repository
-        run: |
-          cat <<EOF > Dockerfile
-          FROM python:3.12-alpine3.19
-          WORKDIR /app
-          COPY . .
-          EXPOSE 5000
-          CMD ["python", "-m", "http.server", "5000"]
-          EOF
-
-      - name: Package and build Helm repository image
-        run: |
-          helm dependency build deploy/helm
-          helm package deploy/helm
-          helm repo index .
-          docker build -t helm-repo:latest .
-
-      - name: Deploy Helm repository in Kubernetes cluster
-        run: |
-          cat <<EOF | kubectl apply -f -
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: helm-repo
-          spec:
-            selector:
-              matchLabels:
-                app: helm-repo
-            replicas: 1
-            template:
-              metadata:
-                labels:
-                  app: helm-repo
-              spec:
-                containers:
-                - name: helm-repo
-                  image: helm-repo:latest
-                  imagePullPolicy: Never
-                  ports:
-                  - containerPort: 5000
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: helm-repo
-          spec:
-            selector:
-              app: helm-repo
-            ports:
-              - protocol: TCP
-                port: 5000
-                targetPort: 5000
-            type: ClusterIP
-          EOF
-
-      - name: Deploy swo-k8s-collector Helm chart
-        run: |
-          helm install swo-k8s-collector solarwinds/swo-k8s-collector \
-            --create-namespace \
-            --namespace swo-k8s-collector \
-            --set cluster.name=test-cluster \
-            --set cluster.uid=test-cluster \
-            --set otel.endpoint=timeseries-mock-service:9082 \
-            --set otel.api_token=not_set \
-            --set autoupdate.enabled=true \
-            --set autoupdate.devel=true \
-            --set otel.metrics.swi_endpoint_check=false \
-            --set otel.metrics.prometheus_check=false \
-            --set otel.metrics.resources.requests.memory=100Mi \
-            --set otel.events.resources.requests.memory=100Mi \
-            --set otel.logs.resources.requests.memory=100Mi \
-            --atomic
-
-      - name: Update AutoUpdate ConfigMap to use local Helm repository
-        run: |
-          kubectl get configmap swo-k8s-collector-autoupdate-script -n swo-k8s-collector -o yaml > autoupdate-script.yaml
-          sed -i 's|https://helm.solarwinds.com|http://helm-repo.default.svc.cluster.local:5000|' autoupdate-script.yaml
-          kubectl apply -f autoupdate-script.yaml
-          cat autoupdate-script.yaml
-
-      - name: Trigger helm-autoupdate CronJob and verify
-        run: |
-          # Trigger the CronJob
-          kubectl create job --from=cronjob/helm-autoupdate helm-autoupdate-manual-trigger -n swo-k8s-collector
-          
-          # Wait for the job to complete
-          kubectl wait --for=condition=complete --timeout=300s job/helm-autoupdate-manual-trigger -n swo-k8s-collector
-          
-          # Get the job's success and failure status
-          JOB_SUCCEEDED=$(kubectl get job helm-autoupdate-manual-trigger -n swo-k8s-collector -o=jsonpath='{.status.succeeded}')
-          JOB_FAILED=$(kubectl get job helm-autoupdate-manual-trigger -n swo-k8s-collector -o=jsonpath='{.status.failed}')
-
-          # Check if the job succeeded or failed
-          if [ "$JOB_SUCCEEDED" == "1" ]; then
-            echo "Job completed successfully."
-          elif [ "$JOB_FAILED" != "" ]; then
-            echo "Job failed."
-            exit 1
-          else
-            echo "Job did not complete successfully. Status is ambiguous."
-            exit 1
-          fi
-
-      - name: Trigger helm-autoupdate CronJob logs
-        if: ${{ always() }}
-        run: |
-          kubectl logs jobs/helm-autoupdate-manual-trigger -n swo-k8s-collector --all-containers=true
-
+ 
   deploy_dockerhub:
     runs-on: ubuntu-latest
     needs: build_and_test
     name: Deploy to docker hub
-    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
     environment:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
@@ -323,7 +138,7 @@ jobs:
     runs-on: windows-2022
     needs: build_and_test_windows
     name: Deploy to docker hub Windows
-    if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
     environment:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
@@ -365,3 +180,37 @@ jobs:
         run: | 
           docker manifest push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver
 
+  create_release:
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    needs:
+      - deploy_dockerhub_windows
+      - deploy_dockerhub
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find previous tag
+        id: find_previous_tag
+        run: |
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          PREVIOUS_TAG=$(git tag --sort=version:refname | grep -B1 "^${CURRENT_TAG}$" | head -n 1)
+
+          echo "Current tag: $CURRENT_TAG"
+          echo "Previous tag: $PREVIOUS_TAG"
+          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
+          echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}  # Use the tag that triggered the workflow
+          release_name: ${{ github.ref }}
+          body: |
+            **Full Changelog**: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/compare/${{ env.PREVIOUS_TAG }}...${{ env.CURRENT_TAG}}
+          draft: false
+          prerelease: false

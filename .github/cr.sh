@@ -12,6 +12,14 @@ main() {
 
     rm -rf .cr-index
     mkdir -p .cr-index
+    
+    export APP_VERSION=$(git tag --sort=version:refname | grep -E '^[0-9]+.[0-9]+.[0-9]+$' | tail -n 1)
+    export CHART_VERSION=$(git tag --sort=version:refname | grep -E  '^swo-k8s-collector-' | tail -n 1 | awk -F'swo-k8s-collector-' '{print $2}')
+    echo "App Version=$APP_VERSION"
+    echo "Chart Version=$CHART_VERSION"
+    
+    yq eval '.appVersion = env(APP_VERSION)' -i deploy/helm/Chart.yaml
+    yq eval '.version = env(CHART_VERSION)' -i deploy/helm/Chart.yaml
 
     echo "Packaging chart ..."
     cr package "deploy/helm"
