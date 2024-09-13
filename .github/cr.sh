@@ -18,7 +18,7 @@ main() {
     echo "App Version=$APP_VERSION"
     echo "Chart Version=$CHART_VERSION"
     
-    yq eval '.appVersion = env(APP_VERSION' -i deploy/helm/Chart.yaml
+    yq eval '.appVersion = env(APP_VERSION)' -i deploy/helm/Chart.yaml
     yq eval '.version = env(CHART_VERSION)' -i deploy/helm/Chart.yaml
 
     echo "Packaging chart ..."
