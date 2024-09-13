@@ -213,33 +213,28 @@ Basic linting is part of the build pipeline, though.
 
 The Helm chart is bundled also in AKS/EKS addons. Make sure that any changes are reflected there, too.
 
-## Publishing
+## Release
 
 ### Docker image
 
-Before proceeding:
-
-- Make sure that you updated binary version in `src/cmd/main.go`
-
-Customized Otel Collector image is getting published to <https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector>.
-
-Steps to publish new version:
-
-1. Create GitHub release selecting the Tag/branch you want to release with description of changes
-   - use tag in semver format, it is the tag which Docker hub image will have publicly
-   - publish release
-2. GitHub action will be triggered that will build the release and wait for publish approval
-3. after CODEOWNERS approve it, it will be published to Dockerhub public repository
+1. Create tag you want to release and push it to origin
+    ```
+    git tag 0.11.5
+    git push origin 0.11.5
+    ```
+1. GitHub Action will be triggered, building the release and awaiting manual approval for publishing.
+1. Once approved, it will be published to Docker Hub repository: [solarwinds/swi-opentelemetry-collector](https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector).
 
 ### Helm Chart
 
-Helm chart is published to <https://helm.solarwinds.com>.
 
-1. Update property `version` in [deploy/helm/Chart.yaml](../deploy/helm/Chart.yaml). (follow the [SemVer 2](https://semver.org/spec/v2.0.0.html) format).
-2. Update [deploy/helm/CHANGELOG.md](../deploy/helm/CHANGELOG.md):
-   1. Create release record with the right version and the date.
-   2. Write all changes recorded in `Unreleased` section into the release.
-3. Create PR for the changes to the `master` branch and merge them.
-4. Run "Release Helm Chart" GitHub action workflow.
-5. Find relevant release in GitHub, edit it and write all changes recorded into [CHANGELOG.md](../deploy/helm/CHANGELOG.md) into its description.
-6. Review PR that was created for the changes to the `gh-pages` branch and merge them.
+1. Create the tag you want to release and push it to origin. For a pre-release, use the `-alpha.1` suffix:
+
+    ```
+    git tag swo-k8s-collector-1.2.3[-alpha.1]
+    git push origin swo-k8s-collector-1.2.3
+    ```
+1. GitHub Action will be triggered to build the release and open a PR to the `gh-pages` branch.
+1. Find the relevant release in GitHub, edit it, and summarize all changes recorded in [CHANGELOG.md](../deploy/helm/CHANGELOG.md) into the release description.
+1. Review the PR created for changes to the `gh-pages` branch (which hosts the Helm charts), and merge it.
+1. Once the PR is merged, the Helm chart is published to <https://helm.solarwinds.com>.
