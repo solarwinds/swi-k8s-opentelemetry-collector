@@ -2,11 +2,16 @@ name: Build and Deploy
 
 on:
   push:
+    paths-ignore:
+      - docs/**
+      - README.md
+      - deploy/helm/*.md
     tags:
       - '*.*.*'
     branches: 
       - master
       - release/**
+
 
   pull_request:
     branches: 
@@ -93,37 +98,8 @@ jobs:
             swi-k8s-opentelemetry-collector-windows-ltsc2022.tar
             swi-k8s-opentelemetry-collector-windows-ltsc2019.tar
           retention-days: 2
-        
 
-  # Verify whether Helm chart works with image published in DockerHub
-  helm_e2e:
-    runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.generate-tag.outputs.value }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy skaffold
-        uses: ./.github/actions/deploy-skaffold
-
-      - name: Deploy kubernetes
-        uses: ./.github/actions/deploy-kubernetes
-
-      - name: Add dependency chart repos
-        run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-
-      - name: Build
-        run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
-
-      - name: Deploy services using Skaffold
-        run: skaffold deploy -p=ci-helm-e2e --build-artifacts=/tmp/tags.json
-      
-      - name: Run integration tests
-        uses: ./.github/actions/run-integration-tests
-
-
+  deploy + tests   + utils .github    
   helm_verify:
     runs-on: ubuntu-latest
     steps:
@@ -153,6 +129,39 @@ jobs:
       
       - name: Run unit tests
         run: helm unittest deploy/helm
+
+  # Verify whether Helm chart works with image published in DockerHub
+ 
+
+  helm_e2e:
+    runs-on: ubuntu-latest
+    needs: helm_verify
+    outputs:
+      image_tag: ${{ steps.generate-tag.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy skaffold
+        uses: ./.github/actions/deploy-skaffold
+
+      - name: Deploy kubernetes
+        uses: ./.github/actions/deploy-kubernetes
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      - name: Build
+        run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
+
+      - name: Deploy services using Skaffold
+        run: skaffold deploy -p=ci-helm-e2e --build-artifacts=/tmp/tags.json
+      
+      - name: Run integration tests
+        uses: ./.github/actions/run-integration-tests
+
+
 
   helm_test_auto_update_against_last_published:
     runs-on: ubuntu-latest
