@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Setting `cluster.uid` is now optional. If not provided it defaults to value of `cluster.name`.
+
+## [4.1.0-alpha.3] - 2024-09-13
+
 ### Fixed
 
 - Configuring `otel.events.k8s_instrumentation.labels.excludePattern` or `otel.events.k8s_instrumentation.annotations.excludePattern` might cause the events collector to fail when manifest collection is enabled.

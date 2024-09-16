@@ -145,7 +145,7 @@ spec:
             path: c:\var\lib\docker\containers
         - name: logcheckpoints
           hostPath:
-            path: c:{{ printf "%s/%s" .Values.otel.logs.filestorage.directory (sha256sum .Values.cluster.uid) }}
+            path: c:{{ printf "%s/%s" .Values.otel.logs.filestorage.directory (sha256sum (include "common.cluster-uid" .)) }}
             type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
@@ -156,7 +156,7 @@ spec:
 {{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
         - name: sending-queue
           hostPath:
-            path: c:{{ printf "%s/%s" .Values.otel.node_collector.sending_queue.persistent_storage.directory .Values.cluster.uid }}
+            path: c:{{ printf "%s/%s" .Values.otel.node_collector.sending_queue.persistent_storage.directory (sha256sum (include "common.cluster-uid" .)) }}
             type: DirectoryOrCreate
 {{- end }}
 {{- end }}

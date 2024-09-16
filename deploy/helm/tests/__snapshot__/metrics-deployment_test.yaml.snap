@@ -78,8 +78,8 @@ Metrics collector spec should match snapshot when using default values:
           - -H
           - 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}'
           - -d
-          - '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "<CLUSTER_UID>"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}'
-          - <OTEL_ENVOY_ADDRESS>
+          - '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "${CLUSTER_UID}"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}'
+          - $(OTEL_ENVOY_ADDRESS)
           - opentelemetry.proto.collector.logs.v1.LogsService.Export
         env:
           - name: SOLARWINDS_API_TOKEN
@@ -88,6 +88,9 @@ Metrics collector spec should match snapshot when using default values:
                 key: SOLARWINDS_API_TOKEN
                 name: solarwinds-api-token
                 optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
         image: fullstorydev/grpcurl:v1.9.1
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check

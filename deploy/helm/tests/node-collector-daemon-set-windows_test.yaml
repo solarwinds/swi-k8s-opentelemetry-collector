@@ -4,18 +4,16 @@ templates:
   - node-collector-daemon-set-windows.yaml
   - node-collector-config-map-windows.yaml
   - common-env-config-map.yaml
+chart:
+  appVersion: 1.0.0
 tests:
   - it: DaemonSet spec for windows nodes should match snapshot when using default values
     template: node-collector-daemon-set-windows.yaml
-    chart:
-      appVersion: 1.0.0
     asserts:
       - matchSnapshot:
           path: spec.template.spec
   - it: Image should be correct in default state
     template: node-collector-daemon-set-windows.yaml
-    chart:
-      appVersion: 1.0.0
     asserts:
     - equal:
           path: spec.template.spec.containers[0].image
@@ -39,3 +37,10 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
+  - it: DaemonSet spec for windows nodes should match snapshot when overriding cluster ID
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      cluster.uid: customUid
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec

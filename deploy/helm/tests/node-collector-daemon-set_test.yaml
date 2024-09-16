@@ -5,20 +5,25 @@ templates:
   - node-collector-config-map.yaml
   - common-env-config-map.yaml
   - network/configmap.yaml
+chart:
+  appVersion: 1.0.0
 tests:
   - it: DaemonSet spec should match snapshot when using default values
     template: node-collector-daemon-set.yaml
-    chart:
-      appVersion: 1.0.0
     asserts:
       - matchSnapshot:
           path: spec.template.spec
   - it: DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled
     template: node-collector-daemon-set.yaml
-    chart:
-      appVersion: 1.0.0
     set:
       ebpfNetworkMonitoring.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
+  - it: DaemonSet spec should match snapshot when overriding cluster ID
+    template: node-collector-daemon-set.yaml
+    set:
+      cluster.uid: customUid
     asserts:
       - matchSnapshot:
           path: spec.template.spec

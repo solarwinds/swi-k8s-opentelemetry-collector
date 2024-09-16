@@ -168,7 +168,7 @@ spec:
             path: /var/log/journal
         - name: logcheckpoints
           hostPath:
-            path: {{ printf "%s/%s" .Values.otel.logs.filestorage.directory .Values.cluster.uid }}
+            path: {{ printf "%s/%s" .Values.otel.logs.filestorage.directory (sha256sum (include "common.cluster-uid" .)) }}
             type: DirectoryOrCreate
         - name: opentelemetry-collector-configmap
           configMap:
@@ -179,7 +179,7 @@ spec:
 {{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
         - name: sending-queue
           hostPath:
-            path: {{ printf "%s/%s" .Values.otel.node_collector.sending_queue.persistent_storage.directory .Values.cluster.uid }}
+            path: {{ printf "%s/%s" .Values.otel.node_collector.sending_queue.persistent_storage.directory (sha256sum (include "common.cluster-uid" .)) }}
             type: DirectoryOrCreate
 {{- end }}
 {{- end }}

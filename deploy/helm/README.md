@@ -10,7 +10,6 @@
 
 Walk through `Add a Kubernetes cluster` in [SolarWinds Observability](https://documentation.solarwinds.com/en/success_center/observability/default.htm#cshid=gh-k8s-collector)
 
-
 ## Configuration
 
 The [Helm chart](Chart.yaml) that you are about to deploy to your cluster has various configuration options. The full list, including the default settings, is available in [values.yaml](values.yaml).
@@ -33,6 +32,10 @@ In order to deploy the Helm chart, you need to prepare:
       name: <cluster-display-name>
       uid: <unique-cluster-identifier>
   ```
+
+#### Version 4.1.0 and newer
+
+Starting with version 4.1.0 setting `cluster.uid` is optional. If not provided it defaults to value of `cluster.name`.
 
 ### Metrics
 

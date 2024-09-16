@@ -7,7 +7,7 @@ metadata:
 {{ include "common.labels" . | indent 4 }}
 data:
   CLUSTER_NAME: {{ quote .Values.cluster.name }}
-  CLUSTER_UID: {{ quote .Values.cluster.uid }}
+  CLUSTER_UID: {{ quote (include "common.cluster-uid" .) }}
   OTEL_ENVOY_ADDRESS: {{ quote .Values.otel.endpoint }}
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: {{ quote .Values.otel.tls_insecure }}
   MANIFEST_VERSION: {{ quote .Chart.Version }}

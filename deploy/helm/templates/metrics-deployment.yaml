@@ -82,8 +82,8 @@ spec:
           command: ['/bin/grpcurl', '-expand-headers',
                     '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
                     '-H', 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}',
-                    '-d', '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "{{ .Values.cluster.uid }}"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}',
-                    '{{ .Values.otel.endpoint }}', 'opentelemetry.proto.collector.logs.v1.LogsService.Export']
+                    '-d', '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "${CLUSTER_UID}"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}',
+                    '$(OTEL_ENVOY_ADDRESS)', 'opentelemetry.proto.collector.logs.v1.LogsService.Export']
           volumeMounts:
             - mountPath: opentelemetry/proto/collector/logs/v1/logs_service.proto
               name: opentelemetry-collector-configmap
@@ -108,6 +108,9 @@ spec:
                   name: {{ template "common.secret" . }}
                   key: SOLARWINDS_API_TOKEN
                   optional: true
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
         {{- end }}
       {{- end }}
       containers:

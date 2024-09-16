@@ -43,6 +43,15 @@ Usages:
 {{- end -}}
 
 {{/*
+Get cluster UID based on name and uid provided in .Values.cluster.
+Usage:
+  {{ include "common.cluster-uid" . }}
+*/}}
+{{- define "common.cluster-uid" -}}
+{{ default .Values.cluster.name .Values.cluster.uid }}
+{{- end -}}
+
+{{/*
 Common pod labels - those labels are included on every pod in the chart
 */}}
 {{- define "common.pod-labels" -}}

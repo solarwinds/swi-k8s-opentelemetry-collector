@@ -119,7 +119,137 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
           path: /var/log/journal
         name: varlogjournal
       - hostPath:
-          path: /var/lib/swo/checkpoints/<CLUSTER_UID>
+          path: /var/lib/swo/checkpoints/7e819eda63eb48d6b9aee7eda8e239c756bfe327e64ac579b5469466b0ca1e2d
+          type: DirectoryOrCreate
+        name: logcheckpoints
+      - configMap:
+          items:
+            - key: logs.config
+              path: relay.yaml
+          name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+        name: opentelemetry-collector-configmap
+DaemonSet spec should match snapshot when overriding cluster ID:
+  1: |
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: eks.amazonaws.com/compute-type
+                  operator: NotIn
+                  values:
+                    - fargate
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+    containers:
+      - command:
+          - /wrapper
+          - /swi-otelcol
+          - --config=/conf/relay.yaml
+          - --feature-gates=filelog.container.removeOriginalTimeField
+        env:
+          - name: CHECKPOINT_DIR
+            value: /var/lib/swo/checkpoints
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+          - name: GOMEMLIMIT
+            valueFrom:
+              resourceFieldRef:
+                resource: limits.memory
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 13133
+        name: swi-opentelemetry-collector
+        ports:
+          - containerPort: 8888
+            name: http
+            protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 13133
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            memory: 50Mi
+        volumeMounts:
+          - mountPath: /var/log/pods
+            name: varlogpods
+            readOnly: true
+          - mountPath: /var/log/containers
+            name: varlogcontainers
+            readOnly: true
+          - mountPath: /var/lib/docker/containers
+            name: varlibdockercontainers
+            readOnly: true
+          - mountPath: /conf
+            name: opentelemetry-collector-configmap
+            readOnly: true
+          - mountPath: /run/log/journal
+            name: runlogjournal
+            readOnly: true
+          - mountPath: /var/log/journal
+            name: varlogjournal
+            readOnly: true
+          - mountPath: /var/lib/swo/checkpoints
+            name: logcheckpoints
+    securityContext:
+      fsGroup: 0
+      runAsGroup: 0
+      runAsUser: 0
+    serviceAccountName: RELEASE-NAME-swo-k8s-collector
+    terminationGracePeriodSeconds: 600
+    tolerations:
+      - effect: NoSchedule
+        operator: Exists
+    volumes:
+      - hostPath:
+          path: /var/log/pods
+        name: varlogpods
+      - hostPath:
+          path: /var/log/containers
+        name: varlogcontainers
+      - hostPath:
+          path: /var/lib/docker/containers
+        name: varlibdockercontainers
+      - hostPath:
+          path: /run/log/journal
+        name: runlogjournal
+      - hostPath:
+          path: /var/log/journal
+        name: varlogjournal
+      - hostPath:
+          path: /var/lib/swo/checkpoints/6eb3475096f465fb33e3929d08ca7e1913c2896feb5e001b3600a56f3964b4d9
           type: DirectoryOrCreate
         name: logcheckpoints
       - configMap:
@@ -249,7 +379,7 @@ DaemonSet spec should match snapshot when using default values:
           path: /var/log/journal
         name: varlogjournal
       - hostPath:
-          path: /var/lib/swo/checkpoints/<CLUSTER_UID>
+          path: /var/lib/swo/checkpoints/7e819eda63eb48d6b9aee7eda8e239c756bfe327e64ac579b5469466b0ca1e2d
           type: DirectoryOrCreate
         name: logcheckpoints
       - configMap:
