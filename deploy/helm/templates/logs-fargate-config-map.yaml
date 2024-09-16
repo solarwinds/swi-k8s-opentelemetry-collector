@@ -1,7 +1,10 @@
 {{- if and .Values.aws_fargate.enabled .Values.aws_fargate.logs.enabled }}
 {{- $pattern := "[^a-zA-Z0-9\\.\\-_/#]" -}}
 {{- $replacement := "" -}}
-{{- $name := regexReplaceAll $pattern .Values.cluster.name $replacement | default .Values.cluster.uid | lower | trunc 512 -}}
+{{/* Set the log group name either to a sanitized cluster name, or to a cluster uid or to a hash of a cluster name */}}
+{{- $sanitizedName := regexReplaceAll $pattern .Values.cluster.name $replacement -}}
+{{- $sanitizedUid := regexReplaceAll $pattern (default "" .Values.cluster.uid) $replacement -}}
+{{- $name := default (default (sha256sum .Values.cluster.name) $sanitizedUid) $sanitizedName | lower | trunc 512 -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -30,7 +33,7 @@ data:
     [FILTER]
         Name modify
         Match *
-        Add sw.k8s.cluster.uid {{ .Values.cluster.uid }}
+        Add sw.k8s.cluster.uid {{ include "common.cluster-uid" . }}
         Add sw.k8s.log.type container
         Add sw.k8s.agent.manifest.version {{ quote .Chart.Version }}
   output.conf: |

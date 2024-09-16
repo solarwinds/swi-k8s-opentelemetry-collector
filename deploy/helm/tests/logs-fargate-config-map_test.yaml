@@ -2,6 +2,8 @@
 suite: Test for logs-fargate-config-map
 templates:
   - logs-fargate-config-map.yaml
+chart:
+  version: 1.0.0
 tests:
   - it: Fargate logging ConfigMap spec should match snapshot when Fargate logging is enabled
     template: logs-fargate-config-map.yaml
@@ -27,6 +29,16 @@ tests:
         [FILTER]
             Name filter_name
             Match *
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Fargate logging ConfigMap spec should match snapshot when Fargate logging is enabled and cluster UID is overridden
+    template: logs-fargate-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+      aws_fargate.logs.enabled: true
+      aws_fargate.logs.region: test-region
+      cluster.uid: customUid
     asserts:
       - matchSnapshot:
           path: data

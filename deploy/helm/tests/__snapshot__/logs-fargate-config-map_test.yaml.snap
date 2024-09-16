@@ -20,9 +20,9 @@ Fargate logging ConfigMap spec should include additional filters when they are c
       [FILTER]
           Name modify
           Match *
-          Add sw.k8s.cluster.uid <CLUSTER_UID>
+          Add sw.k8s.cluster.uid <CLUSTER_NAME>
           Add sw.k8s.log.type container
-          Add sw.k8s.agent.manifest.version "0.0.0"
+          Add sw.k8s.agent.manifest.version "1.0.0"
     flb_log_cw: "false"
     output.conf: |
       [OUTPUT]
@@ -58,9 +58,47 @@ Fargate logging ConfigMap spec should match snapshot when Fargate logging is ena
       [FILTER]
           Name modify
           Match *
-          Add sw.k8s.cluster.uid <CLUSTER_UID>
+          Add sw.k8s.cluster.uid <CLUSTER_NAME>
           Add sw.k8s.log.type container
-          Add sw.k8s.agent.manifest.version "0.0.0"
+          Add sw.k8s.agent.manifest.version "1.0.0"
+    flb_log_cw: "false"
+    output.conf: |
+      [OUTPUT]
+          Name cloudwatch_logs
+          Match kube.*
+          region test-region
+          log_group_name /swo/fargate/cluster_name
+          log_stream_prefix from-fluent-bit-
+          log_retention_days 30
+          auto_create_group true
+    parsers.conf: |-
+      [PARSER]
+          Name crio
+          Format Regex
+          Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>P|F) (?<log>.*)$
+          Time_Key time
+          Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+Fargate logging ConfigMap spec should match snapshot when Fargate logging is enabled and cluster UID is overridden:
+  1: |
+    filters.conf: |
+      [FILTER]
+          Name parser
+          Match *
+          Key_name log
+          Parser crio
+      [FILTER]
+          Name kubernetes
+          Match kube.*
+          Buffer_Size 0
+          Kube_Meta_Cache_TTL 300s
+          Labels Off
+          Annotations Off
+      [FILTER]
+          Name modify
+          Match *
+          Add sw.k8s.cluster.uid customUid
+          Add sw.k8s.log.type container
+          Add sw.k8s.agent.manifest.version "1.0.0"
     flb_log_cw: "false"
     output.conf: |
       [OUTPUT]
