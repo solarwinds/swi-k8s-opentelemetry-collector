@@ -228,13 +228,8 @@ The Helm chart is bundled also in AKS/EKS addons. Make sure that any changes are
 ### Helm Chart
 
 
-1. Create the tag you want to release and push it to origin. For a pre-release, use the `-alpha.1` suffix:
-
-    ```
-    git tag swo-k8s-collector-1.2.3[-alpha.1]
-    git push origin swo-k8s-collector-1.2.3
-    ```
-1. GitHub Action will be triggered to build the release and open a PR to the `gh-pages` branch.
+1. Create PR with version change into [Chart.yaml](../deploy/helm/Chart.yaml)
+1. Once the PR is merged, GitHub Action will be triggered to build the release and open a PR to the `gh-pages` branch.
 1. Review the PR created for changes to the `gh-pages` branch (which hosts the Helm charts), and merge it.
 1. Once the PR is merged, the Helm chart is published to <https://helm.solarwinds.com>.
 1. Find the relevant release in GitHub, edit it, and summarize all changes recorded in [CHANGELOG.md](../deploy/helm/CHANGELOG.md) into the release description.
