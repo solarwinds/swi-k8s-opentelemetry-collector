@@ -85,13 +85,13 @@ jobs:
           docker build -t swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019 --build-arg WINBASE=mcr.microsoft.com/windows/nanoserver:ltsc2019 -f build/docker/Dockerfile.Windows-Runtime . 
 
       - name: Save image
-        if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+        if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
         run: |
           docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2022.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2022
           docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2019.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019
       
       - uses: actions/upload-artifact@v3
-        if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+        if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
         with:
           name: image
           path: |
