@@ -27,3 +27,10 @@ tests:
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: DaemonSet spec should match snapshot when setting cluster name with spaces
+    template: node-collector-daemon-set.yaml
+    set:
+      cluster.name: custom &^%$ name
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
