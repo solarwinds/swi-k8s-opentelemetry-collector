@@ -13,25 +13,17 @@ main() {
     rm -rf .cr-index
     mkdir -p .cr-index
     RELEASE_NAME=$(yq -e '.name + "-" + .version' deploy/helm/Chart.yaml)
-    NEW_TAG=$RELEASE_NAME
-    
-    # Generate release notes 
+
+    # Check release type 
     if [[ "$RELEASE_NAME" == *"alpha"* ]]; then
         echo "Handling alpha release: $RELEASE_NAME"
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
+        PRE_RELEASE="--prerelease  --latest=false"
     else
         echo "Handling standard release: $RELEASE_NAME"
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep -v alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
+        PRE_RELEASE=""
     fi
-
-    GIT_PATH="deploy"
-    echo "# Changed:" > deploy/helm/release-notes.md
-    git log "$PREVIOUS_TAG"..HEAD --pretty=format:"%s" -- $GIT_PATH | grep -v Merge | awk '{print "* " $0}' >> deploy/helm/release-notes.md
-    echo "" >> deploy/helm/release-notes.md
-    echo "**Full Changelog**: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/compare/$PREVIOUS_TAG...$NEW_TAG" >> deploy/helm/release-notes.md
-    echo "Release notes:"
-    cat deploy/helm/release-notes.md
-
 
     echo "Packaging chart ..."
     cr package "deploy/helm"
@@ -39,13 +31,25 @@ main() {
     # Find the .tgz file and extract the release name
     RELEASE_FILE=$(find .cr-release-packages -name '*.tgz')
     
-
+    echo ""
+    echo ""
+    echo "********** Debug section: **************"
+    echo "Release name: $RELEASE_NAME"
     echo "Release file: $RELEASE_FILE"
+    echo "Previous tag: $PREVIOUS_TAG"
+    echo "Prerelease opt:  $PRE_RELEASE"
+    echo "****************************************"
+    echo ""
+    echo ""
 
-  
-    
     echo 'Releasing chart...'
-    cr upload -c "$(git rev-parse HEAD)" --release-notes-file=release-notes.md
+    gh release create -d $RELEASE_NAME \
+      --title $RELEASE_NAME \
+      $PRE_RELEASE \
+      --title $RELEASE_NAME \
+      --notes-start-tag $PREVIOUS_TAG \
+      --generate-notes \
+      $RELEASE_FILE
     
     echo 'Updating chart repo index...'
     cr index
