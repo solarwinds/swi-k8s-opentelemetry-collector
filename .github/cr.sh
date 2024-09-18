@@ -50,7 +50,6 @@ main() {
       --notes-start-tag $PREVIOUS_TAG \
       --generate-notes \
       $RELEASE_FILE
-    #cr upload -c "$(git rev-parse HEAD)" --release-notes-file=release-notes.md
     
     echo 'Updating chart repo index...'
     cr index
