@@ -3,9 +3,9 @@ name: Build and Deploy Images
 on:
   push:
     paths-ignore:
-      - docs/**
-      - README.md
-      - deploy/helm/*.md
+      - "docs/**"
+      - "*.md"
+      - "deploy/helm/*.md"
     tags:
       - '*.*.*'
 
@@ -56,6 +56,7 @@ jobs:
   
   build_and_test_windows:
     runs-on: windows-2022
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
     outputs:
       image_tag: ${{ steps.generate-tag.outputs.value }}
     steps:
@@ -193,11 +194,16 @@ jobs:
         run: |
           CURRENT_TAG=${GITHUB_REF#refs/tags/}
           PREVIOUS_TAG=$(git tag --sort=version:refname | grep -B1 "^${CURRENT_TAG}$" | head -n 1)
+          GIT_PATH="build src"
+          CHANGE_LOG=$(git log "$PREVIOUS_TAG".."$CURRENT_TAG" --pretty=format:"%s" -- "$GIT_PATH" | grep -v Merge | awk '{print "* " $0}')
 
           echo "Current tag: $CURRENT_TAG"
           echo "Previous tag: $PREVIOUS_TAG"
+          echo "Change log:"
+          echo $CHANGE_LOG
           echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+          printf "NOTES<<EOF\n%s\nEOF\n" "$CHANGE_LOG" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -207,6 +213,9 @@ jobs:
           tag_name: ${{ github.ref }}  # Use the tag that triggered the workflow
           release_name: ${{ github.ref }}
           body: |
-            **Full Changelog**: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/compare/${{ env.PREVIOUS_TAG }}...${{ env.CURRENT_TAG}}
+              ## Changed
+              ${{ env.NOTES }}
+
+              **Full Changelog**: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/compare/${{ env.PREVIOUS_TAG }}...${{ env.CURRENT_TAG}}
           draft: false
           prerelease: false
