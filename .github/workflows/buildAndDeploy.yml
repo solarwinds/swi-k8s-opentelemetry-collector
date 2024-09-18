@@ -22,7 +22,6 @@ env:
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
     outputs:
       image_tag: ${{ steps.generate-tag.outputs.value }}
     steps:
@@ -181,7 +180,9 @@ jobs:
   create_release:
     runs-on: ubuntu-latest
     name: Create GitHub Release
-
+    needs:
+      - deploy_dockerhub_windows
+      - deploy_dockerhub
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
