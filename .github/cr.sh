@@ -26,7 +26,7 @@ main() {
 
     GIT_PATH="deploy"
     echo "# Changed:" > deploy/helm/release-notes.md
-    git log "$PREVIOUS_TAG"..HEAD --pretty=format:"%s" -- $GIT_PATH | grep -v Merge | awk '{print "* " $0}' >> deploy/helm/release-notes.md
+    git log "$PREVIOUS_TAG"..HEAD --pretty=format:"%s by %aN" -- $GIT_PATH | grep -v Merge | awk '{print "* " $0}' >> deploy/helm/release-notes.md
     echo "" >> deploy/helm/release-notes.md
     echo "**Full Changelog**: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/compare/$PREVIOUS_TAG...$NEW_TAG" >> deploy/helm/release-notes.md
     echo "Release notes:"
