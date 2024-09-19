@@ -76,8 +76,10 @@ jobs:
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
       - name: Build
+        run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
+
+      - name: Copy image to Kind cluster
         run: |
-          skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
           kind load docker-image $(jq -r '.builds[] | select(.imageName=="integration-test") | .tag' /tmp/tags.json)
 
       - name: Deploy services using Skaffold
