@@ -9,7 +9,7 @@ runs:
         
         kubectl describe pod -l job-name=integration-test-manual -n test-namespace
         
-        kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n test-namespace
+        kubectl wait --for=condition=ready --timeout=120 pod -l job-name=integration-test-manual -n test-namespace
         kubetail -l job-name=integration-test-manual -n test-namespace &  
 
         # Wait for either complete or failed
