@@ -7,3 +7,28 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: The provided OTEL endpoint address ('otel-collector.dc-01.cloud.solarwinds.com') has been deprecated. Please provide a new one (https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm).
+  - it: should fail when empty cluster name is provided
+    set:
+      cluster.name: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: Please specify the cluster name.
+  - it: should fail when invalid cluster name is provided (only whitespace)
+    set:
+      cluster.name: " "
+    asserts:
+      - failedTemplate:
+          errorMessage: Please specify the cluster name.
+  - it: should not fail when empty cluster uid is provided
+    set:
+      cluster.uid: ""
+    template: "asserts.yaml"
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: should fail when invalid cluster uid is provided (only whitespace)
+    set:
+      cluster.uid: " "
+    asserts:
+      - failedTemplate:
+          errorMessage: If specified, the custom cluster UID should be a valid string.

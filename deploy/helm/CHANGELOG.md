@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
 - Added labels and annotations to all the entities
+
+### Changed
+
+- Setting `cluster.uid` is now optional. If not provided it defaults to value of `cluster.name`.
+
+## [4.1.0-alpha.3] - 2024-09-13
 
 ### Fixed
 

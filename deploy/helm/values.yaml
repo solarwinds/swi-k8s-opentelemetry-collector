@@ -185,8 +185,8 @@ otel:
 
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
-    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace,
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo',
     # but we need to add a condition that allows data without namespace attribute to be collected.
     # filter:
     #   metric:
@@ -279,8 +279,13 @@ otel:
     # Scheduling configurations
     # By default: set to run on linux amd64 nodes
     nodeSelector: {}
+
+    # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
     tolerations: []
+
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
     affinity: {}
+
     terminationGracePeriodSeconds: 600
 
     readinessProbe:
@@ -295,8 +300,8 @@ otel:
 
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
-    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
-    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace,
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo',
     # but we need to add a condition that allows data without namespace attribute to be collected.
     # filter:
     #   log_record:
@@ -410,7 +415,11 @@ otel:
     # Scheduling configurations
     # By default: set to run on linux amd64 nodes
     nodeSelector: {}
+
+    # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
     tolerations: []
+
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
     affinity: {}
 
     terminationGracePeriodSeconds: 600
@@ -448,19 +457,19 @@ otel:
     # This filter is applied after initial log processing, it is the place where logs could be filtered out
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     # default (prior to k8s collector 4.0.0):
-      # filter:
-      #   include:
-      #     match_type: regexp
-      #     # a log has to match all expressions in the list to be included
-      #     # see https://github.com/google/re2/wiki/Syntax for regexp syntax
-      #     record_attributes:
-      #       # allow only system namespaces (kube-system, kube-public)
-      #       - key: k8s.namespace.name
-      #         value: ^kube-.*$
-    # default (since k8s collector 4.0.0) is to collect all logs     
+    # filter:
+    #   include:
+    #     match_type: regexp
+    #     # a log has to match all expressions in the list to be included
+    #     # see https://github.com/google/re2/wiki/Syntax for regexp syntax
+    #     record_attributes:
+    #       # allow only system namespaces (kube-system, kube-public)
+    #       - key: k8s.namespace.name
+    #         value: ^kube-.*$
+    # default (since k8s collector 4.0.0) is to collect all logs
     #
-    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace, 
-    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo', 
+    # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace,
+    # we need to allow other data to be collected. The following example excludes all data from namespace 'foo',
     # but we need to add a condition that allows data without namespace attribute to be collected.
     # filter:
     #   log_record:
@@ -496,7 +505,6 @@ otel:
         # excludePattern: ".*internal.*|.*private.*"
         # by default all annotations are excluded
         excludePattern: "k8s\\.\\w+\\.annotations\\..*"
-
 
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
@@ -571,7 +579,7 @@ otel:
     enabled: true
 
     # Apart of watching for changes in k8s resources, all resources are periodically pulled
-    # this is mainly to catch resources that were created before the collector was deployed and also to catch 
+    # this is mainly to catch resources that were created before the collector was deployed and also to catch
     # resources that were created during the time when the collector was down (or something unexpected happen)
     pull_every: 60m
 
@@ -580,8 +588,12 @@ otel:
     filter: {}
 
 cluster:
+  # A unique name of a cluster provided by user during deployment of the Helm chart.
   name: <CLUSTER_NAME>
-  uid: <CLUSTER_UID>
+
+  # An optional unique identifier for a cluster provided by user during deployment of the Helm chart.
+  # Useful for example if multiple clusters have to have the same name. Or when the name contains problematic characters.
+  uid: ""
 
 # If enabled it creates CronJob that will periodically check for new versions of the Helm chart and upgrade if available
 # Keep in mind that in order to update resources the job has full access to the namespace where it is deployed and also have access to modify ClusterRole and ClusterRolBinding
@@ -668,9 +680,11 @@ ebpfNetworkMonitoring:
 
     # Scheduling configurations
     nodeSelector: {}
-    # By default: tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
+
+    # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
     tolerations: []
-    # By default: affinity is set to run the DaemonSet on linux amd64.
+
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
     affinity: {}
 
   k8sCollector:
@@ -719,7 +733,6 @@ ebpfNetworkMonitoring:
       repository: "otel/opentelemetry-ebpf-reducer"
       tag: "v0.10.1"
       pullPolicy: IfNotPresent
-
 # DEPRECATED: Prometheus is deployed only in case opencost section is enabled. Otherwise this section can be ignored.
 # prometheus:
 

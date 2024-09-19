@@ -1,3 +1,11 @@
 {{- if (mustRegexMatch "otel-collector\\.dc-\\d\\d\\.cloud\\.solarwinds\\.com" .Values.otel.endpoint) -}}
 {{ fail (printf "The provided OTEL endpoint address ('%s') has been deprecated. Please provide a new one (https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm)." .Values.otel.endpoint) }}
 {{- end -}}
+
+{{- if empty (trim .Values.cluster.name) -}}
+{{ fail "Please specify the cluster name." }}
+{{- end -}}
+
+{{- if mustRegexMatch "^[\\s]+$" .Values.cluster.uid -}}
+{{ fail "If specified, the custom cluster UID should be a valid string." }}
+{{- end -}}

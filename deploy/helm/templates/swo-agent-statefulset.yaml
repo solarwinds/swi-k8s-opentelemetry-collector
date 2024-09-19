@@ -50,7 +50,10 @@ spec:
           imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
-              value: {{ .Values.cluster.uid }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "common.fullname" (tuple . "-common-env") }}
+                  key: CLUSTER_UID
             - name: SWO_URL
               value: {{ .Values.otel.endpoint | trimPrefix "otel.collector." | trimPrefix "otel-collector." }}
             - name: UAMS_ACCESS_TOKEN

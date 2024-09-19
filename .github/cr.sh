@@ -12,30 +12,47 @@ main() {
 
     rm -rf .cr-index
     mkdir -p .cr-index
-    
-    export APP_VERSION=$(git tag --sort=version:refname | grep -E '^[0-9]+.[0-9]+.[0-9]+$' | tail -n 1)
-    export CHART_VERSION=$(git tag --sort=version:refname | grep -E  '^swo-k8s-collector-' | tail -n 1 | awk -F'swo-k8s-collector-' '{print $2}')
-    echo "App Version=$APP_VERSION"
-    echo "Chart Version=$CHART_VERSION"
-    
-    yq eval '.appVersion = env(APP_VERSION)' -i deploy/helm/Chart.yaml
-    yq eval '.version = env(CHART_VERSION)' -i deploy/helm/Chart.yaml
+    RELEASE_NAME=$(yq -e '.name + "-" + .version' deploy/helm/Chart.yaml)
+
+    # Check release type 
+    if [[ "$RELEASE_NAME" == *"alpha"* ]]; then
+        echo "Handling alpha release: $RELEASE_NAME"
+        PREVIOUS_TAG=$(git tag --sort=version:refname | grep alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
+        PRE_RELEASE="--prerelease  --latest=false"
+    else
+        echo "Handling standard release: $RELEASE_NAME"
+        PREVIOUS_TAG=$(git tag --sort=version:refname | grep -v alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
+        PRE_RELEASE=""
+    fi
 
     echo "Packaging chart ..."
     cr package "deploy/helm"
-
-    echo 'Releasing chart...'
-    cr upload -c "$(git rev-parse HEAD)"
-
-    echo 'Updating chart repo index...'
-    cr index
-
+    
     # Find the .tgz file and extract the release name
     RELEASE_FILE=$(find .cr-release-packages -name '*.tgz')
-    RELEASE_NAME=$(basename "$RELEASE_FILE" .tgz)
-
-    echo "Release file: $RELEASE_FILE"
+    
+    echo ""
+    echo ""
+    echo "********** Debug section: **************"
     echo "Release name: $RELEASE_NAME"
+    echo "Release file: $RELEASE_FILE"
+    echo "Previous tag: $PREVIOUS_TAG"
+    echo "Prerelease opt:  $PRE_RELEASE"
+    echo "****************************************"
+    echo ""
+    echo ""
+
+    echo 'Releasing chart...'
+    gh release create -d $RELEASE_NAME \
+      --title $RELEASE_NAME \
+      $PRE_RELEASE \
+      --title $RELEASE_NAME \
+      --notes-start-tag $PREVIOUS_TAG \
+      --generate-notes \
+      $RELEASE_FILE
+    
+    echo 'Updating chart repo index...'
+    cr index
 
     echo 'Pushing update...'
     push_files "$RELEASE_NAME"
@@ -45,7 +62,7 @@ main() {
 }
 
 install_chart_releaser() {
-    local version="v1.5.0"
+    local version="v1.6.0"
     local install_dir="$RUNNER_TOOL_CACHE/cr/$version/$(uname -m)"
     if [[ ! -d "$install_dir" ]]; then
         mkdir -p "$install_dir"

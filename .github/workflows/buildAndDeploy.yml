@@ -3,15 +3,11 @@ name: Build and Deploy Images
 on:
   push:
     paths-ignore:
-      - docs/**
-      - README.md
-      - deploy/helm/*.md
+      - "docs/**"
+      - "*.md"
+      - "deploy/helm/*.md"
     tags:
       - '*.*.*'
-    branches: 
-      - master
-      - release/**
-
 
   pull_request:
     branches: 
@@ -60,6 +56,7 @@ jobs:
   
   build_and_test_windows:
     runs-on: windows-2022
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
     outputs:
       image_tag: ${{ steps.generate-tag.outputs.value }}
     steps:
@@ -85,13 +82,13 @@ jobs:
           docker build -t swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019 --build-arg WINBASE=mcr.microsoft.com/windows/nanoserver:ltsc2019 -f build/docker/Dockerfile.Windows-Runtime . 
 
       - name: Save image
-        if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+        if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
         run: |
           docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2022.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2022
           docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2019.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019
       
       - uses: actions/upload-artifact@v3
-        if: github.event_name == 'release' && github.event.action == 'published' && !contains(github.ref, 'swo-k8s-collector')
+        if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
         with:
           name: image
           path: |
@@ -193,24 +190,19 @@ jobs:
           fetch-depth: 0
 
       - name: Find previous tag
-        id: find_previous_tag
         run: |
           CURRENT_TAG=${GITHUB_REF#refs/tags/}
           PREVIOUS_TAG=$(git tag --sort=version:refname | grep -B1 "^${CURRENT_TAG}$" | head -n 1)
-
-          echo "Current tag: $CURRENT_TAG"
           echo "Previous tag: $PREVIOUS_TAG"
-          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
+      - name: Create Github Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}  # Use the tag that triggered the workflow
-          release_name: ${{ github.ref }}
-          body: |
-            **Full Changelog**: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/compare/${{ env.PREVIOUS_TAG }}...${{ env.CURRENT_TAG}}
-          draft: false
-          prerelease: false
+          # for gh cli
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref }} \
+            --title ${{ github.ref }} \
+            --latest=false \
+            --generate-notes \
+            --notes-start-tag ${{ env.PREVIOUS_TAG }}

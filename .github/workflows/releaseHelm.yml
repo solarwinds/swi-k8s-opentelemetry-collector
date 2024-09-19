@@ -1,0 +1,48 @@
+name: Release Helm
+
+on:
+  push:  
+    paths:
+      - deploy/helm/Chart.yaml
+    branches: 
+      - master
+      - release/**
+ 
+jobs:
+  deploy_helm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to push chart release and create a release (helm/chart-releaser-action)
+      id-token: write # needed for signing
+      pull-requests: write # needed to create pull-request
+    name: Deploy Helm chart to GitHub pages
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:     
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3.5
+        with:
+          version: v3.9.2
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+      - name: Set env
+        run: |
+          echo "CR_GIT_REPO=$(cut -d '/' -f 2 <<< $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+          echo "CR_OWNER=$(cut -d '/' -f 1 <<< $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+
+      - name: Run chart-releaser
+        env:
+          # for chart-releaser (it is required although probably not used)
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          # for gh cli
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          "./.github/cr.sh"
+        shell: bash
