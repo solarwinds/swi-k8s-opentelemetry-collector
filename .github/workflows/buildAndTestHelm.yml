@@ -82,6 +82,11 @@ jobs:
         run: |
           kind load docker-image $(jq -r '.builds[] | select(.imageName=="integration-test") | .tag' /tmp/tags.json)
 
+      - name: Setup kubetail
+        run: |
+            curl -Lo kubetail https://raw.githubusercontent.com/johanhaleby/kubetail/master/kubetail && sudo install kubetail /usr/local/bin/
+        shell: bash
+
       - name: Deploy services using Skaffold
         run: |
           skaffold deploy -p=ci-helm-e2e \
