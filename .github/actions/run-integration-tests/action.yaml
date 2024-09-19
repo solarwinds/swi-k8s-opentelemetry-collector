@@ -6,10 +6,6 @@ runs:
     - name: Run Integration tests
       run: |
         kubectl create job --from=cronjob/integration-test integration-test-manual -n test-namespace
-        docker images
-        sleep 60
-        kubectl describe pod -l job-name=integration-test-manual -n test-namespace
-        
         kubectl wait --for=condition=ready --timeout=120s pod -l job-name=integration-test-manual -n test-namespace
         kubetail -l job-name=integration-test-manual -n test-namespace &  
 
