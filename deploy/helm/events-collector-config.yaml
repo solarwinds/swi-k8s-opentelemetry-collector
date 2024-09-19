@@ -92,39 +92,41 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.job.found")
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
+
+{{- if .Values.otel.manifests.enabled }}
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
     log_statements:
       - context: log
         statements:
           # set entity annotations for the resource
-          - set(resource.attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Pod"
-          - set(resource.attributes["k8s.deployment.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Deployment"
-          - set(resource.attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "StatefulSet"
-          - set(resource.attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "ReplicaSet"
-          - set(resource.attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "DaemonSet"
-          - set(resource.attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Job"
-          - set(resource.attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"]) where body["kind"] == "CronJob"
-          - set(resource.attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Node"
-          - set(resource.attributes["k8s.service.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Service"
-          - set(resource.attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolume"
-          - set(resource.attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolumeClaim"
-          - set(resource.attributes["k8s.ingress.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Ingress"
+          - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Pod"
+          - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Deployment"
+          - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "StatefulSet"
+          - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "ReplicaSet"
+          - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "DaemonSet"
+          - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Job"
+          - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"]) where body["kind"] == "CronJob"
+          - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Node"
+          - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Service"
+          - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolume"
+          - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolumeClaim"
+          - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Ingress"
 
           # set entity labels for the resource
-          - set(resource.attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"] == "Pod"
-          - set(resource.attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where body["kind"] == "Deployment"
-          - set(resource.attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where body["kind"] == "StatefulSet"
-          - set(resource.attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where body["kind"] == "ReplicaSet"
-          - set(resource.attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where body["kind"] == "DaemonSet"
-          - set(resource.attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"] == "Job"
-          - set(resource.attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"] == "CronJob"
-          - set(resource.attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"] == "Node"
-          - set(resource.attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"] == "Service"
-          - set(resource.attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolume"
-          - set(resource.attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolumeClaim"
-          - set(resource.attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"] == "Ingress"
-
+          - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"] == "Pod"
+          - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where body["kind"] == "Deployment"
+          - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where body["kind"] == "StatefulSet"
+          - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where body["kind"] == "ReplicaSet"
+          - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where body["kind"] == "DaemonSet"
+          - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"] == "Job"
+          - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"] == "CronJob"
+          - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"] == "Node"
+          - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"] == "Service"
+          - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolume"
+          - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolumeClaim"
+          - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"] == "Ingress"
+{{- end }}
 {{- if .Values.otel.manifests.enabled }}
   transform/manifest:
       error_mode: ignore
@@ -183,6 +185,34 @@ processors:
       - k8s.persistentvolumeclaim.name
       - k8s.ingress.name
       - sw.k8s.ingress.type
+
+      - k8s.pod.labels
+      - k8s.deployment.labels
+      - k8s.statefulset.labels
+      - k8s.replicaset.labels
+      - k8s.daemonset.labels
+      - k8s.job.labels
+      - k8s.cronjob.labels
+      - k8s.node.labels
+      - k8s.labelsspace.labels
+      - k8s.service.labels
+      - k8s.persistentvolume.labels
+      - k8s.persistentvolumeclaim.labels
+      - k8s.ingress.labels
+
+      - k8s.pod.annotations
+      - k8s.deployment.annotations
+      - k8s.statefulset.annotations
+      - k8s.replicaset.annotations
+      - k8s.daemonset.annotations
+      - k8s.job.annotations
+      - k8s.cronjob.annotations
+      - k8s.node.annotations
+      - k8s.labelsspace.annotations
+      - k8s.service.annotations
+      - k8s.persistentvolume.annotations
+      - k8s.persistentvolumeclaim.annotations
+      - k8s.ingress.annotations
 {{- end }}
 
   resource/events:
