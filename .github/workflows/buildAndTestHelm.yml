@@ -77,7 +77,7 @@ jobs:
       - name: Build
         run: |
           skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
-          kind load docker-image integration-test:$(jq -r '.builds[] | select(.imageName=="integration-test") | .tag' /tmp/tags.json)
+          kind load docker-image $(jq -r '.builds[] | select(.imageName=="integration-test") | .tag' /tmp/tags.json)
 
       - name: Deploy services using Skaffold
         run: |
