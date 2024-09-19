@@ -51,6 +51,11 @@ jobs:
     name: Helm e2e tests
     outputs:
       image_tag: ${{ steps.generate-tag.outputs.value }}
+
+    strategy:
+      matrix:
+        # Kubernetes versions to test on
+        kubernetes_version: [v1.25.16, v1.26.15, v1.27.16, v1.28.13, v1.29.8, v1.30.4, v1.31.0]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,8 +63,12 @@ jobs:
       - name: Deploy skaffold
         uses: ./.github/actions/deploy-skaffold
 
-      - name: Deploy kubernetes
-        uses: ./.github/actions/deploy-kubernetes
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          version: v0.24.0
+          kubectl_version: ${{ matrix.kubernetes_version }}
+          node_image: kindest/node:${{ matrix.kubernetes_version }}
 
       - name: Add dependency chart repos
         run: |
@@ -69,8 +78,15 @@ jobs:
         run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
 
       - name: Deploy services using Skaffold
-        run: skaffold deploy -p=ci-helm-e2e --build-artifacts=/tmp/tags.json
+        run: |
+          skaffold deploy -p=ci-helm-e2e \
+            --build-artifacts=/tmp/tags.json  \
+            --kube-context kind-chart-testing
       
+      - name: Show all resources
+        run: |
+          kubectl get all -n test-namesapce
+
       - name: Run integration tests
         uses: ./.github/actions/run-integration-tests
 
