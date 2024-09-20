@@ -66,6 +66,7 @@ jobs:
         run: skaffold deploy --build-artifacts=/tmp/tags.json --kube-context kind-kind
 
       - name: Show all resources
+        if: ${{ failure() }}
         run: |
           kubectl get all -n test-namespace
 
