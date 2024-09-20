@@ -107,6 +107,11 @@ jobs:
       - name: Run integration tests
         uses: ./.github/actions/run-integration-tests
 
+      - name: Setup upterm session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() }}        
+        timeout-minutes: 15
+
   helm_test_auto_update_against_last_published:
     runs-on: ubuntu-latest
     name: Helm auto update test
