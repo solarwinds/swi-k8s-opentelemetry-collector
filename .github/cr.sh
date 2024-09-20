@@ -43,7 +43,7 @@ main() {
     echo ""
 
     echo 'Releasing chart...'
-    gh release create -d $RELEASE_NAME \
+    gh release create $RELEASE_NAME \
       --title $RELEASE_NAME \
       $PRE_RELEASE \
       --title $RELEASE_NAME \
