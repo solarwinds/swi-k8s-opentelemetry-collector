@@ -5,7 +5,10 @@ runs:
   steps:
     - name: Run Integration tests
       run: |
+        kubectl wait --for=condition=ready --timeout=60s pod -l app=timeseries-mock-service -n test-namespace
+
         kubectl create job --from=cronjob/integration-test integration-test-manual -n test-namespace
+
         kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n test-namespace
         kubetail -l job-name=integration-test-manual -n test-namespace &  
 
@@ -20,7 +23,7 @@ runs:
                 job_result=1
                 break
             fi
-            echo "."
+            echo -n "."
             sleep 3
         done
 
