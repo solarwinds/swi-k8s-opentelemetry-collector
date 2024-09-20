@@ -31,11 +31,20 @@ spec:
     spec:
       terminationGracePeriodSeconds: {{ .Values.otel.node_collector.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
+      hostNetwork: true
       securityContext:
         fsGroup: 0
         runAsUser: 0
         runAsGroup: 0
       tolerations:
+      {{- if .Values.openshift.enabled }}
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/infra
+          operator: Exists
+          effect: NoSchedule
+      {{- end }}
       {{- if .Values.otel.logs.tolerations }}
       {{ toYaml .Values.otel.logs.tolerations | nindent 8 }}
       {{- else }}
@@ -76,6 +85,14 @@ spec:
         - name: swi-opentelemetry-collector
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          securityContext: 
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+              - ALL
           command:
             - /wrapper
             - /swi-otelcol

@@ -57,7 +57,15 @@ Events collector spec should match snapshot when using default values:
             memory: 1000Mi
           requests:
             memory: 1000Mi
-        securityContext: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - mountPath: /conf
             name: opentelemetry-collector-configmap

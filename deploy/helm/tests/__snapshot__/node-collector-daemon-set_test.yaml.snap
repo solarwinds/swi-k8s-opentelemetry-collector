@@ -72,6 +72,14 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
             memory: 1Gi
           requests:
             memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - mountPath: /var/log/pods
             name: varlogpods
@@ -93,6 +101,7 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    hostNetwork: true
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -202,6 +211,14 @@ DaemonSet spec should match snapshot when overriding cluster ID:
             memory: 1Gi
           requests:
             memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - mountPath: /var/log/pods
             name: varlogpods
@@ -223,6 +240,7 @@ DaemonSet spec should match snapshot when overriding cluster ID:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    hostNetwork: true
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -332,6 +350,14 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
             memory: 1Gi
           requests:
             memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - mountPath: /var/log/pods
             name: varlogpods
@@ -353,6 +379,7 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    hostNetwork: true
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -462,6 +489,14 @@ DaemonSet spec should match snapshot when using default values:
             memory: 1Gi
           requests:
             memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - mountPath: /var/log/pods
             name: varlogpods
@@ -483,6 +518,7 @@ DaemonSet spec should match snapshot when using default values:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    hostNetwork: true
     securityContext:
       fsGroup: 0
       runAsGroup: 0
