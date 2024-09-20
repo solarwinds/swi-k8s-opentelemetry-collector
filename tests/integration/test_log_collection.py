@@ -11,7 +11,8 @@ def setup_function():
     run_shell_command(f'kubectl run {pod_name} --image bash:alpine3.19 -n default -- -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"')
 
 def teardown_function():
-    run_shell_command(f'kubectl delete pod {pod_name} -n default')
+    pass
+    #run_shell_command(f'kubectl delete pod {pod_name} -n default')
 
 def test_logs_generated():
     retry_until_ok(url, assert_test_log_found, print_failure)
