@@ -48,8 +48,8 @@ def retry_until_ok(url, func, print_failure, timeout = 600):
             print(e, traceback.format_exc())
 
         if response is not None and response.status_code == 200:
-            if( last_error == ''): 
-                print("Successfully downloaded!")
+            if( last_error != ''): 
+                print(last_error)
             result = func(response.content)
             if( type(result) != tuple):
                 is_ok = result
