@@ -1,5 +1,6 @@
 import pytest
 import os
+import json
 from test_utils import get_all_bodies_for_all_sent_content, retry_until_ok, run_shell_command
 
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
@@ -18,12 +19,17 @@ def test_logs_generated():
 
 def assert_test_log_found(content):
     raw_bodies = get_all_bodies_for_all_sent_content(content)
-    test_log_found = any(f'{tested_log}' in raw_bodies)
+    test_log_found = any(f'{tested_log}' in body for body in raw_bodies)
     return test_log_found
 
 def print_failure(content):
     raw_bodies = get_all_bodies_for_all_sent_content(content)
     print(f'Failed to find {tested_log}')
-    print('Sent logs:')
-    print(raw_bodies)
+    print('All logs in raw_bodies_dump.txt')
+    #print(raw_bodies)
+    # Dump the raw_bodies to a file
+    with open('raw_bodies_dump.txt', 'w') as file:
+        # Convert the list to a JSON string for better formatting
+        json.dump(raw_bodies, file, indent=4)
+
 

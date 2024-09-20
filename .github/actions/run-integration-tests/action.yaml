@@ -36,8 +36,7 @@ runs:
                 kubectl logs -n test-namespace $pod -c $container > pod-logs/$container.txt
               done
             done
-            curl http://$TIMESERIES_MOCK_ENDPOINT/logs.json > pod-logs/otel-logs.json
-
+            mv raw_bodies_dump.txt pod-logs/
             exit 1
         fi
 
