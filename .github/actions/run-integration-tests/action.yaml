@@ -13,6 +13,7 @@ runs:
         kubetail -l job-name=integration-test-manual -n test-namespace &  
 
         # Wait for either complete or failed
+        echo "Waiting for tests to complete"
         while true; do
             if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual -n test-namespace 2>/dev/null; then
                 job_result=0
@@ -43,7 +44,7 @@ runs:
             exit 1
         fi
 
-        echo -n "Tests succeeded"
+        echo "Tests succeeded"
       shell: bash
     - name: Upload pod logs
       uses: actions/upload-artifact@v3
