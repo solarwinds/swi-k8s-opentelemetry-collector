@@ -247,7 +247,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
                 break  # Metric found, break the resource loop            
 
         if not test_case_passed:
-            return (False, f'Failed to find metric {metric_in_test_case["name"]} in resource group')
+            return (False, f'Failed to find metric {metric_in_test_case["name"]}')
 
     return (True, '')
 
