@@ -5,7 +5,7 @@ from test_utils import get_all_bodies_for_all_sent_content, retry_until_ok, run_
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
 url = f'http://{endpoint}/logs.json'
 pod_name = 'dummy-logging-pod'
-tested_log = '!!testlog!!'
+tested_log = 'testlog-swo-k8s-collector-integration-test'
 
 def setup_function():
     run_shell_command(f'kubectl run {pod_name} --image bash:alpine3.19 -n default -- -ec "while :; do echo \'{tested_log}\'; sleep 5 ; done"')
