@@ -46,7 +46,7 @@ def test_expected_otel_message_content_is_generated(file_name):
     resource_attributes = test_case["resource_attributes"]
     metrics = test_case["metrics"]
 
-    print(f'Checking metrics {metrics} with resource attributes {resource_attributes}')
+    print(f'Checking metrics {[item['name'] for item in metrics]} with resource attributes {resource_attributes}')
 
     retry_until_ok(url, 
                    lambda content: assert_test_contain_expected_datapoints(content, metrics, resource_attributes),
@@ -205,7 +205,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
                         # Loop through each metric
                         for metric in scope["metrics"]:
                             if metric["name"] == metric_in_test_case["name"]:
-                                print(f'Found metric {metric_in_test_case["name"]} in resource group')
+                                print(f'Found metric {metric_in_test_case["name"]}')
                                 test_case_passed = True
 
                                 # Default to empty list if 'attributes' key is not present
@@ -247,7 +247,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
                 break  # Metric found, break the resource loop            
 
         if not test_case_passed:
-            return (False, f'Failed to find metric {metric_in_test_case["name"]} in resource group')
+            return (False, f'Failed to find metric {metric_in_test_case["name"]}')
 
     return (True, '')
 
