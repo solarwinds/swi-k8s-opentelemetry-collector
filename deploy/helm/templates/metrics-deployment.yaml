@@ -118,7 +118,16 @@ spec:
           command:
             - /swi-otelcol
             - --config=/conf/relay.yaml
-          securityContext: {}
+          securityContext: 
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+              - ALL
+
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
