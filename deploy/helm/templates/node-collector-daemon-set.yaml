@@ -31,7 +31,9 @@ spec:
     spec:
       terminationGracePeriodSeconds: {{ .Values.otel.node_collector.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
+      {{- if .Values.openshift.enabled }}
       hostNetwork: true
+      {{- end }}
       securityContext:
         fsGroup: 0
         runAsUser: 0
