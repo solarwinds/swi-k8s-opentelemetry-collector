@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added labels and annotations to all the entities
+
 ## [4.1.0-alpha.6] - 2024-09-23
 
 ### Added
