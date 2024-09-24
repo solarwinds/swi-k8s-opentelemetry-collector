@@ -30,7 +30,7 @@ def get_all_resources_for_all_sent_content(content):
     return [get_all_log_resources(log_bulk) for log_bulk in log_bulks]
 
 
-def retry_until_ok(url, func, print_failure, timeout = 240):
+def retry_until_ok(url, func, print_failure, timeout = 600):
     start_time = time.time()
     last_exception = None
     last_error = ''
@@ -48,8 +48,8 @@ def retry_until_ok(url, func, print_failure, timeout = 240):
             print(e, traceback.format_exc())
 
         if response is not None and response.status_code == 200:
-            if( last_error == ''): 
-                print("Successfully downloaded!")
+            if( last_error != ''): 
+                print(last_error)
             result = func(response.content)
             if( type(result) != tuple):
                 is_ok = result

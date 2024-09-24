@@ -5,12 +5,15 @@ runs:
   steps:
     - name: Run Integration tests
       run: |
+        kubectl wait --for=condition=ready --timeout=60s pod -l app=timeseries-mock-service -n test-namespace
+
         kubectl create job --from=cronjob/integration-test integration-test-manual -n test-namespace
 
         kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n test-namespace
         kubetail -l job-name=integration-test-manual -n test-namespace &  
 
         # Wait for either complete or failed
+        echo "Waiting for tests to complete"
         while true; do
             if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual -n test-namespace 2>/dev/null; then
                 job_result=0
@@ -21,8 +24,7 @@ runs:
                 job_result=1
                 break
             fi
-
-            echo "Waiting for tests to complete"
+            echo -n "."
             sleep 3
         done
 
@@ -38,7 +40,7 @@ runs:
                 kubectl logs -n test-namespace $pod -c $container > pod-logs/$container.txt
               done
             done
-
+            mv raw_bodies_dump.txt pod-logs/
             exit 1
         fi
 

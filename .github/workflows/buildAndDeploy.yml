@@ -31,6 +31,18 @@ jobs:
       - name: Deploy skaffold
         uses: ./.github/actions/deploy-skaffold
 
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          version: v0.24.0
+          kubectl_version: v1.31.0
+          node_image: kindest/node:v1.31.0
+          cluster_name: kind
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
       - name: Generate docker image tag
         id: generate-tag
         run: echo "::set-output name=value::v${{ github.run_number }}-$(git rev-parse --short HEAD)"
@@ -41,15 +53,24 @@ jobs:
       - name: Test
         run: skaffold test --build-artifacts=/tmp/tags.json
 
-      - name: Deploy kubernetes
-        uses: ./.github/actions/deploy-kubernetes
-
-      - name: Add dependency chart repos
+      - name: Copy image to Kind cluster
         run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          kind load docker-image $(jq -r '.builds[] | select(.imageName=="integration-test") | .tag' /tmp/tags.json)
+          kind load docker-image $(jq -r '.builds[] | select(.imageName=="swi-k8s-opentelemetry-collector") | .tag' /tmp/tags.json)
+          kind load docker-image $(jq -r '.builds[] | select(.imageName=="swi-k8s-opentelemetry-collector-tests") | .tag' /tmp/tags.json)
+
+      - name: Setup kubetail
+        run: |
+          curl -Lo kubetail https://raw.githubusercontent.com/johanhaleby/kubetail/master/kubetail && sudo install kubetail /usr/local/bin/
+        shell: bash
 
       - name: Deploy services using Skaffold
-        run: skaffold deploy --build-artifacts=/tmp/tags.json
+        run: skaffold deploy --build-artifacts=/tmp/tags.json --kube-context kind-kind
+
+      - name: Show all resources
+        if: ${{ failure() }}
+        run: |
+          kubectl get all -n test-namespace
 
       - name: Run integration tests
         uses: ./.github/actions/run-integration-tests

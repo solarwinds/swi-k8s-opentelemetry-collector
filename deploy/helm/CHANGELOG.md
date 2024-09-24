@@ -7,13 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added labels and annotations to all the entities
+
+## [4.1.0-alpha.6] - 2024-09-23
+
 ### Added
 
-- Added labels and annotations to all the entities
+- Initial support for OpenShift clusters.
+  - Set `openshift.enabled` to `true` during deployment to automatically generate necessary k8s resources.
+  - Settings `ebpfNetworkMonitoring.enabled` and `swoagent.enabled` must be set to `false` as they are not supported yet.
+
+### Changed
+
+- Improved build pipeline.
+
+## [4.1.0-alpha.5] - 2024-09-20
+
+### Changed
+
+- Improved Helm chart documentation.
+- Additional improvements for supporting the optional `cluster.uid`.
+- Improved build pipeline.
+
+## [4.1.0-alpha.4] - 2024-09-16
 
 ### Changed
 
 - Setting `cluster.uid` is now optional. If not provided it defaults to value of `cluster.name`.
+
+### Fixed
+
+- Fixed autoupdate job to run only on Linux Nodes.
 
 ## [4.1.0-alpha.3] - 2024-09-13
 

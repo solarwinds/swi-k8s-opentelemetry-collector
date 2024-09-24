@@ -1,0 +1,20 @@
+{{- if .Values.openshift.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "common.fullname" (tuple . "-openshift-role-binding") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "common.fullname" (tuple . "-openshift-role") }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "common.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-kube-state-metrics
+  namespace: {{ .Release.Namespace }}
+{{- end }}

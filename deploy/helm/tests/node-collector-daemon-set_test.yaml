@@ -34,3 +34,10 @@ tests:
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: DaemonSet spec should match snapshot when openshift is enabled
+    template: node-collector-daemon-set.yaml
+    set:
+      openshift.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec

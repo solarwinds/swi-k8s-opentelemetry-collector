@@ -64,7 +64,15 @@ Metrics collector spec should match snapshot when using default values:
             memory: 3Gi
           requests:
             memory: 3Gi
-        securityContext: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
           - mountPath: /conf
             name: opentelemetry-collector-configmap
