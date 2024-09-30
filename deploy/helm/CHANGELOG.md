@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Added labels and annotations to all the entities
+## [4.1.0] - 2024-09-30
+
+### Added
+
+- Improved compatibility with 3rd party tools for managing Helm charts.
+  - Added Helm chart README.md.
+  - Improved Helm chart documentation.
+- Setting `cluster.uid` is now optional. If not provided it defaults to value of `cluster.name`.
+- Initial support for OpenShift clusters.
+  - Set `openshift.enabled` to `true` during deployment to automatically generate necessary k8s resources.
+  - Settings `ebpfNetworkMonitoring.enabled` and `swoagent.enabled` must be set to `false` as they are not supported yet.
+  - This is an experimental feature and it may change in the future.
+
+### Changed
+
+- Settings `otel.metrics.k8s_instrumentation`, `otel.logs.k8s_instrumentation` and `otel.events.k8s_instrumentation` are deprecated and may be removed in a future version.
+- Enabled automatic deployment of the OTEL Network Collector to the cluster.
+- Improved build pipeline.
+- Upgraded collector image to `0.11.5` which brings following changes:
+  - See Release notes for [0.11.5](https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/tag/0.11.5).
+  - Bumped 3rd party dependencies and Docker images.
+
+### Fixed
+
+- Configuring `otel.events.k8s_instrumentation.labels.excludePattern` or `otel.events.k8s_instrumentation.annotations.excludePattern` might cause the events collector to fail when manifest collection is enabled.
+- Fixed the autoupdate job to run only on Linux Nodes.
 
 ## [4.1.0-alpha.6] - 2024-09-23
 
