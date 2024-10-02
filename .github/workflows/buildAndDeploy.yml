@@ -190,20 +190,44 @@ jobs:
           docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022
           docker push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2019
 
-      - name: Create multi-arch manifest
-        run: | 
-          docker manifest create ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver --amend ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022 --amend ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2019
-
-      - name: Push multi-arch manifest
-        run: | 
-          docker manifest push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver
-
-  create_release:
+  create_and_push_manifest:
     runs-on: ubuntu-latest
     name: Create GitHub Release
     needs:
       - deploy_dockerhub_windows
       - deploy_dockerhub
+    steps:   
+      - name: Get image tag
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}    
+
+      - name: Docker login
+        env:
+          DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
+          DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
+        run: echo "$env:DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:DOCKER_HUB_CI_USER" --password-stdin   
+        
+      - name: Get linux manifest
+        run: | 
+          docker manifest inspect ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }} > manifest.json
+          
+      - name: Create multi-arch manifest
+        run: | 
+          docker manifest create ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}  \
+            --amend ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2022 \
+            --amend ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}-nanoserver-ltsc2019 \
+            --amend ${{ env.DOCKERHUB_IMAGE }}@$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' manifest.json) \
+            --amend ${{ env.DOCKERHUB_IMAGE }}@$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' manifest.json) 
+
+      - name: Push multi-arch manifest
+        run: | 
+          docker manifest push ${{ env.DOCKERHUB_IMAGE }}:${{ steps.vars.outputs.tag }}
+
+  create_release:
+    runs-on: ubuntu-latest
+    name: Create GitHub Release
+    needs:
+      - create_and_push_manifest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
