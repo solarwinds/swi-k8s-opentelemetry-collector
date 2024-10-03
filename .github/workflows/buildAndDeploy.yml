@@ -244,13 +244,17 @@ jobs:
           echo "Previous tag: $PREVIOUS_TAG"
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
 
+      - name: Get current tag
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+
       - name: Create Github Release
         env:
           # for gh cli
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.ref }} \
-            --title ${{ github.ref }} \
+          gh release create ${{ steps.vars.outputs.tag }} \
+            --title ${{ steps.vars.outputs.tag }} \
             --latest=false \
             --generate-notes \
             --notes-start-tag ${{ env.PREVIOUS_TAG }}
