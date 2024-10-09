@@ -139,8 +139,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -181,9 +181,9 @@ jobs:
 
       - name: Docker login
         env:
-          DOCKER_HUB_CI_PASSWORD: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
-          DOCKER_HUB_CI_USER: ${{ secrets.DOCKER_HUB_CI_USER }}
-        run: echo "$env:DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:DOCKER_HUB_CI_USER" --password-stdin
+          OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+          OPENTELEMETRY_DOCKER_HUB_CI_USER: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+        run: echo "$env:OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:OPENTELEMETRY_DOCKER_HUB_CI_USER" --password-stdin
 
       - name: Push as specific
         run: | 
@@ -207,8 +207,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
         
       - name: Get linux manifest
         run: | 
