@@ -54,6 +54,8 @@ main() {
     echo 'Updating chart repo index...'
     cr index
 
+    .github/add_annotation.sh .cr-index/index.yaml deploy/helm/values.yaml $(yq -e '.version' deploy/helm/Chart.yaml)
+
     echo 'Pushing update...'
     push_files "$RELEASE_NAME"
 
