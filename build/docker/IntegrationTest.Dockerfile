@@ -1,4 +1,4 @@
-FROM python:3.12-alpine3.19
+FROM python:3.13-alpine3.19
 
 RUN apk add --update --no-cache curl ca-certificates bash
 
