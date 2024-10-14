@@ -21,6 +21,10 @@ data:
         path: /data/events.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
         rotation:
+      file/manifests:
+        path: /data/manifests.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
       prometheus:
         endpoint: "0.0.0.0:8080"
         namespace: output
@@ -30,24 +34,34 @@ data:
         resource_to_telemetry_conversion:
           enabled: true
     extensions:
-      health_check: {}
+      health_check:
+        endpoint: 0.0.0.0:13133
       memory_ballast:
-        size_mib: "204"
+        size_mib: 204
     processors:
-      filter/events_in:
+      filter/events:
         logs: 
           include:
             match_type: strict
             resource_attributes:
               - key: sw.k8s.log.type
                 value: event
-      filter/events_out:
+      filter/manifests:
+        logs: 
+          include:
+            match_type: strict
+            resource_attributes:
+              - key: sw.k8s.log.type
+                value: manifest
+      filter/logs:
         logs: 
           exclude:
             match_type: strict
             resource_attributes:
               - key: sw.k8s.log.type
                 value: event
+              - key: sw.k8s.log.type
+                value: manifest
     receivers:
       otlp:
         protocols:
@@ -69,14 +83,21 @@ data:
           exporters:
           - file/logs
           processors:
-          - filter/events_out
+          - filter/logs
           receivers:
           - otlp
         logs/events:
           exporters:
           - file/events
           processors:
-          - filter/events_in
+          - filter/events
+          receivers:
+          - otlp
+        logs/manifests:
+          exporters:
+          - file/manifests
+          processors:
+          - filter/manifests
           receivers:
           - otlp
 ---
@@ -127,7 +148,7 @@ spec:
             - --config=/conf/relay.yaml
           securityContext:
             runAsUser: 0
-          image: "otel/opentelemetry-collector-contrib:0.98.0"
+          image: "otel/opentelemetry-collector-contrib:0.107.0"
           imagePullPolicy: IfNotPresent
           ports:
             - name: otlp
@@ -148,7 +169,7 @@ spec:
               mountPath: /data
         - name: file-provider
           image: nginx:alpine
-          command: ['sh', '-c', 'touch /usr/share/nginx/html/events.json && touch /usr/share/nginx/html/metrics.json && touch /usr/share/nginx/html/logs.json && chmod -R 777 /usr/share/nginx/html && nginx -g "daemon off;"']
+          command: ['sh', '-c', 'touch /usr/share/nginx/html/events.json && touch /usr/share/nginx/html/metrics.json && touch /usr/share/nginx/html/logs.json && touch /usr/share/nginx/html/manifests.json && chmod -R 777 /usr/share/nginx/html && nginx -g "daemon off;"']
           securityContext:
             runAsUser: 0
           volumeMounts:
