@@ -392,6 +392,10 @@ receivers:
       - docker
       - containerd
 {{- end}}
+  hostmetrics:
+    collection_interval: 60s
+    scrapers:
+      filesystem: {}
   filelog:
 {{- if (.isWindows) }}
     include: [ "\\var\\log\\pods\\*\\*\\*.log" ]
@@ -733,6 +737,7 @@ service:
         - resource/all
       receivers:
         - receiver_creator/node
+        - hostmetrics
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     metrics:
