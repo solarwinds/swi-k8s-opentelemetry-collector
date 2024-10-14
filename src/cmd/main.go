@@ -26,13 +26,16 @@ import (
 	"go.opentelemetry.io/collector/confmap/provider/httpsprovider"
 	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
 	"go.opentelemetry.io/collector/otelcol"
+
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/connectioncheck"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/metadata"
 )
 
 func main() {
 	info := component.BuildInfo{
-		Command:     "swi-k8s-opentelemetry-collector",
-		Description: "SolarWinds distribution for OpenTelemetry",
-		Version:     "0.11.4",
+		Command:     metadata.AppName,
+		Description: metadata.AppDescription,
+		Version:     metadata.AppVersion,
 	}
 
 	set := otelcol.CollectorSettings{
@@ -58,6 +61,8 @@ func main() {
 
 func runInteractive(params otelcol.CollectorSettings) error {
 	cmd := otelcol.NewCommand(params)
+	cmd.AddCommand(connectioncheck.NewCommand())
+
 	if err := cmd.Execute(); err != nil {
 		log.Fatalf("collector server run finished with error: %v", err)
 	}
