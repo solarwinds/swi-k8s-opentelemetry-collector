@@ -79,16 +79,12 @@ Metrics collector spec should match snapshot when using default values:
             readOnly: true
     initContainers:
       - command:
-          - /bin/grpcurl
-          - -expand-headers
-          - -proto
-          - opentelemetry/proto/collector/logs/v1/logs_service.proto
-          - -H
-          - 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}'
-          - -d
-          - '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "${CLUSTER_UID}"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}'
-          - $(OTEL_ENVOY_ADDRESS)
-          - opentelemetry.proto.collector.logs.v1.LogsService.Export
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
         env:
           - name: SOLARWINDS_API_TOKEN
             valueFrom:
@@ -99,26 +95,9 @@ Metrics collector spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: fullstorydev/grpcurl:v1.9.1
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
-        volumeMounts:
-          - mountPath: opentelemetry/proto/collector/logs/v1/logs_service.proto
-            name: opentelemetry-collector-configmap
-            readOnly: true
-            subPath: logs_service.proto
-          - mountPath: opentelemetry/proto/logs/v1/logs.proto
-            name: opentelemetry-collector-configmap
-            readOnly: true
-            subPath: logs.proto
-          - mountPath: opentelemetry/proto/common/v1/common.proto
-            name: opentelemetry-collector-configmap
-            readOnly: true
-            subPath: common.proto
-          - mountPath: opentelemetry/proto/resource/v1/resource.proto
-            name: opentelemetry-collector-configmap
-            readOnly: true
-            subPath: resource.proto
     securityContext: {}
     serviceAccountName: RELEASE-NAME-swo-k8s-collector
     terminationGracePeriodSeconds: 600
@@ -127,13 +106,5 @@ Metrics collector spec should match snapshot when using default values:
           items:
             - key: metrics.config
               path: relay.yaml
-            - key: logs_service.proto
-              path: logs_service.proto
-            - key: logs.proto
-              path: logs.proto
-            - key: common.proto
-              path: common.proto
-            - key: resource.proto
-              path: resource.proto
           name: RELEASE-NAME-swo-k8s-collector-metrics-config
         name: opentelemetry-collector-configmap
