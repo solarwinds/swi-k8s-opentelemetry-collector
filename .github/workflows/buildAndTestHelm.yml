@@ -116,8 +116,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy Kubernetes
-        uses: ./.github/actions/deploy-kubernetes
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          version: v0.24.0
+          kubectl_version: v1.31.0
+          node_image: kindest/node:v1.31.0
+          cluster_name: kind
+
+      - name: Print cluster info
+        run: |
+          helm version
+          kubectl version
+          kubectl get sc
+          kubectl cluster-info dump --output=yaml
+        shell: bash
+
+      - name: Setup kubetail
+        run: |
+          curl -Lo kubetail https://raw.githubusercontent.com/johanhaleby/kubetail/master/kubetail && sudo install kubetail /usr/local/bin/
+        shell: bash
 
       - name: Add dependency chart repos
         run: |
