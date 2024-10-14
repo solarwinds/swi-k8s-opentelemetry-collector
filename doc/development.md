@@ -6,10 +6,11 @@
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
 - [Develop against remote prometheus](#develop-against-remote-prometheus)
+- [Helm Unit tests](#helm-unit-tests)
 - [Integration tests](#integration-tests)
 - [Updating Chart dependencies](#updating-chart-dependencies)
 - [Updating Chart configuration](#updating-chart-configuration)
-- [Publishing](#publishing)
+- [Release](#release)
 
 ## Contribution Guidelines
 
@@ -91,16 +92,25 @@ Possible issues:
   ```shell
   helm repo add "stable" "https://charts.helm.sh/stable" --force-update
   ```
+
 ### How can you analyze exported telemetry
+
 #### Metrics
-* You can look at `http://localhost:8088/metrics.json` (each line is JSON as bulk sent by OTEL collector)
-* You can also look at local Prometheus which collects all the outputs with metric names prefixed with `output_` at `http://localhost:8080`
+
+- You can look at `http://localhost:8088/metrics.json` (each line is JSON as bulk sent by OTEL collector)
+- You can also look at local Prometheus which collects all the outputs with metric names prefixed with `output_` at `http://localhost:8080`
 
 #### Logs
+
 You can look at `http://localhost:8088/logs.json` (each line is JSON as bulk sent by OTEL collector)
 
 #### Events
+
 You can look at `http://localhost:8088/events.json` (each line is JSON as bulk sent by OTEL collector)
+
+#### Manifests
+
+You can look at `http://localhost:8088/manifests.json` (each line is JSON as bulk sent by OTEL collector)
 
 ## Develop against remote cluster
 * Make sure that you have working kubeContext, set this to `test-cluster` profile section in `skaffold.yaml`:
@@ -218,10 +228,12 @@ The Helm chart is bundled also in AKS/EKS addons. Make sure that any changes are
 ### Docker image
 
 1. Create tag you want to release and push it to origin
-    ```
+
+    ```shell
     git tag 0.11.5
     git push origin 0.11.5
     ```
+
 1. GitHub Action will be triggered, building the release and awaiting manual approval for publishing.
 1. Once approved, it will be published to Docker Hub repository: [solarwinds/swi-opentelemetry-collector](https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector).
 
