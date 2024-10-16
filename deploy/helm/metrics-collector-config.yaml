@@ -163,7 +163,7 @@ processors:
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
+      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -927,6 +927,8 @@ processors:
           name == "container_network_receive_packets_dropped_total" or
           name == "container_network_transmit_packets_dropped_total" or
           name == "apiserver_request_total" or
+          name == "workqueue_adds_total" or
+          name == "workqueue_depth" or
           name == "kubelet_volume_stats_available_percent" or
           name == "kubernetes_build_info"
           )
