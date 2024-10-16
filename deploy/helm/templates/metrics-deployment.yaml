@@ -60,7 +60,7 @@ spec:
                 values:
                 - linux
       {{- end }}
-      {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) (and .Values.otel.metrics.swi_endpoint_check (not .Values.otel.https_proxy_url)) }}
+      {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) .Values.otel.metrics.swi_endpoint_check }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
@@ -75,32 +75,17 @@ spec:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
         {{- end }}
-        {{- if and .Values.otel.metrics.swi_endpoint_check (not .Values.otel.https_proxy_url) }}
+        {{- if .Values.otel.metrics.swi_endpoint_check }}
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel.init_images "swi_endpoint_check") }}"
-          imagePullPolicy: {{ .Values.otel.init_images.swi_endpoint_check.pullPolicy }}
-          command: ['/bin/grpcurl', '-expand-headers',
-                    '-proto', 'opentelemetry/proto/collector/logs/v1/logs_service.proto',
-                    '-H', 'Authorization: Bearer ${SOLARWINDS_API_TOKEN}',
-                    '-d', '{"resourceLogs":[{"resource":{"attributes":[{"key":"sw.k8s.cluster.uid","value":{"stringValue": "${CLUSTER_UID}"}}]},"scope_logs":{"log_records":[{"severityText":"INFO","body":{"stringValue":"otel-endpoint-check successful"}}]}}]}',
-                    '$(OTEL_ENVOY_ADDRESS)', 'opentelemetry.proto.collector.logs.v1.LogsService.Export']
-          volumeMounts:
-            - mountPath: opentelemetry/proto/collector/logs/v1/logs_service.proto
-              name: opentelemetry-collector-configmap
-              subPath: logs_service.proto
-              readOnly: true
-            - mountPath: opentelemetry/proto/logs/v1/logs.proto
-              name: opentelemetry-collector-configmap
-              subPath: logs.proto
-              readOnly: true
-            - mountPath: opentelemetry/proto/common/v1/common.proto
-              name: opentelemetry-collector-configmap
-              subPath: common.proto
-              readOnly: true
-            - mountPath: opentelemetry/proto/resource/v1/resource.proto
-              name: opentelemetry-collector-configmap
-              subPath: resource.proto
-              readOnly: true
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          command:
+            - /swi-otelcol
+            - test-connection
+            - --endpoint=$(OTEL_ENVOY_ADDRESS)
+            - --apitoken=$(SOLARWINDS_API_TOKEN)
+            - --clusteruid=$(CLUSTER_UID)
+            - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
           env:
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
@@ -191,14 +176,6 @@ spec:
             items:
               - key: metrics.config
                 path: relay.yaml
-              - key: logs_service.proto
-                path: logs_service.proto
-              - key: logs.proto
-                path: logs.proto
-              - key: common.proto
-                path: common.proto
-              - key: resource.proto
-                path: resource.proto  
 {{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
         - name: sending-queue
           emptyDir: {}
