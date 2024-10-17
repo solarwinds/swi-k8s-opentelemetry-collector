@@ -467,10 +467,6 @@ Metrics config should match snapshot when using default values:
             - k8s.node.network.transmit_packets_dropped
             - apiserver_request_not_failed_temp
             - apiserver_request_total_temp
-            - k8s.apiserver_request_duration_seconds_sum_temp
-            - k8s.apiserver_request_duration_seconds_count_temp
-            - k8s.workqueue_queue_duration_seconds_sum_temp
-            - k8s.workqueue_queue_duration_seconds_count_temp
         deltatorate:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
@@ -508,16 +504,6 @@ Metrics config should match snapshot when using default values:
             operation: percent
             type: calculate
             unit: Percent
-          - metric1: k8s.apiserver_request_duration_seconds_sum_temp
-            metric2: k8s.apiserver_request_duration_seconds_count_temp
-            name: k8s.apiserver_request_duration_seconds.avg
-            operation: divide
-            type: calculate
-          - metric1: k8s.workqueue_queue_duration_seconds_sum_temp
-            metric2: k8s.workqueue_queue_duration_seconds_count_temp
-            name: k8s.workqueue_queue_duration_seconds.avg
-            operation: divide
-            type: calculate
         filter/ebpf:
           metrics:
             metric:
@@ -525,7 +511,8 @@ Metrics config should match snapshot when using default values:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds")
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -1969,18 +1956,6 @@ Metrics config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
-        transform/histograms:
-          metric_statements:
-          - context: metric
-            statements:
-            - extract_sum_metric(true) where (name == "apiserver_request_duration_seconds"
-              or name == "workqueue_queue_duration_seconds")
-            - extract_count_metric(true) where (name == "apiserver_request_duration_seconds"
-              or name == "workqueue_queue_duration_seconds")
-            - set(name, "apiserver_request_duration_seconds_sum_temp") where name == "apiserver_request_duration_seconds_sum"
-            - set(name, "apiserver_request_duration_seconds_count_temp") where name == "apiserver_request_duration_seconds_count"
-            - set(name, "workqueue_queue_duration_seconds_sum_temp") where name == "workqueue_queue_duration_seconds_sum"
-            - set(name, "workqueue_queue_duration_seconds_count_temp") where name == "workqueue_queue_duration_seconds_count"
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -2158,7 +2133,6 @@ Metrics config should match snapshot when using default values:
             - memory_limiter
             - filter/receiver
             - transform
-            - transform/histograms
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
             - attributes/remove_prometheus_attributes_endpoint
