@@ -163,7 +163,7 @@ processors:
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
+      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -556,7 +556,7 @@ processors:
         action: update
         new_name: k8s.kubernetes_build_info_temp
       # Prometheus metrics
-      - include: apiserver_request_total
+      - include: k8s.apiserver_request_total
         action: insert
         match_type: regexp
         # Alternative to (?!5\d\d|429) - Go regex does not support negative lookahead
@@ -570,7 +570,7 @@ processors:
             # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
             label_set: [dummy_label_workaround]
             aggregation_type: sum
-      - include: apiserver_request_total
+      - include: k8s.apiserver_request_total
         action: insert
         new_name: apiserver_request_total_temp
         operations:
@@ -635,6 +635,7 @@ processors:
         metric1: apiserver_request_not_failed_temp
         metric2: apiserver_request_total_temp
         operation: percent
+  
   groupbyattrs/node:
     keys:
       - k8s.node.name
@@ -927,13 +928,17 @@ processors:
           name == "container_network_receive_packets_dropped_total" or
           name == "container_network_transmit_packets_dropped_total" or
           name == "apiserver_request_total" or
+          name == "apiserver_request_duration_seconds" or
+          name == "workqueue_adds_total" or
+          name == "workqueue_depth" or
+          name == "workqueue_queue_duration_seconds" or
           name == "kubelet_volume_stats_available_percent" or
           name == "kubernetes_build_info"
           )
   filter/histograms:
     metrics:
       metric:
-        - 'type == METRIC_DATA_TYPE_HISTOGRAM'
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds")'
 
 connectors:
   forward/prometheus:
