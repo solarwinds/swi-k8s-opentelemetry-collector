@@ -160,17 +160,6 @@ processors:
         value: "false"
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
 
-  transform/histograms:
-    metric_statements:
-      - context: metric
-        statements:
-          - extract_sum_metric(true) where (name == "apiserver_request_duration_seconds" or name == "workqueue_queue_duration_seconds")
-          - extract_count_metric(true) where (name == "apiserver_request_duration_seconds" or name == "workqueue_queue_duration_seconds")
-          - set(name, "apiserver_request_duration_seconds_sum_temp") where name == "apiserver_request_duration_seconds_sum"
-          - set(name, "apiserver_request_duration_seconds_count_temp") where name == "apiserver_request_duration_seconds_count"
-          - set(name, "workqueue_queue_duration_seconds_sum_temp") where name == "workqueue_queue_duration_seconds_sum"
-          - set(name, "workqueue_queue_duration_seconds_count_temp") where name == "workqueue_queue_duration_seconds_count"
-
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
@@ -632,10 +621,6 @@ processors:
         {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}
         - apiserver_request_not_failed_temp
         - apiserver_request_total_temp
-        - k8s.apiserver_request_duration_seconds_sum_temp
-        - k8s.apiserver_request_duration_seconds_count_temp
-        - k8s.workqueue_queue_duration_seconds_sum_temp
-        - k8s.workqueue_queue_duration_seconds_count_temp
       match_type: strict
 
   deltatorate:
@@ -650,16 +635,6 @@ processors:
         metric1: apiserver_request_not_failed_temp
         metric2: apiserver_request_total_temp
         operation: percent
-      - name: k8s.apiserver_request_duration_seconds.avg
-        type: calculate
-        metric1: k8s.apiserver_request_duration_seconds_sum_temp
-        metric2: k8s.apiserver_request_duration_seconds_count_temp
-        operation: divide
-      - name: k8s.workqueue_queue_duration_seconds.avg
-        type: calculate
-        metric1: k8s.workqueue_queue_duration_seconds_sum_temp
-        metric2: k8s.workqueue_queue_duration_seconds_count_temp
-        operation: divide
   
   groupbyattrs/node:
     keys:
@@ -963,7 +938,7 @@ processors:
   filter/histograms:
     metrics:
       metric:
-        - 'type == METRIC_DATA_TYPE_HISTOGRAM'
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds")'
 
 connectors:
   forward/prometheus:
@@ -1166,7 +1141,6 @@ service:
         - memory_limiter
         - filter/receiver
         - transform
-        - transform/histograms
         - filter/remove_internal        
         - attributes/remove_prometheus_attributes
         - attributes/remove_prometheus_attributes_endpoint
