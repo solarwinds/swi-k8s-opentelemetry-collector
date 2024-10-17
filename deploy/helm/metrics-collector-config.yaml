@@ -160,6 +160,17 @@ processors:
         value: "false"
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
 
+  transform/histograms:
+    metric_statements:
+      - context: metric
+        statements:
+          - extract_sum_metric(true) where (name == "apiserver_request_duration_seconds" or name == "workqueue_queue_duration_seconds")
+          - extract_count_metric(true) where (name == "apiserver_request_duration_seconds" or name == "workqueue_queue_duration_seconds")
+          - set(name, "apiserver_request_duration_seconds_sum_temp") where name == "apiserver_request_duration_seconds_sum"
+          - set(name, "apiserver_request_duration_seconds_count_temp") where name == "apiserver_request_duration_seconds_count"
+          - set(name, "workqueue_queue_duration_seconds_sum_temp") where name == "workqueue_queue_duration_seconds_sum"
+          - set(name, "workqueue_queue_duration_seconds_count_temp") where name == "workqueue_queue_duration_seconds_count"
+
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
@@ -556,7 +567,7 @@ processors:
         action: update
         new_name: k8s.kubernetes_build_info_temp
       # Prometheus metrics
-      - include: apiserver_request_total
+      - include: k8s.apiserver_request_total
         action: insert
         match_type: regexp
         # Alternative to (?!5\d\d|429) - Go regex does not support negative lookahead
@@ -570,7 +581,7 @@ processors:
             # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
             label_set: [dummy_label_workaround]
             aggregation_type: sum
-      - include: apiserver_request_total
+      - include: k8s.apiserver_request_total
         action: insert
         new_name: apiserver_request_total_temp
         operations:
@@ -621,6 +632,10 @@ processors:
         {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}
         - apiserver_request_not_failed_temp
         - apiserver_request_total_temp
+        - k8s.apiserver_request_duration_seconds_sum_temp
+        - k8s.apiserver_request_duration_seconds_count_temp
+        - k8s.workqueue_queue_duration_seconds_sum_temp
+        - k8s.workqueue_queue_duration_seconds_count_temp
       match_type: strict
 
   deltatorate:
@@ -635,6 +650,17 @@ processors:
         metric1: apiserver_request_not_failed_temp
         metric2: apiserver_request_total_temp
         operation: percent
+      - name: k8s.apiserver_request_duration_seconds.avg
+        type: calculate
+        metric1: k8s.apiserver_request_duration_seconds_sum_temp
+        metric2: k8s.apiserver_request_duration_seconds_count_temp
+        operation: divide
+      - name: k8s.workqueue_queue_duration_seconds.avg
+        type: calculate
+        metric1: k8s.workqueue_queue_duration_seconds_sum_temp
+        metric2: k8s.workqueue_queue_duration_seconds_count_temp
+        operation: divide
+  
   groupbyattrs/node:
     keys:
       - k8s.node.name
@@ -927,8 +953,10 @@ processors:
           name == "container_network_receive_packets_dropped_total" or
           name == "container_network_transmit_packets_dropped_total" or
           name == "apiserver_request_total" or
+          name == "apiserver_request_duration_seconds" or
           name == "workqueue_adds_total" or
           name == "workqueue_depth" or
+          name == "workqueue_queue_duration_seconds" or
           name == "kubelet_volume_stats_available_percent" or
           name == "kubernetes_build_info"
           )
@@ -1138,6 +1166,7 @@ service:
         - memory_limiter
         - filter/receiver
         - transform
+        - transform/histograms
         - filter/remove_internal        
         - attributes/remove_prometheus_attributes
         - attributes/remove_prometheus_attributes_endpoint
