@@ -279,6 +279,12 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
 | k8s.apiserver.request.successrate | Gauge | percent | Success rate of Kubernetes API server calls | custom |
+| k8s.apiserver_request_total | Counter | | Kubernetes API server requests | native |
+| k8s.apiserver_request_duration_seconds | Histogram | | Kubernetes API server requests latency | native |
+| k8s.workqueue_adds_total | Counter | | Kubernetes workqueue adds | native |
+| k8s.workqueue_depth | Gauge | | Kubernetes workqueue depth | native |
+| k8s.workqueue_queue_duration_seconds | Histogram | | How long item stays in Kubernetes workqueue | native |
+
 
 ## Network usage metrics
 

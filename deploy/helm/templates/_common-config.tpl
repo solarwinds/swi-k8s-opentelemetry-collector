@@ -622,5 +622,4 @@ filter/remove_temporary_metrics:
   metrics:
     metric:            
       - 'IsMatch(name , ".*_temp")'
-      - 'name == "apiserver_request_total"'
 {{- end }}

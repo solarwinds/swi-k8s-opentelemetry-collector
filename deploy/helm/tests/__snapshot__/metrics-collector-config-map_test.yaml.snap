@@ -511,7 +511,8 @@ Metrics config should match snapshot when fargate is enabled:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds")
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -608,6 +609,10 @@ Metrics config should match snapshot when fargate is enabled:
               name == "container_network_receive_packets_dropped_total" or
               name == "container_network_transmit_packets_dropped_total" or
               name == "apiserver_request_total" or
+              name == "apiserver_request_duration_seconds" or
+              name == "workqueue_adds_total" or
+              name == "workqueue_depth" or
+              name == "workqueue_queue_duration_seconds" or
               name == "kubelet_volume_stats_available_percent" or
               name == "kubernetes_build_info"
               )
@@ -633,7 +638,6 @@ Metrics config should match snapshot when fargate is enabled:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
-            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -1557,7 +1561,7 @@ Metrics config should match snapshot when fargate is enabled:
           - action: insert
             experimental_match_labels:
               code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
-            include: apiserver_request_total
+            include: k8s.apiserver_request_total
             match_type: regexp
             new_name: apiserver_request_not_failed_temp
           - action: update
@@ -1569,7 +1573,7 @@ Metrics config should match snapshot when fargate is enabled:
               label_set:
               - dummy_label_workaround
           - action: insert
-            include: apiserver_request_total
+            include: k8s.apiserver_request_total
             new_name: apiserver_request_total_temp
             operations:
             - action: aggregate_labels
@@ -1589,7 +1593,7 @@ Metrics config should match snapshot when fargate is enabled:
         metricstransform/rename:
           transforms:
           - action: update
-            include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
+            include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
         metricstransform/rename-otel:
@@ -2728,7 +2732,8 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds")
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -2825,6 +2830,10 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               name == "container_network_receive_packets_dropped_total" or
               name == "container_network_transmit_packets_dropped_total" or
               name == "apiserver_request_total" or
+              name == "apiserver_request_duration_seconds" or
+              name == "workqueue_adds_total" or
+              name == "workqueue_depth" or
+              name == "workqueue_queue_duration_seconds" or
               name == "kubelet_volume_stats_available_percent" or
               name == "kubernetes_build_info"
               )
@@ -2850,7 +2859,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
-            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -3774,7 +3782,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - action: insert
             experimental_match_labels:
               code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
-            include: apiserver_request_total
+            include: k8s.apiserver_request_total
             match_type: regexp
             new_name: apiserver_request_not_failed_temp
           - action: update
@@ -3786,7 +3794,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               label_set:
               - dummy_label_workaround
           - action: insert
-            include: apiserver_request_total
+            include: k8s.apiserver_request_total
             new_name: apiserver_request_total_temp
             operations:
             - action: aggregate_labels
@@ -3806,7 +3814,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
         metricstransform/rename:
           transforms:
           - action: update
-            include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
+            include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
         metricstransform/rename-otel:
@@ -4887,7 +4895,8 @@ Metrics config should match snapshot when using default values:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds")
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -4984,6 +4993,10 @@ Metrics config should match snapshot when using default values:
               name == "container_network_receive_packets_dropped_total" or
               name == "container_network_transmit_packets_dropped_total" or
               name == "apiserver_request_total" or
+              name == "apiserver_request_duration_seconds" or
+              name == "workqueue_adds_total" or
+              name == "workqueue_depth" or
+              name == "workqueue_queue_duration_seconds" or
               name == "kubelet_volume_stats_available_percent" or
               name == "kubernetes_build_info"
               )
@@ -5009,7 +5022,6 @@ Metrics config should match snapshot when using default values:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
-            - name == "apiserver_request_total"
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -5933,7 +5945,7 @@ Metrics config should match snapshot when using default values:
           - action: insert
             experimental_match_labels:
               code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
-            include: apiserver_request_total
+            include: k8s.apiserver_request_total
             match_type: regexp
             new_name: apiserver_request_not_failed_temp
           - action: update
@@ -5945,7 +5957,7 @@ Metrics config should match snapshot when using default values:
               label_set:
               - dummy_label_workaround
           - action: insert
-            include: apiserver_request_total
+            include: k8s.apiserver_request_total
             new_name: apiserver_request_total_temp
             operations:
             - action: aggregate_labels
@@ -5965,7 +5977,7 @@ Metrics config should match snapshot when using default values:
         metricstransform/rename:
           transforms:
           - action: update
-            include: ^(kube_|container_|kubernetes_|kubelet_)(.*)$$
+            include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
         metricstransform/rename-otel:
