@@ -305,7 +305,7 @@ processors:
   filter/histograms:
     metrics:
       metric:
-        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")'
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")'
 
   transform/istio-metrics:
     metric_statements:
@@ -543,11 +543,11 @@ receivers:
     watch_observers:
       - k8s_observer
     receivers:
-      prometheus/discovery:
+      prometheus/discovery/http:
         {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
-        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         {{- else }}
-        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https"
         {{- end }}
         config:
           config:
@@ -561,6 +561,34 @@ receivers:
                 static_configs:
                   - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
+
+      prometheus/discovery/https:
+        {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] == "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        {{- else }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] == "https"
+        {{- end }}
+        config:
+          config:
+            scrape_configs:
+              - job_name: pod
+                scheme: "https"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
+                honor_timestamps: false
+                honor_labels: true
+                authorization:
+                  type: Bearer
+                  credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                follow_redirects: true
+                enable_http2: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
+
 
       {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.podMonitors }}
       {{- range $key, $rule :=.Values.otel.metrics.autodiscovery.prometheusEndpoints.podMonitors.rules }}

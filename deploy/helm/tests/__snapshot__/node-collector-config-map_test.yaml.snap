@@ -164,7 +164,8 @@ Custom logs filter with new syntax:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.etcd_disk_wal_fsync_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/logs:
           logs:
@@ -973,7 +974,7 @@ Custom logs filter with new syntax:
           - containerd
         receiver_creator/discovery:
           receivers:
-            prometheus/discovery:
+            prometheus/discovery/http:
               config:
                 config:
                   scrape_configs:
@@ -988,7 +989,33 @@ Custom logs filter with new syntax:
                     - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
                         : 9090`'
-              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                != "https"
+            prometheus/discovery/https:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: pod
+                    metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
+                      : "/metrics"`'
+                    scheme: https
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
+                        : 9090`'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                == "https"
           watch_observers:
           - k8s_observer
         receiver_creator/node:
@@ -1288,7 +1315,8 @@ Custom logs filter with old syntax:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.etcd_disk_wal_fsync_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/logs:
           logs:
@@ -2181,7 +2209,7 @@ Custom logs filter with old syntax:
           - containerd
         receiver_creator/discovery:
           receivers:
-            prometheus/discovery:
+            prometheus/discovery/http:
               config:
                 config:
                   scrape_configs:
@@ -2196,7 +2224,33 @@ Custom logs filter with old syntax:
                     - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
                         : 9090`'
-              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                != "https"
+            prometheus/discovery/https:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: pod
+                    metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
+                      : "/metrics"`'
+                    scheme: https
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
+                        : 9090`'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                == "https"
           watch_observers:
           - k8s_observer
         receiver_creator/node:
@@ -2496,7 +2550,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.etcd_disk_wal_fsync_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/receiver:
           metrics:
@@ -3577,7 +3632,8 @@ Node collector config should match snapshot when fargate is enabled:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.etcd_disk_wal_fsync_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/receiver:
           metrics:
@@ -4382,7 +4438,7 @@ Node collector config should match snapshot when fargate is enabled:
           - containerd
         receiver_creator/discovery:
           receivers:
-            prometheus/discovery:
+            prometheus/discovery/http:
               config:
                 config:
                   scrape_configs:
@@ -4397,7 +4453,33 @@ Node collector config should match snapshot when fargate is enabled:
                     - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
                         : 9090`'
-              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                != "https"
+            prometheus/discovery/https:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: pod
+                    metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
+                      : "/metrics"`'
+                    scheme: https
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
+                        : 9090`'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                == "https"
           watch_observers:
           - k8s_observer
       service:
@@ -4627,7 +4709,8 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.etcd_disk_wal_fsync_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/receiver:
           metrics:
@@ -5639,7 +5722,8 @@ Node collector config should match snapshot when using default values:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.etcd_disk_wal_fsync_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/receiver:
           metrics:
@@ -6444,7 +6528,7 @@ Node collector config should match snapshot when using default values:
           - containerd
         receiver_creator/discovery:
           receivers:
-            prometheus/discovery:
+            prometheus/discovery/http:
               config:
                 config:
                   scrape_configs:
@@ -6459,7 +6543,33 @@ Node collector config should match snapshot when using default values:
                     - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
                         : 9090`'
-              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true"
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                != "https"
+            prometheus/discovery/https:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: pod
+                    metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
+                      : "/metrics"`'
+                    scheme: https
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
+                        : 9090`'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
+                == "https"
           watch_observers:
           - k8s_observer
         receiver_creator/node:
