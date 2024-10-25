@@ -22,7 +22,7 @@ if ! command -v yq &> /dev/null; then
 fi
 
 
-if [ "$RELEASE_TYPE" = "" ]; then
+if [ "$RELEASE_TYPE" = "official" ]; then
   # Production release
   yq eval ".annotations.\"artifacthub.io/prerelease\" = \"false\"" deploy/helm/Chart.yaml -i
 
@@ -30,5 +30,3 @@ else
   yq eval ".annotations.\"artifacthub.io/prerelease\" = \"true\"" deploy/helm/Chart.yaml -i
 
 fi
-
-
