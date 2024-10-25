@@ -18,14 +18,16 @@ main() {
     if [[ "$RELEASE_NAME" == *"alpha"* ]]; then
         echo "Handling alpha release: $RELEASE_NAME"
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
-        PRE_RELEASE="--prerelease  --latest=false"
+        PRE_RELEASE_CMD="--prerelease  --latest=false"
+        RELEASE="alpha"
     else
         echo "Handling standard release: $RELEASE_NAME"
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep -v alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
-        PRE_RELEASE=""
+        PRE_RELEASE_CMD=""
+        RELEASE="official"
     fi
     
-    .github/add_annotation.sh deploy/helm/Chart.yaml $PRE_RELEASE
+    .github/add_annotation.sh deploy/helm/Chart.yaml $RELEASE
 
     echo "Packaging chart ..."
     cr package "deploy/helm"
@@ -39,7 +41,7 @@ main() {
     echo "Release name: $RELEASE_NAME"
     echo "Release file: $RELEASE_FILE"
     echo "Previous tag: $PREVIOUS_TAG"
-    echo "Prerelease opt:  $PRE_RELEASE"
+    echo "Prerelease opt:  $PRE_RELEASE_CMD"
     echo "****************************************"
     echo ""
     echo ""
@@ -47,7 +49,7 @@ main() {
     echo 'Releasing chart...'
     gh release create $RELEASE_NAME \
       --title $RELEASE_NAME \
-      $PRE_RELEASE \
+      $PRE_RELEASE_CMD \
       --title $RELEASE_NAME \
       --notes-start-tag $PREVIOUS_TAG \
       --generate-notes \
