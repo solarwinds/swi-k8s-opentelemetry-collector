@@ -24,6 +24,8 @@ main() {
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep -v alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
         PRE_RELEASE=""
     fi
+    
+    .github/add_annotation.sh deploy/helm/Chart.yaml $PRE_RELEASE
 
     echo "Packaging chart ..."
     cr package "deploy/helm"
@@ -54,7 +56,6 @@ main() {
     echo 'Updating chart repo index...'
     cr index
 
-    .github/add_annotation.sh .cr-index/index.yaml deploy/helm/values.yaml $(yq -e '.version' deploy/helm/Chart.yaml)
 
     echo 'Pushing update...'
     push_files "$RELEASE_NAME"
