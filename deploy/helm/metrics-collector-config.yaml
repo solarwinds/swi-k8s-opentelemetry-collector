@@ -163,7 +163,7 @@ processors:
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_)(.*)$$
+      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -933,12 +933,21 @@ processors:
           name == "workqueue_depth" or
           name == "workqueue_queue_duration_seconds" or
           name == "kubelet_volume_stats_available_percent" or
-          name == "kubernetes_build_info"
+          name == "kubernetes_build_info" or
+          name == "coredns_build_info" or
+          name == "coredns_dns_requests_total" or
+          name == "coredns_dns_request_size_bytes" or
+          name == "coredns_dns_responses_total" or
+          name == "coredns_dns_response_size_bytes" or
+          name == "coredns_dns_request_duration_seconds" or
+          name == "coredns_cache_entries" or
+          name == "coredns_cache_hits_total" or
+          name == "coredns_cache_misses_total"
           )
   filter/histograms:
     metrics:
       metric:
-        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds")'
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds" or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")'
 
 connectors:
   forward/prometheus:
@@ -1090,6 +1099,23 @@ receivers:
             kubeconfig_file: ""
             follow_redirects: true
             enable_http2: true
+        - job_name: kubernetes-coredns
+          honor_timestamps: false
+          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+          scrape_timeout: 10s
+          kubernetes_sd_configs:
+          - role: endpoints
+            follow_redirects: true
+            enable_http2: true
+          relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_namespace, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: kube-dns;kube-system;metrics  # Only scrape CoreDNS in kube-system namespace
+          # manually label job source as original `job` label can be misleading
+          - source_labels: [__address__]
+            target_label: scrape_job
+            replacement: "kubernetes-coredns"
+
 service:
   extensions:
 {{- if .Values.otel.metrics.sending_queue.offload_to_disk }}

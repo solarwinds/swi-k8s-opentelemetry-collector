@@ -512,7 +512,8 @@ Metrics config should match snapshot when using default values:
           metrics:
             metric:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds")
+              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
+              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -614,7 +615,16 @@ Metrics config should match snapshot when using default values:
               name == "workqueue_depth" or
               name == "workqueue_queue_duration_seconds" or
               name == "kubelet_volume_stats_available_percent" or
-              name == "kubernetes_build_info"
+              name == "kubernetes_build_info" or
+              name == "coredns_build_info" or
+              name == "coredns_dns_requests_total" or
+              name == "coredns_dns_request_size_bytes" or
+              name == "coredns_dns_responses_total" or
+              name == "coredns_dns_response_size_bytes" or
+              name == "coredns_dns_request_duration_seconds" or
+              name == "coredns_cache_entries" or
+              name == "coredns_cache_hits_total" or
+              name == "coredns_cache_misses_total"
               )
         filter/receiver:
           metrics:
@@ -1593,7 +1603,7 @@ Metrics config should match snapshot when using default values:
         metricstransform/rename:
           transforms:
           - action: update
-            include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_)(.*)$$
+            include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
         metricstransform/rename-otel:
@@ -2095,6 +2105,25 @@ Metrics config should match snapshot when using default values:
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: true
+            - honor_timestamps: false
+              job_name: kubernetes-coredns
+              kubernetes_sd_configs:
+              - enable_http2: true
+                follow_redirects: true
+                role: endpoints
+              relabel_configs:
+              - action: keep
+                regex: kube-dns;kube-system;metrics
+                source_labels:
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_endpoint_port_name
+              - replacement: kubernetes-coredns
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scrape_interval: 60s
+              scrape_timeout: 10s
       service:
         extensions:
         - health_check
