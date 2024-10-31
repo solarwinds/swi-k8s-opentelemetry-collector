@@ -255,6 +255,21 @@ Node collector config for windows nodes should match snapshot when using default
         metricstransform/istio-metrics:
           transforms:
           - action: insert
+            include: k8s.istio_request_bytes_sum
+            new_name: k8s.istio_request_bytes.rate
+          - action: insert
+            include: k8s.istio_response_bytes_sum
+            new_name: k8s.istio_response_bytes.rate
+          - action: insert
+            include: k8s.istio_requests_total
+            new_name: k8s.istio_requests.rate
+          - action: insert
+            include: k8s.istio_tcp_sent_bytes_total
+            new_name: k8s.istio_tcp_sent_bytes.rate
+          - action: insert
+            include: k8s.istio_tcp_received_bytes_total
+            new_name: k8s.istio_tcp_received_bytes.rate
+          - action: insert
             include: k8s.istio_request_bytes.rate
             new_name: k8s.istio_request_bytes.delta
           - action: insert
@@ -703,6 +718,12 @@ Node collector config for windows nodes should match snapshot when using default
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
+        metricstransform/rename/discovery:
+          transforms:
+          - action: update
+            include: ^(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}
         resource/all:
           attributes:
           - action: insert
@@ -896,11 +917,6 @@ Node collector config for windows nodes should match snapshot when using default
             - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
               == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
-            - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
-            - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
-            - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
-            - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
-            - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
             - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name ==
               "k8s.istio_request_duration_milliseconds_sum"
             - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name
@@ -1075,7 +1091,7 @@ Node collector config for windows nodes should match snapshot when using default
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename
+            - metricstransform/rename/discovery
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
@@ -1380,6 +1396,21 @@ Node collector config for windows nodes should match snapshot when using legacy 
         metricstransform/istio-metrics:
           transforms:
           - action: insert
+            include: k8s.istio_request_bytes_sum
+            new_name: k8s.istio_request_bytes.rate
+          - action: insert
+            include: k8s.istio_response_bytes_sum
+            new_name: k8s.istio_response_bytes.rate
+          - action: insert
+            include: k8s.istio_requests_total
+            new_name: k8s.istio_requests.rate
+          - action: insert
+            include: k8s.istio_tcp_sent_bytes_total
+            new_name: k8s.istio_tcp_sent_bytes.rate
+          - action: insert
+            include: k8s.istio_tcp_received_bytes_total
+            new_name: k8s.istio_tcp_received_bytes.rate
+          - action: insert
             include: k8s.istio_request_bytes.rate
             new_name: k8s.istio_request_bytes.delta
           - action: insert
@@ -1828,6 +1859,12 @@ Node collector config for windows nodes should match snapshot when using legacy 
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
+        metricstransform/rename/discovery:
+          transforms:
+          - action: update
+            include: ^(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}
         resource/all:
           attributes:
           - action: insert
@@ -2021,11 +2058,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
               == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
-            - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
-            - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
-            - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
-            - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
-            - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
             - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name ==
               "k8s.istio_request_duration_milliseconds_sum"
             - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name
@@ -2274,7 +2306,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename
+            - metricstransform/rename/discovery
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
