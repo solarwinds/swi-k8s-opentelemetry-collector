@@ -186,6 +186,46 @@ otel:
       # How often the metrics are scraped from Prometheus
       scrape_interval: 60s
 
+    control_plane:
+      coredns:
+        enabled: true
+
+      controller_manager:
+        enabled: true
+
+        label_selector:
+          key: "component"
+          value: "kube-controller-manager"
+        scheme: "https"
+        metrics_path: "/metrics"
+        port: 10257
+      etcd:
+        enabled: true
+
+        scheme: "http"
+        metrics_path: "/metrics"
+        port: 2379
+
+        # scrape kind can be either "static" or "pod"
+        # static - scrape etcd from static endpoints defined in static-endpoints
+        # pod - scrape etcd from etcd pods in the cluster (see label-selector configuration)
+        scrape_kind: "pod"
+
+        # label_selector is used to find etcd pods in the cluster
+        label_selector:
+          key: "component"
+          value: "etcd"
+
+        # If scrape_kind is set to "static" and endpoints are set etcd will be scraped from those ips
+        # this covers scenario where etcd is not running in k8s cluster
+        # example: 
+        # static_endpoints:
+        #   - 10.240.0.32:2379
+        #   - 10.240.0.33:2379
+        #   - 10.240.0.34:2379
+        static_endpoints: []
+      
+
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace,

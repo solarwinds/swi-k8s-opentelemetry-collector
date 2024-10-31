@@ -967,6 +967,28 @@ Node collector config for windows nodes should match snapshot when using default
           storage: file_storage/checkpoints
         receiver_creator/discovery:
           receivers:
+            prometheus/controller-manager:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: kubernetes-controller-manager
+                    metrics_path: /metrics
+                    scheme: https
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:10257'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && labels["component"] == "kube-controller-manager"
             prometheus/discovery/http:
               config:
                 config:
@@ -1009,6 +1031,28 @@ Node collector config for windows nodes should match snapshot when using default
                       insecure_skip_verify: true
               rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
                 == "https"
+            prometheus/etcd:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: kubernetes-etcd
+                    metrics_path: /metrics
+                    scheme: http
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:2379'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
         receiver_creator/node:
@@ -2181,6 +2225,28 @@ Node collector config for windows nodes should match snapshot when using legacy 
           storage: file_storage/checkpoints
         receiver_creator/discovery:
           receivers:
+            prometheus/controller-manager:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: kubernetes-controller-manager
+                    metrics_path: /metrics
+                    scheme: https
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:10257'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && labels["component"] == "kube-controller-manager"
             prometheus/discovery/http:
               config:
                 config:
@@ -2223,6 +2289,28 @@ Node collector config for windows nodes should match snapshot when using legacy 
                       insecure_skip_verify: true
               rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"]
                 == "https"
+            prometheus/etcd:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: kubernetes-etcd
+                    metrics_path: /metrics
+                    scheme: http
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:2379'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
         receiver_creator/node:
