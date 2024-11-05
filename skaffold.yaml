@@ -57,6 +57,11 @@ deploy:
                 scrape_interval: "15s"
               kube-state-metrics:
                 scrape_interval: "15s"
+              control_plane:
+                controller_manager:
+                  enabled: false
+                etcd:
+                  enabled: false
               k8s_instrumentation:
                 annotations:
                   # excluded annotations:
@@ -83,6 +88,7 @@ deploy:
                       - rule: labels["app"] == "test-deployment"
                         metrics_path: "/custom_metrics"
                         endpoint_port: 8081
+                prefix: ""
             events:
               enabled: true
               sending_queue:

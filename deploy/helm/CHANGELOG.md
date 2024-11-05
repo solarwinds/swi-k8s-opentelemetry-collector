@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- It is now possible to customize prefix of discovered metrics using `otel.metrics.autodiscovery.prefix` (default `k8s.`)
+
 ## [4.2.0-alpha.5] - 2024-10-23
 
 ### Added

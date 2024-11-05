@@ -163,7 +163,7 @@ processors:
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|certmanager_)(.*)$$
+      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -1105,6 +1105,7 @@ receivers:
             kubeconfig_file: ""
             follow_redirects: true
             enable_http2: true
+        {{- if .Values.otel.metrics.control_plane.coredns.enabled }}
         - job_name: kubernetes-coredns
           honor_timestamps: false
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
@@ -1121,6 +1122,20 @@ receivers:
           - source_labels: [__address__]
             target_label: scrape_job
             replacement: "kubernetes-coredns"
+        {{- end }}
+        {{- if and .Values.otel.metrics.control_plane.etcd.enabled (eq .Values.otel.metrics.control_plane.etcd.scrape_kind "static") }}
+        - job_name: kubernetes-etcd
+          scheme: {{ quote .Values.otel.metrics.control_plane.etcd.scheme }}
+          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+          metrics_path: {{ quote .Values.otel.metrics.control_plane.etcd.metrics_path }}
+          honor_timestamps: false
+          honor_labels: true
+          static_configs:
+            - targets:
+                {{- range $endpoint := .Values.otel.metrics.control_plane.etcd.static_endpoints }}
+                - {{ $endpoint}}
+                {{- end }}
+        {{- end }}
         - job_name: cert-manager
           honor_timestamps: false
           scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
