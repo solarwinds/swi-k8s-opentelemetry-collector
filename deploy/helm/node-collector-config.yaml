@@ -281,6 +281,14 @@ processors:
         action: update
         new_name: k8s.$${1}
 
+  metricstransform/rename/discovery:
+    transforms:
+      # add `k8s.` prefix to all metrics
+      - include: ^(.*)$$
+        match_type: regexp
+        action: update
+        new_name: {{ .Values.otel.metrics.autodiscovery.prefix }}$${1}
+
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
   cumulativetodelta/discovery:
     include:
@@ -311,18 +319,63 @@ processors:
     metric_statements:
       - context: metric
         statements:
-          - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
-          - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
-          - set(name, "k8s.istio_request_bytes.rate") where name == "k8s.istio_request_bytes_sum"
-          - set(name, "k8s.istio_response_bytes.rate") where name == "k8s.istio_response_bytes_sum"
-          - set(name, "k8s.istio_requests.rate") where name == "k8s.istio_requests_total"
-          - set(name, "k8s.istio_tcp_sent_bytes.rate") where name == "k8s.istio_tcp_sent_bytes_total"
-          - set(name, "k8s.istio_tcp_received_bytes.rate") where name == "k8s.istio_tcp_received_bytes_total"
-          - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name == "k8s.istio_request_duration_milliseconds_sum"
-          - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name == "k8s.istio_request_duration_milliseconds_count"
+          - extract_sum_metric(true) where (name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes" or name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes" or name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
+          - extract_count_metric(true) where (name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
+          - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
+          - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
   
+{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+  # in case the prefix differs from "k8s." we need to copy the required metrics
+  # so that SWO built-in dashboards works correctly
+{{- $arrayOfRequiredMetrics := list 
+  "etcd_disk_backend_commit_duration_seconds"
+  "etcd_disk_wal_fsync_duration_seconds" 
+  "etcd_network_client_grpc_received_bytes_total" 
+  "etcd_network_client_grpc_sent_bytes_total" 
+  "etcd_network_peer_received_bytes_total" 
+  "etcd_network_peer_sent_bytes_total" 
+  "etcd_server_leader_changes_seen_total" 
+  "etcd_server_proposals_applied_total" 
+  "etcd_server_proposals_committed_total"
+  "etcd_server_proposals_failed_total"
+  "etcd_server_proposals_pending"
+  "etcd_server_has_leader"
+  "etcd_mvcc_db_total_size_in_bytes"
+  "process_resident_memory_bytes"
+  "grpc_server_started_total"
+  "grpc_server_handled_total"
+  "rest_client_request_duration_seconds"
+  "rest_client_requests_total"
+  "workqueue_adds_total"
+  "workqueue_depth"
+  "workqueue_queue_duration_seconds"
+}}
+  metricstransform/copy-required-metrics:
+    transforms:
+    {{- $root := . }}
+    {{- range $index, $metric := $arrayOfRequiredMetrics }}
+      - include: {{ $root.Values.otel.metrics.autodiscovery.prefix }}{{ $metric }}
+        action: insert
+        new_name: k8s.{{ $metric }}
+    {{- end }}
+{{- end }}
   metricstransform/istio-metrics:
     transforms:
+      - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum
+        action: insert
+        new_name: k8s.istio_request_bytes.rate
+      - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes_sum
+        action: insert
+        new_name: k8s.istio_response_bytes.rate
+      - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_requests_total
+        action: insert
+        new_name: k8s.istio_requests.rate
+      - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_sent_bytes_total
+        action: insert
+        new_name: k8s.istio_tcp_sent_bytes.rate
+      - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_received_bytes_total
+        action: insert
+        new_name: k8s.istio_tcp_received_bytes.rate
       - include: k8s.istio_request_bytes.rate
         action: insert
         new_name: k8s.istio_request_bytes.delta
@@ -538,11 +591,12 @@ receivers:
         field: attributes["log.file.path"]
 {{- end }}
 
-{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
+{{- if .Values.otel.metrics.enabled }}
   receiver_creator/discovery:
     watch_observers:
       - k8s_observer
     receivers:
+    {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled}}
       prometheus/discovery/http:
         {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
@@ -610,6 +664,58 @@ receivers:
       {{- end }}
       {{- end }}
       {{- end }}
+
+      {{- if .Values.otel.metrics.control_plane.controller_manager.enabled }}
+      prometheus/controller-manager:
+        rule: type == "pod" && labels[{{ quote $.Values.otel.metrics.control_plane.controller_manager.label_selector.key }}] == {{ quote $.Values.otel.metrics.control_plane.controller_manager.label_selector.value }}
+        config:
+          config:
+            scrape_configs:
+              - job_name: kubernetes-controller-manager
+                scheme: {{ quote .Values.otel.metrics.control_plane.controller_manager.scheme }}
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: {{ quote .Values.otel.metrics.control_plane.controller_manager.metrics_path }}
+                honor_timestamps: false
+                honor_labels: true
+                authorization:
+                  type: Bearer
+                  credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                follow_redirects: true
+                enable_http2: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:{{ .Values.otel.metrics.control_plane.controller_manager.port }}'
+      {{- end }}
+
+      {{- if and .Values.otel.metrics.control_plane.etcd.enabled (eq .Values.otel.metrics.control_plane.etcd.scrape_kind "pod") }}
+      prometheus/etcd:
+        rule: type == "pod" && labels[{{ quote .Values.otel.metrics.control_plane.etcd.label_selector.key }}] == {{ quote .Values.otel.metrics.control_plane.etcd.label_selector.value }}
+        config:
+          config:
+            scrape_configs:
+              - job_name: kubernetes-etcd
+                scheme: {{ quote .Values.otel.metrics.control_plane.etcd.scheme }}
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: {{ quote .Values.otel.metrics.control_plane.etcd.metrics_path }}
+                honor_timestamps: false
+                honor_labels: true
+                authorization:
+                  type: Bearer
+                  credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                follow_redirects: true
+                enable_http2: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:{{ .Values.otel.metrics.control_plane.etcd.port }}'
+      {{- end }}
+
+    {{- end }}
 {{- end }}
 
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
@@ -722,7 +828,12 @@ service:
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
         - filter/metrics-discovery
 {{- end }}
-        - metricstransform/rename
+{{- if .Values.otel.metrics.autodiscovery.prefix }}
+        - metricstransform/rename/discovery
+{{- end }}
+{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+        - metricstransform/copy-required-metrics
+{{- end }}
         - transform/istio-metrics
         - metricstransform/istio-metrics
         - cumulativetodelta/istio-metrics
