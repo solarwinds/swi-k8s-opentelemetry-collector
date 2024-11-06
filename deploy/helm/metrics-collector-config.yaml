@@ -163,7 +163,7 @@ processors:
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_)(.*)$$
+      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -942,7 +942,13 @@ processors:
           name == "coredns_dns_request_duration_seconds" or
           name == "coredns_cache_entries" or
           name == "coredns_cache_hits_total" or
-          name == "coredns_cache_misses_total"
+          name == "coredns_cache_misses_total" or
+          name == "certmanager_certificate_expiration_timestamp_seconds" or
+          name == "certmanager_certificate_ready_status" or
+          name == "certmanager_certificate_renewal_timestamp_seconds" or
+          name == "certmanager_clock_time_seconds" or
+          name == "certmanager_clock_time_seconds_gauge" or
+          name == "certmanager_controller_sync_call_count"
           )
   filter/histograms:
     metrics:
@@ -1130,6 +1136,18 @@ receivers:
                 - {{ $endpoint}}
                 {{- end }}
         {{- end }}
+        - job_name: cert-manager
+          honor_timestamps: false
+          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+          scrape_timeout: 10s
+          kubernetes_sd_configs:
+          - role: endpoints
+            follow_redirects: true
+            enable_http2: true
+          relabel_configs:
+          - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_instance, __meta_kubernetes_service_label_app_kubernetes_io_name]
+            regex: cert-manager
+            action: keep
 
 service:
   extensions:
