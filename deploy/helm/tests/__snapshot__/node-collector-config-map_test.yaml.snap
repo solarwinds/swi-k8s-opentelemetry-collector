@@ -1058,12 +1058,7 @@ Custom logs filter with new syntax:
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -1072,9 +1067,6 @@ Custom logs filter with new syntax:
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
@@ -2353,12 +2345,7 @@ Custom logs filter with old syntax:
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -2367,9 +2354,6 @@ Custom logs filter with old syntax:
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
@@ -3518,12 +3502,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -3532,9 +3511,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
@@ -4706,12 +4682,7 @@ Node collector config should match snapshot when fargate is enabled:
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -4720,9 +4691,6 @@ Node collector config should match snapshot when fargate is enabled:
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
@@ -5801,12 +5769,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -5815,9 +5778,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
@@ -6920,12 +6880,7 @@ Node collector config should match snapshot when using default values:
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -6934,9 +6889,6 @@ Node collector config should match snapshot when using default values:
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
