@@ -1035,12 +1035,7 @@ Node collector config for windows nodes should match snapshot when using default
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -1049,9 +1044,6 @@ Node collector config for windows nodes should match snapshot when using default
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer
@@ -2293,12 +2285,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               config:
                 config:
                   scrape_configs:
-                  - authorization:
-                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                      type: Bearer
-                    enable_http2: true
-                    follow_redirects: true
-                    honor_labels: true
+                  - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
                     metrics_path: /metrics
@@ -2307,9 +2294,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
                     static_configs:
                     - targets:
                       - '`endpoint`:2379'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
               rule: type == "pod" && labels["component"] == "etcd"
           watch_observers:
           - k8s_observer

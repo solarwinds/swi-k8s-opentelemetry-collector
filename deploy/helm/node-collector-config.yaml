@@ -664,6 +664,7 @@ receivers:
       {{- end }}
       {{- end }}
       {{- end }}
+    {{- end }}
 
       {{- if .Values.otel.metrics.control_plane.controller_manager.enabled }}
       prometheus/controller-manager:
@@ -677,6 +678,7 @@ receivers:
                 metrics_path: {{ quote .Values.otel.metrics.control_plane.controller_manager.metrics_path }}
                 honor_timestamps: false
                 honor_labels: true
+                {{- if eq .Values.otel.metrics.control_plane.controller_manager.scheme "https" }}
                 authorization:
                   type: Bearer
                   credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -685,6 +687,7 @@ receivers:
                   insecure_skip_verify: true
                 follow_redirects: true
                 enable_http2: true
+                {{- end }}
                 static_configs:
                   - targets:
                       - '`endpoint`:{{ .Values.otel.metrics.control_plane.controller_manager.port }}'
@@ -702,6 +705,7 @@ receivers:
                 metrics_path: {{ quote .Values.otel.metrics.control_plane.etcd.metrics_path }}
                 honor_timestamps: false
                 honor_labels: true
+                {{- if eq .Values.otel.metrics.control_plane.etcd.scheme "https" }}
                 authorization:
                   type: Bearer
                   credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -710,12 +714,11 @@ receivers:
                   insecure_skip_verify: true
                 follow_redirects: true
                 enable_http2: true
+                {{- end }}
                 static_configs:
                   - targets:
                       - '`endpoint`:{{ .Values.otel.metrics.control_plane.etcd.port }}'
       {{- end }}
-
-    {{- end }}
 {{- end }}
 
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
