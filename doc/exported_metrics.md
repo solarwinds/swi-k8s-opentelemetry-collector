@@ -236,7 +236,12 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | k8s.kube_persistentvolume_claim_ref | Gauge |  | Information about connected Persistent Volume Claim's | native |
 | k8s.kube_persistentvolume_created | Gauge |  | Unix creation timestamp | native |
 | k8s.persistentvolume.status.phase | Gauge |  | Describes the status of the Persistent Volume | custom |
-| k8s.kubelet_volume_stats_available_percent | Gauge |  | The capacity in percent of the volume | native |
+| k8s.kubelet_volume_stats_available_bytes| Gauge |  | The number of available bytes of the volume| native |
+| k8s.kubelet_volume_stats_capacity_bytes| Gauge |  | The capacity in bytes of the volume | native |
+| k8s.kubelet_volume_stats_inodes| Gauge |  | The maximum number of inodes in the volume | native |
+| k8s.kubelet_volume_stats_inodes_free| Gauge |  | The number of free inodes in the volume | native |
+| k8s.kubelet_volume_stats_inodes_used| Gauge |  | The number of used inodes in the volume | native |
+| k8s.kubelet_volume_stats_used_bytes| Gauge |  | The number of used bytes in the volume | native |
 
 ## Persistent Volume Claim metrics
 
