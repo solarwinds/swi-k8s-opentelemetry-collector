@@ -3589,6 +3589,21 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - batch/metrics
             receivers:
             - forward/metric-exporter
+          metrics/discovery:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
+            - transform/istio-metrics
+            - metricstransform/istio-metrics
+            - cumulativetodelta/istio-metrics
+            - deltatorate/istio-metrics
+            - experimental_metricsgeneration/istio-metrics
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - receiver_creator/discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -5799,6 +5814,21 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - resource/journal
             receivers:
             - journald
+          metrics/discovery:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
+            - transform/istio-metrics
+            - metricstransform/istio-metrics
+            - cumulativetodelta/istio-metrics
+            - deltatorate/istio-metrics
+            - experimental_metricsgeneration/istio-metrics
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - receiver_creator/discovery
         telemetry:
           logs:
             level: info
