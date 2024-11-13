@@ -93,6 +93,28 @@ otel:
           IsMatch(body, "\\[[^\\]]*\\] \"\\S+ \\S+ HTTP/\\d(\\.\\d)*\" 200.*")
 ```
 
+### Manifests
+
+Starting with version 4.0.0, `swo-k8s-collector` observes changes in supported resources and collects their manifests.
+
+By default, manifest collection is enabled, but it can be disabled by setting `otel.manifests.enabled` to `false`.  Manifest collection runs in the event collector, so `otel.events.enabled` must be set to `true` (default). 
+
+Currently, the following resources are watched for changes: `pods`, `deployments`, `statefulsets`, `replicasets`, `daemonsets`, `jobs`, `cronjobs`, `nodes`, `services`, `persistentvolumes`, `persistentvolumeclaims`, `configmaps`, `ingresses` and Istio's `virtualservices`.
+
+By default, `swo-k8s-collector` collects all manifests. You can use the `otel.manifests.filter` setting to filter out manifests that should not be collected.
+
+An example of filter for collecting all manifests, but `configmaps` just for `kube-system` namespace.
+
+```yaml
+otel:
+  manifests:
+    enabled: true
+    filter:
+      log_record:  
+        - attributes["k8s.object.kind"] == "ConfigMap" and resource.attributes["k8s.namespace.name"] != "kube-system"
+```
+
+
 ## Receive 3rd party metrics
 
 SWO K8s Collector has an OTEL service endpoint which is able to forward metrics and logs into SolarWinds Observability. All incoming data is properly associated with current cluster. Additionally, metrics are decorated with prefix `k8s.`.
