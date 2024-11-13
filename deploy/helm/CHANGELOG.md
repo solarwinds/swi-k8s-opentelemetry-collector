@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [4.3.0-alpha.1] - 2024-11-11
+
+### Added 
+- Adding OTEL Operator as subchart
+
 ### Added
 
 - It is now possible to customize prefix of discovered metrics using `otel.metrics.autodiscovery.prefix` (default `k8s.`)

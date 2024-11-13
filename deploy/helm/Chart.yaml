@@ -22,6 +22,16 @@ dependencies:
     repository: https://prometheus-community.github.io/helm-charts
     version: "~> 5.26.0"
     condition: kube-state-metrics.enabled
+  - name: opentelemetry-operator
+    repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+    version: 0.68.3 # 0.68.3 chart version includes otel-operator version 0.107.0
+    alias: operator
+    condition: operator.enabled
+  - name: cert-manager
+    version: v1.16.1
+    alias: certmanager
+    repository: https://charts.jetstack.io
+    condition: certmanager.enabled
 annotations:
   artifacthub.io/prerelease: "false"
   artifacthub.io/license: Apache-2.0
