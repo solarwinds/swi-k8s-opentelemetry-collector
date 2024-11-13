@@ -26,6 +26,50 @@ entries:
     version: 2.0.1-alpha.1
   swo-k8s-collector:
   - annotations:
+      artifacthub.io/images: |
+        - name: ebpf-kernelCollector
+          image: solarwinds/opentelemetry-ebpf-kernel-collector:v0.10.3
+          whitelisted: true
+        - name: ebpf-k8sCollectorWatcher
+          image: solarwinds/opentelemetry-ebpf-k8s-watcher:v0.10.3
+          whitelisted: true
+        - name: ebpf-k8sCollectorRelay
+          image: solarwinds/opentelemetry-ebpf-k8s-relay:v0.10.3
+          whitelisted: true
+        - name: ebpf-reducer
+          image: solarwinds/opentelemetry-ebpf-reducer:v0.10.3
+          whitelisted: true
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/prerelease: "false"
+    apiVersion: v2
+    appVersion: 0.11.8
+    created: "2024-11-13T08:59:30.621156989Z"
+    dependencies:
+    - condition: kube-state-metrics.enabled
+      name: kube-state-metrics
+      repository: https://prometheus-community.github.io/helm-charts
+      version: ~> 5.26.0
+    description: SolarWinds Kubernetes Integration
+    digest: fd2ed466d71fc14babf2475434e5a4ad325797887dca73c532306a7264563d52
+    home: https://solarwinds.com/
+    icon: https://helm.solarwinds.com/favicon.png
+    keywords:
+    - monitoring
+    - observability
+    - metric
+    - logs
+    - events
+    - kubernetes
+    maintainers:
+    - email: support@solarwinds.com
+      name: SolarWinds
+    name: swo-k8s-collector
+    sources:
+    - https://github.com/solarwinds/swi-k8s-opentelemetry-collector/deploy/helm/
+    urls:
+    - https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/download/swo-k8s-collector-4.2.0/swo-k8s-collector-4.2.0.tgz
+    version: 4.2.0
+  - annotations:
       artifacthub.io/images: |-
         - name: ebpf-kernelCollector
           image: solarwinds/opentelemetry-ebpf-kernel-collector:v0.10.3
@@ -3894,4 +3938,4 @@ entries:
     urls:
     - https://helm.solarwinds.com/swo-k8s-collector-2.0.2-alpha.tgz
     version: 2.0.2-alpha
-generated: "2024-11-08T11:46:41.518217324Z"
+generated: "2024-11-13T08:59:30.621560425Z"
