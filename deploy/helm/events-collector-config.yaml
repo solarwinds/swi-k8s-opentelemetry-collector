@@ -112,6 +112,7 @@ processors:
           - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolume"
           - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolumeClaim"
           - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Ingress"
+          - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"]) where body["kind"] == "ConfigMap"
 
           # set entity labels for the resource
           - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"] == "Pod"
@@ -126,6 +127,7 @@ processors:
           - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolume"
           - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolumeClaim"
           - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"] == "Ingress"
+          - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
 {{- end }}
 {{- if .Values.otel.manifests.enabled }}
   transform/manifest:
@@ -158,6 +160,7 @@ processors:
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
             - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"] == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
 
             # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
@@ -191,6 +194,7 @@ processors:
       - k8s.persistentvolumeclaim.name
       - k8s.ingress.name
       - sw.k8s.ingress.type
+      - k8s.configmap.name
 
       - k8s.pod.labels
       - k8s.deployment.labels
@@ -205,6 +209,7 @@ processors:
       - k8s.persistentvolume.labels
       - k8s.persistentvolumeclaim.labels
       - k8s.ingress.labels
+      - k8s.configmap.labels
 
       - k8s.pod.annotations
       - k8s.deployment.annotations
@@ -219,6 +224,7 @@ processors:
       - k8s.persistentvolume.annotations
       - k8s.persistentvolumeclaim.annotations
       - k8s.ingress.annotations
+      - k8s.configmap.annotations
 {{- end }}
 
   resource/events:
@@ -305,6 +311,7 @@ receivers:
   "persistentvolumes"
   "persistentvolumeclaims"
   "ingresses"
+  "configmaps"
 }}
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}

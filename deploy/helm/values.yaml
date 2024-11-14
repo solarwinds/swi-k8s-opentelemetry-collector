@@ -786,3 +786,28 @@ ebpfNetworkMonitoring:
 # Enable support for OpenShift environment
 openshift:
   enabled: false
+
+operator:
+  enabled: false
+  manager:
+    image:
+      repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+      tag: "0.107.0"
+    collectorImage:
+      # it is not yet supported to run collector instrumented by operator
+      # filling this to satisfy subchart requirement
+      repository: "solarwinds/swi-opentelemetry-collector"
+  admissionWebhooks:
+    certManager:
+      enabled: true
+      # ensure that Certificate and Issuer resource are created after CRD's of all dependencies
+      certificateAnnotations:
+        "helm.sh/hook": post-install,post-upgrade
+        "helm.sh/hook-weight": "1"
+      issuerAnnotations:
+        "helm.sh/hook": post-install,post-upgrade
+        "helm.sh/hook-weight": "1"
+
+certmanager:
+  enabled: false
+  installCRDs: true

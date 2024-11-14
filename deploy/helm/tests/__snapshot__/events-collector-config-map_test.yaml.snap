@@ -45,6 +45,7 @@ Custom events filter with new syntax:
           - k8s.persistentvolumeclaim.name
           - k8s.ingress.name
           - sw.k8s.ingress.type
+          - k8s.configmap.name
           - k8s.pod.labels
           - k8s.deployment.labels
           - k8s.statefulset.labels
@@ -58,6 +59,7 @@ Custom events filter with new syntax:
           - k8s.persistentvolume.labels
           - k8s.persistentvolumeclaim.labels
           - k8s.ingress.labels
+          - k8s.configmap.labels
           - k8s.pod.annotations
           - k8s.deployment.annotations
           - k8s.statefulset.annotations
@@ -71,6 +73,7 @@ Custom events filter with new syntax:
           - k8s.persistentvolume.annotations
           - k8s.persistentvolumeclaim.annotations
           - k8s.ingress.annotations
+          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -339,6 +342,8 @@ Custom events filter with new syntax:
               == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
               "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
@@ -384,6 +389,8 @@ Custom events filter with new syntax:
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
               where body["kind"] == "Ingress"
+            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
+              where body["kind"] == "ConfigMap"
             - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
               == "Pod"
             - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
@@ -408,6 +415,8 @@ Custom events filter with new syntax:
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
               == "Ingress"
+            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
+              body["kind"] == "ConfigMap"
         transform/severity:
           log_statements:
           - context: log
@@ -519,6 +528,11 @@ Custom events filter with new syntax:
             name: ingresses
           - mode: watch
             name: ingresses
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check
@@ -608,6 +622,7 @@ Custom events filter with old syntax:
           - k8s.persistentvolumeclaim.name
           - k8s.ingress.name
           - sw.k8s.ingress.type
+          - k8s.configmap.name
           - k8s.pod.labels
           - k8s.deployment.labels
           - k8s.statefulset.labels
@@ -621,6 +636,7 @@ Custom events filter with old syntax:
           - k8s.persistentvolume.labels
           - k8s.persistentvolumeclaim.labels
           - k8s.ingress.labels
+          - k8s.configmap.labels
           - k8s.pod.annotations
           - k8s.deployment.annotations
           - k8s.statefulset.annotations
@@ -634,6 +650,7 @@ Custom events filter with old syntax:
           - k8s.persistentvolume.annotations
           - k8s.persistentvolumeclaim.annotations
           - k8s.ingress.annotations
+          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -902,6 +919,8 @@ Custom events filter with old syntax:
               == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
               "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
@@ -947,6 +966,8 @@ Custom events filter with old syntax:
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
               where body["kind"] == "Ingress"
+            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
+              where body["kind"] == "ConfigMap"
             - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
               == "Pod"
             - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
@@ -971,6 +992,8 @@ Custom events filter with old syntax:
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
               == "Ingress"
+            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
+              body["kind"] == "ConfigMap"
         transform/severity:
           log_statements:
           - context: log
@@ -1082,6 +1105,11 @@ Custom events filter with old syntax:
             name: ingresses
           - mode: watch
             name: ingresses
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check
@@ -1164,6 +1192,7 @@ Events config should match snapshot when using default values:
           - k8s.persistentvolumeclaim.name
           - k8s.ingress.name
           - sw.k8s.ingress.type
+          - k8s.configmap.name
           - k8s.pod.labels
           - k8s.deployment.labels
           - k8s.statefulset.labels
@@ -1177,6 +1206,7 @@ Events config should match snapshot when using default values:
           - k8s.persistentvolume.labels
           - k8s.persistentvolumeclaim.labels
           - k8s.ingress.labels
+          - k8s.configmap.labels
           - k8s.pod.annotations
           - k8s.deployment.annotations
           - k8s.statefulset.annotations
@@ -1190,6 +1220,7 @@ Events config should match snapshot when using default values:
           - k8s.persistentvolume.annotations
           - k8s.persistentvolumeclaim.annotations
           - k8s.ingress.annotations
+          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -1458,6 +1489,8 @@ Events config should match snapshot when using default values:
               == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
               "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
@@ -1503,6 +1536,8 @@ Events config should match snapshot when using default values:
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
               where body["kind"] == "Ingress"
+            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
+              where body["kind"] == "ConfigMap"
             - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
               == "Pod"
             - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
@@ -1527,6 +1562,8 @@ Events config should match snapshot when using default values:
               where body["kind"] == "PersistentVolumeClaim"
             - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
               == "Ingress"
+            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
+              body["kind"] == "ConfigMap"
         transform/severity:
           log_statements:
           - context: log
@@ -1638,6 +1675,11 @@ Events config should match snapshot when using default values:
             name: ingresses
           - mode: watch
             name: ingresses
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check

@@ -5,6 +5,7 @@
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Limitations](#limitations)
+- [Auto instrumentation](#autoinstrumentation)
 
 ## Installation
 
@@ -93,6 +94,28 @@ otel:
           IsMatch(body, "\\[[^\\]]*\\] \"\\S+ \\S+ HTTP/\\d(\\.\\d)*\" 200.*")
 ```
 
+### Manifests
+
+Starting with version 4.0.0, `swo-k8s-collector` observes changes in supported resources and collects their manifests.
+
+By default, manifest collection is enabled, but it can be disabled by setting `otel.manifests.enabled` to `false`.  Manifest collection runs in the event collector, so `otel.events.enabled` must be set to `true` (default). 
+
+Currently, the following resources are watched for changes: `pods`, `deployments`, `statefulsets`, `replicasets`, `daemonsets`, `jobs`, `cronjobs`, `nodes`, `services`, `persistentvolumes`, `persistentvolumeclaims`, `configmaps`, `ingresses` and Istio's `virtualservices`.
+
+By default, `swo-k8s-collector` collects all manifests. You can use the `otel.manifests.filter` setting to filter out manifests that should not be collected.
+
+An example of filter for collecting all manifests, but `configmaps` just for `kube-system` namespace.
+
+```yaml
+otel:
+  manifests:
+    enabled: true
+    filter:
+      log_record:  
+        - attributes["k8s.object.kind"] == "ConfigMap" and resource.attributes["k8s.namespace.name"] != "kube-system"
+```
+
+
 ## Receive 3rd party metrics
 
 SWO K8s Collector has an OTEL service endpoint which is able to forward metrics and logs into SolarWinds Observability. All incoming data is properly associated with current cluster. Additionally, metrics are decorated with prefix `k8s.`.
@@ -133,3 +156,65 @@ config:
   - Local Kubernetes deployments (e.q. Minikube, Docker Desktop) are not supported (although most of the functionality may be working).
   - Note: since Kubernetes v1.24 Docker container runtime will not be reporting pod level network metrics (`kubenet` and other network plumbing was removed from upstream as part of the dockershim removal/deprecation)
 - Supported architectures: Linux x86-64 (`amd64`), Linux ARM (`arm64`), Windows x86-64 (`amd64`).
+
+## AutoInstrumentation
+
+This chart allows you to deploy the [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator), which can be used to auto-instrument applications with [SWO APM](https://documentation.solarwinds.com/en/success_center/observability/content/intro/services.htm).
+
+### Setting up
+
+#### 1. Enable deployment of the operator
+Set the following option in `values.yaml`: `operator.enable=true`
+
+#### 2. Ensure proper TLS Certificate management
+The operator expects that Cert Manager is already present on the cluster. There are a few different ways you can use to generate/configure the required TLS certificate:
+1. Deploy `cert-manager` as part of this chart.
+   - Ensure there is no cert-manager instance already present in the cluster.
+   - Set `certmanager.enabled=true`.
+2. Read the OTEL Operator documentation for alternative options: https://opentelemetry.io/docs/kubernetes/helm/operator/#configuration. All OTEL Operator configuration options are available below the `operator` key in `values.yaml`.
+
+#### 3. Create an `Instrumentation` custom resource
+- Create an `Instrumentation` custom resource with the following image set:
+  - Java: `ghcr.io/solarwinds/autoinstrumentation-java:2.9.0`
+- Set `SW_APM_SERVICE_KEY` with the SWO ingestion API_TOKEN (the same API_TOKEN that is used for this chart can be used).
+- Set `SW_APM_COLLECTOR` with the APM SWO endpoint (e.g., `apm.collector.na-01.st-ssp.solarwinds.com`).
+
+##### Example
+
+```
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: java-instrumentation
+spec:
+  java:
+    image: ghcr.io/solarwinds/autoinstrumentation-java:2.9.0
+    env:
+      - name: SW_APM_SERVICE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: swo-token
+            key: SOLARWINDS_API_TOKEN
+      - name: SW_APM_COLLECTOR
+        value: apm.collector.na-01.st-ssp.solarwinds.com
+```
+{{- end }}
+
+#### 4. Instrument applications by setting the annotation
+The final step is to opt your services into automatic instrumentation. This is done by updating your service’s `spec.template.metadata.annotations` to include a language-specific annotation:
+
+- .NET: `instrumentation.opentelemetry.io/inject-dotnet: "true"`
+- Go: `instrumentation.opentelemetry.io/inject-go: "true"`
+- Java: `instrumentation.opentelemetry.io/inject-java: "true"`
+- Node.js: `instrumentation.opentelemetry.io/inject-nodejs: "true"`
+- Python: `instrumentation.opentelemetry.io/inject-python: "true"`
+
+The possible values for the annotation can be:
+
+- `"true"` - to inject the Instrumentation resource with the default name from the current namespace.
+- `"my-instrumentation"` - to inject the Instrumentation CR instance with the name "my-instrumentation" in the current namespace.
+- `"my-other-namespace/my-instrumentation"` - to inject the Instrumentation CR instance with the name "my-instrumentation" from another namespace "my-other-namespace".
+- `"false"` - do not inject.
+
+Alternatively, the annotation can be added to a namespace, which will result in all services in that namespace opting into automatic instrumentation. See the [Operator's auto-instrumentation documentation](https://github.com/open-telemetry/opentelemetry-operator/blob/main/README.md#opentelemetry-auto-instrumentation-injection) for more details.
+
