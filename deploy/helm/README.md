@@ -163,10 +163,9 @@ The operator expects that Cert Manager is already present on the cluster. There 
 apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
 metadata:
-  name: java-instrumentation
+  name: swo-apm-instrumentation
 spec:
   java:
-    image: ghcr.io/solarwinds/autoinstrumentation-java:2.9.0
     env:
       - name: SW_APM_SERVICE_KEY
         valueFrom:

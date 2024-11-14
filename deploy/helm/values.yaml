@@ -797,10 +797,28 @@ operator:
       # it is not yet supported to run collector instrumented by operator
       # filling this to satisfy subchart requirement
       repository: "solarwinds/swi-opentelemetry-collector"
+    autoInstrumentationImage:
+      # Currently only Java is supported, other languages are TBD
+      java:
+        repository: "ghcr.io/solarwinds/autoinstrumentation-java"
+        tag: "2.9.0"
+      nodejs:
+        repository: ""
+        tag: ""
+      python:
+        repository: ""
+        tag: ""
+      dotnet:
+        repository: ""
+        tag: ""
+      go:
+        repository: ""
+        tag: ""
+        
   admissionWebhooks:
     certManager:
       enabled: true
-      # ensure that Certificate and Issuer resource are created after CRD's of all dependencies
+      # ensure that Certificate and Issuer resource are created after CRD's of cert-manager
       certificateAnnotations:
         "helm.sh/hook": post-install,post-upgrade
         "helm.sh/hook-weight": "1"
