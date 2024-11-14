@@ -314,7 +314,17 @@ processors:
     metrics:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")'
-
+  transform/scope:
+    metric_statements:
+      - context: scope
+        statements:
+          - set(name, "")
+          - set(version, "")
+    log_statements:
+      - context: scope
+        statements:
+          - set(name, "")
+          - set(version, "")
   transform/istio-metrics:
     metric_statements:
       - context: metric
@@ -884,6 +894,7 @@ service:
         - memory_limiter
         - filter/histograms
         - swk8sattributes
+        - transform/scope
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
         - resource/swk8sattributes_labels_filter
 {{- end }}
