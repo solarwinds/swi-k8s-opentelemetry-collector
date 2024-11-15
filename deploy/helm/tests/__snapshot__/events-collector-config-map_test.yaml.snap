@@ -354,6 +354,12 @@ Custom events filter with new syntax:
           - context: log
             statements:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/scope:
+          log_statements:
+          - context: scope
+            statements:
+            - set(name, "")
+            - set(version, "")
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -556,6 +562,7 @@ Custom events filter with new syntax:
             - groupbyattrs/manifest
             - resource/manifest
             - swk8sattributes
+            - transform/scope
             - transform/cleanup_attributes_for_nonexisting_entities
             - batch
             receivers:
@@ -924,6 +931,12 @@ Custom events filter with old syntax:
           - context: log
             statements:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/scope:
+          log_statements:
+          - context: scope
+            statements:
+            - set(name, "")
+            - set(version, "")
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -1126,6 +1139,7 @@ Custom events filter with old syntax:
             - groupbyattrs/manifest
             - resource/manifest
             - swk8sattributes
+            - transform/scope
             - transform/cleanup_attributes_for_nonexisting_entities
             - batch
             receivers:
@@ -1487,6 +1501,12 @@ Events config should match snapshot when using default values:
           - context: log
             statements:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/scope:
+          log_statements:
+          - context: scope
+            statements:
+            - set(name, "")
+            - set(version, "")
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -1688,6 +1708,7 @@ Events config should match snapshot when using default values:
             - groupbyattrs/manifest
             - resource/manifest
             - swk8sattributes
+            - transform/scope
             - transform/cleanup_attributes_for_nonexisting_entities
             - batch
             receivers:
@@ -1944,6 +1965,12 @@ Events config should not contain manifest collection pipeline when disabled:
           - context: log
             statements:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/scope:
+          log_statements:
+          - context: scope
+            statements:
+            - set(name, "")
+            - set(version, "")
         transform/severity:
           log_statements:
           - context: log

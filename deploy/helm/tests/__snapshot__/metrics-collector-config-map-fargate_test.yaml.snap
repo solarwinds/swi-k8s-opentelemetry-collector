@@ -1699,6 +1699,12 @@ Metrics config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+        transform/scope:
+          metric_statements:
+          - context: scope
+            statements:
+            - set(name, "")
+            - set(version, "")
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -1880,6 +1886,7 @@ Metrics config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
+            - transform/scope
             - filter/histograms
             - batch
             receivers:

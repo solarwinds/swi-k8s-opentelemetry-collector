@@ -171,6 +171,12 @@ processors:
             # convert body to string
             - set(body, body.string)
 {{- end }}
+  transform/scope:
+    log_statements:
+      - context: scope
+        statements:
+          - set(name, "")
+          - set(version, "")
 {{- if .Values.otel.manifests.enabled }}
   groupbyattrs/manifest:
     keys:
@@ -365,6 +371,7 @@ service:
         - groupbyattrs/manifest
         - resource/manifest
         - swk8sattributes
+        - transform/scope
 {{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
         - resource/swk8sattributes_labels_filter
 {{- end }}

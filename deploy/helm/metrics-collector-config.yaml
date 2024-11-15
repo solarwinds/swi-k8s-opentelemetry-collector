@@ -54,6 +54,12 @@ processors:
   {{- include "common-config.filter-remove-internal" . | nindent 2 }}
   {{- include "common-config.filter-remove-internal-post-processing" . | nindent 2 }}
 
+  transform/scope:
+    metric_statements:
+      - context: scope
+        statements:
+          - set(name, "")
+          - set(version, "")
   # unify attributes
   attributes/unify_node_attribute:
     include:
@@ -1247,6 +1253,7 @@ service:
         - otlp
       processors:
         - memory_limiter
+        - transform/scope
         - filter/histograms
         - batch
       receivers:
