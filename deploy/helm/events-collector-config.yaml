@@ -356,6 +356,7 @@ service:
 {{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "false") }}
         - filter
 {{- end }}
+        - transform/scope
         - batch
       receivers:
         - k8s_events
@@ -371,7 +372,6 @@ service:
         - groupbyattrs/manifest
         - resource/manifest
         - swk8sattributes
-        - transform/scope
 {{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
         - resource/swk8sattributes_labels_filter
 {{- end }}
@@ -382,6 +382,7 @@ service:
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
+        - transform/scope
         - batch
       receivers:
         - k8sobjects
