@@ -5,7 +5,7 @@
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Limitations](#limitations)
-- [Auto instrumentation](#autoinstrumentation)
+- [Auto Instrumentation (experimental feature)](#auto-instrumentation-experimental-feature)
 
 ## Installation
 
@@ -157,50 +157,52 @@ config:
   - Note: since Kubernetes v1.24 Docker container runtime will not be reporting pod level network metrics (`kubenet` and other network plumbing was removed from upstream as part of the dockershim removal/deprecation)
 - Supported architectures: Linux x86-64 (`amd64`), Linux ARM (`arm64`), Windows x86-64 (`amd64`).
 
-## AutoInstrumentation
+## Auto Instrumentation (experimental feature)
 
 This chart allows you to deploy the [OpenTelemetry Operator](https://github.com/open-telemetry/opentelemetry-operator), which can be used to auto-instrument applications with [SWO APM](https://documentation.solarwinds.com/en/success_center/observability/content/intro/services.htm).
 
 ### Setting up
 
 #### 1. Enable deployment of the operator
+
 Set the following option in `values.yaml`: `operator.enable=true`
 
 #### 2. Ensure proper TLS Certificate management
+
 The operator expects that Cert Manager is already present on the cluster. There are a few different ways you can use to generate/configure the required TLS certificate:
-1. Deploy `cert-manager` as part of this chart.
-   - Ensure there is no cert-manager instance already present in the cluster.
-   - Set `certmanager.enabled=true`.
-2. Read the OTEL Operator documentation for alternative options: https://opentelemetry.io/docs/kubernetes/helm/operator/#configuration. All OTEL Operator configuration options are available below the `operator` key in `values.yaml`.
+
+- Deploy `cert-manager` as part of this chart.
+  - Ensure there is no cert-manager instance already present in the cluster.
+  - Set `certmanager.enabled=true`.
+- Or, read the OTEL Operator documentation for alternative options: https://opentelemetry.io/docs/kubernetes/helm/operator/#configuration. All OTEL Operator configuration options are available below the `operator` key in `values.yaml`.
 
 #### 3. Create an `Instrumentation` custom resource
-- Create an `Instrumentation` custom resource with the following image set:
-  - Java: `ghcr.io/solarwinds/autoinstrumentation-java:2.9.0`
-- Set `SW_APM_SERVICE_KEY` with the SWO ingestion API_TOKEN (the same API_TOKEN that is used for this chart can be used).
-- Set `SW_APM_COLLECTOR` with the APM SWO endpoint (e.g., `apm.collector.na-01.st-ssp.solarwinds.com`).
 
-##### Example
+- Create an `Instrumentation` custom resource.
+- Set `SW_APM_SERVICE_KEY` with the SWO ingestion API token. You can use the same token that is used for this chart.
+- Set `SW_APM_COLLECTOR` with the APM SWO endpoint (e.g., `apm.collector.na-01.cloud.solarwinds.com`).
+- If you are using a secret to store the API token, both the secret and the `Instrumentation` resource must be created in the same namespace as the applications that are to be instrumented.
+- Example:
 
-```
-apiVersion: opentelemetry.io/v1alpha1
-kind: Instrumentation
-metadata:
-  name: java-instrumentation
-spec:
-  java:
-    image: ghcr.io/solarwinds/autoinstrumentation-java:2.9.0
-    env:
-      - name: SW_APM_SERVICE_KEY
-        valueFrom:
-          secretKeyRef:
-            name: swo-token
-            key: SOLARWINDS_API_TOKEN
-      - name: SW_APM_COLLECTOR
-        value: apm.collector.na-01.st-ssp.solarwinds.com
-```
-{{- end }}
+  ```yaml
+  apiVersion: opentelemetry.io/v1alpha1
+  kind: Instrumentation
+  metadata:
+    name: swo-apm-instrumentation
+  spec:
+    java:
+      env:
+        - name: SW_APM_SERVICE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: solarwinds-api-token
+              key: SOLARWINDS_API_TOKEN
+        - name: SW_APM_COLLECTOR
+          value: apm.collector.na-01.cloud.solarwinds.com
+  ```
 
 #### 4. Instrument applications by setting the annotation
+
 The final step is to opt your services into automatic instrumentation. This is done by updating your service’s `spec.template.metadata.annotations` to include a language-specific annotation:
 
 - .NET: `instrumentation.opentelemetry.io/inject-dotnet: "true"`
@@ -217,4 +219,3 @@ The possible values for the annotation can be:
 - `"false"` - do not inject.
 
 Alternatively, the annotation can be added to a namespace, which will result in all services in that namespace opting into automatic instrumentation. See the [Operator's auto-instrumentation documentation](https://github.com/open-telemetry/opentelemetry-operator/blob/main/README.md#opentelemetry-auto-instrumentation-injection) for more details.
-
