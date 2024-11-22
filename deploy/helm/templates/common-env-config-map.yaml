@@ -12,6 +12,10 @@ data:
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: {{ quote .Values.otel.tls_insecure }}
   MANIFEST_VERSION: {{ quote .Chart.Version }}
   APP_VERSION: {{ quote .Chart.AppVersion }}
+  METRICS_ENABLED: {{ quote .Values.otel.metrics.enabled }}
+  LOGS_ENABLED: {{ quote .Values.otel.logs.enabled }}
+  EVENTS_ENABLED: {{ quote .Values.otel.events.enabled }}
+  NETWORK_EBPF_ENABLED: {{ quote .Values.ebpfNetworkMonitoring.enabled }}
 {{ if .Values.otel.https_proxy_url }}
   HTTPS_PROXY: {{ quote .Values.otel.https_proxy_url }}
 {{ end }}
