@@ -12,6 +12,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/collector/client v1.19.0
 	go.opentelemetry.io/collector/component v0.113.0
+	go.opentelemetry.io/collector/component/componentstatus v0.113.0
 	go.opentelemetry.io/collector/config/configtelemetry v0.113.0
 	go.opentelemetry.io/collector/confmap v1.19.0
 	go.opentelemetry.io/collector/consumer v0.113.0
@@ -66,7 +67,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.opentelemetry.io/collector/component/componentstatus v0.113.0 // indirect
 	go.opentelemetry.io/collector/consumer/consumerprofiles v0.113.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.113.0 // indirect
 	go.opentelemetry.io/collector/pdata/testdata v0.113.0 // indirect

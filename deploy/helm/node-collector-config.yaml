@@ -429,7 +429,7 @@ processors:
       - k8s.istio_tcp_sent_bytes.rate
       - k8s.istio_tcp_received_bytes.rate
 
-  experimental_metricsgeneration/istio-metrics:
+  metricsgeneration/istio-metrics:
     rules:
       - name: k8s.istio_request_duration_milliseconds.rate
         type: calculate
@@ -852,7 +852,7 @@ service:
         - metricstransform/istio-metrics
         - cumulativetodelta/istio-metrics
         - deltatorate/istio-metrics
-        - experimental_metricsgeneration/istio-metrics
+        - metricsgeneration/istio-metrics
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
         - cumulativetodelta/discovery
         - deltatorate/discovery
