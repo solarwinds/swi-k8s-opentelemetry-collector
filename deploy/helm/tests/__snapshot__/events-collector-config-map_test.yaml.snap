@@ -46,34 +46,6 @@ Custom events filter with new syntax:
           - k8s.ingress.name
           - sw.k8s.ingress.type
           - k8s.configmap.name
-          - k8s.pod.labels
-          - k8s.deployment.labels
-          - k8s.statefulset.labels
-          - k8s.replicaset.labels
-          - k8s.daemonset.labels
-          - k8s.job.labels
-          - k8s.cronjob.labels
-          - k8s.node.labels
-          - k8s.labelsspace.labels
-          - k8s.service.labels
-          - k8s.persistentvolume.labels
-          - k8s.persistentvolumeclaim.labels
-          - k8s.ingress.labels
-          - k8s.configmap.labels
-          - k8s.pod.annotations
-          - k8s.deployment.annotations
-          - k8s.statefulset.annotations
-          - k8s.replicaset.annotations
-          - k8s.daemonset.annotations
-          - k8s.job.annotations
-          - k8s.cronjob.annotations
-          - k8s.node.annotations
-          - k8s.labelsspace.annotations
-          - k8s.service.annotations
-          - k8s.persistentvolume.annotations
-          - k8s.persistentvolumeclaim.annotations
-          - k8s.ingress.annotations
-          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -348,7 +320,6 @@ Custom events filter with new syntax:
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-            - set(body, body.string)
         transform/namespace:
           log_statements:
           - context: log
@@ -365,58 +336,71 @@ Custom events filter with new syntax:
           log_statements:
           - context: log
             statements:
-            - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Pod"
-            - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Job"
-            - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "CronJob"
-            - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Node"
-            - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Service"
-            - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Ingress"
-            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ConfigMap"
-            - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.pod.annotations") where body["kind"]
               == "Pod"
-            - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.deployment.annotations") where
               body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.statefulset.annotations") where
               body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.replicaset.annotations") where
               body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.daemonset.annotations") where
               body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.job.annotations") where body["kind"]
               == "Job"
-            - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.cronjob.annotations") where
+              body["kind"] == "CronJob"
+            - flatten(body["metadata"]["annotations"], "k8s.node.annotations") where body["kind"]
               == "Node"
-            - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"])
+            - flatten(body["metadata"]["annotations"], "k8s.service.annotations") where
+              body["kind"] == "Service"
+            - flatten(body["metadata"]["annotations"], "k8s.persistentvolume.annotations")
               where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"])
+            - flatten(body["metadata"]["annotations"], "k8s.persistentvolumeclaim.annotations")
               where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.ingress.annotations") where
+              body["kind"] == "Ingress"
+            - flatten(body["metadata"]["annotations"], "k8s.configmap.annotations") where
               body["kind"] == "ConfigMap"
+            - merge_maps(resource.attributes, body["metadata"]["annotations"], "upsert")
+              where body["kind"] == "Pod" or body["kind"] == "Deployment" or body["kind"]
+              == "StatefulSet" or body["kind"] == "ReplicaSet" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Job" or body["kind"] == "CronJob" or body["kind"] == "Node"
+              or body["kind"] == "Service" or body["kind"] == "PersistentVolume" or body["kind"]
+              == "PersistentVolumeClaim" or body["kind"] == "Ingress" or body["kind"] ==
+              "ConfigMap"
+            - flatten(body["metadata"]["labels"], "k8s.pod.labels") where body["kind"] ==
+              "Pod"
+            - flatten(body["metadata"]["labels"], "k8s.deployment.labels") where body["kind"]
+              == "Deployment"
+            - flatten(body["metadata"]["labels"], "k8s.statefulset.labels") where body["kind"]
+              == "StatefulSet"
+            - flatten(body["metadata"]["labels"], "k8s.replicaset.labels") where body["kind"]
+              == "ReplicaSet"
+            - flatten(body["metadata"]["labels"], "k8s.daemonset.labels") where body["kind"]
+              == "DaemonSet"
+            - flatten(body["metadata"]["labels"], "k8s.job.labels") where body["kind"] ==
+              "Job"
+            - flatten(body["metadata"]["labels"], "k8s.cronjob.labels") where body["kind"]
+              == "CronJob"
+            - flatten(body["metadata"]["labels"], "k8s.node.labels") where body["kind"]
+              == "Node"
+            - flatten(body["metadata"]["labels"], "k8s.service.labels") where body["kind"]
+              == "Service"
+            - flatten(body["metadata"]["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume"
+            - flatten(body["metadata"]["labels"], "k8s.persistentvolumeclaim.labels") where
+              body["kind"] == "PersistentVolumeClaim"
+            - flatten(body["metadata"]["labels"], "k8s.ingress.labels") where body["kind"]
+              == "Ingress"
+            - flatten(body["metadata"]["labels"], "k8s.configmap.labels") where body["kind"]
+              == "ConfigMap"
+            - merge_maps(resource.attributes, body["metadata"]["labels"], "upsert") where
+              body["kind"] == "Pod" or body["kind"] == "Deployment" or body["kind"] == "StatefulSet"
+              or body["kind"] == "ReplicaSet" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Job" or body["kind"] == "CronJob" or body["kind"] == "Node" or body["kind"]
+              == "Service" or body["kind"] == "PersistentVolume" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "Ingress" or body["kind"] == "ConfigMap"
         transform/severity:
           log_statements:
           - context: log
@@ -463,6 +447,12 @@ Custom events filter with new syntax:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
         k8sobjects:
@@ -558,9 +548,10 @@ Custom events filter with new syntax:
             - otlp
             processors:
             - memory_limiter
-            - transform/set_labels_and_annotations_for_entities
             - transform/manifest
             - groupbyattrs/manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
@@ -624,34 +615,6 @@ Custom events filter with old syntax:
           - k8s.ingress.name
           - sw.k8s.ingress.type
           - k8s.configmap.name
-          - k8s.pod.labels
-          - k8s.deployment.labels
-          - k8s.statefulset.labels
-          - k8s.replicaset.labels
-          - k8s.daemonset.labels
-          - k8s.job.labels
-          - k8s.cronjob.labels
-          - k8s.node.labels
-          - k8s.labelsspace.labels
-          - k8s.service.labels
-          - k8s.persistentvolume.labels
-          - k8s.persistentvolumeclaim.labels
-          - k8s.ingress.labels
-          - k8s.configmap.labels
-          - k8s.pod.annotations
-          - k8s.deployment.annotations
-          - k8s.statefulset.annotations
-          - k8s.replicaset.annotations
-          - k8s.daemonset.annotations
-          - k8s.job.annotations
-          - k8s.cronjob.annotations
-          - k8s.node.annotations
-          - k8s.labelsspace.annotations
-          - k8s.service.annotations
-          - k8s.persistentvolume.annotations
-          - k8s.persistentvolumeclaim.annotations
-          - k8s.ingress.annotations
-          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -926,7 +889,6 @@ Custom events filter with old syntax:
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-            - set(body, body.string)
         transform/namespace:
           log_statements:
           - context: log
@@ -943,58 +905,71 @@ Custom events filter with old syntax:
           log_statements:
           - context: log
             statements:
-            - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Pod"
-            - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Job"
-            - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "CronJob"
-            - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Node"
-            - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Service"
-            - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Ingress"
-            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ConfigMap"
-            - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.pod.annotations") where body["kind"]
               == "Pod"
-            - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.deployment.annotations") where
               body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.statefulset.annotations") where
               body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.replicaset.annotations") where
               body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.daemonset.annotations") where
               body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.job.annotations") where body["kind"]
               == "Job"
-            - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.cronjob.annotations") where
+              body["kind"] == "CronJob"
+            - flatten(body["metadata"]["annotations"], "k8s.node.annotations") where body["kind"]
               == "Node"
-            - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"])
+            - flatten(body["metadata"]["annotations"], "k8s.service.annotations") where
+              body["kind"] == "Service"
+            - flatten(body["metadata"]["annotations"], "k8s.persistentvolume.annotations")
               where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"])
+            - flatten(body["metadata"]["annotations"], "k8s.persistentvolumeclaim.annotations")
               where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.ingress.annotations") where
+              body["kind"] == "Ingress"
+            - flatten(body["metadata"]["annotations"], "k8s.configmap.annotations") where
               body["kind"] == "ConfigMap"
+            - merge_maps(resource.attributes, body["metadata"]["annotations"], "upsert")
+              where body["kind"] == "Pod" or body["kind"] == "Deployment" or body["kind"]
+              == "StatefulSet" or body["kind"] == "ReplicaSet" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Job" or body["kind"] == "CronJob" or body["kind"] == "Node"
+              or body["kind"] == "Service" or body["kind"] == "PersistentVolume" or body["kind"]
+              == "PersistentVolumeClaim" or body["kind"] == "Ingress" or body["kind"] ==
+              "ConfigMap"
+            - flatten(body["metadata"]["labels"], "k8s.pod.labels") where body["kind"] ==
+              "Pod"
+            - flatten(body["metadata"]["labels"], "k8s.deployment.labels") where body["kind"]
+              == "Deployment"
+            - flatten(body["metadata"]["labels"], "k8s.statefulset.labels") where body["kind"]
+              == "StatefulSet"
+            - flatten(body["metadata"]["labels"], "k8s.replicaset.labels") where body["kind"]
+              == "ReplicaSet"
+            - flatten(body["metadata"]["labels"], "k8s.daemonset.labels") where body["kind"]
+              == "DaemonSet"
+            - flatten(body["metadata"]["labels"], "k8s.job.labels") where body["kind"] ==
+              "Job"
+            - flatten(body["metadata"]["labels"], "k8s.cronjob.labels") where body["kind"]
+              == "CronJob"
+            - flatten(body["metadata"]["labels"], "k8s.node.labels") where body["kind"]
+              == "Node"
+            - flatten(body["metadata"]["labels"], "k8s.service.labels") where body["kind"]
+              == "Service"
+            - flatten(body["metadata"]["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume"
+            - flatten(body["metadata"]["labels"], "k8s.persistentvolumeclaim.labels") where
+              body["kind"] == "PersistentVolumeClaim"
+            - flatten(body["metadata"]["labels"], "k8s.ingress.labels") where body["kind"]
+              == "Ingress"
+            - flatten(body["metadata"]["labels"], "k8s.configmap.labels") where body["kind"]
+              == "ConfigMap"
+            - merge_maps(resource.attributes, body["metadata"]["labels"], "upsert") where
+              body["kind"] == "Pod" or body["kind"] == "Deployment" or body["kind"] == "StatefulSet"
+              or body["kind"] == "ReplicaSet" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Job" or body["kind"] == "CronJob" or body["kind"] == "Node" or body["kind"]
+              == "Service" or body["kind"] == "PersistentVolume" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "Ingress" or body["kind"] == "ConfigMap"
         transform/severity:
           log_statements:
           - context: log
@@ -1041,6 +1016,12 @@ Custom events filter with old syntax:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
         k8sobjects:
@@ -1136,9 +1117,10 @@ Custom events filter with old syntax:
             - otlp
             processors:
             - memory_limiter
-            - transform/set_labels_and_annotations_for_entities
             - transform/manifest
             - groupbyattrs/manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
@@ -1195,34 +1177,6 @@ Events config should match snapshot when using default values:
           - k8s.ingress.name
           - sw.k8s.ingress.type
           - k8s.configmap.name
-          - k8s.pod.labels
-          - k8s.deployment.labels
-          - k8s.statefulset.labels
-          - k8s.replicaset.labels
-          - k8s.daemonset.labels
-          - k8s.job.labels
-          - k8s.cronjob.labels
-          - k8s.node.labels
-          - k8s.labelsspace.labels
-          - k8s.service.labels
-          - k8s.persistentvolume.labels
-          - k8s.persistentvolumeclaim.labels
-          - k8s.ingress.labels
-          - k8s.configmap.labels
-          - k8s.pod.annotations
-          - k8s.deployment.annotations
-          - k8s.statefulset.annotations
-          - k8s.replicaset.annotations
-          - k8s.daemonset.annotations
-          - k8s.job.annotations
-          - k8s.cronjob.annotations
-          - k8s.node.annotations
-          - k8s.labelsspace.annotations
-          - k8s.service.annotations
-          - k8s.persistentvolume.annotations
-          - k8s.persistentvolumeclaim.annotations
-          - k8s.ingress.annotations
-          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -1497,7 +1451,6 @@ Events config should match snapshot when using default values:
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-            - set(body, body.string)
         transform/namespace:
           log_statements:
           - context: log
@@ -1514,58 +1467,71 @@ Events config should match snapshot when using default values:
           log_statements:
           - context: log
             statements:
-            - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Pod"
-            - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Job"
-            - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "CronJob"
-            - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Node"
-            - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Service"
-            - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Ingress"
-            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ConfigMap"
-            - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.pod.annotations") where body["kind"]
               == "Pod"
-            - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.deployment.annotations") where
               body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.statefulset.annotations") where
               body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.replicaset.annotations") where
               body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.daemonset.annotations") where
               body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.job.annotations") where body["kind"]
               == "Job"
-            - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"]
+            - flatten(body["metadata"]["annotations"], "k8s.cronjob.annotations") where
+              body["kind"] == "CronJob"
+            - flatten(body["metadata"]["annotations"], "k8s.node.annotations") where body["kind"]
               == "Node"
-            - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"])
+            - flatten(body["metadata"]["annotations"], "k8s.service.annotations") where
+              body["kind"] == "Service"
+            - flatten(body["metadata"]["annotations"], "k8s.persistentvolume.annotations")
               where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"])
+            - flatten(body["metadata"]["annotations"], "k8s.persistentvolumeclaim.annotations")
               where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
+            - flatten(body["metadata"]["annotations"], "k8s.ingress.annotations") where
+              body["kind"] == "Ingress"
+            - flatten(body["metadata"]["annotations"], "k8s.configmap.annotations") where
               body["kind"] == "ConfigMap"
+            - merge_maps(resource.attributes, body["metadata"]["annotations"], "upsert")
+              where body["kind"] == "Pod" or body["kind"] == "Deployment" or body["kind"]
+              == "StatefulSet" or body["kind"] == "ReplicaSet" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Job" or body["kind"] == "CronJob" or body["kind"] == "Node"
+              or body["kind"] == "Service" or body["kind"] == "PersistentVolume" or body["kind"]
+              == "PersistentVolumeClaim" or body["kind"] == "Ingress" or body["kind"] ==
+              "ConfigMap"
+            - flatten(body["metadata"]["labels"], "k8s.pod.labels") where body["kind"] ==
+              "Pod"
+            - flatten(body["metadata"]["labels"], "k8s.deployment.labels") where body["kind"]
+              == "Deployment"
+            - flatten(body["metadata"]["labels"], "k8s.statefulset.labels") where body["kind"]
+              == "StatefulSet"
+            - flatten(body["metadata"]["labels"], "k8s.replicaset.labels") where body["kind"]
+              == "ReplicaSet"
+            - flatten(body["metadata"]["labels"], "k8s.daemonset.labels") where body["kind"]
+              == "DaemonSet"
+            - flatten(body["metadata"]["labels"], "k8s.job.labels") where body["kind"] ==
+              "Job"
+            - flatten(body["metadata"]["labels"], "k8s.cronjob.labels") where body["kind"]
+              == "CronJob"
+            - flatten(body["metadata"]["labels"], "k8s.node.labels") where body["kind"]
+              == "Node"
+            - flatten(body["metadata"]["labels"], "k8s.service.labels") where body["kind"]
+              == "Service"
+            - flatten(body["metadata"]["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume"
+            - flatten(body["metadata"]["labels"], "k8s.persistentvolumeclaim.labels") where
+              body["kind"] == "PersistentVolumeClaim"
+            - flatten(body["metadata"]["labels"], "k8s.ingress.labels") where body["kind"]
+              == "Ingress"
+            - flatten(body["metadata"]["labels"], "k8s.configmap.labels") where body["kind"]
+              == "ConfigMap"
+            - merge_maps(resource.attributes, body["metadata"]["labels"], "upsert") where
+              body["kind"] == "Pod" or body["kind"] == "Deployment" or body["kind"] == "StatefulSet"
+              or body["kind"] == "ReplicaSet" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Job" or body["kind"] == "CronJob" or body["kind"] == "Node" or body["kind"]
+              == "Service" or body["kind"] == "PersistentVolume" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "Ingress" or body["kind"] == "ConfigMap"
         transform/severity:
           log_statements:
           - context: log
@@ -1612,6 +1578,12 @@ Events config should match snapshot when using default values:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
         k8sobjects:
@@ -1706,9 +1678,10 @@ Events config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
-            - transform/set_labels_and_annotations_for_entities
             - transform/manifest
             - groupbyattrs/manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
@@ -2020,6 +1993,12 @@ Events config should not contain manifest collection pipeline when disabled:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
       service:
