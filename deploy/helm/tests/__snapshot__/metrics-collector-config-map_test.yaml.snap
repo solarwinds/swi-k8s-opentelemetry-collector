@@ -222,14 +222,6 @@ Metrics config should match snapshot when fargate is enabled:
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        experimental_metricsgeneration/cluster:
-          rules:
-          - metric1: apiserver_request_not_failed_temp
-            metric2: apiserver_request_total_temp
-            name: k8s.apiserver.request.successrate
-            operation: percent
-            type: calculate
-            unit: Percent
         filter/ebpf:
           metrics:
             metric:
@@ -436,6 +428,14 @@ Metrics config should match snapshot when fargate is enabled:
           check_interval: 1s
           limit_mib: 2560
           spike_limit_mib: 512
+        metricsgeneration/cluster:
+          rules:
+          - metric1: apiserver_request_not_failed_temp
+            metric2: apiserver_request_total_temp
+            name: k8s.apiserver.request.successrate
+            operation: percent
+            type: calculate
+            unit: Percent
         metricstransform/aggregate_node_level:
           transforms:
           - action: insert
@@ -1936,7 +1936,7 @@ Metrics config should match snapshot when fargate is enabled:
             - attributes/attributes_namespace_status
             - cumulativetodelta
             - deltatorate
-            - experimental_metricsgeneration/cluster
+            - metricsgeneration/cluster
             - groupbyattrs/node
             - metricstransform/aggregate_node_level
             - groupbyattrs/pod
@@ -2188,14 +2188,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        experimental_metricsgeneration/cluster:
-          rules:
-          - metric1: apiserver_request_not_failed_temp
-            metric2: apiserver_request_total_temp
-            name: k8s.apiserver.request.successrate
-            operation: percent
-            type: calculate
-            unit: Percent
         filter/ebpf:
           metrics:
             metric:
@@ -2402,6 +2394,14 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           check_interval: 1s
           limit_mib: 2560
           spike_limit_mib: 512
+        metricsgeneration/cluster:
+          rules:
+          - metric1: apiserver_request_not_failed_temp
+            metric2: apiserver_request_total_temp
+            name: k8s.apiserver.request.successrate
+            operation: percent
+            type: calculate
+            unit: Percent
         metricstransform/aggregate_node_level:
           transforms:
           - action: insert
@@ -3837,7 +3837,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - attributes/attributes_namespace_status
             - cumulativetodelta
             - deltatorate
-            - experimental_metricsgeneration/cluster
+            - metricsgeneration/cluster
             - groupbyattrs/node
             - metricstransform/aggregate_node_level
             - groupbyattrs/pod
@@ -4096,14 +4096,6 @@ Metrics config should match snapshot when using default values:
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        experimental_metricsgeneration/cluster:
-          rules:
-          - metric1: apiserver_request_not_failed_temp
-            metric2: apiserver_request_total_temp
-            name: k8s.apiserver.request.successrate
-            operation: percent
-            type: calculate
-            unit: Percent
         filter/ebpf:
           metrics:
             metric:
@@ -4310,6 +4302,14 @@ Metrics config should match snapshot when using default values:
           check_interval: 1s
           limit_mib: 2560
           spike_limit_mib: 512
+        metricsgeneration/cluster:
+          rules:
+          - metric1: apiserver_request_not_failed_temp
+            metric2: apiserver_request_total_temp
+            name: k8s.apiserver.request.successrate
+            operation: percent
+            type: calculate
+            unit: Percent
         metricstransform/aggregate_node_level:
           transforms:
           - action: insert
@@ -5730,7 +5730,7 @@ Metrics config should match snapshot when using default values:
             - attributes/attributes_namespace_status
             - cumulativetodelta
             - deltatorate
-            - experimental_metricsgeneration/cluster
+            - metricsgeneration/cluster
             - groupbyattrs/node
             - metricstransform/aggregate_node_level
             - groupbyattrs/pod
