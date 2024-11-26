@@ -53,7 +53,7 @@ tests:
   - it: Image otel-endpoint-check should be correct in default state
     template: metrics-deployment.yaml
     set:
-      otel.swi_endpoint_check: true
+      otel.swi_endpoint_check.enabled: true
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
@@ -61,7 +61,7 @@ tests:
   - it: Image otel-endpoint-check should be correct when overriden repository
     template: metrics-deployment.yaml
     set:
-      otel.swi_endpoint_check: true
+      otel.swi_endpoint_check.enabled: true
       otel.image.repository: "swi-opentelemetry-collector"
     asserts:
     - equal:
@@ -70,7 +70,7 @@ tests:
   - it: Image otel-endpoint-check should be correct when overriden tag
     template: metrics-deployment.yaml
     set:
-      otel.swi_endpoint_check: true
+      otel.swi_endpoint_check.enabled: true
       otel.image.tag: "beta1"
     asserts:
     - equal:
@@ -79,7 +79,7 @@ tests:
   - it: Image otel-endpoint-check should be correct when overriden by azure
     template: metrics-deployment.yaml
     set:
-      otel.swi_endpoint_check: true
+      otel.swi_endpoint_check.enabled: true
       aks: true
       global.azure.images.image.digest: "abcd"
       global.azure.images.image.image: "swi-opentelemetry-collector:v1.2.3"
