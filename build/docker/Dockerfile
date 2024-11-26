@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.23.2-bookworm AS base
+FROM docker.io/library/golang:1.23.3-bookworm AS base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
@@ -15,7 +15,7 @@ FROM builder AS tests
 # run all tests for all go modules in `src` folder
 CMD cd src && find . -name go.mod -execdir go test ./... \;
 
-FROM debian:12.7 AS journal
+FROM debian:12.8 AS journal
 RUN apt update
 RUN apt install -y systemd
 COPY /build/docker/copy-journalbinary.sh /script.sh
@@ -26,7 +26,7 @@ FROM base AS wrapper
 WORKDIR /src/src/wrapper
 RUN CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -a -tags netgo -ldflags '-w -extldflags "-static"' -o /bin/wrapper && chmod +x /bin/wrapper
 
-FROM gcr.io/distroless/static-debian12@sha256:69830f29ed7545c762777507426a412f97dad3d8d32bae3e74ad3fb6160917ea
+FROM gcr.io/distroless/static-debian12@sha256:f4a57e8ffd7ba407bdd0eb315bb54ef1f21a2100a7f032e9102e4da34fe7c196
 
 ARG USER_UID=10001
 USER ${USER_UID}

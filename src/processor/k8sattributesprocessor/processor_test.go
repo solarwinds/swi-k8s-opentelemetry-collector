@@ -55,14 +55,11 @@ func newPodIdentifier(from string, name string, value string) kube.PodIdentifier
 	}
 }
 
-func newTracesProcessor(cfg component.Config, next consumer.Traces, errFunc func(error), options ...option) (processor.Traces, error) {
+func newTracesProcessor(cfg component.Config, next consumer.Traces, options ...option) (processor.Traces, error) {
 
 	opts := options
 	opts = append(opts, withKubeClientProvider(newFakeClient))
 	set := processortest.NewNopSettings()
-	set.ReportStatus = func(event *component.StatusEvent) {
-		errFunc(event.Err())
-	}
 	return createTracesProcessorWithOptions(
 		context.Background(),
 		set,
@@ -72,13 +69,10 @@ func newTracesProcessor(cfg component.Config, next consumer.Traces, errFunc func
 	)
 }
 
-func newMetricsProcessor(cfg component.Config, nextMetricsConsumer consumer.Metrics, errFunc func(error), options ...option) (processor.Metrics, error) {
+func newMetricsProcessor(cfg component.Config, nextMetricsConsumer consumer.Metrics, options ...option) (processor.Metrics, error) {
 	opts := options
 	opts = append(opts, withKubeClientProvider(newFakeClient))
 	set := processortest.NewNopSettings()
-	set.ReportStatus = func(event *component.StatusEvent) {
-		errFunc(event.Err())
-	}
 	return createMetricsProcessorWithOptions(
 		context.Background(),
 		set,
@@ -88,13 +82,10 @@ func newMetricsProcessor(cfg component.Config, nextMetricsConsumer consumer.Metr
 	)
 }
 
-func newLogsProcessor(cfg component.Config, nextLogsConsumer consumer.Logs, errFunc func(error), options ...option) (processor.Logs, error) {
+func newLogsProcessor(cfg component.Config, nextLogsConsumer consumer.Logs, options ...option) (processor.Logs, error) {
 	opts := options
 	opts = append(opts, withKubeClientProvider(newFakeClient))
 	set := processortest.NewNopSettings()
-	set.ReportStatus = func(event *component.StatusEvent) {
-		errFunc(event.Err())
-	}
 	return createLogsProcessorWithOptions(
 		context.Background(),
 		set,
@@ -148,7 +139,7 @@ func newMultiTest(
 		nextLogs:    new(consumertest.LogsSink),
 	}
 
-	tp, err := newTracesProcessor(cfg, m.nextTrace, errFunc, append(options, withExtractKubernetesProcessorInto(&m.kpTrace))...)
+	tp, err := newTracesProcessor(cfg, m.nextTrace, append(options, withExtractKubernetesProcessorInto(&m.kpTrace))...)
 	require.NoError(t, err)
 	err = tp.Start(context.Background(), componenttest.NewNopHost())
 	if errFunc == nil {
@@ -156,7 +147,7 @@ func newMultiTest(
 		require.NoError(t, err)
 	}
 
-	mp, err := newMetricsProcessor(cfg, m.nextMetrics, errFunc, append(options, withExtractKubernetesProcessorInto(&m.kpMetrics))...)
+	mp, err := newMetricsProcessor(cfg, m.nextMetrics, append(options, withExtractKubernetesProcessorInto(&m.kpMetrics))...)
 	require.NoError(t, err)
 	err = mp.Start(context.Background(), componenttest.NewNopHost())
 	if errFunc == nil {
@@ -164,7 +155,7 @@ func newMultiTest(
 		require.NoError(t, err)
 	}
 
-	lp, err := newLogsProcessor(cfg, m.nextLogs, errFunc, append(options, withExtractKubernetesProcessorInto(&m.kpLogs))...)
+	lp, err := newLogsProcessor(cfg, m.nextLogs, append(options, withExtractKubernetesProcessorInto(&m.kpLogs))...)
 	require.NoError(t, err)
 	err = lp.Start(context.Background(), componenttest.NewNopHost())
 	if errFunc == nil {
@@ -1331,7 +1322,6 @@ func TestPassthroughStart(t *testing.T) {
 	p, err := newTracesProcessor(
 		NewFactory().CreateDefaultConfig(),
 		next,
-		nil,
 		opts...,
 	)
 	require.NoError(t, err)
