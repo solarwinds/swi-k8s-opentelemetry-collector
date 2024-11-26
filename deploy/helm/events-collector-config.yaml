@@ -285,19 +285,7 @@ processors:
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   swk8sattributes:
-{{ include "common.k8s-instrumentation" (tuple . .Values.otel.events.k8s_instrumentation.annotations.enabled .Values.otel.events.k8s_instrumentation.labels.enabled "true") | indent 4 }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
-  resource/swk8sattributes_labels_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.events.k8s_instrumentation.labels.excludePattern }}
-{{- end }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
-  resource/swk8sattributes_annotations_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.events.k8s_instrumentation.annotations.excludePattern }}
-{{- end }}
+{{ include "common.k8s-instrumentation" . | indent 4 }}
 
 receivers:
   k8s_events:
@@ -353,12 +341,6 @@ service:
         - transform/entity_attributes
         - resource/events
         - swk8sattributes
-{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
-        - resource/swk8sattributes_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/swk8sattributes_annotations_filter
-{{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
 {{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "false") }}
         - filter
@@ -380,12 +362,6 @@ service:
         - transform/stringify_body
         - resource/manifest
         - swk8sattributes
-{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
-        - resource/swk8sattributes_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/swk8sattributes_annotations_filter
-{{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
