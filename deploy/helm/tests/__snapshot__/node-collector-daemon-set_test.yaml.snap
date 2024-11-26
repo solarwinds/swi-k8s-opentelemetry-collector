@@ -101,6 +101,27 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    initContainers:
+      - command:
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -240,6 +261,27 @@ DaemonSet spec should match snapshot when openshift is enabled:
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
     hostNetwork: true
+    initContainers:
+      - command:
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -384,6 +426,27 @@ DaemonSet spec should match snapshot when overriding cluster ID:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    initContainers:
+      - command:
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -522,6 +585,27 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    initContainers:
+      - command:
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     securityContext:
       fsGroup: 0
       runAsGroup: 0
@@ -660,6 +744,27 @@ DaemonSet spec should match snapshot when using default values:
             readOnly: true
           - mountPath: /var/lib/swo/checkpoints
             name: logcheckpoints
+    initContainers:
+      - command:
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     securityContext:
       fsGroup: 0
       runAsGroup: 0
