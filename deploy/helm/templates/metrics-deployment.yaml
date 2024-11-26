@@ -60,7 +60,7 @@ spec:
                 values:
                 - linux
       {{- end }}
-      {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) .Values.otel.metrics.swi_endpoint_check }}
+      {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) .Values.otel.swi_endpoint_check }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
@@ -75,7 +75,7 @@ spec:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
         {{- end }}
-        {{- if .Values.otel.metrics.swi_endpoint_check }}
+        {{- if .Values.otel.swi_endpoint_check }}
         - name: otel-endpoint-check
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
