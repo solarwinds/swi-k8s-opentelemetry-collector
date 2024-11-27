@@ -175,17 +175,6 @@ profiles:
     - op: replace
       path: /deploy/kubeContext
       value: "<your kube context here>"
-  - name: builder-only
-    build:
-      artifacts:
-        - image: swi-k8s-opentelemetry-collector-builder
-          docker:
-            dockerfile: build/docker/Dockerfile
-            target: builder
-            buildArgs:
-              CREATE_VENDOR_DIR: "true"
-      local:
-        push: false
   - name: ci
     activation:
       - env: CI=true

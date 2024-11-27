@@ -6,11 +6,6 @@ FROM base AS builder
 
 RUN cd src/cmd && CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -trimpath -o ../../swi-k8s-opentelemetry-collector "-ldflags=-s -w"
 
-# create vendor folder (for mend scanning)
-SHELL ["/bin/bash", "-c"]
-ARG CREATE_VENDOR_DIR
-RUN if [[ -z "$CREATE_VENDOR_DIR" ]] ; then echo vendor creation skipped ; else cd src/cmd && go mod vendor -o /src/vendor ; fi
-
 FROM builder AS tests
 # run all tests for all go modules in `src` folder
 CMD cd src && find . -name go.mod -execdir go test ./... \;
