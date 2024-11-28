@@ -27,7 +27,6 @@ extensions:
     endpoint: 0.0.0.0:13133
   k8s_observer:
     auth_type: serviceAccount
-    node: ${NODE_NAME}
     observe_pods: true    
 
 processors:
@@ -178,6 +177,14 @@ processors:
         action: update
         new_name: k8s.$${1}$${2}
   
+  metricstransform/rename/discovery:
+    transforms:
+      # add `k8s.` prefix to all metrics
+      - include: ^(.*)$$
+        match_type: regexp
+        action: update
+        new_name: {{ .Values.otel.metrics.autodiscovery.prefix }}$${1}
+
   # Transformations done on all metrics before any grouping
   metricstransform/preprocessing:
     transforms:
