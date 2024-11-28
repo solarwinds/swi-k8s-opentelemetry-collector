@@ -606,7 +606,7 @@ receivers:
     watch_observers:
       - k8s_observer
     receivers:
-    {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled}}
+    {{- if and .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled (not .Values.aws_fargate.enabled) }}
       prometheus/discovery/http:
         {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}

@@ -25,6 +25,10 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
+  k8s_observer:
+    auth_type: serviceAccount
+    node: ${NODE_NAME}
+    observe_pods: true    
 
 processors:
   swk8sattributes:
@@ -174,14 +178,6 @@ processors:
         action: update
         new_name: k8s.$${1}$${2}
   
-  metricstransform/rename-otel:
-    transforms:
-      # add `k8s.` prefix to all metrics
-      - include: ^(.*)$$
-        match_type: regexp
-        action: update
-        new_name: k8s.$${1}
-
   # Transformations done on all metrics before any grouping
   metricstransform/preprocessing:
     transforms:
@@ -772,26 +768,6 @@ processors:
 
   {{- include "common-config.attributes-remove-prometheus-attributes" . | nindent 2 }}
 
-  resource/otlp-metrics:
-    attributes:
-      # Collector and Manifest version
-      - key: sw.k8s.agent.manifest.version
-        value: ${MANIFEST_VERSION}
-        action: insert
-
-      - key: sw.k8s.agent.app.version
-        value: ${APP_VERSION}
-        action: insert
-
-      # Cluster
-      - key: sw.k8s.cluster.uid
-        value: ${CLUSTER_UID}
-        action: insert
-
-      - key: k8s.cluster.name
-        value: ${CLUSTER_NAME}
-        action: insert
-
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
   filter/kube-state-metrics:
@@ -881,256 +857,89 @@ processors:
           name == "kube_endpoint_ports" or
           name == "kube_endpoint_address"
           )
-  filter/ebpf:
-    metrics:
-      metric:
-        - 'IsMatch(name, "^ebpf_net.*$")'
 
-  filter/prometheus-node-metrics:
-    metrics:
-      metric:
-        - |
-          not(
-          name == "container_cpu_usage_seconds_total" or
-          name == "container_spec_cpu_quota" or
-          name == "container_spec_cpu_period" or
-          name == "container_memory_working_set_bytes" or
-          name == "container_spec_memory_limit_bytes" or
-          name == "container_cpu_cfs_throttled_periods_total" or
-          name == "container_cpu_cfs_periods_total" or
-          name == "container_fs_reads_total" or
-          name == "container_fs_writes_total" or
-          name == "container_fs_reads_bytes_total" or
-          name == "container_fs_writes_bytes_total" or
-          name == "container_fs_usage_bytes" or
-          name == "container_network_receive_bytes_total" or
-          name == "container_network_transmit_bytes_total" or
-          name == "container_network_receive_packets_total" or
-          name == "container_network_transmit_packets_total" or
-          name == "container_network_receive_packets_dropped_total" or
-          name == "container_network_transmit_packets_dropped_total" or
-          name == "apiserver_request_total" or
-          name == "apiserver_request_duration_seconds" or
-          name == "workqueue_adds_total" or
-          name == "workqueue_depth" or
-          name == "workqueue_queue_duration_seconds" or
-          name == "kubelet_volume_stats_available_percent" or
-          name == "kubernetes_build_info" or
-          name == "coredns_build_info" or
-          name == "coredns_dns_requests_total" or
-          name == "coredns_dns_request_size_bytes" or
-          name == "coredns_dns_responses_total" or
-          name == "coredns_dns_response_size_bytes" or
-          name == "coredns_dns_request_duration_seconds" or
-          name == "coredns_cache_entries" or
-          name == "coredns_cache_hits_total" or
-          name == "coredns_cache_misses_total" or
-          name == "certmanager_certificate_expiration_timestamp_seconds" or
-          name == "certmanager_certificate_ready_status" or
-          name == "certmanager_certificate_renewal_timestamp_seconds" or
-          name == "certmanager_clock_time_seconds" or
-          name == "certmanager_clock_time_seconds_gauge" or
-          name == "certmanager_controller_sync_call_count" or
-          name == "certmanager_http_acme_client_request_count"
-          )
   filter/histograms:
     metrics:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds" or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")'
 
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+  filter/metrics-discovery:
+    metrics:
+{{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 6 }}
+{{- end }}
+
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+  cumulativetodelta/discovery:
+    include:
+      metrics:
+{{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+        - {{ . }}
+{{- end }}
+      match_type: strict
+  deltatorate/discovery:
+    metrics:
+{{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+      - {{ . }}
+{{- end }}
+{{- end }}
+
+
 connectors:
   forward/prometheus:
   forward/metric-exporter:
 
+
 receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
-{{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
-  prometheus/prometheus-server:
-    config:
-      scrape_configs:
-        - job_name: prometheus
-          scheme: {{ .Values.otel.metrics.prometheus.scheme | default "http" | quote }}
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          metrics_path: "/federate"
-          honor_timestamps: false
-          honor_labels: true
-          params:
-            "match[]":
-{{ toYaml .Values.otel.metrics.extra_scrape_metrics | indent 14 }}
-          static_configs:
-            - targets:
-                - ${PROMETHEUS_URL}
-{{- end }}
-  prometheus/kube-state-metrics:
-    config:
-      scrape_configs:
-        - job_name: kube-state-metrics
-          scheme: {{ (index .Values.otel.metrics "kube-state-metrics").scheme | default "http" | quote }}
-          scrape_interval: {{ quote (index .Values.otel.metrics "kube-state-metrics").scrape_interval }}
-          metrics_path: "/metrics"
-          honor_timestamps: false
-          honor_labels: true
-          static_configs:
-            - targets:
-                - ${KUBE_STATE_METRICS_URL}
-  prometheus/node-metrics:
-    config:
-      scrape_configs:
-{{- if .Values.aws_fargate.enabled }}
-        - job_name: 'kubernetes-nodes-cadvisor'
-          honor_timestamps: false
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          scrape_timeout: 10s
-          metrics_path: /metrics
-          scheme: https
-          authorization:
-            type: Bearer
-            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-          tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            insecure_skip_verify: true
-          follow_redirects: true
-          enable_http2: true
-          relabel_configs:
-          - separator: ;
-            regex: __meta_kubernetes_node_label_(.+)
-            replacement: $$1
-            action: labelmap
-          - separator: ;
-            regex: (.*)
-            target_label: __address__
-            replacement: kubernetes.default.svc:443
-            action: replace
-          - source_labels: [__meta_kubernetes_node_name]
-            separator: ;
-            regex: (.+)
-            target_label: __metrics_path__
-            replacement: /api/v1/nodes/$$1/proxy/metrics/cadvisor
-            action: replace
-          # manually label job source as original `job` label can be misleading
-          - source_labels: [__address__]
-            target_label: scrape_job
-            replacement: "kubernetes-nodes-cadvisor"
-          kubernetes_sd_configs:
-          - role: node
-            kubeconfig_file: ""
-            follow_redirects: true
-            enable_http2: true
-        - job_name: 'kubernetes-nodes'
-          honor_timestamps: false
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          scrape_timeout: 10s
-          metrics_path: /metrics
-          scheme: https
-          authorization:
-            type: Bearer
-            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-          tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            insecure_skip_verify: true
-          follow_redirects: true
-          enable_http2: true
-          relabel_configs:
-          - separator: ;
-            regex: __meta_kubernetes_node_label_(.+)
-            replacement: $$1
-            action: labelmap
-          - separator: ;
-            regex: (.*)
-            target_label: __address__
-            replacement: kubernetes.default.svc:443
-            action: replace
-          - source_labels: [__meta_kubernetes_node_name]
-            separator: ;
-            regex: (.+)
-            target_label: __metrics_path__
-            replacement: /api/v1/nodes/$$1/proxy/metrics
-            action: replace
-          # manually label job source as original `job` label can be misleading
-          - source_labels: [__address__]
-            target_label: scrape_job
-            replacement: "kubernetes-nodes"
-          kubernetes_sd_configs:
-          - role: node
-            kubeconfig_file: ""
-            follow_redirects: true
-            enable_http2: true
-{{- end }}
-        - job_name: kubernetes-apiservers
-          honor_timestamps: false
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          scrape_timeout: 10s
-          metrics_path: /metrics
-          scheme: https
-          authorization:
-            type: Bearer
-            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-          tls_config:
-            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-            insecure_skip_verify: true
-          follow_redirects: true
-          enable_http2: true
-          relabel_configs:
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-            separator: ;
-            regex: default;kubernetes;https
-            replacement: $$1
-            action: keep
-          # manually label job source as original `job` label can be misleading
-          - source_labels: [__address__]
-            target_label: scrape_job
-            replacement: "kubernetes-apiservers"
-          kubernetes_sd_configs:
-          - role: endpoints
-            kubeconfig_file: ""
-            follow_redirects: true
-            enable_http2: true
-        {{- if .Values.otel.metrics.control_plane.coredns.enabled }}
-        - job_name: kubernetes-coredns
-          honor_timestamps: false
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          scrape_timeout: 10s
-          kubernetes_sd_configs:
-          - role: endpoints
-            follow_redirects: true
-            enable_http2: true
-          relabel_configs:
-          - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_namespace, __meta_kubernetes_endpoint_port_name]
-            action: keep
-            regex: kube-dns;kube-system;metrics  # Only scrape CoreDNS in kube-system namespace
-          # manually label job source as original `job` label can be misleading
-          - source_labels: [__address__]
-            target_label: scrape_job
-            replacement: "kubernetes-coredns"
+  receiver_creator/discovery:
+    watch_observers:
+      - k8s_observer
+    receivers:
+      prometheus/discovery/http:
+        {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        {{- else }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https"
         {{- end }}
-        {{- if and .Values.otel.metrics.control_plane.etcd.enabled (eq .Values.otel.metrics.control_plane.etcd.scrape_kind "static") }}
-        - job_name: kubernetes-etcd
-          scheme: {{ quote .Values.otel.metrics.control_plane.etcd.scheme }}
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          metrics_path: {{ quote .Values.otel.metrics.control_plane.etcd.metrics_path }}
-          honor_timestamps: false
-          honor_labels: true
-          static_configs:
-            - targets:
-                {{- range $endpoint := .Values.otel.metrics.control_plane.etcd.static_endpoints }}
-                - {{ $endpoint}}
-                {{- end }}
+        config:
+          config:
+            scrape_configs:
+              - job_name: pod
+                scheme: "http"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
+                honor_timestamps: false
+                honor_labels: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
+
+      prometheus/discovery/https:
+        {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] == "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        {{- else }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] == "https"
         {{- end }}
-        - job_name: cert-manager
-          honor_timestamps: false
-          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-          scrape_timeout: 10s
-          kubernetes_sd_configs:
-          - role: endpoints
-            follow_redirects: true
-            enable_http2: true
-          relabel_configs:
-          - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_instance, __meta_kubernetes_service_label_app_kubernetes_io_name]
-            regex: cert-manager
-            action: keep
+        config:
+          config:
+            scrape_configs:
+              - job_name: pod
+                scheme: "https"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
+                honor_timestamps: false
+                honor_labels: true
+                authorization:
+                  type: Bearer
+                  credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                follow_redirects: true
+                enable_http2: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
 
 service:
   extensions:
@@ -1138,44 +947,30 @@ service:
     - file_storage/sending_queue
 {{- end }}
     - health_check
+    - k8s_observer
   pipelines:
-    metrics/otlp:
+
+    metrics/discovery:
       exporters:
-        - forward/metric-exporter
+        - forward/prometheus
       processors:
         - memory_limiter
-{{- if and .Values.ebpfNetworkMonitoring.enabled (not .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled)  }}
-        - filter/ebpf
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+        - filter/metrics-discovery
+{{- end }}        
+{{- if .Values.otel.metrics.autodiscovery.prefix }}
+        - metricstransform/rename/discovery
 {{- end }}
-        - metricstransform/rename-otel
-        - resource/otlp-metrics
-      receivers:
-        - otlp
-{{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
-    metrics/prometheus-server:
-      exporters:
-        - forward/prometheus
-      processors:
-        - memory_limiter
-      receivers:
-        - prometheus/prometheus-server
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+        - cumulativetodelta/discovery
+        - deltatorate/discovery
 {{- end }}
-    metrics/kubestatemetrics:
-      exporters:
-        - forward/prometheus
-      processors:
-        - memory_limiter
-        - filter/kube-state-metrics
       receivers:
-        - prometheus/kube-state-metrics
-    metrics/prometheus-node-metrics:
-      exporters:
-        - forward/prometheus
-      processors:
-        - memory_limiter
-        - filter/prometheus-node-metrics
-      receivers:
-        - prometheus/node-metrics
+        - receiver_creator/discovery
+    
+    
+    
+    
     metrics/prometheus:
       exporters:
         - forward/metric-exporter

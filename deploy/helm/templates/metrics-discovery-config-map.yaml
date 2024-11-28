@@ -1,0 +1,12 @@
+{{- if and .Values.otel.metrics.enabled .Values.aws_fargate.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" (tuple . "-metrics-discovery-config") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+data:
+  metrics-discovery.config: |
+{{ tpl (.Files.Get "metrics-discovery-config.yaml") . | fromYaml | toYaml | indent 8 }}
+{{- end }}
