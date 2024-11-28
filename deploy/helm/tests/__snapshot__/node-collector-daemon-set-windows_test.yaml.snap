@@ -63,6 +63,9 @@ DaemonSet spec for windows nodes should match snapshot when overriding cluster I
             memory: 1Gi
           requests:
             memory: 50Mi
+        securityContext:
+          windowsOptions:
+            runAsUserName: ContainerAdministrator
         volumeMounts:
           - mountPath: c:\var\log\pods
             name: varlogpods
@@ -171,6 +174,9 @@ DaemonSet spec for windows nodes should match snapshot when using default values
             memory: 1Gi
           requests:
             memory: 50Mi
+        securityContext:
+          windowsOptions:
+            runAsUserName: ContainerAdministrator
         volumeMounts:
           - mountPath: c:\var\log\pods
             name: varlogpods
