@@ -65,6 +65,9 @@ spec:
         - name: swi-opentelemetry-collector
           image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil .Chart.AppVersion ) }}"
           imagePullPolicy: {{ .Values.otel.windows.image.pullPolicy }}
+          securityContext:
+            windowsOptions:
+              runAsUserName: ContainerAdministrator
           command:
             - c:\wrapper.exe
             - c:\swi-otelcol.exe

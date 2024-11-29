@@ -104,3 +104,15 @@ def run_shell_command(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     print(result.stdout)
     print(result.stderr)
+
+def has_attribute_with_key_and_value(resource, target_key, expected_value):
+    attributes = resource.get("attributes", [])
+    for attribute in attributes:
+        key = attribute.get("key", "")
+        value = attribute.get("value", {}).get("stringValue", "")
+        if key == target_key and value == expected_value:
+            print(f"Resource has attribute with key '{target_key}' and value '{expected_value}'.")
+            return True
+
+    print(f"Resource does not have attribute with key '{target_key}' and value '{expected_value}'.")
+    return False
