@@ -8,9 +8,9 @@ url = f'http://{endpoint}/manifests.json'
 pod_name = 'dummy-pod'
 namespace_name = 'default'
 label_key = 'test-label'
-label_value = 'test-label-value'
+label_value = 'test-value'
 annotation_key = 'test-annotation'
-annotation_value = 'test-annotation-value'
+annotation_value = 'test-value'
 
 
 def setup_function():
