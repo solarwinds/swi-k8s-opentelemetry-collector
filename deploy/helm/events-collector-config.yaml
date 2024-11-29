@@ -108,22 +108,37 @@ processors:
       - context: log
         statements:
           # assign entity prefix k8s.entity.annotations.*
-          - flatten(body["metadata"]["annotations"], "k8s.pod.annotations") where body["kind"] == "Pod"
-          - flatten(body["metadata"]["annotations"], "k8s.deployment.annotations") where body["kind"] == "Deployment"
-          - flatten(body["metadata"]["annotations"], "k8s.statefulset.annotations") where body["kind"] == "StatefulSet"
-          - flatten(body["metadata"]["annotations"], "k8s.replicaset.annotations") where body["kind"] == "ReplicaSet"
-          - flatten(body["metadata"]["annotations"], "k8s.daemonset.annotations") where body["kind"] == "DaemonSet"
-          - flatten(body["metadata"]["annotations"], "k8s.job.annotations") where body["kind"] == "Job"
-          - flatten(body["metadata"]["annotations"], "k8s.cronjob.annotations") where body["kind"] == "CronJob"
-          - flatten(body["metadata"]["annotations"], "k8s.node.annotations") where body["kind"] == "Node"
-          - flatten(body["metadata"]["annotations"], "k8s.service.annotations") where body["kind"] == "Service"
-          - flatten(body["metadata"]["annotations"], "k8s.persistentvolume.annotations") where body["kind"] == "PersistentVolume"
-          - flatten(body["metadata"]["annotations"], "k8s.persistentvolumeclaim.annotations") where body["kind"] == "PersistentVolumeClaim"
-          - flatten(body["metadata"]["annotations"], "k8s.ingress.annotations") where body["kind"] == "Ingress"
-          - flatten(body["metadata"]["annotations"], "k8s.configmap.annotations") where body["kind"] == "ConfigMap"
+          - set(cache["annotations"], body["metadata"]["annotations"]) where 
+            body["kind"] == "Pod" or 
+            body["kind"] == "Deployment" or 
+            body["kind"] == "StatefulSet" or 
+            body["kind"] == "ReplicaSet" or
+            body["kind"] == "DaemonSet" or
+            body["kind"] == "Job" or
+            body["kind"] == "CronJob" or
+            body["kind"] == "Node" or
+            body["kind"] == "Service" or
+            body["kind"] == "PersistentVolume" or
+            body["kind"] == "PersistentVolumeClaim" or
+            body["kind"] == "Ingress" or
+            body["kind"] == "ConfigMap"
+          - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] == "Pod" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"] == "Deployment" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"] == "StatefulSet" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"] == "ReplicaSet" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"] == "DaemonSet" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] == "Job" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"] == "CronJob" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] == "Node" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"] == "Service" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"] == "PersistentVolume" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"] == "Ingress" and cache["annotations"] != nil
+          - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"] == "ConfigMap" and cache["annotations"] != nil
 
           # Set annotations to resource attributes
-          - merge_maps(resource.attributes, body["metadata"]["annotations"], "upsert") where 
+          - merge_maps(resource.attributes, cache["annotations"], "upsert") where 
+            (
             body["kind"] == "Pod" or 
             body["kind"] == "Deployment" or 
             body["kind"] == "StatefulSet" or 
@@ -137,24 +152,10 @@ processors:
             body["kind"] == "PersistentVolumeClaim" or
             body["kind"] == "Ingress" or
             body["kind"] == "ConfigMap"
+            ) and cache["annotations"] != nil
 
           # assign entity prefix k8s.entity.labels.*
-          - flatten(body["metadata"]["labels"], "k8s.pod.labels") where body["kind"] == "Pod"
-          - flatten(body["metadata"]["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
-          - flatten(body["metadata"]["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
-          - flatten(body["metadata"]["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
-          - flatten(body["metadata"]["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
-          - flatten(body["metadata"]["labels"], "k8s.job.labels") where body["kind"] == "Job"
-          - flatten(body["metadata"]["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
-          - flatten(body["metadata"]["labels"], "k8s.node.labels") where body["kind"] == "Node"
-          - flatten(body["metadata"]["labels"], "k8s.service.labels") where body["kind"] == "Service"
-          - flatten(body["metadata"]["labels"], "k8s.persistentvolume.labels") where body["kind"] == "PersistentVolume"
-          - flatten(body["metadata"]["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"] == "PersistentVolumeClaim"
-          - flatten(body["metadata"]["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
-          - flatten(body["metadata"]["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
-
-          # Set labels to resource attributes
-          - merge_maps(resource.attributes, body["metadata"]["labels"], "upsert") where 
+          - set(cache["labels"], body["metadata"]["labels"]) where 
             body["kind"] == "Pod" or 
             body["kind"] == "Deployment" or 
             body["kind"] == "StatefulSet" or 
@@ -168,6 +169,37 @@ processors:
             body["kind"] == "PersistentVolumeClaim" or
             body["kind"] == "Ingress" or
             body["kind"] == "ConfigMap"
+          - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"] == "PersistentVolume" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"] == "PersistentVolumeClaim" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress" and cache["labels"] != nil
+          - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap" and cache["labels"] != nil
+
+          # Set labels to resource attributes
+          - merge_maps(resource.attributes, cache["labels"], "upsert") where 
+            (
+            body["kind"] == "Pod" or 
+            body["kind"] == "Deployment" or 
+            body["kind"] == "StatefulSet" or 
+            body["kind"] == "ReplicaSet" or
+            body["kind"] == "DaemonSet" or
+            body["kind"] == "Job" or
+            body["kind"] == "CronJob" or
+            body["kind"] == "Node" or
+            body["kind"] == "Service" or
+            body["kind"] == "PersistentVolume" or
+            body["kind"] == "PersistentVolumeClaim" or
+            body["kind"] == "Ingress" or
+            body["kind"] == "ConfigMap"
+            ) and cache["labels"] != nil
 {{- end }}
 {{- if .Values.otel.manifests.enabled }}
   transform/manifest:
