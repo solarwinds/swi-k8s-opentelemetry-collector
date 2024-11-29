@@ -1,6 +1,6 @@
 import pytest
 import os
-from test_utils import get_all_bodies_for_all_sent_content, get_all_resources_for_all_sent_content, retry_until_ok, run_shell_command
+from test_utils import get_all_bodies_for_all_sent_content, get_all_resources_for_all_sent_content, has_attribute_with_key_and_value, retry_until_ok, run_shell_command
 
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
 url = f'http://{endpoint}/events.json'
@@ -61,18 +61,6 @@ def find_resource_with_specific_body(raw_bodies, target_body):
 
     return None
 
-def has_attribute_with_key_and_value(resource, target_key, expected_value):
-    attributes = resource.get("attributes", [])
-    for attribute in attributes:
-        key = attribute.get("key", "")
-        value = attribute.get("value", {}).get("stringValue", "")
-        if key == target_key and value == expected_value:
-            print(f"Resource has attribute with key '{target_key}' and value '{expected_value}'.")
-            return True
-
-    print(f"Resource does not have attribute with key '{target_key}' and value '{expected_value}'.")
-    return False
-
 def does_not_have_attribute_with_key(resource, target_key):
     attributes = resource.get("attributes", [])
     for attribute in attributes:
@@ -83,5 +71,3 @@ def does_not_have_attribute_with_key(resource, target_key):
 
     print(f"Resource does not have attribute with key '{target_key}'.")
     return True
-
-
