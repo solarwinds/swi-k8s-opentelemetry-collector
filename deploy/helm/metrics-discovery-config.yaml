@@ -32,30 +32,23 @@ extensions:
 processors:
   swk8sattributes:
 {{ include "common.k8s-instrumentation" (tuple . .Values.otel.metrics.k8s_instrumentation.annotations.enabled .Values.otel.metrics.k8s_instrumentation.labels.enabled "true") | indent 4 }}
+
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
   resource/swk8sattributes_labels_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.labels.excludePattern }}
 {{- end }}
+
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
   resource/swk8sattributes_annotations_filter:
     attributes:
       - action: delete
         pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
 {{- end }}
+
   memory_limiter:
 {{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
-  transform:
-    metric_statements:
-      - context: datapoint
-        statements:
-          - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0
-          - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
-          - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
-
-  {{- include "common-config.filter-remove-internal" . | nindent 2 }}
-  {{- include "common-config.filter-remove-internal-post-processing" . | nindent 2 }}
 
   transform/scope:
     metric_statements:
@@ -63,120 +56,7 @@ processors:
         statements:
           - set(name, "")
           - set(version, "")
-  # unify attributes
-  attributes/unify_node_attribute:
-    include:
-      match_type: regexp
-      metric_names:
-        - container_.*
-        - kube_node_.*
-        - kube_pod_info
-        - kube_pod_container_resource_requests
-        - kube_pod_container_resource_limits
-        - kube_pod_init_container_resource_requests
-        - kube_pod_init_container_resource_limits
-        - k8s.node_cpu_hourly_cost
-        - k8s.node_gpu_hourly_cost
-        - k8s.node_ram_hourly_cost
-        - k8s.node_total_hourly_cost        
-        - k8s.node_gpu_count
-        - k8s.kubecost_node_is_spot                
-    actions:
-      - key: k8s.node.name
-        from_attribute: node
-        action: insert
-{{- if not .Values.aws_fargate.enabled }}
-      - key: k8s.node.name
-        from_attribute: kubernetes_io_hostname
-        action: insert
-{{- end }}
 
-  {{- include "common-config.transform-node-attributes" . | nindent 2 }}
-
-  attributes/unify_volume_attribute:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_persistentvolumeclaim_.*
-        - kube_persistentvolume_claim_ref
-    actions:
-      - key: persistentvolume
-        from_attribute: volumename
-        action: insert
-      # for kube_persistentvolume_claim_ref
-      - key: persistentvolumeclaim
-        from_attribute: name
-        action: insert
-      - key: namespace
-        from_attribute: claim_namespace
-        action: upsert
-
-  attributes/unify_service_attribute:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_service_.*
-    actions:
-      - key: k8s.service.name
-        from_attribute: service
-        action: insert
-      - key: sw.k8s.service.external_name
-        from_attribute: external_name
-        action: insert
-      - key: sw.k8s.service.type
-        from_attribute: type
-        action: insert
-      - key: sw.k8s.cluster.ip
-        from_attribute: cluster_ip
-        action: insert
-
-  attributes/unify_endpoint_attribute:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_endpoint_.*
-    actions:
-      - key: k8s.service.name
-        from_attribute: endpoint
-        action: insert
-  attributes/unify_pod_attribute:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_pod_.*
-    actions:
-      - key: k8s.pod.uid
-        from_attribute: uid
-        action: insert
-
-  attributes/identify_init_container:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_pod_init_container_.*
-    actions:
-      - key: sw.k8s.container.init
-        action: insert
-        value: "true"
-  attributes/identify_standard_container:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_pod_container_.*
-    actions:
-      - key: sw.k8s.container.init
-        action: insert
-        value: "false"
-  {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
-
-  metricstransform/rename:
-    transforms:
-      # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
-        match_type: regexp
-        action: update
-        new_name: k8s.$${1}$${2}
-  
   metricstransform/rename/discovery:
     transforms:
       # add `k8s.` prefix to all metrics
@@ -185,685 +65,48 @@ processors:
         action: update
         new_name: {{ .Values.otel.metrics.autodiscovery.prefix }}$${1}
 
-  # Transformations done on all metrics before any grouping
-  metricstransform/preprocessing:
-    transforms:
-      - include: k8s.kube_node_status_condition
-        experimental_match_labels: { "condition": "Ready" }
-        action: insert
-        new_name: k8s.kube_node_status_ready
-        operations:
-          - action: update_label
-            label: status
-            value_actions:
-              - value: "true"
-                new_value: "Ready"
-              - value: "false"
-                new_value: "NotReady"
-              - value: unknown
-                new_value: Unknown
-          - action: update_label
-            label: status
-            new_label: sw.k8s.node.status
-      - include: k8s.kube_deployment_status_condition
-        experimental_match_labels: { "condition": "Available" }
-        action: insert
-        new_name: k8s.deployment.condition.available
-        operations:
-          - action: update_label
-            label: status
-            new_label: sw.k8s.deployment.condition.available
-      - include: k8s.kube_deployment_status_condition
-        experimental_match_labels: { "condition": "Progressing" }
-        action: insert
-        new_name: k8s.deployment.condition.progressing
-        operations:
-          - action: update_label
-            label: status
-            new_label: sw.k8s.deployment.condition.progressing
-      - include: k8s.kube_deployment_status_condition
-        experimental_match_labels: { "condition": "ReplicaFailure" }
-        action: insert
-        new_name: k8s.deployment.condition.replicafailure
-        operations:
-          - action: update_label
-            label: status
-            new_label: sw.k8s.deployment.condition.replicafailure
-      - include: k8s.kube_persistentvolume_status_phase
-        action: insert
-        new_name: k8s.persistentvolume.status.phase
-        operations:
-          - action: update_label
-            label: phase
-            new_label: sw.k8s.persistentvolume.status
-      - include: k8s.kube_persistentvolumeclaim_status_phase
-        action: insert
-        new_name: k8s.persistentvolumeclaim.status.phase
-        operations:
-          - action: update_label
-            label: phase
-            new_label: sw.k8s.persistentvolumeclaim.status
-
-      {{- include "common-config.metricstransform-preprocessing-cadvisor" . | nindent 6 }}
-      # Container metrics
-      - include: k8s.kube_pod_container_resource_limits
-        experimental_match_labels: { "resource": "cpu" }
-        action: insert
-        new_name: k8s.container.spec.cpu.limit_temp
-      - include: k8s.kube_pod_init_container_resource_limits
-        experimental_match_labels: { "resource": "cpu" }
-        action: insert
-        new_name: k8s.initcontainer.spec.cpu.limit_temp
-
-      - include: k8s.kube_pod_container_resource_requests
-        experimental_match_labels: { "resource": "cpu" }
-        action: insert
-        new_name: k8s.container.spec.cpu.requests_temp
-      - include: k8s.kube_pod_init_container_resource_requests
-        experimental_match_labels: { "resource": "cpu" }
-        action: insert
-        new_name: k8s.initcontainer.spec.cpu.requests_temp
-      - include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.spec.cpu.requests
-
-      - include: k8s.kube_pod_container_resource_requests
-        experimental_match_labels: { "resource": "memory" }
-        action: insert
-        new_name: k8s.container.spec.memory.requests_temp
-      - include: k8s.kube_pod_init_container_resource_requests
-        experimental_match_labels: { "resource": "memory" }
-        action: insert
-        new_name: k8s.initcontainer.spec.memory.requests_temp
-      - include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.spec.memory.requests
-
-      - include: k8s.kube_pod_container_resource_limits
-        action: insert
-        match_type: regexp
-        experimental_match_labels: { "resource": "memory" }
-        new_name: k8s.container.spec.memory.limit_temp
-      - include: k8s.kube_pod_init_container_resource_limits
-        action: insert
-        match_type: regexp
-        experimental_match_labels: { "resource": "memory" }
-        new_name: k8s.initcontainer.spec.memory.limit_temp
-
-      - include: k8s.kube_pod_container_status_waiting
-        action: insert
-        new_name: k8s.kube_pod_container_status_waiting_only_temp
-      - include: k8s.kube_pod_container_status_running
-        action: insert
-        new_name: k8s.kube_pod_container_status_running_only_temp
-      - include: k8s.kube_pod_container_status_terminated
-        action: insert
-        new_name: k8s.kube_pod_container_status_terminated_only_temp
-      - include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.status_temp
-        submatch_case: lower
-        operations:
-          - action: update_label
-            label: status
-            new_label: sw.k8s.container.status
-      - include: k8s.kube_pod_init_container_status_waiting
-        action: insert
-        new_name: k8s.kube_pod_init_container_status_waiting_only_temp
-      - include: k8s.kube_pod_init_container_status_running
-        action: insert
-        new_name: k8s.kube_pod_init_container_status_running_only_temp
-      - include: k8s.kube_pod_init_container_status_terminated
-        action: insert
-        new_name: k8s.kube_pod_init_container_status_terminated_only_temp
-      - include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
-        match_type: regexp
-        action: combine
-        new_name: k8s.initcontainer.status_temp
-        submatch_case: lower
-        operations:
-          - action: update_label
-            label: status
-            new_label: sw.k8s.container.status
-      - include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
-        match_type: regexp
-        action: combine
-        submatch_case: lower
-        new_name: k8s.container.status
-
-      # Pod resource metrics
-      - include: k8s.container.spec.cpu.limit_temp
-        action: insert
-        new_name: k8s.pod.spec.cpu.limit
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace, k8s.node.name]
-            aggregation_type: sum
-      - include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.spec.cpu.limit
-      - include: k8s.container.spec.memory.limit_temp
-        action: insert
-        new_name: k8s.pod.spec.memory.limit
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace, k8s.node.name]
-            aggregation_type: sum
-      - include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
-        match_type: regexp
-        action: combine
-        new_name: k8s.container.spec.memory.limit
-
-      - include: k8s.kube_pod_container_status_running
-        action: insert
-        new_name: k8s.pod.containers.running
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace]
-            aggregation_type: sum
-      - include: k8s.container.spec.cpu.requests
-        action: insert
-        new_name: k8s.pod.spec.cpu.requests
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace, k8s.node.name]
-            aggregation_type: sum
-      - include: k8s.container.spec.memory.requests
-        action: insert
-        new_name: k8s.pod.spec.memory.requests
-        operations:
-          - action: aggregate_labels
-            label_set: [pod, namespace, k8s.node.name]
-            aggregation_type: sum
-      - include: k8s.kube_pod_owner
-        experimental_match_labels: { "owner_kind": "DaemonSet", "owner_is_controller": "true" }
-        action: insert
-        new_name: k8s.kube.pod.owner.daemonset
-        operations:
-          - action: update_label
-            label: owner_name
-            new_label: daemonset
-      - include: k8s.kube_pod_owner
-        experimental_match_labels: { "owner_kind": "ReplicaSet", "owner_is_controller": "true" }
-        action: insert
-        new_name: k8s.kube.pod.owner.replicaset
-        operations:
-          - action: update_label
-            label: owner_name
-            new_label: replicaset
-      - include: k8s.kube_pod_owner
-        experimental_match_labels: { "owner_kind": "StatefulSet", "owner_is_controller": "true" }
-        action: insert
-        new_name: k8s.kube.pod.owner.statefulset
-        operations:
-          - action: update_label
-            label: owner_name
-            new_label: statefulset
-      - include: k8s.kube_pod_owner
-        experimental_match_labels: { "owner_kind": "Job", "owner_is_controller": "true" }
-        action: insert
-        new_name: k8s.kube.pod.owner.job
-        operations:
-          - action: update_label
-            label: owner_name
-            new_label: job_name
-      - include: k8s.kube_replicaset_owner
-        experimental_match_labels: { "owner_kind": "Deployment", "owner_is_controller": "true" }
-        action: insert
-        new_name: k8s.kube.replicaset.owner.deployment
-        operations:
-          - action: update_label
-            label: owner_name
-            new_label: deployment
-      - include: k8s.kube_node_status_capacity
-        experimental_match_labels: { "resource": "cpu" }
-        action: insert
-        new_name: k8s.node.cpu.capacity
-      - include: k8s.kube_node_status_allocatable
-        experimental_match_labels: { "resource": "cpu" }
-        action: insert
-        new_name: k8s.node.cpu.allocatable
-      - include: k8s.kube_node_status_capacity
-        experimental_match_labels: { "resource": "memory" }
-        action: insert
-        new_name: k8s.node.memory.capacity
-      - include: k8s.kube_node_status_allocatable
-        experimental_match_labels: { "resource": "memory" }
-        action: insert
-        new_name: k8s.node.memory.allocatable
-      - include: k8s.kube_node_status_condition
-        experimental_match_labels: { "condition": "Ready", "status": "true" }
-        action: insert
-        new_name: k8s.node.status.condition.ready
-      - include: k8s.kube_node_status_condition
-        experimental_match_labels: { "condition": "NetworkUnavailable", "status": "true" }
-        action: insert
-        new_name: k8s.node.status.condition.networkunavailable
-      - include: k8s.kube_node_status_condition
-        experimental_match_labels: { "condition": "PIDPressure", "status": "true" }
-        action: insert
-        new_name: k8s.node.status.condition.pidpressure
-      - include: k8s.kube_node_status_condition
-        experimental_match_labels: { "condition": "MemoryPressure", "status": "true" }
-        action: insert
-        new_name: k8s.node.status.condition.memorypressure
-      - include: k8s.kube_node_status_condition
-        experimental_match_labels: { "condition": "DiskPressure", "status": "true" }
-        action: insert
-        new_name: k8s.node.status.condition.diskpressure
-      - include: k8s.kube_pod_status_phase
-        experimental_match_labels: { "phase": "Running" }
-        action: insert
-        new_name: k8s.pod.status.phase.running_temp
-      
-      # Cluster metrics
-      - include: k8s.kube_pod_info
-        action: insert
-        new_name: k8s.cluster.pods
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.kube_node_info
-        action: insert
-        new_name: k8s.cluster.nodes
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.node.status.condition.ready
-        action: insert
-        new_name: k8s.cluster.nodes.ready
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.node.status.condition.ready
-        action: insert
-        new_name: k8s.cluster.nodes.ready.avg
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: mean
-      - include: k8s.container.spec.memory.requests
-        action: insert
-        new_name: k8s.cluster.spec.memory.requests
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.container.spec.cpu.requests
-        action: insert
-        new_name: k8s.cluster.spec.cpu.requests
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.pod.status.phase.running_temp
-        action: insert
-        new_name: k8s.cluster.pods.running
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.node.cpu.capacity
-        action: insert
-        new_name: k8s.cluster.cpu.capacity
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.node.cpu.allocatable
-        action: insert
-        new_name: k8s.cluster.cpu.allocatable
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.node.memory.capacity
-        action: insert
-        new_name: k8s.cluster.memory.capacity
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.node.memory.allocatable
-        action: insert
-        new_name: k8s.cluster.memory.allocatable
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.kubernetes_build_info
-        action: insert
-        match_type: regexp
-        experimental_match_labels: { "scrape_job": '.*apiservers.*' }
-        new_name: k8s.cluster.version
-        operations:
-          - action: update_label
-            label: git_version
-            new_label: sw.k8s.cluster.version
-          - action: aggregate_labels
-            label_set: [sw.k8s.cluster.version]
-            aggregation_type: sum
-      - include: k8s.kubernetes_build_info
-        action: update
-        new_name: k8s.kubernetes_build_info_temp
-      # Prometheus metrics
-      - include: k8s.apiserver_request_total
-        action: insert
-        match_type: regexp
-        # Alternative to (?!5\d\d|429) - Go regex does not support negative lookahead
-        experimental_match_labels: { "code": '^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$' }
-        new_name: apiserver_request_not_failed_temp
-      - include: apiserver_request_not_failed_temp
-        action: update
-        new_name: apiserver_request_not_failed_temp
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-      - include: k8s.apiserver_request_total
-        action: insert
-        new_name: apiserver_request_total_temp
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-
-      # Job metrics
-      - include: k8s.kube_job_owner
-        experimental_match_labels: { "owner_kind": "CronJob", "owner_is_controller": "true" }
-        action: insert
-        new_name: k8s.kube.job.owner.cronjob
-        operations:
-          - action: update_label
-            label: owner_name
-            new_label: cronjob
-
-  filter/preprocessing:
-    error_mode: ignore
-    metrics:
-      datapoint:
-        - 'metric.name == "k8s.kube_node_status_ready" and value_double != 1'
-        - 'metric.name == "k8s.deployment.condition.available" and value_double != 1'
-        - 'metric.name == "k8s.deployment.condition.progressing" and value_double != 1'
-        - 'metric.name == "k8s.deployment.condition.replicafailure" and value_double != 1'
-        - 'metric.name == "k8s.pod.status.reason" and value_double != 1'
-        - 'metric.name == "k8s.kube_pod_status_phase" and value_double != 1'
-        - 'metric.name == "k8s.kube_pod_start_time" and value_double == 0'
-        - 'metric.name == "k8s.kube_pod_completion_time" and value_double == 0'
-        - 'metric.name == "k8s.persistentvolume.status.phase" and value_double != 1'
-        - 'metric.name == "k8s.persistentvolumeclaim.status.phase" and value_double != 1'
-        - 'metric.name == "k8s.kube_node_created" and value_double == 0'
-        - 'metric.name == "k8s.kube_pod_created" and value_double == 0'
-        - 'metric.name == "k8s.kube_deployment_created" and value_double == 0'
-        - 'metric.name == "k8s.kube_daemonset_created" and value_double == 0'
-        - 'metric.name == "k8s.kube_namespace_status_phase" and value_double != 1'
-        - 'metric.name == "k8s.kube_namespace_created" and value_double == 0'
-        - 'metric.name == "k8s.kube_statefulset_created" and value_double == 0'
-        - 'metric.name == "k8s.kube_job_created" and value_double == 0'
-        - 'metric.name == "k8s.kube_job_status_completion_time" and value_double == 0'
-        - 'metric.name == "k8s.kube_job_status_start_time" and value_double == 0'
-        - 'metric.name == "k8s.container.status" and value_double != 1'
-
-  cumulativetodelta:
-    include:
-      metrics:
-        {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}
-        - apiserver_request_not_failed_temp
-        - apiserver_request_total_temp
-      match_type: strict
-
-  deltatorate:
-    metrics:
-      {{- include "common-config.cumulativetorate-cadvisor" . | nindent 6 }}
-  
-  metricsgeneration/cluster:
-    rules:
-      - name: k8s.apiserver.request.successrate
-        unit: Percent
-        type: calculate
-        metric1: apiserver_request_not_failed_temp
-        metric2: apiserver_request_total_temp
-        operation: percent
-  
-  groupbyattrs/node:
+ 
+  groupbyattrs/common-all:
     keys:
-      - k8s.node.name
-  # Transformations done after grouping per k8s.node.name
-  metricstransform/aggregate_node_level:
-    transforms:
-      - include: k8s.kube_pod_info
-        action: insert
-        new_name: k8s.node.pods
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-  groupbyattrs/pod:
-    keys:
-      - namespace
-      - pod
-  # Transformations done after grouping per pod
-  metricstransform/aggregate_pod_level:
-    transforms:
-      - include: k8s.kube_pod_container_info
-        action: insert
-        new_name: k8s.pod.containers
-        operations:
-          - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
-            aggregation_type: sum
-  groupbyattrs/all:
-    keys:
-      - kubelet_version
-      - container_runtime_version
-      - provider_id
-      - os_image
-      - namespace
-      - uid
+      - k8s.container.name
+      - k8s.namespace.name
+      - k8s.pod.name
       - k8s.pod.uid
-      - pod_ip
-      - host_ip
-      - created_by_kind
-      - created_by_name
-      - host_network
-      - priority_class
-      - container_id
-      - container
-      - image
-      - image_id
       - k8s.node.name
-      - sw.k8s.pod.status
-      - sw.k8s.namespace.status
-      - sw.k8s.node.status
-      - sw.k8s.container.status
-      - sw.k8s.container.init
-      - daemonset
-      - statefulset
-      - deployment
-      - replicaset
-      - job_name
-      - cronjob
-      - sw.k8s.cluster.version
-      - internal_ip
-      - job_condition
-      - persistentvolumeclaim
-      - persistentvolume
-      - sw.k8s.persistentvolumeclaim.status
-      - sw.k8s.persistentvolume.status
-      - storageclass
-      - access_mode
-      - k8s.service.name
-      - sw.k8s.service.external_name
-      - sw.k8s.service.type
-      - sw.k8s.cluster.ip
+      - host.name
+      - service.name
+  
+  resource/all:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+ 
+
 {{- if .Values.otel.metrics.filter }}
-  filter:
+  filter/metrics:
     metrics:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
 {{- end }}
 
-{{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
-
-{{- include "common-config.filter-reciever" . | nindent 2 }}
-
-  attributes/attributes_namespace_status:
-    include:
-      match_type: regexp
-      metric_names:
-        - k8s.kube_namespace_status_phase
-    actions:
-      - key: sw.k8s.namespace.status
-        from_attribute: phase
-        action: insert
-
-  attributes/attributes_pod_status:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_pod_status_phase
-    actions:
-      - key: sw.k8s.pod.status
-        from_attribute: phase
-        action: insert
-
-  {{- include "common-config.resource-metrics" . | nindent 2 }}
-
-  transform/cleanup_attributes_for_nonexisting_entities:
-    metric_statements:
-      - context: metric
-        statements:
-          - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"] == "false"
-          - delete_key(resource.attributes, "sw.k8s.pod.found")
-          - delete_key(resource.attributes, "sw.k8s.deployment.found")
-          - delete_key(resource.attributes, "sw.k8s.statefulset.found")
-          - delete_key(resource.attributes, "sw.k8s.replicaset.found")
-          - delete_key(resource.attributes, "sw.k8s.daemonset.found")
-          - delete_key(resource.attributes, "sw.k8s.job.found")
-          - delete_key(resource.attributes, "sw.k8s.cronjob.found")
-          - delete_key(resource.attributes, "sw.k8s.node.found")
-
-  attributes/remove_prometheus_attributes_endpoint:
-    exclude:
-      match_type: regexp
-      metric_names:
-        - kube_endpoint_.*
-    actions:
-      - key: endpoint
-        action: delete
-
-  {{- include "common-config.attributes-remove-prometheus-attributes" . | nindent 2 }}
-
-  batch:
+  batch/metrics:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
-  filter/kube-state-metrics:
-    metrics:
-      metric:
-        - |
-          not(
-          name == "kube_deployment_created" or
-          name == "kube_deployment_created" or
-          name == "kube_daemonset_created" or
-          name == "kube_namespace_created" or
-          name == "kube_node_info" or
-          name == "kube_node_created" or
-          name == "kube_node_status_capacity" or
-          name == "kube_node_status_condition" or
-          name == "kube_pod_created" or
-          name == "kube_pod_info" or
-          name == "kube_pod_owner" or
-          name == "kube_pod_completion_time" or
-          name == "kube_pod_status_phase" or
-          name == "kube_pod_status_ready" or
-          name == "kube_pod_status_reason" or
-          name == "kube_pod_start_time" or 
-          IsMatch(name, "^kube_pod_container_.*$") or 
-          IsMatch(name, "^kube_pod_init_container_.*$") or 
-          name == "kube_namespace_status_phase" or
-          name == "kube_deployment_spec_replicas" or
-          name == "kube_deployment_spec_paused" or
-          name == "kube_deployment_status_replicas" or
-          name == "kube_deployment_status_replicas_ready" or
-          name == "kube_deployment_status_replicas_available" or
-          name == "kube_deployment_status_replicas_updated" or
-          name == "kube_deployment_status_replicas_unavailable" or
-          name == "kube_deployment_status_condition" or
-          name == "kube_replicaset_owner" or
-          name == "kube_replicaset_created" or
-          name == "kube_replicaset_spec_replicas" or
-          name == "kube_replicaset_status_ready_replicas" or
-          name == "kube_replicaset_status_replicas" or
-          name == "kube_statefulset_replicas" or
-          name == "kube_statefulset_status_replicas_ready" or
-          name == "kube_statefulset_status_replicas_current" or
-          name == "kube_statefulset_status_replicas_updated" or
-          name == "kube_statefulset_created" or
-          name == "kube_daemonset_status_current_number_scheduled" or
-          name == "kube_daemonset_status_desired_number_scheduled" or
-          name == "kube_daemonset_status_updated_number_scheduled" or
-          name == "kube_daemonset_status_number_available" or
-          name == "kube_daemonset_status_number_misscheduled" or
-          name == "kube_daemonset_status_number_ready" or
-          name == "kube_daemonset_status_number_unavailable" or
-          name == "kube_resourcequota" or
-          name == "kube_node_status_allocatable" or
-          name == "kube_node_spec_unschedulable" or
-          name == "kube_job_info" or
-          name == "kube_job_owner" or
-          name == "kube_job_created" or
-          name == "kube_job_complete" or
-          name == "kube_job_failed" or
-          name == "kube_job_status_active" or
-          name == "kube_job_status_succeeded" or
-          name == "kube_job_status_failed" or
-          name == "kube_job_status_start_time" or
-          name == "kube_job_status_completion_time" or
-          name == "kube_job_spec_completions" or
-          name == "kube_job_spec_parallelism" or
-          name == "kube_persistentvolume_capacity_bytes" or
-          name == "kube_persistentvolume_info" or
-          name == "kube_persistentvolume_status_phase" or
-          name == "kube_persistentvolume_claim_ref" or
-          name == "kube_persistentvolume_created" or
-          name == "kube_persistentvolumeclaim_info" or
-          name == "kube_persistentvolumeclaim_access_mode" or
-          name == "kube_persistentvolumeclaim_status_phase" or
-          name == "kube_persistentvolumeclaim_resource_requests_storage_bytes" or
-          name == "kube_persistentvolumeclaim_created" or
-          name == "kube_pod_spec_volumes_persistentvolumeclaims_info" or
-          name == "kube_service_info" or
-          name == "kube_service_created" or
-          name == "kube_service_spec_type" or
-          name == "kube_service_spec_external_ip" or
-          name == "kube_service_status_load_balancer_ingress" or
-          name == "kube_endpoint_address_not_ready" or
-          name == "kube_endpoint_address_available" or
-          name == "kube_endpoint_info" or
-          name == "kube_endpoint_created" or
-          name == "kube_endpoint_ports" or
-          name == "kube_endpoint_address"
-          )
+  
+{{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
 
   filter/histograms:
     metrics:
@@ -891,11 +134,44 @@ processors:
 {{- end }}
 {{- end }}
 
+{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+  # in case the prefix differs from "k8s." we need to copy the required metrics
+  # so that SWO built-in dashboards works correctly
+{{- $arrayOfRequiredMetrics := list 
+  "etcd_disk_backend_commit_duration_seconds"
+  "etcd_disk_wal_fsync_duration_seconds" 
+  "etcd_network_client_grpc_received_bytes_total" 
+  "etcd_network_client_grpc_sent_bytes_total" 
+  "etcd_network_peer_received_bytes_total" 
+  "etcd_network_peer_sent_bytes_total" 
+  "etcd_server_leader_changes_seen_total" 
+  "etcd_server_proposals_applied_total" 
+  "etcd_server_proposals_committed_total"
+  "etcd_server_proposals_failed_total"
+  "etcd_server_proposals_pending"
+  "etcd_server_has_leader"
+  "etcd_mvcc_db_total_size_in_bytes"
+  "process_resident_memory_bytes"
+  "grpc_server_started_total"
+  "grpc_server_handled_total"
+  "rest_client_request_duration_seconds"
+  "rest_client_requests_total"
+  "workqueue_adds_total"
+  "workqueue_depth"
+  "workqueue_queue_duration_seconds"
+}}
+  metricstransform/copy-required-metrics:
+    transforms:
+    {{- $root := . }}
+    {{- range $index, $metric := $arrayOfRequiredMetrics }}
+      - include: {{ $root.Values.otel.metrics.autodiscovery.prefix }}{{ $metric }}
+        action: insert
+        new_name: k8s.{{ $metric }}
+    {{- end }}
+{{- end }}
 
 connectors:
-  forward/prometheus:
   forward/metric-exporter:
-
 
 receivers:
   receiver_creator/discovery:
@@ -956,10 +232,9 @@ service:
     - health_check
     - k8s_observer
   pipelines:
-
     metrics/discovery:
       exporters:
-        - forward/prometheus
+        - forward/metric-exporter
       processors:
         - memory_limiter
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
@@ -968,50 +243,24 @@ service:
 {{- if .Values.otel.metrics.autodiscovery.prefix }}
         - metricstransform/rename/discovery
 {{- end }}
+{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+        - metricstransform/copy-required-metrics
+{{- end }}
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
         - cumulativetodelta/discovery
         - deltatorate/discovery
 {{- end }}
+        - groupbyattrs/common-all
+        - resource/all
       receivers:
         - receiver_creator/discovery
     
-    
-    
-    
-    metrics/prometheus:
+    metrics:
       exporters:
-        - forward/metric-exporter
+        - otlp
       processors:
         - memory_limiter
-        - filter/receiver
-        - transform
-        - filter/remove_internal        
-        - attributes/remove_prometheus_attributes
-        - attributes/remove_prometheus_attributes_endpoint
-        - attributes/unify_node_attribute
-        - transform/unify_node_attribute
-        - attributes/unify_volume_attribute        
-        - attributes/unify_service_attribute
-        - attributes/unify_endpoint_attribute
-        - attributes/unify_pod_attribute
-        - attributes/identify_init_container
-        - attributes/identify_standard_container
-        - metricstransform/rename
-        - metricstransform/preprocessing
-        - filter/preprocessing
-        - filter/remove_internal_postprocessing
-        - attributes/remove_temp
-        - attributes/attributes_pod_status
-        - attributes/attributes_namespace_status
-        - cumulativetodelta
-        - deltatorate
-        - metricsgeneration/cluster
-        - groupbyattrs/node
-        - metricstransform/aggregate_node_level
-        - groupbyattrs/pod
-        - metricstransform/aggregate_pod_level
-        - groupbyattrs/all
-        - resource/metrics
+        - filter/histograms
         - swk8sattributes
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
         - resource/swk8sattributes_labels_filter
@@ -1019,21 +268,12 @@ service:
 {{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
         - resource/swk8sattributes_annotations_filter
 {{- end }}
-        - transform/cleanup_attributes_for_nonexisting_entities
 {{- if .Values.otel.metrics.filter }}
-        - filter
+        - filter/metrics
 {{- end }}
         - filter/remove_temporary_metrics
-      receivers:
-        - forward/prometheus
-    metrics:
-      exporters:
-        - otlp
-      processors:
-        - memory_limiter
-        - filter/histograms
         - transform/scope
-        - batch
+        - batch/metrics
       receivers:
         - forward/metric-exporter
     
