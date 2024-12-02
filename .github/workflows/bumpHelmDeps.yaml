@@ -1,0 +1,20 @@
+name: Check and Bump Helm Chart Dependencies
+
+on:
+  workflow_dispatch:
+  schedule:
+    # run at 8am every weekday
+    - cron: "0 8 * * 1-5"
+
+jobs:
+  bump-helm-deps:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - uses: sgibson91/bump-helm-deps-action@main
+      with:
+        chart_path: deploy/helm/Chart.yaml
+        chart_urls: '{"kube-state-metrics": "https://prometheus-community.github.io/helm-charts/index.yaml", "opentelemetry-operator": "https://open-telemetry.github.io/opentelemetry-helm-charts/index.yaml", "cert-manager": "https://charts.jetstack.io/index.yaml"}'
+        dry_run: false
+        base_branch: master
