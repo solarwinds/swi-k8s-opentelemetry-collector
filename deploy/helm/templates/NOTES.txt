@@ -7,7 +7,7 @@ WARNING: Prometheus is no longer included in this chart. To scrape custom metric
 
 {{- if and .Values.otel.metrics.extra_scrape_metrics (and .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled (not .Values.otel.metrics.force_extra_scrape_metrics)) -}}
 WARNING: You have enabled autodiscovery of prometheus endpoints, so `extra_scrape_metrics` is ignored. If you are sure that those metrics won't be covered by autodiscovery set `otel.metrics.force_extra_scrape_metrics` to `true`.
-
+{{- println -}}
 {{- end -}}
 
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "true" -}}
@@ -89,5 +89,10 @@ WARNING: Configuration `opencost` was deprecated. Please remove the custom confi
 
 {{- if index .Values "prometheus-node-exporter" -}}
 WARNING: Configuration `prometheus-node-exporter` was deprecated. Please remove the custom configuration.
+{{- println -}}
+{{- end -}}
+
+{{- if hasKey .Values.otel.metrics "swi_endpoint_check" -}}
+WARNING: Value `otel.metrics.swi_endpoint_check` was deprecated and will be removed in a future release. Please use `otel.swi_endpoint_check.enabled` instead.
 {{- println -}}
 {{- end -}}

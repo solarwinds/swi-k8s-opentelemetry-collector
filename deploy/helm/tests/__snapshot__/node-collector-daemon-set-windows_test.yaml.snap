@@ -81,6 +81,27 @@ DaemonSet spec for windows nodes should match snapshot when overriding cluster I
             readOnly: true
           - mountPath: c:/var/lib/swo/checkpoints
             name: logcheckpoints
+    initContainers:
+      - command:
+          - c:\swi-otelcol.exe
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     nodeSelector:
       kubernetes.io/arch: amd64
       kubernetes.io/os: windows
@@ -192,6 +213,27 @@ DaemonSet spec for windows nodes should match snapshot when using default values
             readOnly: true
           - mountPath: c:/var/lib/swo/checkpoints
             name: logcheckpoints
+    initContainers:
+      - command:
+          - c:\swi-otelcol.exe
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     nodeSelector:
       kubernetes.io/arch: amd64
       kubernetes.io/os: windows

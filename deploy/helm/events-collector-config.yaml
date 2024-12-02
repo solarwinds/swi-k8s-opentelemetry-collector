@@ -1,3 +1,19 @@
+{{- $resourceMap := dict
+    "pods" "Pod"
+    "deployments" "Deployment"
+    "statefulsets" "StatefulSet"
+    "replicasets" "ReplicaSet"
+    "daemonsets" "DaemonSet"
+    "jobs" "Job"
+    "cronjobs" "CronJob"
+    "nodes" "Node"
+    "services" "Service"
+    "persistentvolumes" "PersistentVolume"
+    "persistentvolumeclaims" "PersistentVolumeClaim"
+    "ingresses" "Ingress"
+    "configmaps" "ConfigMap"
+}}
+{{- $arrayOfWatchedResources := keys $resourceMap | sortAlpha }}
 exporters:
   otlp:
     endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -93,41 +109,48 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
 
+  transform/stringify_body:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          # convert body to string
+          - set(body, body.string)
+
 {{- if .Values.otel.manifests.enabled }}
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
     log_statements:
       - context: log
         statements:
-          # set entity annotations for the resource
-          - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Pod"
-          - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Deployment"
-          - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "StatefulSet"
-          - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "ReplicaSet"
-          - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"]) where body["kind"] == "DaemonSet"
-          - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Job"
-          - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"]) where body["kind"] == "CronJob"
-          - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Node"
-          - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Service"
-          - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolume"
-          - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"]) where body["kind"] == "PersistentVolumeClaim"
-          - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"]) where body["kind"] == "Ingress"
-          - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"]) where body["kind"] == "ConfigMap"
+          # assign entity prefix k8s.entity.annotations.*
+{{- $conditions := list }}
+{{- range $index, $resourceName := $arrayOfWatchedResources }}
+      {{- $resourceKind := get $resourceMap $resourceName }}
+      {{- $condition := printf `body["kind"] == "%s"` $resourceKind }}
+      {{- $conditions = append $conditions $condition }}
+{{- end }}
+{{- $joinedConditions := join " or " $conditions }}
+          - set(cache["annotations"], body["metadata"]["annotations"]) where {{ $joinedConditions }}
+{{- range $index, $resourceName := $arrayOfWatchedResources }}
+      {{- $resourceKind := get $resourceMap $resourceName }}
+      {{- $prefix := lower $resourceKind }}
+          - flatten(cache["annotations"], "k8s.{{ $prefix }}.annotations") where body["kind"] == "{{ $resourceKind }}" and cache["annotations"] != nil
+{{- end }}
+          # Set annotations to resource attributes
+          - merge_maps(resource.attributes, cache["annotations"], "upsert") where ({{ $joinedConditions }}) and cache["annotations"] != nil
 
-          # set entity labels for the resource
-          - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"] == "Pod"
-          - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where body["kind"] == "Deployment"
-          - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where body["kind"] == "StatefulSet"
-          - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where body["kind"] == "ReplicaSet"
-          - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where body["kind"] == "DaemonSet"
-          - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"] == "Job"
-          - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"] == "CronJob"
-          - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"] == "Node"
-          - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"] == "Service"
-          - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolume"
-          - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"]) where body["kind"] == "PersistentVolumeClaim"
-          - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"] == "Ingress"
-          - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
+          # assign entity prefix k8s.entity.labels.*
+          - set(cache["labels"], body["metadata"]["labels"]) where {{ $joinedConditions }}
+
+{{- range $index, $resourceName := $arrayOfWatchedResources }}
+      {{- $resourceKind := get $resourceMap $resourceName }}
+      {{- $prefix := lower $resourceKind }}
+          - flatten(cache["labels"], "k8s.{{ $prefix }}.labels") where body["kind"] == "{{ $resourceKind }}" and cache["labels"] != nil
+{{- end }}
+          
+          # Set labels to resource attributes
+          - merge_maps(resource.attributes, cache["labels"], "upsert") where ({{ $joinedConditions }}) and cache["labels"] != nil
 {{- end }}
 {{- if .Values.otel.manifests.enabled }}
   transform/manifest:
@@ -146,30 +169,20 @@ processors:
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
 
             # set attributes for the resource
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"] == "Pod"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"] == "Job"
-            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"] == "CronJob"
-            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"] == "Node"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"] == "Service"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"]) where body["kind"] == "PersistentVolumeClaim"
+{{- range $index, $resourceName := $arrayOfWatchedResources }}
+      {{- $resourceKind := get $resourceMap $resourceName }}
+      {{- $prefix := lower $resourceKind }}
+            - set(attributes["k8s.{{$prefix}}.name"], body["metadata"]["name"]) where body["kind"] == "{{$resourceKind}}"
+{{- end }}
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
             - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"] == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
 
             # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-
-            # convert body to string
-            - set(body, body.string)
 {{- end }}
   transform/scope:
     log_statements:
@@ -195,36 +208,6 @@ processors:
       - k8s.ingress.name
       - sw.k8s.ingress.type
       - k8s.configmap.name
-
-      - k8s.pod.labels
-      - k8s.deployment.labels
-      - k8s.statefulset.labels
-      - k8s.replicaset.labels
-      - k8s.daemonset.labels
-      - k8s.job.labels
-      - k8s.cronjob.labels
-      - k8s.node.labels
-      - k8s.labelsspace.labels
-      - k8s.service.labels
-      - k8s.persistentvolume.labels
-      - k8s.persistentvolumeclaim.labels
-      - k8s.ingress.labels
-      - k8s.configmap.labels
-
-      - k8s.pod.annotations
-      - k8s.deployment.annotations
-      - k8s.statefulset.annotations
-      - k8s.replicaset.annotations
-      - k8s.daemonset.annotations
-      - k8s.job.annotations
-      - k8s.cronjob.annotations
-      - k8s.node.annotations
-      - k8s.labelsspace.annotations
-      - k8s.service.annotations
-      - k8s.persistentvolume.annotations
-      - k8s.persistentvolumeclaim.annotations
-      - k8s.ingress.annotations
-      - k8s.configmap.annotations
 {{- end }}
 
   resource/events:
@@ -278,19 +261,7 @@ processors:
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   swk8sattributes:
-{{ include "common.k8s-instrumentation" (tuple . .Values.otel.events.k8s_instrumentation.annotations.enabled .Values.otel.events.k8s_instrumentation.labels.enabled "true") | indent 4 }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
-  resource/swk8sattributes_labels_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.events.k8s_instrumentation.labels.excludePattern }}
-{{- end }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
-  resource/swk8sattributes_annotations_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.events.k8s_instrumentation.annotations.excludePattern }}
-{{- end }}
+{{ include "common.k8s-instrumentation" . | indent 4 }}
 
 receivers:
   k8s_events:
@@ -298,21 +269,6 @@ receivers:
   k8sobjects:
     auth_type: serviceAccount
     objects:
-{{- $arrayOfWatchedResources := list 
-  "pods" 
-  "deployments" 
-  "statefulsets" 
-  "replicasets" 
-  "daemonsets" 
-  "jobs" 
-  "cronjobs" 
-  "nodes" 
-  "services"
-  "persistentvolumes"
-  "persistentvolumeclaims"
-  "ingresses"
-  "configmaps"
-}}
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
 {{- end }}
@@ -346,12 +302,6 @@ service:
         - transform/entity_attributes
         - resource/events
         - swk8sattributes
-{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
-        - resource/swk8sattributes_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/swk8sattributes_annotations_filter
-{{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
 {{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "false") }}
         - filter
@@ -367,17 +317,12 @@ service:
         - otlp
       processors:
         - memory_limiter
-        - transform/set_labels_and_annotations_for_entities
         - transform/manifest
         - groupbyattrs/manifest
+        - transform/set_labels_and_annotations_for_entities
+        - transform/stringify_body
         - resource/manifest
         - swk8sattributes
-{{- if not (empty .Values.otel.events.k8s_instrumentation.labels.excludePattern) }}
-        - resource/swk8sattributes_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.events.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/swk8sattributes_annotations_filter
-{{- end }}
         - transform/cleanup_attributes_for_nonexisting_entities
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests

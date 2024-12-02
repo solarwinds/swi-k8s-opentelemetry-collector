@@ -18,7 +18,7 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: solarwinds/swi-opentelemetry-collector:1.0.0
-  - it: Image should be correct when overriden tag
+  - it: Image should be correct when overridden tag
     template: node-collector-daemon-set-windows.yaml
     set:
       otel.windows.image.tag: "beta1"
@@ -26,7 +26,7 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: solarwinds/swi-opentelemetry-collector:beta1
-  - it: Image should be correct when overriden by azure
+  - it: Image should be correct when overridden by azure
     template: node-collector-daemon-set-windows.yaml
     set:
       aks: true
@@ -44,3 +44,61 @@ tests:
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: SWI endpoint check should not be included when disabled
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.swi_endpoint_check.enabled: false
+    asserts:
+    - notExists:
+        path: spec.template.spec.initContainers
+  - it: SWI endpoint check should be included in default state
+    template: node-collector-daemon-set-windows.yaml
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: otel-endpoint-check
+  - it: SWI endpoint check should not be included when disabled by deprecated setting
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.metrics.swi_endpoint_check: false
+    asserts:
+    - notExists:
+        path: spec.template.spec.initContainers
+  - it: Image otel-endpoint-check should be correct in default state
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: solarwinds/swi-opentelemetry-collector:1.0.0
+  - it: Image otel-endpoint-check should be correct when overridden repository
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+      otel.windows.image.repository: "swi-opentelemetry-collector"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: swi-opentelemetry-collector:1.0.0
+  - it: Image otel-endpoint-check should be correct when overridden tag
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+      otel.windows.image.tag: "beta1"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: solarwinds/swi-opentelemetry-collector:beta1
+  - it: Image otel-endpoint-check should be correct when overridden by azure
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+      aks: true
+      global.azure.images.image_windows.digest: "abcd"
+      global.azure.images.image_windows.image: "swi-opentelemetry-collector:v1.2.3"
+      global.azure.images.image_windows.registry: "azurek8s.azure.io/marketplaceimages"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd

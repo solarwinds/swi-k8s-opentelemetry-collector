@@ -46,34 +46,6 @@ Custom events filter with new syntax:
           - k8s.ingress.name
           - sw.k8s.ingress.type
           - k8s.configmap.name
-          - k8s.pod.labels
-          - k8s.deployment.labels
-          - k8s.statefulset.labels
-          - k8s.replicaset.labels
-          - k8s.daemonset.labels
-          - k8s.job.labels
-          - k8s.cronjob.labels
-          - k8s.node.labels
-          - k8s.labelsspace.labels
-          - k8s.service.labels
-          - k8s.persistentvolume.labels
-          - k8s.persistentvolumeclaim.labels
-          - k8s.ingress.labels
-          - k8s.configmap.labels
-          - k8s.pod.annotations
-          - k8s.deployment.annotations
-          - k8s.statefulset.annotations
-          - k8s.replicaset.annotations
-          - k8s.daemonset.annotations
-          - k8s.job.annotations
-          - k8s.cronjob.annotations
-          - k8s.node.annotations
-          - k8s.labelsspace.annotations
-          - k8s.service.annotations
-          - k8s.persistentvolume.annotations
-          - k8s.persistentvolumeclaim.annotations
-          - k8s.ingress.annotations
-          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -121,11 +93,7 @@ Custom events filter with new syntax:
                 name: k8s.cronjob.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.labels.$$1
+            extract: null
           daemonset:
             association:
             - sources:
@@ -133,11 +101,7 @@ Custom events filter with new syntax:
                 name: k8s.daemonset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.labels.$$1
+            extract: null
           deployment:
             association:
             - sources:
@@ -145,19 +109,8 @@ Custom events filter with new syntax:
                 name: k8s.deployment.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.labels.$$1
+            extract: null
           extract:
-            labels:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.labels.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.labels.$$1
             metadata:
             - k8s.deployment.name
             - k8s.replicaset.name
@@ -173,32 +126,20 @@ Custom events filter with new syntax:
                 name: k8s.job.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.labels.$$1
+            extract: null
           node:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.node.name
-            extract:
-              labels:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.labels.$$1
+            extract: null
           passthrough: false
           persistentvolume:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.persistentvolume.name
-            extract:
-              labels:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.labels.$$1
+            extract: null
           persistentvolumeclaim:
             association:
             - sources:
@@ -206,11 +147,7 @@ Custom events filter with new syntax:
                 name: k8s.persistentvolumeclaim.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.labels.$$1
+            extract: null
           pod_association:
           - sources:
             - from: resource_attribute
@@ -224,11 +161,7 @@ Custom events filter with new syntax:
                 name: k8s.replicaset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.labels.$$1
+            extract: null
           service:
             association:
             - sources:
@@ -236,11 +169,7 @@ Custom events filter with new syntax:
                 name: k8s.service.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.labels.$$1
+            extract: null
           set_object_existence: true
           statefulset:
             association:
@@ -249,11 +178,7 @@ Custom events filter with new syntax:
                 name: k8s.statefulset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.labels.$$1
+            extract: null
         transform/cleanup_attributes_for_nonexisting_entities:
           log_statements:
           - context: log
@@ -315,40 +240,41 @@ Custom events filter with new syntax:
             - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
               != nil
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
-              == "Pod"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
-              == "Deployment"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
-              == "StatefulSet"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
-              == "ReplicaSet"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
-              == "DaemonSet"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
-              == "Job"
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
             - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
               == "CronJob"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
+              == "DaemonSet"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
+              == "Deployment"
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+              == "Job"
             - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
               == "Node"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
-              body["kind"] == "PersistentVolume"
             - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
               where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
+              body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+              == "Pod"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
+              == "ReplicaSet"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
+              == "Service"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
+              == "StatefulSet"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
             - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
               == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
               "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-            - set(body, body.string)
         transform/namespace:
           log_statements:
           - context: log
@@ -365,58 +291,84 @@ Custom events filter with new syntax:
           log_statements:
           - context: log
             statements:
-            - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Pod"
-            - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Job"
-            - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "CronJob"
-            - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Node"
-            - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Service"
-            - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Ingress"
-            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ConfigMap"
-            - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Pod"
-            - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Job"
-            - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Node"
-            - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "ConfigMap"
+            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
+              == "ConfigMap" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
+              == "CronJob" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
+              == "DaemonSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
+              == "Deployment" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
+              == "Ingress" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
+              "Job" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
+              "Node" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
+              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
+              == "PersistentVolume" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
+              "Pod" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
+              == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
+              == "Service" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
+              == "StatefulSet" and cache["annotations"] != nil
+            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["annotations"] != nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
+              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
+              == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume"
+              or body["kind"] == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] ==
+              "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
+              == "PersistentVolumeClaim" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
+              and cache["labels"] != nil
+            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["labels"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -463,6 +415,12 @@ Custom events filter with new syntax:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
         k8sobjects:
@@ -470,34 +428,9 @@ Custom events filter with new syntax:
           objects:
           - interval: 60m
             mode: pull
-            name: pods
+            name: configmaps
           - mode: watch
-            name: pods
-          - interval: 60m
-            mode: pull
-            name: deployments
-          - mode: watch
-            name: deployments
-          - interval: 60m
-            mode: pull
-            name: statefulsets
-          - mode: watch
-            name: statefulsets
-          - interval: 60m
-            mode: pull
-            name: replicasets
-          - mode: watch
-            name: replicasets
-          - interval: 60m
-            mode: pull
-            name: daemonsets
-          - mode: watch
-            name: daemonsets
-          - interval: 60m
-            mode: pull
-            name: jobs
-          - mode: watch
-            name: jobs
+            name: configmaps
           - interval: 60m
             mode: pull
             name: cronjobs
@@ -505,24 +438,14 @@ Custom events filter with new syntax:
             name: cronjobs
           - interval: 60m
             mode: pull
-            name: nodes
+            name: daemonsets
           - mode: watch
-            name: nodes
+            name: daemonsets
           - interval: 60m
             mode: pull
-            name: services
+            name: deployments
           - mode: watch
-            name: services
-          - interval: 60m
-            mode: pull
-            name: persistentvolumes
-          - mode: watch
-            name: persistentvolumes
-          - interval: 60m
-            mode: pull
-            name: persistentvolumeclaims
-          - mode: watch
-            name: persistentvolumeclaims
+            name: deployments
           - interval: 60m
             mode: pull
             name: ingresses
@@ -530,9 +453,44 @@ Custom events filter with new syntax:
             name: ingresses
           - interval: 60m
             mode: pull
-            name: configmaps
+            name: jobs
           - mode: watch
-            name: configmaps
+            name: jobs
+          - interval: 60m
+            mode: pull
+            name: nodes
+          - mode: watch
+            name: nodes
+          - interval: 60m
+            mode: pull
+            name: persistentvolumeclaims
+          - mode: watch
+            name: persistentvolumeclaims
+          - interval: 60m
+            mode: pull
+            name: persistentvolumes
+          - mode: watch
+            name: persistentvolumes
+          - interval: 60m
+            mode: pull
+            name: pods
+          - mode: watch
+            name: pods
+          - interval: 60m
+            mode: pull
+            name: replicasets
+          - mode: watch
+            name: replicasets
+          - interval: 60m
+            mode: pull
+            name: services
+          - mode: watch
+            name: services
+          - interval: 60m
+            mode: pull
+            name: statefulsets
+          - mode: watch
+            name: statefulsets
       service:
         extensions:
         - health_check
@@ -558,9 +516,10 @@ Custom events filter with new syntax:
             - otlp
             processors:
             - memory_limiter
-            - transform/set_labels_and_annotations_for_entities
             - transform/manifest
             - groupbyattrs/manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
@@ -624,34 +583,6 @@ Custom events filter with old syntax:
           - k8s.ingress.name
           - sw.k8s.ingress.type
           - k8s.configmap.name
-          - k8s.pod.labels
-          - k8s.deployment.labels
-          - k8s.statefulset.labels
-          - k8s.replicaset.labels
-          - k8s.daemonset.labels
-          - k8s.job.labels
-          - k8s.cronjob.labels
-          - k8s.node.labels
-          - k8s.labelsspace.labels
-          - k8s.service.labels
-          - k8s.persistentvolume.labels
-          - k8s.persistentvolumeclaim.labels
-          - k8s.ingress.labels
-          - k8s.configmap.labels
-          - k8s.pod.annotations
-          - k8s.deployment.annotations
-          - k8s.statefulset.annotations
-          - k8s.replicaset.annotations
-          - k8s.daemonset.annotations
-          - k8s.job.annotations
-          - k8s.cronjob.annotations
-          - k8s.node.annotations
-          - k8s.labelsspace.annotations
-          - k8s.service.annotations
-          - k8s.persistentvolume.annotations
-          - k8s.persistentvolumeclaim.annotations
-          - k8s.ingress.annotations
-          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -699,11 +630,7 @@ Custom events filter with old syntax:
                 name: k8s.cronjob.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.labels.$$1
+            extract: null
           daemonset:
             association:
             - sources:
@@ -711,11 +638,7 @@ Custom events filter with old syntax:
                 name: k8s.daemonset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.labels.$$1
+            extract: null
           deployment:
             association:
             - sources:
@@ -723,19 +646,8 @@ Custom events filter with old syntax:
                 name: k8s.deployment.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.labels.$$1
+            extract: null
           extract:
-            labels:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.labels.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.labels.$$1
             metadata:
             - k8s.deployment.name
             - k8s.replicaset.name
@@ -751,32 +663,20 @@ Custom events filter with old syntax:
                 name: k8s.job.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.labels.$$1
+            extract: null
           node:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.node.name
-            extract:
-              labels:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.labels.$$1
+            extract: null
           passthrough: false
           persistentvolume:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.persistentvolume.name
-            extract:
-              labels:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.labels.$$1
+            extract: null
           persistentvolumeclaim:
             association:
             - sources:
@@ -784,11 +684,7 @@ Custom events filter with old syntax:
                 name: k8s.persistentvolumeclaim.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.labels.$$1
+            extract: null
           pod_association:
           - sources:
             - from: resource_attribute
@@ -802,11 +698,7 @@ Custom events filter with old syntax:
                 name: k8s.replicaset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.labels.$$1
+            extract: null
           service:
             association:
             - sources:
@@ -814,11 +706,7 @@ Custom events filter with old syntax:
                 name: k8s.service.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.labels.$$1
+            extract: null
           set_object_existence: true
           statefulset:
             association:
@@ -827,11 +715,7 @@ Custom events filter with old syntax:
                 name: k8s.statefulset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.labels.$$1
+            extract: null
         transform/cleanup_attributes_for_nonexisting_entities:
           log_statements:
           - context: log
@@ -893,40 +777,41 @@ Custom events filter with old syntax:
             - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
               != nil
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
-              == "Pod"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
-              == "Deployment"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
-              == "StatefulSet"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
-              == "ReplicaSet"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
-              == "DaemonSet"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
-              == "Job"
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
             - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
               == "CronJob"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
+              == "DaemonSet"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
+              == "Deployment"
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+              == "Job"
             - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
               == "Node"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
-              body["kind"] == "PersistentVolume"
             - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
               where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
+              body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+              == "Pod"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
+              == "ReplicaSet"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
+              == "Service"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
+              == "StatefulSet"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
             - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
               == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
               "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-            - set(body, body.string)
         transform/namespace:
           log_statements:
           - context: log
@@ -943,58 +828,84 @@ Custom events filter with old syntax:
           log_statements:
           - context: log
             statements:
-            - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Pod"
-            - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Job"
-            - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "CronJob"
-            - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Node"
-            - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Service"
-            - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Ingress"
-            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ConfigMap"
-            - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Pod"
-            - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Job"
-            - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Node"
-            - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "ConfigMap"
+            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
+              == "ConfigMap" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
+              == "CronJob" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
+              == "DaemonSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
+              == "Deployment" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
+              == "Ingress" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
+              "Job" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
+              "Node" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
+              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
+              == "PersistentVolume" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
+              "Pod" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
+              == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
+              == "Service" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
+              == "StatefulSet" and cache["annotations"] != nil
+            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["annotations"] != nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
+              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
+              == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume"
+              or body["kind"] == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] ==
+              "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
+              == "PersistentVolumeClaim" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
+              and cache["labels"] != nil
+            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["labels"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1041,6 +952,12 @@ Custom events filter with old syntax:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
         k8sobjects:
@@ -1048,34 +965,9 @@ Custom events filter with old syntax:
           objects:
           - interval: 60m
             mode: pull
-            name: pods
+            name: configmaps
           - mode: watch
-            name: pods
-          - interval: 60m
-            mode: pull
-            name: deployments
-          - mode: watch
-            name: deployments
-          - interval: 60m
-            mode: pull
-            name: statefulsets
-          - mode: watch
-            name: statefulsets
-          - interval: 60m
-            mode: pull
-            name: replicasets
-          - mode: watch
-            name: replicasets
-          - interval: 60m
-            mode: pull
-            name: daemonsets
-          - mode: watch
-            name: daemonsets
-          - interval: 60m
-            mode: pull
-            name: jobs
-          - mode: watch
-            name: jobs
+            name: configmaps
           - interval: 60m
             mode: pull
             name: cronjobs
@@ -1083,24 +975,14 @@ Custom events filter with old syntax:
             name: cronjobs
           - interval: 60m
             mode: pull
-            name: nodes
+            name: daemonsets
           - mode: watch
-            name: nodes
+            name: daemonsets
           - interval: 60m
             mode: pull
-            name: services
+            name: deployments
           - mode: watch
-            name: services
-          - interval: 60m
-            mode: pull
-            name: persistentvolumes
-          - mode: watch
-            name: persistentvolumes
-          - interval: 60m
-            mode: pull
-            name: persistentvolumeclaims
-          - mode: watch
-            name: persistentvolumeclaims
+            name: deployments
           - interval: 60m
             mode: pull
             name: ingresses
@@ -1108,9 +990,44 @@ Custom events filter with old syntax:
             name: ingresses
           - interval: 60m
             mode: pull
-            name: configmaps
+            name: jobs
           - mode: watch
-            name: configmaps
+            name: jobs
+          - interval: 60m
+            mode: pull
+            name: nodes
+          - mode: watch
+            name: nodes
+          - interval: 60m
+            mode: pull
+            name: persistentvolumeclaims
+          - mode: watch
+            name: persistentvolumeclaims
+          - interval: 60m
+            mode: pull
+            name: persistentvolumes
+          - mode: watch
+            name: persistentvolumes
+          - interval: 60m
+            mode: pull
+            name: pods
+          - mode: watch
+            name: pods
+          - interval: 60m
+            mode: pull
+            name: replicasets
+          - mode: watch
+            name: replicasets
+          - interval: 60m
+            mode: pull
+            name: services
+          - mode: watch
+            name: services
+          - interval: 60m
+            mode: pull
+            name: statefulsets
+          - mode: watch
+            name: statefulsets
       service:
         extensions:
         - health_check
@@ -1136,9 +1053,10 @@ Custom events filter with old syntax:
             - otlp
             processors:
             - memory_limiter
-            - transform/set_labels_and_annotations_for_entities
             - transform/manifest
             - groupbyattrs/manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
@@ -1195,34 +1113,6 @@ Events config should match snapshot when using default values:
           - k8s.ingress.name
           - sw.k8s.ingress.type
           - k8s.configmap.name
-          - k8s.pod.labels
-          - k8s.deployment.labels
-          - k8s.statefulset.labels
-          - k8s.replicaset.labels
-          - k8s.daemonset.labels
-          - k8s.job.labels
-          - k8s.cronjob.labels
-          - k8s.node.labels
-          - k8s.labelsspace.labels
-          - k8s.service.labels
-          - k8s.persistentvolume.labels
-          - k8s.persistentvolumeclaim.labels
-          - k8s.ingress.labels
-          - k8s.configmap.labels
-          - k8s.pod.annotations
-          - k8s.deployment.annotations
-          - k8s.statefulset.annotations
-          - k8s.replicaset.annotations
-          - k8s.daemonset.annotations
-          - k8s.job.annotations
-          - k8s.cronjob.annotations
-          - k8s.node.annotations
-          - k8s.labelsspace.annotations
-          - k8s.service.annotations
-          - k8s.persistentvolume.annotations
-          - k8s.persistentvolumeclaim.annotations
-          - k8s.ingress.annotations
-          - k8s.configmap.annotations
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -1270,11 +1160,7 @@ Events config should match snapshot when using default values:
                 name: k8s.cronjob.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.labels.$$1
+            extract: null
           daemonset:
             association:
             - sources:
@@ -1282,11 +1168,7 @@ Events config should match snapshot when using default values:
                 name: k8s.daemonset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.labels.$$1
+            extract: null
           deployment:
             association:
             - sources:
@@ -1294,19 +1176,8 @@ Events config should match snapshot when using default values:
                 name: k8s.deployment.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.labels.$$1
+            extract: null
           extract:
-            labels:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.labels.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.labels.$$1
             metadata:
             - k8s.deployment.name
             - k8s.replicaset.name
@@ -1322,32 +1193,20 @@ Events config should match snapshot when using default values:
                 name: k8s.job.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.labels.$$1
+            extract: null
           node:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.node.name
-            extract:
-              labels:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.labels.$$1
+            extract: null
           passthrough: false
           persistentvolume:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.persistentvolume.name
-            extract:
-              labels:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.labels.$$1
+            extract: null
           persistentvolumeclaim:
             association:
             - sources:
@@ -1355,11 +1214,7 @@ Events config should match snapshot when using default values:
                 name: k8s.persistentvolumeclaim.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.labels.$$1
+            extract: null
           pod_association:
           - sources:
             - from: resource_attribute
@@ -1373,11 +1228,7 @@ Events config should match snapshot when using default values:
                 name: k8s.replicaset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.labels.$$1
+            extract: null
           service:
             association:
             - sources:
@@ -1385,11 +1236,7 @@ Events config should match snapshot when using default values:
                 name: k8s.service.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.labels.$$1
+            extract: null
           set_object_existence: true
           statefulset:
             association:
@@ -1398,11 +1245,7 @@ Events config should match snapshot when using default values:
                 name: k8s.statefulset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.labels.$$1
+            extract: null
         transform/cleanup_attributes_for_nonexisting_entities:
           log_statements:
           - context: log
@@ -1464,40 +1307,41 @@ Events config should match snapshot when using default values:
             - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
               != nil
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
-              == "Pod"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
-              == "Deployment"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
-              == "StatefulSet"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
-              == "ReplicaSet"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
-              == "DaemonSet"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
-              == "Job"
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
             - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
               == "CronJob"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
+              == "DaemonSet"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
+              == "Deployment"
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+              == "Job"
             - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
               == "Node"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
-              body["kind"] == "PersistentVolume"
             - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
               where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
+              body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+              == "Pod"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
+              == "ReplicaSet"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
+              == "Service"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
+              == "StatefulSet"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
             - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
               == "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
               "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-            - set(body, body.string)
         transform/namespace:
           log_statements:
           - context: log
@@ -1514,58 +1358,84 @@ Events config should match snapshot when using default values:
           log_statements:
           - context: log
             statements:
-            - set(attributes["k8s.pod.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Pod"
-            - set(attributes["k8s.deployment.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Job"
-            - set(attributes["k8s.cronjob.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "CronJob"
-            - set(attributes["k8s.node.annotations"], body["metadata"]["annotations"]) where
-              body["kind"] == "Node"
-            - set(attributes["k8s.service.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Service"
-            - set(attributes["k8s.persistentvolume.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "Ingress"
-            - set(attributes["k8s.configmap.annotations"], body["metadata"]["annotations"])
-              where body["kind"] == "ConfigMap"
-            - set(attributes["k8s.pod.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Pod"
-            - set(attributes["k8s.deployment.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "Deployment"
-            - set(attributes["k8s.statefulset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "StatefulSet"
-            - set(attributes["k8s.replicaset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "ReplicaSet"
-            - set(attributes["k8s.daemonset.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "DaemonSet"
-            - set(attributes["k8s.job.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Job"
-            - set(attributes["k8s.cronjob.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.node.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Node"
-            - set(attributes["k8s.service.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.persistentvolume.labels"], body["metadata"]["labels"])
-              where body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.persistentvolumeclaim.labels"], body["metadata"]["labels"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.ingress.labels"], body["metadata"]["labels"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.configmap.labels"], body["metadata"]["labels"]) where
-              body["kind"] == "ConfigMap"
+            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
+              == "ConfigMap" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
+              == "CronJob" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
+              == "DaemonSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
+              == "Deployment" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
+              == "Ingress" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
+              "Job" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
+              "Node" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
+              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
+              == "PersistentVolume" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
+              "Pod" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
+              == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
+              == "Service" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
+              == "StatefulSet" and cache["annotations"] != nil
+            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["annotations"] != nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
+              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
+              == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume"
+              or body["kind"] == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] ==
+              "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
+              == "PersistentVolumeClaim" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
+              and cache["labels"] != nil
+            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["labels"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1612,6 +1482,12 @@ Events config should match snapshot when using default values:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
         k8sobjects:
@@ -1619,34 +1495,9 @@ Events config should match snapshot when using default values:
           objects:
           - interval: 60m
             mode: pull
-            name: pods
+            name: configmaps
           - mode: watch
-            name: pods
-          - interval: 60m
-            mode: pull
-            name: deployments
-          - mode: watch
-            name: deployments
-          - interval: 60m
-            mode: pull
-            name: statefulsets
-          - mode: watch
-            name: statefulsets
-          - interval: 60m
-            mode: pull
-            name: replicasets
-          - mode: watch
-            name: replicasets
-          - interval: 60m
-            mode: pull
-            name: daemonsets
-          - mode: watch
-            name: daemonsets
-          - interval: 60m
-            mode: pull
-            name: jobs
-          - mode: watch
-            name: jobs
+            name: configmaps
           - interval: 60m
             mode: pull
             name: cronjobs
@@ -1654,24 +1505,14 @@ Events config should match snapshot when using default values:
             name: cronjobs
           - interval: 60m
             mode: pull
-            name: nodes
+            name: daemonsets
           - mode: watch
-            name: nodes
+            name: daemonsets
           - interval: 60m
             mode: pull
-            name: services
+            name: deployments
           - mode: watch
-            name: services
-          - interval: 60m
-            mode: pull
-            name: persistentvolumes
-          - mode: watch
-            name: persistentvolumes
-          - interval: 60m
-            mode: pull
-            name: persistentvolumeclaims
-          - mode: watch
-            name: persistentvolumeclaims
+            name: deployments
           - interval: 60m
             mode: pull
             name: ingresses
@@ -1679,9 +1520,44 @@ Events config should match snapshot when using default values:
             name: ingresses
           - interval: 60m
             mode: pull
-            name: configmaps
+            name: jobs
           - mode: watch
-            name: configmaps
+            name: jobs
+          - interval: 60m
+            mode: pull
+            name: nodes
+          - mode: watch
+            name: nodes
+          - interval: 60m
+            mode: pull
+            name: persistentvolumeclaims
+          - mode: watch
+            name: persistentvolumeclaims
+          - interval: 60m
+            mode: pull
+            name: persistentvolumes
+          - mode: watch
+            name: persistentvolumes
+          - interval: 60m
+            mode: pull
+            name: pods
+          - mode: watch
+            name: pods
+          - interval: 60m
+            mode: pull
+            name: replicasets
+          - mode: watch
+            name: replicasets
+          - interval: 60m
+            mode: pull
+            name: services
+          - mode: watch
+            name: services
+          - interval: 60m
+            mode: pull
+            name: statefulsets
+          - mode: watch
+            name: statefulsets
       service:
         extensions:
         - health_check
@@ -1706,9 +1582,10 @@ Events config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
-            - transform/set_labels_and_annotations_for_entities
             - transform/manifest
             - groupbyattrs/manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
@@ -1778,11 +1655,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.cronjob.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.labels.$$1
+            extract: null
           daemonset:
             association:
             - sources:
@@ -1790,11 +1663,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.daemonset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.labels.$$1
+            extract: null
           deployment:
             association:
             - sources:
@@ -1802,19 +1671,8 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.deployment.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.labels.$$1
+            extract: null
           extract:
-            labels:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.labels.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.labels.$$1
             metadata:
             - k8s.deployment.name
             - k8s.replicaset.name
@@ -1830,32 +1688,20 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.job.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.labels.$$1
+            extract: null
           node:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.node.name
-            extract:
-              labels:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.labels.$$1
+            extract: null
           passthrough: false
           persistentvolume:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.persistentvolume.name
-            extract:
-              labels:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.labels.$$1
+            extract: null
           persistentvolumeclaim:
             association:
             - sources:
@@ -1863,11 +1709,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.persistentvolumeclaim.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.labels.$$1
+            extract: null
           pod_association:
           - sources:
             - from: resource_attribute
@@ -1881,11 +1723,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.replicaset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.labels.$$1
+            extract: null
           service:
             association:
             - sources:
@@ -1893,11 +1731,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.service.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.labels.$$1
+            extract: null
           set_object_existence: true
           statefulset:
             association:
@@ -1906,11 +1740,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 name: k8s.statefulset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              labels:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.labels.$$1
+            extract: null
         transform/cleanup_attributes_for_nonexisting_entities:
           log_statements:
           - context: log
@@ -2020,6 +1850,12 @@ Events config should not contain manifest collection pipeline when disabled:
               or attributes["k8s.event.reason"] == "Unhealthy"
             - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
               or attributes["k8s.event.reason"] == "Unhealthy"
+        transform/stringify_body:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(body, body.string)
       receivers:
         k8s_events: null
       service:

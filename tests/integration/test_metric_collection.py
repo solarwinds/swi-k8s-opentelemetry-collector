@@ -46,7 +46,8 @@ def test_expected_otel_message_content_is_generated(file_name):
     resource_attributes = test_case["resource_attributes"]
     metrics = test_case["metrics"]
 
-    print(f'Checking metrics {[item['name'] for item in metrics]} with resource attributes {resource_attributes}')
+    metric_names = [item['name'] for item in metrics]
+    print("Checking metrics {} with resource attributes {}".format(metric_names, resource_attributes))
 
     retry_until_ok(url, 
                    lambda content: assert_test_contain_expected_datapoints(content, metrics, resource_attributes),

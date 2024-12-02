@@ -49,7 +49,6 @@ deploy:
                 persistent_storage:
                   enabled: true
             metrics:
-              swi_endpoint_check: false
               prometheus_check: false
               sending_queue:
                 offload_to_disk: true
@@ -102,6 +101,8 @@ deploy:
               filter:
                 log_record:
                   - resource.attributes["k8s.namespace.name"] == "test-namespace"
+            swi_endpoint_check:
+              enabled: false
           certmanager:
             enabled: false
           operator:
