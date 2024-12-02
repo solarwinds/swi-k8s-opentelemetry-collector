@@ -1,0 +1,255 @@
+Metrics discovery config should match snapshot when Fargate is enabled:
+  1: |
+    metrics-discovery.config: |
+      connectors:
+        forward/metric-exporter: null
+      exporters:
+        otlp:
+          endpoint: ${OTEL_ENVOY_ADDRESS}
+          headers:
+            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          retry_on_failure:
+            enabled: true
+            initial_interval: 10s
+            max_elapsed_time: 300s
+            max_interval: 30s
+          sending_queue:
+            enabled: true
+            num_consumers: 20
+            queue_size: 1000
+          tls:
+            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      extensions:
+        health_check:
+          endpoint: 0.0.0.0:13133
+        k8s_observer:
+          auth_type: serviceAccount
+          observe_pods: true
+      processors:
+        batch/metrics:
+          send_batch_max_size: 512
+          send_batch_size: 512
+          timeout: 1s
+        filter/histograms:
+          metrics:
+            metric:
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
+              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")
+        filter/remove_temporary_metrics:
+          metrics:
+            metric:
+            - IsMatch(name , ".*_temp")
+        groupbyattrs/common-all:
+          keys:
+          - k8s.container.name
+          - k8s.namespace.name
+          - k8s.pod.name
+          - k8s.pod.uid
+          - k8s.node.name
+          - host.name
+          - service.name
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 2560
+          spike_limit_mib: 512
+        metricstransform/rename/discovery:
+          transforms:
+          - action: update
+            include: ^(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}
+        resource/all:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+        swk8sattributes:
+          auth_type: serviceAccount
+          cronjob:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.cronjob.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+          daemonset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.daemonset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+          deployment:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.deployment.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+            - k8s.node.name
+          job:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.job.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+          node:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.node.name
+            extract: null
+          passthrough: false
+          persistentvolume:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolume.name
+            extract: null
+          persistentvolumeclaim:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.persistentvolumeclaim.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          replicaset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.replicaset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+          service:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.service.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+          set_object_existence: true
+          statefulset:
+            association:
+            - sources:
+              - from: resource_attribute
+                name: k8s.statefulset.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+            extract: null
+        transform/scope:
+          metric_statements:
+          - context: scope
+            statements:
+            - set(name, "")
+            - set(version, "")
+      receivers:
+        receiver_creator/discovery:
+          receivers:
+            prometheus/discovery/http:
+              config:
+                config:
+                  scrape_configs:
+                  - honor_labels: true
+                    honor_timestamps: false
+                    job_name: pod
+                    metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
+                      : "/metrics"`'
+                    scheme: http
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
+                        : 9090`'
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"]
+                != "" && annotations["prometheus.io/scheme"] != "https"
+            prometheus/discovery/https:
+              config:
+                config:
+                  scrape_configs:
+                  - authorization:
+                      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      type: Bearer
+                    enable_http2: true
+                    follow_redirects: true
+                    honor_labels: true
+                    honor_timestamps: false
+                    job_name: pod
+                    metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
+                      : "/metrics"`'
+                    scheme: https
+                    scrape_interval: 60s
+                    static_configs:
+                    - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"]
+                        : 9090`'
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: true
+              rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"]
+                != "" && annotations["prometheus.io/scheme"] == "https"
+          watch_observers:
+          - k8s_observer
+      service:
+        extensions:
+        - health_check
+        - k8s_observer
+        pipelines:
+          metrics:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - filter/histograms
+            - swk8sattributes
+            - filter/remove_temporary_metrics
+            - transform/scope
+            - batch/metrics
+            receivers:
+            - forward/metric-exporter
+          metrics/discovery:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - receiver_creator/discovery
+        telemetry:
+          logs:
+            level: info
+          metrics:
+            address: 0.0.0.0:8888

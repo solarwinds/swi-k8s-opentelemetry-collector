@@ -1,0 +1,128 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for metrics-discovery-deployment
+templates:
+  - metrics-discovery-deployment.yaml
+  - metrics-discovery-config-map.yaml
+  - common-env-config-map.yaml
+  - metrics-collector-env-config-map.yaml
+chart:
+  appVersion: 1.0.0
+set:
+  aws_fargate.enabled: true
+tests:
+  - it: Metrics discovery spec should not exist when using default values (Fargate is disabled)
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0      
+  - it: Metrics discovery spec should match snapshot when Fargate is enabled
+    template: metrics-discovery-deployment.yaml
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
+  - it: Image should be correct in default state
+    template: metrics-discovery-deployment.yaml
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: solarwinds/swi-opentelemetry-collector:1.0.0
+  - it: Image should be correct when overridden repository
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.image.repository: "swi-opentelemetry-collector"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: swi-opentelemetry-collector:1.0.0
+  - it: Image should be correct when overridden tag
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.image.tag: "beta1"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: solarwinds/swi-opentelemetry-collector:beta1
+  - it: Image should be correct when overridden by azure
+    template: metrics-discovery-deployment.yaml
+    set:
+      aks: true
+      global.azure.images.image.digest: "abcd"
+      global.azure.images.image.image: "swi-opentelemetry-collector:v1.2.3"
+      global.azure.images.image.registry: "azurek8s.azure.io/marketplaceimages"
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
+    - isSubset:
+        path: spec.template.metadata.labels
+        content:
+          azure-extensions-usage-release-identifier: RELEASE-NAME
+  - it: SWI endpoint check should not be included when disabled
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.swi_endpoint_check.enabled: false
+    asserts:
+    - notExists:
+        path: spec.template.spec.initContainers
+  - it: SWI endpoint check should be included in default state
+    template: metrics-discovery-deployment.yaml
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: otel-endpoint-check
+  - it: SWI endpoint check should not be included when disabled by deprecated setting
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.metrics.swi_endpoint_check: false
+    asserts:
+    - notExists:
+        path: spec.template.spec.initContainers
+  - it: Image otel-endpoint-check should be correct in default state
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: solarwinds/swi-opentelemetry-collector:1.0.0
+  - it: Image otel-endpoint-check should be correct when overridden repository
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+      otel.image.repository: "swi-opentelemetry-collector"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: swi-opentelemetry-collector:1.0.0
+  - it: Image otel-endpoint-check should be correct when overridden tag
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+      otel.image.tag: "beta1"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: solarwinds/swi-opentelemetry-collector:beta1
+  - it: Image otel-endpoint-check should be correct when overridden by azure
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.swi_endpoint_check.enabled: true
+      aks: true
+      global.azure.images.image.digest: "abcd"
+      global.azure.images.image.image: "swi-opentelemetry-collector:v1.2.3"
+      global.azure.images.image.registry: "azurek8s.azure.io/marketplaceimages"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
+  - it: Image prometheus-check should be correct in default state
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.metrics.prometheus_check: true
+      otel.metrics.prometheus.url: "http://prometheus:9090"
+    asserts:
+    - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: busybox:1.36.1
