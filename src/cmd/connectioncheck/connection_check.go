@@ -51,6 +51,7 @@ func sendTestMessage(endpoint, apiToken, clusterUid string, insecure bool) {
 	record.SetTimestamp(time.Now())
 
 	logger.Emit(ctx, record)
+	log.Print("Connection check was successful")
 }
 
 type OtelErrorHandler struct{}
