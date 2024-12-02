@@ -180,9 +180,9 @@ receivers:
     receivers:
       prometheus/discovery/http:
         {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
-        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] != "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         {{- else }}
-        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] != "https"
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] != "https"
         {{- end }}
         config:
           config:
@@ -199,9 +199,9 @@ receivers:
 
       prometheus/discovery/https:
         {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
-        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] == "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] == "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
         {{- else }}
-        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && annotations["prometheus.io/scheme"] == "https"
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] == "https"
         {{- end }}
         config:
           config:
