@@ -359,6 +359,53 @@
                         }
                     },
                     "additionalProperties": false
+                },
+                "discovery": {
+                    "type": "object",
+                    "properties": {
+                        "affinity": {
+                            "$ref": "#/definitions/k8sAffinity"
+                        },
+                        "batch": {
+                            "$ref": "#/definitions/collectorBatch"
+                        },
+                        "memory_limiter": {
+                            "$ref": "#/definitions/collectorMemoryLimiter"
+                        },
+                        "nodeSelector": {
+                            "$ref": "#/definitions/k8sNodeSelector"
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/k8sResourceRequirements"
+                        },
+                        "retry_on_failure": {
+                            "$ref": "#/definitions/collectorRetryOnFailure"
+                        },
+                        "sending_queue": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/collectorSendingQueue"
+                                },
+                                {
+                                    "properties": {
+                                        "offload_to_disk": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/collectorTelemetry"
+                        },
+                        "timeout": {
+                            "$ref": "#/definitions/collectorTimeout"
+                        },
+                        "tolerations": {
+                            "$ref": "#/definitions/k8sTolerations"
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
             "if": {
@@ -894,106 +941,109 @@
                             "description": "Configuration for scraping control plane components' metrics.",
                             "type": "object",
                             "properties": {
-                            "coredns": {
-                                "type": "object",
-                                "description": "Configuration for scraping CoreDNS metrics.",
-                                "properties": {
-                                "enabled": {
-                                    "type": "boolean",
-                                    "description": "Enable or disable scraping of CoreDNS metrics."
-                                }
-                                },
-                                "additionalProperties": false
-                            },
-                            "controller_manager": {
-                                "type": "object",
-                                "description": "Configuration for scraping metrics from the controller manager.",
-                                "properties": {
-                                "enabled": {
-                                    "type": "boolean",
-                                    "description": "Enable or disable scraping of controller manager metrics."
-                                },
-                                "label_selector": {
+                                "coredns": {
                                     "type": "object",
-                                    "description": "Label selector for identifying the controller manager pod.",
+                                    "description": "Configuration for scraping CoreDNS metrics.",
                                     "properties": {
-                                    "key": {
-                                        "type": "string",
-                                        "description": "Key of the label used for selecting the pod."
-                                    },
-                                    "value": {
-                                        "type": "string",
-                                        "description": "Value of the label used for selecting the pod."
-                                    }
+                                        "enabled": {
+                                            "type": "boolean",
+                                            "description": "Enable or disable scraping of CoreDNS metrics."
+                                        }
                                     },
                                     "additionalProperties": false
                                 },
-                                "scheme": {
-                                    "type": "string",
-                                    "description": "Scheme to access metrics (http or https)."
-                                },
-                                "metrics_path": {
-                                    "type": "string",
-                                    "description": "Path to metrics endpoint."
-                                },
-                                "port": {
-                                    "type": "integer",
-                                    "description": "Port for accessing controller manager metrics."
-                                }
-                                },
-                                "additionalProperties": false
-                            },
-                            "etcd": {
-                                "type": "object",
-                                "description": "Configuration for scraping etcd metrics.",
-                                "properties": {
-                                "enabled": {
-                                    "type": "boolean",
-                                    "description": "Enable or disable scraping of etcd metrics."
-                                },
-                                "scheme": {
-                                    "type": "string",
-                                    "description": "Scheme to access etcd metrics (http or https)."
-                                },
-                                "metrics_path": {
-                                    "type": "string",
-                                    "description": "Path to metrics endpoint."
-                                },
-                                "port": {
-                                    "type": "integer",
-                                    "description": "Port for accessing etcd metrics."
-                                },
-                                "scrape_kind": {
-                                    "type": "string",
-                                    "enum": ["static", "pod"],
-                                    "description": "Scrape kind for etcd: 'static' for static endpoints, 'pod' to scrape etcd pods in the cluster."
-                                },
-                                "label_selector": {
+                                "controller_manager": {
                                     "type": "object",
-                                    "description": "Label selector for identifying etcd pods when using scrape_kind 'pod'.",
+                                    "description": "Configuration for scraping metrics from the controller manager.",
                                     "properties": {
-                                    "key": {
-                                        "type": "string",
-                                        "description": "Key of the label used for selecting etcd pods."
-                                    },
-                                    "value": {
-                                        "type": "string",
-                                        "description": "Value of the label used for selecting etcd pods."
-                                    }
+                                        "enabled": {
+                                            "type": "boolean",
+                                            "description": "Enable or disable scraping of controller manager metrics."
+                                        },
+                                        "label_selector": {
+                                            "type": "object",
+                                            "description": "Label selector for identifying the controller manager pod.",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string",
+                                                    "description": "Key of the label used for selecting the pod."
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "description": "Value of the label used for selecting the pod."
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        },
+                                        "scheme": {
+                                            "type": "string",
+                                            "description": "Scheme to access metrics (http or https)."
+                                        },
+                                        "metrics_path": {
+                                            "type": "string",
+                                            "description": "Path to metrics endpoint."
+                                        },
+                                        "port": {
+                                            "type": "integer",
+                                            "description": "Port for accessing controller manager metrics."
+                                        }
                                     },
                                     "additionalProperties": false
                                 },
-                                "static_endpoints": {
-                                    "type": "array",
-                                    "description": "List of static IP endpoints for scraping etcd metrics.",
-                                    "items": {
-                                    "type": "string",
-                                    "description": "Static IP endpoint (e.g., '10.240.0.32:2379')."
-                                    }
+                                "etcd": {
+                                    "type": "object",
+                                    "description": "Configuration for scraping etcd metrics.",
+                                    "properties": {
+                                        "enabled": {
+                                            "type": "boolean",
+                                            "description": "Enable or disable scraping of etcd metrics."
+                                        },
+                                        "scheme": {
+                                            "type": "string",
+                                            "description": "Scheme to access etcd metrics (http or https)."
+                                        },
+                                        "metrics_path": {
+                                            "type": "string",
+                                            "description": "Path to metrics endpoint."
+                                        },
+                                        "port": {
+                                            "type": "integer",
+                                            "description": "Port for accessing etcd metrics."
+                                        },
+                                        "scrape_kind": {
+                                            "type": "string",
+                                            "enum": [
+                                                "static",
+                                                "pod"
+                                            ],
+                                            "description": "Scrape kind for etcd: 'static' for static endpoints, 'pod' to scrape etcd pods in the cluster."
+                                        },
+                                        "label_selector": {
+                                            "type": "object",
+                                            "description": "Label selector for identifying etcd pods when using scrape_kind 'pod'.",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string",
+                                                    "description": "Key of the label used for selecting etcd pods."
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "description": "Value of the label used for selecting etcd pods."
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        },
+                                        "static_endpoints": {
+                                            "type": "array",
+                                            "description": "List of static IP endpoints for scraping etcd metrics.",
+                                            "items": {
+                                                "type": "string",
+                                                "description": "Static IP endpoint (e.g., '10.240.0.32:2379')."
+                                            }
+                                        }
+                                    },
+                                    "additionalProperties": false
                                 }
-                                },
-                                "additionalProperties": false
-                            }
                             },
                             "additionalProperties": false
                         },
@@ -1249,8 +1299,8 @@
             },
             "additionalProperties": false
         },
-        "aks":{
-            "type":"boolean"
+        "aks": {
+            "type": "boolean"
         },
         "global": {
             "type": "object"

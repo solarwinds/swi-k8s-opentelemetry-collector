@@ -18,9 +18,9 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/metrics-discovery-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
-{{- if .Values.otel.metrics.telemetry.metrics.enabled }}
+{{- if .Values.aws_fargate.discovery.telemetry.metrics.enabled }}
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/port: {{ (split ":" .Values.aws_fargate.discovery.telemetry.metrics.address)._1 | quote }}
         prometheus.io/path: "/metrics"
         prometheus.io/scheme: "http"
 {{- end}}
@@ -33,17 +33,17 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.otel.metrics.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
-      {{- if .Values.otel.metrics.nodeSelector }}
+      {{- if .Values.aws_fargate.discovery.nodeSelector }}
       nodeSelector:
-      {{ toYaml .Values.otel.metrics.nodeSelector | nindent 8 }}
+      {{ toYaml .Values.aws_fargate.discovery.nodeSelector | nindent 8 }}
       {{- end }}
-      {{- if .Values.otel.metrics.tolerations }}
+      {{- if .Values.aws_fargate.discovery.tolerations }}
       tolerations:
-        {{ toYaml .Values.otel.metrics.tolerations | nindent 8 }}
+        {{ toYaml .Values.aws_fargate.discovery.tolerations | nindent 8 }}
       {{- end }}
       affinity:
-      {{- if .Values.otel.metrics.affinity }}
-        {{- toYaml .Values.otel.metrics.affinity | nindent 8 }}
+      {{- if .Values.aws_fargate.discovery.affinity }}
+        {{- toYaml .Values.aws_fargate.discovery.affinity | nindent 8 }}
       {{- else }}
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -134,9 +134,9 @@ spec:
             - name: otlp
               containerPort: {{ .Values.otel.metrics.otlp_endpoint.port }}
               protocol: TCP
-{{- if .Values.otel.metrics.telemetry.metrics.enabled }}
+{{- if .Values.aws_fargate.discovery.telemetry.metrics.enabled }}
             - name: http
-              containerPort: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
+              containerPort: {{ (split ":" .Values.aws_fargate.discovery.telemetry.metrics.address)._1 }}
               protocol: TCP
 {{- end}}
           envFrom:
@@ -159,12 +159,12 @@ spec:
               path: /
               port: 13133
           resources:
-{{ toYaml .Values.otel.metrics.resources | indent 12 }}
+{{ toYaml .Values.aws_fargate.discovery.resources | indent 12 }}
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
-{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
             - name: sending-queue
               mountPath: /var/lib/swo/sending_queue
 {{- end }} 
@@ -175,7 +175,7 @@ spec:
             items:
               - key: metrics-discovery.config
                 path: relay.yaml
-{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
         - name: sending-queue
           emptyDir: {}
 {{- end }}

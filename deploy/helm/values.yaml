@@ -704,6 +704,83 @@ aws_fargate:
     # NOTE: The FluentBit configuration expects four spaces as indentation within sections
     filters: ""
 
+  # Configuration for Fargate discovery deployment
+  discovery:
+
+    # Time to wait per individual attempt to send data to SWO
+    timeout: 15s
+
+    # Batching configuration
+    # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
+    batch:
+      send_batch_size: 512
+      send_batch_max_size: 512
+      timeout: 1s
+
+   # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
+    # See https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 2560
+      spike_limit_mib: 512
+
+    # Resource configuration for singleton collector
+    resources:
+      requests:
+        memory: 3Gi
+      limits:
+        # override if your singleton collector is being OOM-killed.
+        memory: 3Gi
+
+    # Scheduling configurations
+    # By default: set to run on linux amd64 nodes
+    nodeSelector: {}
+
+    # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    tolerations: []
+
+    # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+    affinity: {}
+
+    sending_queue:
+      enabled: true
+
+      # Number of consumers that dequeue batches; ignored if enabled is false
+      num_consumers: 20
+
+      # Maximum number of batches kept in memory before dropping; ignored if enabled is false User should calculate this as num_seconds * requests_per_second / requests_per_batch where:
+      # * num_seconds is the number of seconds to buffer in case of a backend outage
+      # * requests_per_second is the average number of requests per seconds
+      # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
+      queue_size: 1000
+
+      # When enabled sending_queue of metrics collector will be offloaded to disk. It will use emptyDir volume
+      # This will reduce amount of memory, but it will use slightly more CPU and will have slightly lower throughput
+      offload_to_disk: false
+
+    retry_on_failure:
+      enabled: true
+
+      # Time to wait after the first failure before retrying; ignored if enabled is false
+      initial_interval: 10s
+
+      # Is the upper bound on backoff; ignored if enabled is false
+      max_interval: 30s
+
+      # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+      max_elapsed_time: 300s
+
+    # Telemetry information of the collector
+    # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
+    telemetry:
+      logs:
+        enabled: true
+        level: "info"
+      metrics:
+        enabled: true
+        address: 0.0.0.0:8888
+
+
 ebpfNetworkMonitoring:
   enabled: true
   kernelCollector:

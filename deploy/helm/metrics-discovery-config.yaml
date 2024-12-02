@@ -6,20 +6,20 @@ exporters:
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
     retry_on_failure:
-      enabled: {{ .Values.otel.metrics.retry_on_failure.enabled }}
-      initial_interval: {{ .Values.otel.metrics.retry_on_failure.initial_interval }}
-      max_interval: {{ .Values.otel.metrics.retry_on_failure.max_interval }}
-      max_elapsed_time: {{ .Values.otel.metrics.retry_on_failure.max_elapsed_time }}
+      enabled: {{ .Values.aws_fargate.discovery.retry_on_failure.enabled }}
+      initial_interval: {{ .Values.aws_fargate.discovery.retry_on_failure.initial_interval }}
+      max_interval: {{ .Values.aws_fargate.discovery.retry_on_failure.max_interval }}
+      max_elapsed_time: {{ .Values.aws_fargate.discovery.retry_on_failure.max_elapsed_time }}
     sending_queue:
-      enabled: {{ .Values.otel.metrics.sending_queue.enabled }}
-      num_consumers: {{ .Values.otel.metrics.sending_queue.num_consumers }}
-      queue_size: {{ .Values.otel.metrics.sending_queue.queue_size }}
-{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+      enabled: {{ .Values.aws_fargate.discovery.sending_queue.enabled }}
+      num_consumers: {{ .Values.aws_fargate.discovery.sending_queue.num_consumers }}
+      queue_size: {{ .Values.aws_fargate.discovery.sending_queue.queue_size }}
+{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
       storage: file_storage/sending_queue
-    timeout: {{ .Values.otel.metrics.timeout }}
+    timeout: {{ .Values.aws_fargate.discovery.timeout }}
 {{- end }}
 extensions:
-{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
   file_storage/sending_queue:
     directory: /var/lib/swo/sending_queue
 {{- end }}
@@ -48,7 +48,7 @@ processors:
 {{- end }}
 
   memory_limiter:
-{{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
+{{ toYaml .Values.aws_fargate.discovery.memory_limiter | indent 4 }}
 
   transform/scope:
     metric_statements:
@@ -104,7 +104,7 @@ processors:
 {{- end }}
 
   batch/metrics:
-{{ toYaml .Values.otel.metrics.batch | indent 4 }}
+{{ toYaml .Values.aws_fargate.discovery.batch | indent 4 }}
   
 {{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
 
@@ -226,7 +226,7 @@ receivers:
 
 service:
   extensions:
-{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
     - file_storage/sending_queue
 {{- end }}
     - health_check
@@ -278,11 +278,11 @@ service:
         - forward/metric-exporter
     
   telemetry:
-{{- if .Values.otel.metrics.telemetry.logs.enabled }}
+{{- if .Values.aws_fargate.discovery.telemetry.logs.enabled }}
     logs:
-      level: {{ .Values.otel.metrics.telemetry.logs.level }}
+      level: {{ .Values.aws_fargate.discovery.telemetry.logs.level }}
 {{- end }}
-{{- if .Values.otel.metrics.telemetry.metrics.enabled }}
+{{- if .Values.aws_fargate.discovery.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.otel.metrics.telemetry.metrics.address }}
+      address: {{ .Values.aws_fargate.discovery.telemetry.metrics.address }}
 {{- end }}
