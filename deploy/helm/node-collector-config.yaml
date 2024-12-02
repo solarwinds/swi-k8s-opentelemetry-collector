@@ -99,32 +99,6 @@ processors:
 
   {{- include "common-config.resource-metrics" . | nindent 2 }}
 
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-  resource/swk8sattributes_labels_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.metrics.k8s_instrumentation.labels.excludePattern }}
-{{- end }}
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-  resource/swk8sattributes_annotations_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern }}
-{{- end }}
-
-{{- if not (empty .Values.otel.logs.k8s_instrumentation.labels.excludePattern) }}
-  resource/swk8sattributes_logs_labels_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.logs.k8s_instrumentation.labels.excludePattern }}
-{{- end }}
-{{- if not (empty .Values.otel.logs.k8s_instrumentation.annotations.excludePattern) }}
-  resource/swk8sattributes_logs_annotations_filter:
-    attributes:
-      - action: delete
-        pattern: {{ .Values.otel.logs.k8s_instrumentation.annotations.excludePattern }}
-{{- end }}
-
   groupbyattrs/common-all:
     keys:
       - k8s.container.name
@@ -796,12 +770,6 @@ service:
         - groupbyattrs/common-all
         - resource/container
         - swk8sattributes
-{{- if not (empty .Values.otel.logs.k8s_instrumentation.labels.excludePattern) }}
-        - resource/swk8sattributes_logs_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.logs.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/swk8sattributes_logs_annotations_filter
-{{- end }}
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
 {{- if (include "logsFilter" .) }}
         - filter/logs
@@ -895,12 +863,6 @@ service:
         - memory_limiter
         - filter/histograms
         - swk8sattributes
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-        - resource/swk8sattributes_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/swk8sattributes_annotations_filter
-{{- end }}
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}
