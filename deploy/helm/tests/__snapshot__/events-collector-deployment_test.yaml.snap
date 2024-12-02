@@ -70,6 +70,27 @@ Events collector spec should match snapshot when using default values:
           - mountPath: /conf
             name: opentelemetry-collector-configmap
             readOnly: true
+    initContainers:
+      - command:
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
     securityContext: {}
     serviceAccountName: RELEASE-NAME-swo-k8s-collector
     terminationGracePeriodSeconds: 600

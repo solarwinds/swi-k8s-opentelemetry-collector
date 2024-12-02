@@ -26,5 +26,21 @@ tests:
       otel.metrics.extra_scrape_metrics: ["test-metric"]
     asserts:
       - equalRaw:
-          value: | 
+          value: |
             WARNING: You have enabled autodiscovery of prometheus endpoints, so `extra_scrape_metrics` is ignored. If you are sure that those metrics won't be covered by autodiscovery set `otel.metrics.force_extra_scrape_metrics` to `true`.
+
+  - it: should show warning when otel.metrics.swi_endpoint_check is set to true
+    set:
+      otel.metrics.swi_endpoint_check: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Value `otel.metrics.swi_endpoint_check` was deprecated and will be removed in a future release. Please use `otel.swi_endpoint_check.enabled` instead.
+
+  - it: should show warning when otel.metrics.swi_endpoint_check is set to false
+    set:
+      otel.metrics.swi_endpoint_check: false
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Value `otel.metrics.swi_endpoint_check` was deprecated and will be removed in a future release. Please use `otel.swi_endpoint_check.enabled` instead.

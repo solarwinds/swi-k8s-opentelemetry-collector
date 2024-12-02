@@ -334,3 +334,13 @@ YAML with the filter.
 {{- end -}}
 
 {{- end -}}
+
+{{/*
+Check whether the SWI endpoint check is enabled
+
+Usage:
+{{ isSwiEndpointCheckEnabled . }}
+*/}}
+{{- define "isSwiEndpointCheckEnabled" -}}
+{{- ternary "true" "" (and .Values.otel.swi_endpoint_check.enabled (ternary true .Values.otel.metrics.swi_endpoint_check (eq .Values.otel.metrics.swi_endpoint_check nil))) -}}
+{{- end -}}

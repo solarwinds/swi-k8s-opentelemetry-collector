@@ -61,6 +61,29 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
       {{- end }}
+      {{- if include "isSwiEndpointCheckEnabled" . }}
+      initContainers:
+        - name: otel-endpoint-check
+          image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil .Chart.AppVersion ) }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          command:
+            - c:\swi-otelcol.exe
+            - test-connection
+            - --endpoint=$(OTEL_ENVOY_ADDRESS)
+            - --apitoken=$(SOLARWINDS_API_TOKEN)
+            - --clusteruid=$(CLUSTER_UID)
+            - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+          env:
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "common.secret" . }}
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
+      {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil .Chart.AppVersion ) }}"
