@@ -309,7 +309,7 @@ func (c *WatchResourceClient[T]) handleResourceAdd(obj any) {
 	c.observabilityTableSizeFunc(int64(resourceTableSize))
 }
 
-func (c *WatchResourceClient[T]) handleResourceUpdate(old, new any) {
+func (c *WatchResourceClient[T]) handleResourceUpdate(_, new any) {
 	c.observabilityResourceUpdated()
 	if resource, ok := new.(metav1.Object); ok {
 		c.addOrUpdateResource(resource)

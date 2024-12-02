@@ -222,14 +222,6 @@ Metrics config should match snapshot when using default values:
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        experimental_metricsgeneration/cluster:
-          rules:
-          - metric1: apiserver_request_not_failed_temp
-            metric2: apiserver_request_total_temp
-            name: k8s.apiserver.request.successrate
-            operation: percent
-            type: calculate
-            unit: Percent
         filter/ebpf:
           metrics:
             metric:
@@ -436,6 +428,14 @@ Metrics config should match snapshot when using default values:
           check_interval: 1s
           limit_mib: 2560
           spike_limit_mib: 512
+        metricsgeneration/cluster:
+          rules:
+          - metric1: apiserver_request_not_failed_temp
+            metric2: apiserver_request_total_temp
+            name: k8s.apiserver.request.successrate
+            operation: percent
+            type: calculate
+            unit: Percent
         metricstransform/aggregate_node_level:
           transforms:
           - action: insert
@@ -1493,15 +1493,7 @@ Metrics config should match snapshot when using default values:
                 name: k8s.cronjob.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.annotations.$$1
-              labels:
-              - from: cronjob
-                key_regex: (.*)
-                tag_name: k8s.cronjob.labels.$$1
+            extract: null
           daemonset:
             association:
             - sources:
@@ -1509,15 +1501,7 @@ Metrics config should match snapshot when using default values:
                 name: k8s.daemonset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.annotations.$$1
-              labels:
-              - from: daemonset
-                key_regex: (.*)
-                tag_name: k8s.daemonset.labels.$$1
+            extract: null
           deployment:
             association:
             - sources:
@@ -1525,30 +1509,8 @@ Metrics config should match snapshot when using default values:
                 name: k8s.deployment.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.annotations.$$1
-              labels:
-              - from: deployment
-                key_regex: (.*)
-                tag_name: k8s.deployment.labels.$$1
+            extract: null
           extract:
-            annotations:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.annotations.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.annotations.$$1
-            labels:
-            - from: pod
-              key_regex: (.*)
-              tag_name: k8s.pod.labels.$$1
-            - from: namespace
-              key_regex: (.*)
-              tag_name: k8s.namespace.labels.$$1
             metadata:
             - k8s.deployment.name
             - k8s.replicaset.name
@@ -1564,44 +1526,20 @@ Metrics config should match snapshot when using default values:
                 name: k8s.job.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.annotations.$$1
-              labels:
-              - from: job
-                key_regex: (.*)
-                tag_name: k8s.job.labels.$$1
+            extract: null
           node:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.node.name
-            extract:
-              annotations:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.annotations.$$1
-              labels:
-              - from: node
-                key_regex: (.*)
-                tag_name: k8s.node.labels.$$1
+            extract: null
           passthrough: false
           persistentvolume:
             association:
             - sources:
               - from: resource_attribute
                 name: k8s.persistentvolume.name
-            extract:
-              annotations:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.annotations.$$1
-              labels:
-              - from: persistentvolume
-                key_regex: (.*)
-                tag_name: k8s.persistentvolume.labels.$$1
+            extract: null
           persistentvolumeclaim:
             association:
             - sources:
@@ -1609,15 +1547,7 @@ Metrics config should match snapshot when using default values:
                 name: k8s.persistentvolumeclaim.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.annotations.$$1
-              labels:
-              - from: persistentvolumeclaim
-                key_regex: (.*)
-                tag_name: k8s.persistentvolumeclaim.labels.$$1
+            extract: null
           pod_association:
           - sources:
             - from: resource_attribute
@@ -1631,15 +1561,7 @@ Metrics config should match snapshot when using default values:
                 name: k8s.replicaset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.annotations.$$1
-              labels:
-              - from: replicaset
-                key_regex: (.*)
-                tag_name: k8s.replicaset.labels.$$1
+            extract: null
           service:
             association:
             - sources:
@@ -1647,15 +1569,7 @@ Metrics config should match snapshot when using default values:
                 name: k8s.service.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.annotations.$$1
-              labels:
-              - from: service
-                key_regex: (.*)
-                tag_name: k8s.service.labels.$$1
+            extract: null
           set_object_existence: true
           statefulset:
             association:
@@ -1664,15 +1578,7 @@ Metrics config should match snapshot when using default values:
                 name: k8s.statefulset.name
               - from: resource_attribute
                 name: k8s.namespace.name
-            extract:
-              annotations:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.annotations.$$1
-              labels:
-              - from: statefulset
-                key_regex: (.*)
-                tag_name: k8s.statefulset.labels.$$1
+            extract: null
         transform:
           metric_statements:
           - context: datapoint
@@ -1936,7 +1842,7 @@ Metrics config should match snapshot when using default values:
             - attributes/attributes_namespace_status
             - cumulativetodelta
             - deltatorate
-            - experimental_metricsgeneration/cluster
+            - metricsgeneration/cluster
             - groupbyattrs/node
             - metricstransform/aggregate_node_level
             - groupbyattrs/pod

@@ -86,7 +86,7 @@ func (kp *kubernetesprocessor) getClientResource(resource *kubernetesProcessorRe
 	}
 }
 
-func extractIdentifier(ctx context.Context, attrs pcommon.Map, associations []kube.Association) kube.ResourceIdentifier {
+func extractIdentifier(_ context.Context, attrs pcommon.Map, associations []kube.Association) kube.ResourceIdentifier {
 	for _, asso := range associations {
 		skip := false
 

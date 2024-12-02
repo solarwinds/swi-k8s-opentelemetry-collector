@@ -153,13 +153,6 @@ Custom logs filter with new syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -255,6 +248,13 @@ Custom logs filter with new syntax:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -892,14 +892,6 @@ Custom logs filter with new syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -1141,8 +1133,6 @@ Custom logs filter with new syntax:
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             - filter/logs
             receivers:
             - filelog
@@ -1177,7 +1167,7 @@ Custom logs filter with new syntax:
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:
@@ -1365,13 +1355,6 @@ Custom logs filter with old syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -1470,6 +1453,13 @@ Custom logs filter with old syntax:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -2107,14 +2097,6 @@ Custom logs filter with old syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -2438,8 +2420,6 @@ Custom logs filter with old syntax:
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -2473,7 +2453,7 @@ Custom logs filter with old syntax:
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:
@@ -2661,13 +2641,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -2759,6 +2732,13 @@ Node collector config should match snapshot when autodiscovery is disabled:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -3396,14 +3376,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -3603,8 +3575,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -3638,7 +3608,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:
@@ -3823,13 +3793,6 @@ Node collector config should match snapshot when fargate is enabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -3921,6 +3884,13 @@ Node collector config should match snapshot when fargate is enabled:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -4558,14 +4528,6 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -4770,8 +4732,6 @@ Node collector config should match snapshot when fargate is enabled:
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -4805,7 +4765,7 @@ Node collector config should match snapshot when fargate is enabled:
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:
@@ -4961,13 +4921,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -5059,6 +5012,13 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -5696,14 +5656,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -5865,8 +5817,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -5888,7 +5838,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:
@@ -6053,13 +6003,6 @@ Node collector config should match snapshot when using default values:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -6151,6 +6094,13 @@ Node collector config should match snapshot when using default values:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -6788,14 +6738,6 @@ Node collector config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -7037,8 +6979,6 @@ Node collector config should match snapshot when using default values:
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           logs/journal:
@@ -7072,7 +7012,7 @@ Node collector config should match snapshot when using default values:
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:

@@ -153,13 +153,6 @@ Node collector config for windows nodes should match snapshot when using default
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -251,6 +244,13 @@ Node collector config for windows nodes should match snapshot when using default
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -868,14 +868,6 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -1118,8 +1110,6 @@ Node collector config for windows nodes should match snapshot when using default
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           metrics:
@@ -1144,7 +1134,7 @@ Node collector config for windows nodes should match snapshot when using default
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:
@@ -1332,13 +1322,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        experimental_metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
         filter/histograms:
           metrics:
             metric:
@@ -1437,6 +1420,13 @@ Node collector config for windows nodes should match snapshot when using legacy 
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         metricstransform/istio-metrics:
           transforms:
           - action: insert
@@ -2054,14 +2044,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/swk8sattributes_logs_annotations_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.annotations\..*
-        resource/swk8sattributes_logs_labels_filter:
-          attributes:
-          - action: delete
-            pattern: k8s\.\w+\.labels\..*
         swk8sattributes:
           auth_type: serviceAccount
           extract:
@@ -2378,8 +2360,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - groupbyattrs/common-all
             - resource/container
             - swk8sattributes
-            - resource/swk8sattributes_logs_labels_filter
-            - resource/swk8sattributes_logs_annotations_filter
             receivers:
             - filelog
           metrics:
@@ -2404,7 +2384,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
-            - experimental_metricsgeneration/istio-metrics
+            - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
             receivers:
