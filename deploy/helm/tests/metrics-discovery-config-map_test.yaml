@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for metrics-discovery-config-map
+templates:
+  - metrics-discovery-config-map.yaml
+tests:
+  - it: Metrics discovery config should match snapshot when Fargate is enabled
+    template: metrics-discovery-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Metrics discovery config should not exist when using default values (Fargate is disabled)
+    template: metrics-discovery-config-map.yaml
+    asserts:
+      - hasDocuments:
+          count: 0      

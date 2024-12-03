@@ -16,8 +16,8 @@ exporters:
       queue_size: {{ .Values.otel.metrics.sending_queue.queue_size }}
 {{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
       storage: file_storage/sending_queue
-    timeout: {{ .Values.otel.metrics.timeout }}
 {{- end }}
+    timeout: {{ .Values.otel.metrics.timeout }}
 extensions:
 {{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
   file_storage/sending_queue:
@@ -759,30 +759,6 @@ processors:
         action: delete
 
   {{- include "common-config.attributes-remove-prometheus-attributes" . | nindent 2 }}
-
-  resource/events:
-    attributes:
-      # Collector and Manifest version
-      - key: sw.k8s.agent.manifest.version
-        value: ${MANIFEST_VERSION}
-        action: insert
-
-      - key: sw.k8s.agent.app.version
-        value: ${APP_VERSION}
-        action: insert
-
-      # Cluster
-      - key: sw.k8s.cluster.uid
-        value: ${CLUSTER_UID}
-        action: insert
-
-      - key: k8s.cluster.name
-        value: ${CLUSTER_NAME}
-        action: insert
-
-      - key: sw.k8s.log.type
-        value: event
-        action: insert
 
   resource/otlp-metrics:
     attributes:

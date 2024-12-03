@@ -18,6 +18,7 @@ Metrics config should match snapshot when fargate is enabled:
             enabled: true
             num_consumers: 20
             queue_size: 1000
+          timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -1345,23 +1346,6 @@ Metrics config should match snapshot when fargate is enabled:
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
-        resource/events:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
-            key: sw.k8s.log.type
-            value: event
         resource/metrics:
           attributes:
           - action: delete
@@ -1887,6 +1871,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             enabled: true
             num_consumers: 20
             queue_size: 1000
+          timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -3217,23 +3202,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
-        resource/events:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
-            key: sw.k8s.log.type
-            value: event
         resource/metrics:
           attributes:
           - action: delete
@@ -3701,6 +3669,7 @@ Metrics config should match snapshot when using default values:
             enabled: true
             num_consumers: 20
             queue_size: 1000
+          timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
@@ -5031,23 +5000,6 @@ Metrics config should match snapshot when using default values:
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
-        resource/events:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
-            key: sw.k8s.log.type
-            value: event
         resource/metrics:
           attributes:
           - action: delete

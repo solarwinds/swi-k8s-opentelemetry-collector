@@ -1,0 +1,161 @@
+{{- if and .Values.otel.metrics.enabled .Values.aws_fargate.enabled .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.fullname" (tuple . "-metrics-discovery") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: swo-k8s-collector
+{{ include "common.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" (tuple . "-metrics-discovery") }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/metrics-discovery-config-map.yaml") . | sha256sum }}
+        checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+        checksum/values: {{ toJson .Values | sha256sum }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ (split ":" .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+{{- end}}
+      labels:
+        app.kubernetes.io/name: swo-k8s-collector
+{{ include "common.labels" . | indent 8 }}
+        app: {{ include "common.fullname" (tuple . "-metrics-discovery") }}
+{{ include "common.pod-labels" . | indent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.otel.metrics.terminationGracePeriodSeconds }}
+      serviceAccountName: {{ include "common.fullname" . }}
+      securityContext: {}
+      {{- if .Values.aws_fargate.metrics.autodiscovery.nodeSelector }}
+      nodeSelector:
+      {{ toYaml .Values.aws_fargate.metrics.autodiscovery.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.aws_fargate.metrics.autodiscovery.tolerations }}
+      tolerations:
+        {{ toYaml .Values.aws_fargate.metrics.autodiscovery.tolerations | nindent 8 }}
+      {{- end }}
+      affinity:
+      {{- if .Values.aws_fargate.metrics.autodiscovery.affinity }}
+        {{- toYaml .Values.aws_fargate.metrics.autodiscovery.affinity | nindent 8 }}
+      {{- else }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if include "isSwiEndpointCheckEnabled" . }}
+      initContainers:
+        - name: otel-endpoint-check
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          command:
+            - /swi-otelcol
+            - test-connection
+            - --endpoint=$(OTEL_ENVOY_ADDRESS)
+            - --apitoken=$(SOLARWINDS_API_TOKEN)
+            - --clusteruid=$(CLUSTER_UID)
+            - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+          env:
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "common.secret" . }}
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
+      {{- end }}
+      containers:
+        - name: swi-opentelemetry-collector
+          command:
+            - /swi-otelcol
+            - --config=/conf/relay.yaml
+          securityContext: 
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+              - ALL
+
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          env:
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "common.secret" . }}
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+          ports:
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
+            - name: http
+              containerPort: {{ (split ":" .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address)._1 }}
+              protocol: TCP
+{{- end}}
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
+          livenessProbe:
+            {{- if .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
+            {{- end }}
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            {{- if .Values.otel.metrics.readinessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.otel.metrics.readinessProbe.initialDelaySeconds }}
+            {{- end }}
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+{{ toYaml .Values.aws_fargate.metrics.autodiscovery.resources | indent 12 }}
+          volumeMounts:
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+              readOnly: true
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
+            - name: sending-queue
+              mountPath: /var/lib/swo/sending_queue
+{{- end }} 
+      volumes:
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: {{ include "common.fullname" (tuple . "-metrics-discovery-config") }}
+            items:
+              - key: metrics-discovery.config
+                path: relay.yaml
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
+        - name: sending-queue
+          emptyDir: {}
+{{- end }}
+{{- end}}

@@ -1,0 +1,268 @@
+exporters:
+  otlp:
+    endpoint: ${OTEL_ENVOY_ADDRESS}
+    tls:
+      insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+    headers:
+      "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    retry_on_failure:
+      enabled: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.enabled }}
+      initial_interval: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.initial_interval }}
+      max_interval: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.max_interval }}
+      max_elapsed_time: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.max_elapsed_time }}
+    sending_queue:
+      enabled: {{ .Values.aws_fargate.metrics.autodiscovery.sending_queue.enabled }}
+      num_consumers: {{ .Values.aws_fargate.metrics.autodiscovery.sending_queue.num_consumers }}
+      queue_size: {{ .Values.aws_fargate.metrics.autodiscovery.sending_queue.queue_size }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
+      storage: file_storage/sending_queue
+{{- end }}
+    timeout: {{ .Values.aws_fargate.metrics.autodiscovery.timeout }}
+extensions:
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
+  file_storage/sending_queue:
+    directory: /var/lib/swo/sending_queue
+{{- end }}
+  health_check:
+    endpoint: 0.0.0.0:13133
+  k8s_observer:
+    auth_type: serviceAccount
+    observe_pods: true    
+
+processors:
+  swk8sattributes:
+{{ include "common.k8s-instrumentation" . | indent 4 }}
+
+  memory_limiter:
+{{ toYaml .Values.aws_fargate.metrics.autodiscovery.memory_limiter | indent 4 }}
+
+  transform/scope:
+    metric_statements:
+      - context: scope
+        statements:
+          - set(name, "")
+          - set(version, "")
+
+  metricstransform/rename/discovery:
+    transforms:
+      # add `k8s.` prefix to all metrics
+      - include: ^(.*)$$
+        match_type: regexp
+        action: update
+        new_name: {{ .Values.otel.metrics.autodiscovery.prefix }}$${1}
+
+ 
+  groupbyattrs/common-all:
+    keys:
+      - k8s.container.name
+      - k8s.namespace.name
+      - k8s.pod.name
+      - k8s.pod.uid
+      - k8s.node.name
+      - host.name
+      - service.name
+  
+  resource/all:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+ 
+
+{{- if .Values.otel.metrics.filter }}
+  filter/metrics:
+    metrics:
+{{ toYaml .Values.otel.metrics.filter | indent 6 }}
+{{- end }}
+
+  batch/metrics:
+{{ toYaml .Values.aws_fargate.metrics.autodiscovery.batch | indent 4 }}
+  
+{{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
+
+  filter/histograms:
+    metrics:
+      metric:
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds")'
+
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+  filter/metrics-discovery:
+    metrics:
+{{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 6 }}
+{{- end }}
+
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+  cumulativetodelta/discovery:
+    include:
+      metrics:
+{{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+        - {{ . }}
+{{- end }}
+      match_type: strict
+  deltatorate/discovery:
+    metrics:
+{{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+      - {{ . }}
+{{- end }}
+{{- end }}
+
+{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+  # in case the prefix differs from "k8s." we need to copy the required metrics
+  # so that SWO built-in dashboards works correctly
+{{- $arrayOfRequiredMetrics := list 
+  "etcd_disk_backend_commit_duration_seconds"
+  "etcd_disk_wal_fsync_duration_seconds" 
+  "etcd_network_client_grpc_received_bytes_total" 
+  "etcd_network_client_grpc_sent_bytes_total" 
+  "etcd_network_peer_received_bytes_total" 
+  "etcd_network_peer_sent_bytes_total" 
+  "etcd_server_leader_changes_seen_total" 
+  "etcd_server_proposals_applied_total" 
+  "etcd_server_proposals_committed_total"
+  "etcd_server_proposals_failed_total"
+  "etcd_server_proposals_pending"
+  "etcd_server_has_leader"
+  "etcd_mvcc_db_total_size_in_bytes"
+  "process_resident_memory_bytes"
+  "grpc_server_started_total"
+  "grpc_server_handled_total"
+  "rest_client_request_duration_seconds"
+  "rest_client_requests_total"
+  "workqueue_adds_total"
+  "workqueue_depth"
+  "workqueue_queue_duration_seconds"
+}}
+  metricstransform/copy-required-metrics:
+    transforms:
+    {{- $root := . }}
+    {{- range $index, $metric := $arrayOfRequiredMetrics }}
+      - include: {{ $root.Values.otel.metrics.autodiscovery.prefix }}{{ $metric }}
+        action: insert
+        new_name: k8s.{{ $metric }}
+    {{- end }}
+{{- end }}
+
+connectors:
+  forward/metric-exporter:
+
+receivers:
+  receiver_creator/discovery:
+    watch_observers:
+      - k8s_observer
+    receivers:
+      prometheus/discovery/http:
+        {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] != "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        {{- else }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] != "https"
+        {{- end }}
+        config:
+          config:
+            scrape_configs:
+              - job_name: pod
+                scheme: "http"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
+                honor_timestamps: false
+                honor_labels: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
+
+      prometheus/discovery/https:
+        {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] == "https" && {{ .Values.otel.metrics.autodiscovery.prometheusEndpoints.additionalRules }}
+        {{- else }}
+        rule: type == "pod" && annotations["prometheus.io/scrape"] == "true" && labels["eks.amazonaws.com/fargate-profile"] != "" && annotations["prometheus.io/scheme"] == "https"
+        {{- end }}
+        config:
+          config:
+            scrape_configs:
+              - job_name: pod
+                scheme: "https"
+                scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+                metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
+                honor_timestamps: false
+                honor_labels: true
+                authorization:
+                  type: Bearer
+                  credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  insecure_skip_verify: true
+                follow_redirects: true
+                enable_http2: true
+                static_configs:
+                  - targets:
+                      - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
+
+service:
+  extensions:
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
+    - file_storage/sending_queue
+{{- end }}
+    - health_check
+    - k8s_observer
+  pipelines:
+    metrics/discovery:
+      exporters:
+        - forward/metric-exporter
+      processors:
+        - memory_limiter
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+        - filter/metrics-discovery
+{{- end }}        
+{{- if .Values.otel.metrics.autodiscovery.prefix }}
+        - metricstransform/rename/discovery
+{{- end }}
+{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+        - metricstransform/copy-required-metrics
+{{- end }}
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
+        - cumulativetodelta/discovery
+        - deltatorate/discovery
+{{- end }}
+        - groupbyattrs/common-all
+        - resource/all
+      receivers:
+        - receiver_creator/discovery
+    
+    metrics:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - filter/histograms
+        - swk8sattributes
+{{- if .Values.otel.metrics.filter }}
+        - filter/metrics
+{{- end }}
+        - filter/remove_temporary_metrics
+        - transform/scope
+        - batch/metrics
+      receivers:
+        - forward/metric-exporter
+    
+  telemetry:
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.enabled }}
+    logs:
+      level: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.level }}
+{{- end }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
+    metrics:
+      address: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address }}
+{{- end }}
