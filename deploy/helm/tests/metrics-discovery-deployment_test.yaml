@@ -44,21 +44,6 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: solarwinds/swi-opentelemetry-collector:beta1
-  - it: Image should be correct when overridden by azure
-    template: metrics-discovery-deployment.yaml
-    set:
-      aks: true
-      global.azure.images.image.digest: "abcd"
-      global.azure.images.image.image: "swi-opentelemetry-collector:v1.2.3"
-      global.azure.images.image.registry: "azurek8s.azure.io/marketplaceimages"
-    asserts:
-    - equal:
-          path: spec.template.spec.containers[0].image
-          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
-    - isSubset:
-        path: spec.template.metadata.labels
-        content:
-          azure-extensions-usage-release-identifier: RELEASE-NAME
   - it: SWI endpoint check should not be included when disabled
     template: metrics-discovery-deployment.yaml
     set:
@@ -105,24 +90,3 @@ tests:
     - equal:
           path: spec.template.spec.initContainers[0].image
           value: solarwinds/swi-opentelemetry-collector:beta1
-  - it: Image otel-endpoint-check should be correct when overridden by azure
-    template: metrics-discovery-deployment.yaml
-    set:
-      otel.swi_endpoint_check.enabled: true
-      aks: true
-      global.azure.images.image.digest: "abcd"
-      global.azure.images.image.image: "swi-opentelemetry-collector:v1.2.3"
-      global.azure.images.image.registry: "azurek8s.azure.io/marketplaceimages"
-    asserts:
-    - equal:
-          path: spec.template.spec.initContainers[0].image
-          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
-  - it: Image prometheus-check should be correct in default state
-    template: metrics-discovery-deployment.yaml
-    set:
-      otel.metrics.prometheus_check: true
-      otel.metrics.prometheus.url: "http://prometheus:9090"
-    asserts:
-    - equal:
-          path: spec.template.spec.initContainers[0].image
-          value: busybox:1.36.1

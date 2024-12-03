@@ -11,16 +11,16 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "common.fullname" (tuple . "-metrics") }}
+      app: {{ include "common.fullname" (tuple . "-metrics-discovery") }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/metrics-discovery-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
-{{- if .Values.aws_fargate.discovery.telemetry.metrics.enabled }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ (split ":" .Values.aws_fargate.discovery.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/port: {{ (split ":" .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address)._1 | quote }}
         prometheus.io/path: "/metrics"
         prometheus.io/scheme: "http"
 {{- end}}
@@ -33,17 +33,17 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.otel.metrics.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
       securityContext: {}
-      {{- if .Values.aws_fargate.discovery.nodeSelector }}
+      {{- if .Values.aws_fargate.metrics.autodiscovery.nodeSelector }}
       nodeSelector:
-      {{ toYaml .Values.aws_fargate.discovery.nodeSelector | nindent 8 }}
+      {{ toYaml .Values.aws_fargate.metrics.autodiscovery.nodeSelector | nindent 8 }}
       {{- end }}
-      {{- if .Values.aws_fargate.discovery.tolerations }}
+      {{- if .Values.aws_fargate.metrics.autodiscovery.tolerations }}
       tolerations:
-        {{ toYaml .Values.aws_fargate.discovery.tolerations | nindent 8 }}
+        {{ toYaml .Values.aws_fargate.metrics.autodiscovery.tolerations | nindent 8 }}
       {{- end }}
       affinity:
-      {{- if .Values.aws_fargate.discovery.affinity }}
-        {{- toYaml .Values.aws_fargate.discovery.affinity | nindent 8 }}
+      {{- if .Values.aws_fargate.metrics.autodiscovery.affinity }}
+        {{- toYaml .Values.aws_fargate.metrics.autodiscovery.affinity | nindent 8 }}
       {{- else }}
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -65,15 +65,6 @@ spec:
       {{- end }}
       {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) (include "isSwiEndpointCheckEnabled" .) }}
       initContainers:
-        {{- if and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url }}
-        - name: prometheus-check
-          image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box") }}"
-          imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
-          command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"']
-          envFrom:
-            - configMapRef:
-                name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
-        {{- end }}
         {{- if include "isSwiEndpointCheckEnabled" . }}
         - name: otel-endpoint-check
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
@@ -115,11 +106,6 @@ spec:
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
-            - name: MY_POD_IP
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: status.podIP
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -131,19 +117,14 @@ spec:
                 resourceFieldRef:
                   resource: limits.memory
           ports:
-            - name: otlp
-              containerPort: {{ .Values.otel.metrics.otlp_endpoint.port }}
-              protocol: TCP
-{{- if .Values.aws_fargate.discovery.telemetry.metrics.enabled }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
             - name: http
-              containerPort: {{ (split ":" .Values.aws_fargate.discovery.telemetry.metrics.address)._1 }}
+              containerPort: {{ (split ":" .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address)._1 }}
               protocol: TCP
 {{- end}}
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-common-env") }}
-            - configMapRef:
-                name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
           livenessProbe:
             {{- if .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
             initialDelaySeconds: {{ .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
@@ -159,12 +140,12 @@ spec:
               path: /
               port: 13133
           resources:
-{{ toYaml .Values.aws_fargate.discovery.resources | indent 12 }}
+{{ toYaml .Values.aws_fargate.metrics.autodiscovery.resources | indent 12 }}
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
-{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
             - name: sending-queue
               mountPath: /var/lib/swo/sending_queue
 {{- end }} 
@@ -175,7 +156,7 @@ spec:
             items:
               - key: metrics-discovery.config
                 path: relay.yaml
-{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
         - name: sending-queue
           emptyDir: {}
 {{- end }}

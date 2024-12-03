@@ -6,20 +6,20 @@ exporters:
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
     retry_on_failure:
-      enabled: {{ .Values.aws_fargate.discovery.retry_on_failure.enabled }}
-      initial_interval: {{ .Values.aws_fargate.discovery.retry_on_failure.initial_interval }}
-      max_interval: {{ .Values.aws_fargate.discovery.retry_on_failure.max_interval }}
-      max_elapsed_time: {{ .Values.aws_fargate.discovery.retry_on_failure.max_elapsed_time }}
+      enabled: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.enabled }}
+      initial_interval: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.initial_interval }}
+      max_interval: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.max_interval }}
+      max_elapsed_time: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.max_elapsed_time }}
     sending_queue:
-      enabled: {{ .Values.aws_fargate.discovery.sending_queue.enabled }}
-      num_consumers: {{ .Values.aws_fargate.discovery.sending_queue.num_consumers }}
-      queue_size: {{ .Values.aws_fargate.discovery.sending_queue.queue_size }}
-{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
+      enabled: {{ .Values.aws_fargate.metrics.autodiscovery.sending_queue.enabled }}
+      num_consumers: {{ .Values.aws_fargate.metrics.autodiscovery.sending_queue.num_consumers }}
+      queue_size: {{ .Values.aws_fargate.metrics.autodiscovery.sending_queue.queue_size }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
       storage: file_storage/sending_queue
-    timeout: {{ .Values.aws_fargate.discovery.timeout }}
+    timeout: {{ .Values.aws_fargate.metrics.autodiscovery.timeout }}
 {{- end }}
 extensions:
-{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
   file_storage/sending_queue:
     directory: /var/lib/swo/sending_queue
 {{- end }}
@@ -34,7 +34,7 @@ processors:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
   memory_limiter:
-{{ toYaml .Values.aws_fargate.discovery.memory_limiter | indent 4 }}
+{{ toYaml .Values.aws_fargate.metrics.autodiscovery.memory_limiter | indent 4 }}
 
   transform/scope:
     metric_statements:
@@ -90,7 +90,7 @@ processors:
 {{- end }}
 
   batch/metrics:
-{{ toYaml .Values.aws_fargate.discovery.batch | indent 4 }}
+{{ toYaml .Values.aws_fargate.metrics.autodiscovery.batch | indent 4 }}
   
 {{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
 
@@ -212,7 +212,7 @@ receivers:
 
 service:
   extensions:
-{{- if .Values.aws_fargate.discovery.sending_queue.offload_to_disk }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
     - file_storage/sending_queue
 {{- end }}
     - health_check
@@ -248,12 +248,6 @@ service:
         - memory_limiter
         - filter/histograms
         - swk8sattributes
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.labels.excludePattern) }}
-        - resource/swk8sattributes_labels_filter
-{{- end }}
-{{- if not (empty .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern) }}
-        - resource/swk8sattributes_annotations_filter
-{{- end }}
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}
@@ -264,11 +258,11 @@ service:
         - forward/metric-exporter
     
   telemetry:
-{{- if .Values.aws_fargate.discovery.telemetry.logs.enabled }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.enabled }}
     logs:
-      level: {{ .Values.aws_fargate.discovery.telemetry.logs.level }}
+      level: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.level }}
 {{- end }}
-{{- if .Values.aws_fargate.discovery.telemetry.metrics.enabled }}
+{{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.aws_fargate.discovery.telemetry.metrics.address }}
+      address: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address }}
 {{- end }}

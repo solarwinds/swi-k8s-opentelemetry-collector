@@ -360,52 +360,58 @@
                     },
                     "additionalProperties": false
                 },
-                "discovery": {
+                "metrics": {
                     "type": "object",
                     "properties": {
-                        "affinity": {
-                            "$ref": "#/definitions/k8sAffinity"
-                        },
-                        "batch": {
-                            "$ref": "#/definitions/collectorBatch"
-                        },
-                        "memory_limiter": {
-                            "$ref": "#/definitions/collectorMemoryLimiter"
-                        },
-                        "nodeSelector": {
-                            "$ref": "#/definitions/k8sNodeSelector"
-                        },
-                        "resources": {
-                            "$ref": "#/definitions/k8sResourceRequirements"
-                        },
-                        "retry_on_failure": {
-                            "$ref": "#/definitions/collectorRetryOnFailure"
-                        },
-                        "sending_queue": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/collectorSendingQueue"
+                        "autodiscovery": {
+                            "type": "object",
+                            "properties": {
+                                "affinity": {
+                                    "$ref": "#/definitions/k8sAffinity"
                                 },
-                                {
-                                    "properties": {
-                                        "offload_to_disk": {
-                                            "type": "boolean"
+                                "batch": {
+                                    "$ref": "#/definitions/collectorBatch"
+                                },
+                                "memory_limiter": {
+                                    "$ref": "#/definitions/collectorMemoryLimiter"
+                                },
+                                "nodeSelector": {
+                                    "$ref": "#/definitions/k8sNodeSelector"
+                                },
+                                "resources": {
+                                    "$ref": "#/definitions/k8sResourceRequirements"
+                                },
+                                "retry_on_failure": {
+                                    "$ref": "#/definitions/collectorRetryOnFailure"
+                                },
+                                "sending_queue": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/definitions/collectorSendingQueue"
+                                        },
+                                        {
+                                            "properties": {
+                                                "offload_to_disk": {
+                                                    "type": "boolean"
+                                                }
+                                            }
                                         }
-                                    }
+                                    ]
+                                },
+                                "telemetry": {
+                                    "$ref": "#/definitions/collectorTelemetry"
+                                },
+                                "timeout": {
+                                    "$ref": "#/definitions/collectorTimeout"
+                                },
+                                "tolerations": {
+                                    "$ref": "#/definitions/k8sTolerations"
                                 }
-                            ]
+                            },
+                            "additionalProperties": false
                         },
-                        "telemetry": {
-                            "$ref": "#/definitions/collectorTelemetry"
-                        },
-                        "timeout": {
-                            "$ref": "#/definitions/collectorTimeout"
-                        },
-                        "tolerations": {
-                            "$ref": "#/definitions/k8sTolerations"
-                        }
-                    },
-                    "additionalProperties": false
+                        "additionalProperties": false
+                    }
                 }
             },
             "if": {
