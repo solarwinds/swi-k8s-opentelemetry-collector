@@ -556,17 +556,6 @@ receivers:
         to: body
 {{- else }}
     operators:
-# The 'container' operator has hardcoded that 'log.file.path' must use '/' as a separator, whic is not true on Windows
-{{- if (.isWindows) }}
-      - type: add
-        field: attributes["log.file.path.windows"]
-        value: 'EXPR(replace(attributes["log.file.path"], "\\", "/"))'
-      - type: remove
-        field: attributes["log.file.path"]
-      - type: move
-        from: attributes["log.file.path.windows"]
-        to: attributes["log.file.path"]
-{{- end }}
       - id: container-parser
         type: container
       - type: remove
