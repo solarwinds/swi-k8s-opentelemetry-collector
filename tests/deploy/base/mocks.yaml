@@ -36,32 +36,20 @@ data:
     extensions:
       health_check:
         endpoint: 0.0.0.0:13133
-      memory_ballast:
-        size_mib: 204
     processors:
       filter/events:
-        logs: 
-          include:
-            match_type: strict
-            resource_attributes:
-              - key: sw.k8s.log.type
-                value: event
+        logs:
+          log_record:
+            - not(IsMatch(resource.attributes["sw.k8s.log.type"], "event"))
       filter/manifests:
-        logs: 
-          include:
-            match_type: strict
-            resource_attributes:
-              - key: sw.k8s.log.type
-                value: manifest
+        logs:
+          log_record:
+            - not(IsMatch(resource.attributes["sw.k8s.log.type"], "manifest"))
       filter/logs:
-        logs: 
-          exclude:
-            match_type: strict
-            resource_attributes:
-              - key: sw.k8s.log.type
-                value: event
-              - key: sw.k8s.log.type
-                value: manifest
+        logs:
+          log_record:
+            - IsMatch(resource.attributes["sw.k8s.log.type"], "event")
+            - IsMatch(resource.attributes["sw.k8s.log.type"], "manifest")
     receivers:
       otlp:
         protocols:
@@ -70,7 +58,6 @@ data:
     service:
       extensions:
       - health_check
-      - memory_ballast
       pipelines:
         metrics:
           exporters:
@@ -148,8 +135,13 @@ spec:
             - --config=/conf/relay.yaml
           securityContext:
             runAsUser: 0
-          image: "otel/opentelemetry-collector-contrib:0.107.0"
+          image: "otel/opentelemetry-collector-contrib:0.113.0"
           imagePullPolicy: IfNotPresent
+          env:
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
           ports:
             - name: otlp
               containerPort: 9082
