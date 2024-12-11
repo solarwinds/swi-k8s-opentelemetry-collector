@@ -161,7 +161,6 @@ processors:
       log_statements:
         - context: log
           statements:
-{{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
             # set event namespace where it will be stored in SWO.
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
             
@@ -187,23 +186,6 @@ processors:
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-{{- else }}
-            # set event namespace where it will be stored in SWO.
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            
-            # Add new attribute `watch-type` with type of the change - "ADDED", "MODIFIED", "DELETED"
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"] != nil
-
-            # in watch mode body has `object` attribute with the manifest, in pull mode body is the manifest
-            # flaten body structure to have only raw manifest in body in all the cases
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"] == "ConfigMap"
-
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
-{{- end }}
   transform/scope:
     log_statements:
       - context: scope

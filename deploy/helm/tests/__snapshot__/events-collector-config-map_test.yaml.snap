@@ -1866,8 +1866,39 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
             - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
               == "ConfigMap"
+            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
+              == "CronJob"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
+              == "DaemonSet"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
+              == "Deployment"
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+              == "Job"
+            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+              == "Node"
+            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
+              where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
+              body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+              == "Pod"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
+              == "ReplicaSet"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
+              == "Service"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
+              == "StatefulSet"
             - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
+              "Ingress" or body["kind"] == "VirtualService"
             - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
+            - delete_key(attributes, "k8s.resource.name")
+            - delete_key(attributes, "event.name")
+            - delete_key(attributes, "event.domain")
         transform/namespace:
           log_statements:
           - context: log
