@@ -30,22 +30,12 @@ Custom events filter with new syntax:
           logs:
             log_record:
             - not(IsMatch(resource.attributes["k8s.namespace.name"], "^.*$"))
-        filter/k8s_collector_config_exclude:
-          error_mode: ignore
-          logs:
-            log_record:
-            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
-              == "values-config-map"
         filter/k8s_collector_config_include:
           error_mode: ignore
           logs:
             log_record:
             - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
               != "values-config-map"
-        groupbyattrs/k8s_collector_config_manifest:
-          keys:
-          - k8s.namespace.name
-          - k8s.configmap.name
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -248,19 +238,6 @@ Custom events filter with new syntax:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
-        transform/k8s_collector_config_manifest:
-          error_mode: ignore
-          log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
-              != nil
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -521,14 +498,6 @@ Custom events filter with new syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
-        k8sobjects/k8s_collector_config:
-          auth_type: serviceAccount
-          objects:
-          - interval: 60m
-            mode: pull
-            name: configmaps
-          - mode: watch
-            name: configmaps
       service:
         extensions:
         - health_check
@@ -549,21 +518,6 @@ Custom events filter with new syntax:
             - batch
             receivers:
             - k8s_events
-          logs/k8scollectorconfig:
-            exporters:
-            - otlp
-            processors:
-            - memory_limiter
-            - transform/k8s_collector_config_manifest
-            - groupbyattrs/k8s_collector_config_manifest
-            - transform/set_labels_and_annotations_for_entities
-            - transform/stringify_body
-            - resource/manifest
-            - filter/k8s_collector_config_include
-            - transform/scope
-            - batch
-            receivers:
-            - k8sobjects/k8s_collector_config
           logs/manifests:
             exporters:
             - otlp
@@ -576,7 +530,6 @@ Custom events filter with new syntax:
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - filter/k8s_collector_config_exclude
             - transform/scope
             - batch
             receivers:
@@ -621,22 +574,12 @@ Custom events filter with old syntax:
               record_attributes:
               - key: k8s.namespace.name
                 value: ^.*$
-        filter/k8s_collector_config_exclude:
-          error_mode: ignore
-          logs:
-            log_record:
-            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
-              == "values-config-map"
         filter/k8s_collector_config_include:
           error_mode: ignore
           logs:
             log_record:
             - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
               != "values-config-map"
-        groupbyattrs/k8s_collector_config_manifest:
-          keys:
-          - k8s.namespace.name
-          - k8s.configmap.name
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -839,19 +782,6 @@ Custom events filter with old syntax:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
-        transform/k8s_collector_config_manifest:
-          error_mode: ignore
-          log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
-              != nil
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1112,14 +1042,6 @@ Custom events filter with old syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
-        k8sobjects/k8s_collector_config:
-          auth_type: serviceAccount
-          objects:
-          - interval: 60m
-            mode: pull
-            name: configmaps
-          - mode: watch
-            name: configmaps
       service:
         extensions:
         - health_check
@@ -1140,21 +1062,6 @@ Custom events filter with old syntax:
             - batch
             receivers:
             - k8s_events
-          logs/k8scollectorconfig:
-            exporters:
-            - otlp
-            processors:
-            - memory_limiter
-            - transform/k8s_collector_config_manifest
-            - groupbyattrs/k8s_collector_config_manifest
-            - transform/set_labels_and_annotations_for_entities
-            - transform/stringify_body
-            - resource/manifest
-            - filter/k8s_collector_config_include
-            - transform/scope
-            - batch
-            receivers:
-            - k8sobjects/k8s_collector_config
           logs/manifests:
             exporters:
             - otlp
@@ -1167,7 +1074,6 @@ Custom events filter with old syntax:
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - filter/k8s_collector_config_exclude
             - transform/scope
             - batch
             receivers:
@@ -1205,22 +1111,12 @@ Events config should match snapshot when using default values:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
-        filter/k8s_collector_config_exclude:
-          error_mode: ignore
-          logs:
-            log_record:
-            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
-              == "values-config-map"
         filter/k8s_collector_config_include:
           error_mode: ignore
           logs:
             log_record:
             - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
               != "values-config-map"
-        groupbyattrs/k8s_collector_config_manifest:
-          keys:
-          - k8s.namespace.name
-          - k8s.configmap.name
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -1423,19 +1319,6 @@ Events config should match snapshot when using default values:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
-        transform/k8s_collector_config_manifest:
-          error_mode: ignore
-          log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
-              != nil
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1696,14 +1579,6 @@ Events config should match snapshot when using default values:
             name: statefulsets
           - mode: watch
             name: statefulsets
-        k8sobjects/k8s_collector_config:
-          auth_type: serviceAccount
-          objects:
-          - interval: 60m
-            mode: pull
-            name: configmaps
-          - mode: watch
-            name: configmaps
       service:
         extensions:
         - health_check
@@ -1723,21 +1598,6 @@ Events config should match snapshot when using default values:
             - batch
             receivers:
             - k8s_events
-          logs/k8scollectorconfig:
-            exporters:
-            - otlp
-            processors:
-            - memory_limiter
-            - transform/k8s_collector_config_manifest
-            - groupbyattrs/k8s_collector_config_manifest
-            - transform/set_labels_and_annotations_for_entities
-            - transform/stringify_body
-            - resource/manifest
-            - filter/k8s_collector_config_include
-            - transform/scope
-            - batch
-            receivers:
-            - k8sobjects/k8s_collector_config
           logs/manifests:
             exporters:
             - otlp
@@ -1750,7 +1610,6 @@ Events config should match snapshot when using default values:
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
-            - filter/k8s_collector_config_exclude
             - transform/scope
             - batch
             receivers:
@@ -1788,21 +1647,28 @@ Events config should not contain manifest collection pipeline when disabled:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
-        filter/k8s_collector_config_exclude:
-          error_mode: ignore
-          logs:
-            log_record:
-            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
-              == "values-config-map"
         filter/k8s_collector_config_include:
           error_mode: ignore
           logs:
             log_record:
             - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
               != "values-config-map"
-        groupbyattrs/k8s_collector_config_manifest:
+        groupbyattrs/manifest:
           keys:
+          - k8s.pod.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.replicaset.name
+          - k8s.daemonset.name
+          - k8s.job.name
+          - k8s.cronjob.name
+          - k8s.node.name
           - k8s.namespace.name
+          - k8s.service.name
+          - k8s.persistentvolume.name
+          - k8s.persistentvolumeclaim.name
+          - k8s.ingress.name
+          - sw.k8s.ingress.type
           - k8s.configmap.name
         memory_limiter:
           check_interval: 1s
@@ -1989,7 +1855,7 @@ Events config should not contain manifest collection pipeline when disabled:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
-        transform/k8s_collector_config_manifest:
+        transform/manifest:
           error_mode: ignore
           log_statements:
           - context: log
@@ -2013,6 +1879,89 @@ Events config should not contain manifest collection pipeline when disabled:
             statements:
             - set(name, "")
             - set(version, "")
+        transform/set_labels_and_annotations_for_entities:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
+              == "ConfigMap" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
+              == "CronJob" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
+              == "DaemonSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
+              == "Deployment" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
+              == "Ingress" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
+              "Job" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
+              "Node" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
+              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
+              == "PersistentVolume" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
+              "Pod" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
+              == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
+              == "Service" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
+              == "StatefulSet" and cache["annotations"] != nil
+            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["annotations"] != nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
+              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
+              == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume"
+              or body["kind"] == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] ==
+              "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
+              == "PersistentVolumeClaim" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
+              and cache["labels"] != nil
+            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["labels"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -2067,7 +2016,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(body, body.string)
       receivers:
         k8s_events: null
-        k8sobjects/k8s_collector_config:
+        k8sobjects:
           auth_type: serviceAccount
           objects:
           - interval: 60m
@@ -2094,21 +2043,23 @@ Events config should not contain manifest collection pipeline when disabled:
             - batch
             receivers:
             - k8s_events
-          logs/k8scollectorconfig:
+          logs/manifests:
             exporters:
             - otlp
             processors:
             - memory_limiter
-            - transform/k8s_collector_config_manifest
-            - groupbyattrs/k8s_collector_config_manifest
+            - transform/manifest
+            - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
             - transform/stringify_body
             - resource/manifest
+            - swk8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/k8s_collector_config_include
             - transform/scope
             - batch
             receivers:
-            - k8sobjects/k8s_collector_config
+            - k8sobjects
         telemetry:
           logs:
             level: info

@@ -117,7 +117,6 @@ processors:
           # convert body to string
           - set(body, body.string)
 
-{{- if .Values.otel.manifests.enabled }}
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
     log_statements:
@@ -151,49 +150,18 @@ processors:
           
           # Set labels to resource attributes
           - merge_maps(resource.attributes, cache["labels"], "upsert") where ({{ $joinedConditions }}) and cache["labels"] != nil
-{{- end }}
-  transform/k8s_collector_config_manifest:
-    error_mode: ignore
-    log_statements:
-      - context: log
-        statements:
-          # set event namespace where it will be stored in SWO.
-          - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-          
-          # Add new attribute `watch-type` with type of the change - "ADDED", "MODIFIED", "DELETED"
-          - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"] != nil
-
-          # in watch mode body has `object` attribute with the manifest, in pull mode body is the manifest
-          # flaten body structure to have only raw manifest in body in all the cases
-          - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-
-          - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"] == "ConfigMap"
-
-          - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-
-          - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
-  groupbyattrs/k8s_collector_config_manifest:
-    keys:
-      - k8s.namespace.name
-      - k8s.configmap.name
   filter/k8s_collector_config_include:
     error_mode: ignore
     logs:
       log_record:
         - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] != "values-config-map"
-  
-  filter/k8s_collector_config_exclude:
-    error_mode: ignore
-    logs:
-      log_record:
-        - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map"
 
-{{- if .Values.otel.manifests.enabled }}
   transform/manifest:
       error_mode: ignore
       log_statements:
         - context: log
           statements:
+{{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
             # set event namespace where it will be stored in SWO.
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
             
@@ -219,6 +187,22 @@ processors:
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
+{{- else }}
+            # set event namespace where it will be stored in SWO.
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            
+            # Add new attribute `watch-type` with type of the change - "ADDED", "MODIFIED", "DELETED"
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"] != nil
+
+            # in watch mode body has `object` attribute with the manifest, in pull mode body is the manifest
+            # flaten body structure to have only raw manifest in body in all the cases
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"] == "ConfigMap"
+
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
 {{- end }}
   transform/scope:
     log_statements:
@@ -226,7 +210,7 @@ processors:
         statements:
           - set(name, "")
           - set(version, "")
-{{- if .Values.otel.manifests.enabled }}
+
   groupbyattrs/manifest:
     keys:
       - k8s.pod.name
@@ -244,7 +228,6 @@ processors:
       - k8s.ingress.name
       - sw.k8s.ingress.type
       - k8s.configmap.name
-{{- end }}
 
   resource/events:
     attributes:
@@ -299,10 +282,10 @@ processors:
 
 receivers:
   k8s_events:
-{{- if .Values.otel.manifests.enabled }}
   k8sobjects:
     auth_type: serviceAccount
     objects:
+{{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
 {{- end }}
@@ -314,16 +297,13 @@ receivers:
       - name : {{ $resource }}
         mode: watch
 {{- end }}
-{{- end }}
-
-  k8sobjects/k8s_collector_config:
-    auth_type: serviceAccount
-    objects:
+{{- else }}
       - name: "configmaps"
         mode: pull
         interval: {{ quote .Values.otel.manifests.pull_every }}
       - name : "configmaps"
         mode: watch
+{{- end }}
 
 service:
   extensions:
@@ -332,21 +312,6 @@ service:
 {{- end}}
     - health_check
   pipelines:
-    logs/k8scollectorconfig:
-      exporters:
-        - otlp
-      processors:
-        - memory_limiter
-        - transform/k8s_collector_config_manifest
-        - groupbyattrs/k8s_collector_config_manifest
-        - transform/set_labels_and_annotations_for_entities
-        - transform/stringify_body
-        - resource/manifest
-        - filter/k8s_collector_config_include
-        - transform/scope
-        - batch
-      receivers:
-        - k8sobjects/k8s_collector_config
 {{- if .Values.otel.events.enabled }}
     logs:
       exporters:
@@ -370,7 +335,6 @@ service:
       receivers:
         - k8s_events
 {{- end }}
-{{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
     logs/manifests:
       exporters:
         - otlp
@@ -383,7 +347,9 @@ service:
         - resource/manifest
         - swk8sattributes
         - transform/cleanup_attributes_for_nonexisting_entities
-        - filter/k8s_collector_config_exclude
+{{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
+        - filter/k8s_collector_config_include
+{{- end }}
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
@@ -391,7 +357,6 @@ service:
         - batch
       receivers:
         - k8sobjects
-{{- end }}
   telemetry:
 {{- if .Values.otel.events.telemetry.logs.enabled }}
     logs:
