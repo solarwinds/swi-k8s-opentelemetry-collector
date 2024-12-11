@@ -30,6 +30,22 @@ Custom events filter with new syntax:
           logs:
             log_record:
             - not(IsMatch(resource.attributes["k8s.namespace.name"], "^.*$"))
+        filter/k8s_collector_config_exclude:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map"
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
+        groupbyattrs/k8s_collector_config_manifest:
+          keys:
+          - k8s.namespace.name
+          - k8s.configmap.name
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -232,6 +248,19 @@ Custom events filter with new syntax:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
+        transform/k8s_collector_config_manifest:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+              != nil
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -492,6 +521,14 @@ Custom events filter with new syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
+        k8sobjects/k8s_collector_config:
+          auth_type: serviceAccount
+          objects:
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check
@@ -512,6 +549,21 @@ Custom events filter with new syntax:
             - batch
             receivers:
             - k8s_events
+          logs/k8scollectorconfig:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/k8s_collector_config_manifest
+            - groupbyattrs/k8s_collector_config_manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
+            - resource/manifest
+            - filter/k8s_collector_config_include
+            - transform/scope
+            - batch
+            receivers:
+            - k8sobjects/k8s_collector_config
           logs/manifests:
             exporters:
             - otlp
@@ -524,6 +576,7 @@ Custom events filter with new syntax:
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
+            - filter/k8s_collector_config_exclude
             - transform/scope
             - batch
             receivers:
@@ -568,6 +621,22 @@ Custom events filter with old syntax:
               record_attributes:
               - key: k8s.namespace.name
                 value: ^.*$
+        filter/k8s_collector_config_exclude:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map"
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
+        groupbyattrs/k8s_collector_config_manifest:
+          keys:
+          - k8s.namespace.name
+          - k8s.configmap.name
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -770,6 +839,19 @@ Custom events filter with old syntax:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
+        transform/k8s_collector_config_manifest:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+              != nil
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1030,6 +1112,14 @@ Custom events filter with old syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
+        k8sobjects/k8s_collector_config:
+          auth_type: serviceAccount
+          objects:
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check
@@ -1050,6 +1140,21 @@ Custom events filter with old syntax:
             - batch
             receivers:
             - k8s_events
+          logs/k8scollectorconfig:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/k8s_collector_config_manifest
+            - groupbyattrs/k8s_collector_config_manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
+            - resource/manifest
+            - filter/k8s_collector_config_include
+            - transform/scope
+            - batch
+            receivers:
+            - k8sobjects/k8s_collector_config
           logs/manifests:
             exporters:
             - otlp
@@ -1062,6 +1167,7 @@ Custom events filter with old syntax:
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
+            - filter/k8s_collector_config_exclude
             - transform/scope
             - batch
             receivers:
@@ -1099,6 +1205,22 @@ Events config should match snapshot when using default values:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        filter/k8s_collector_config_exclude:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map"
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
+        groupbyattrs/k8s_collector_config_manifest:
+          keys:
+          - k8s.namespace.name
+          - k8s.configmap.name
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -1301,6 +1423,19 @@ Events config should match snapshot when using default values:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
+        transform/k8s_collector_config_manifest:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+              != nil
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1561,6 +1696,14 @@ Events config should match snapshot when using default values:
             name: statefulsets
           - mode: watch
             name: statefulsets
+        k8sobjects/k8s_collector_config:
+          auth_type: serviceAccount
+          objects:
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check
@@ -1580,6 +1723,21 @@ Events config should match snapshot when using default values:
             - batch
             receivers:
             - k8s_events
+          logs/k8scollectorconfig:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/k8s_collector_config_manifest
+            - groupbyattrs/k8s_collector_config_manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
+            - resource/manifest
+            - filter/k8s_collector_config_include
+            - transform/scope
+            - batch
+            receivers:
+            - k8sobjects/k8s_collector_config
           logs/manifests:
             exporters:
             - otlp
@@ -1592,6 +1750,7 @@ Events config should match snapshot when using default values:
             - resource/manifest
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
+            - filter/k8s_collector_config_exclude
             - transform/scope
             - batch
             receivers:
@@ -1629,6 +1788,22 @@ Events config should not contain manifest collection pipeline when disabled:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        filter/k8s_collector_config_exclude:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map"
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
+        groupbyattrs/k8s_collector_config_manifest:
+          keys:
+          - k8s.namespace.name
+          - k8s.configmap.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 512
@@ -1650,6 +1825,23 @@ Events config should not contain manifest collection pipeline when disabled:
           - action: insert
             key: sw.k8s.log.type
             value: event
+        resource/manifest:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: manifest
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -1797,6 +1989,19 @@ Events config should not contain manifest collection pipeline when disabled:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
+        transform/k8s_collector_config_manifest:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+              != nil
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
         transform/namespace:
           log_statements:
           - context: log
@@ -1862,6 +2067,14 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(body, body.string)
       receivers:
         k8s_events: null
+        k8sobjects/k8s_collector_config:
+          auth_type: serviceAccount
+          objects:
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check
@@ -1881,6 +2094,21 @@ Events config should not contain manifest collection pipeline when disabled:
             - batch
             receivers:
             - k8s_events
+          logs/k8scollectorconfig:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/k8s_collector_config_manifest
+            - groupbyattrs/k8s_collector_config_manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/stringify_body
+            - resource/manifest
+            - filter/k8s_collector_config_include
+            - transform/scope
+            - batch
+            receivers:
+            - k8sobjects/k8s_collector_config
         telemetry:
           logs:
             level: info
