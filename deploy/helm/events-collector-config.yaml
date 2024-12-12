@@ -117,7 +117,6 @@ processors:
           # convert body to string
           - set(body, body.string)
 
-{{- if .Values.otel.manifests.enabled }}
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
     log_statements:
@@ -151,8 +150,12 @@ processors:
           
           # Set labels to resource attributes
           - merge_maps(resource.attributes, cache["labels"], "upsert") where ({{ $joinedConditions }}) and cache["labels"] != nil
-{{- end }}
-{{- if .Values.otel.manifests.enabled }}
+  filter/k8s_collector_config_include:
+    error_mode: ignore
+    logs:
+      log_record:
+        - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] != "values-config-map"
+
   transform/manifest:
       error_mode: ignore
       log_statements:
@@ -183,14 +186,13 @@ processors:
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-{{- end }}
   transform/scope:
     log_statements:
       - context: scope
         statements:
           - set(name, "")
           - set(version, "")
-{{- if .Values.otel.manifests.enabled }}
+
   groupbyattrs/manifest:
     keys:
       - k8s.pod.name
@@ -208,7 +210,6 @@ processors:
       - k8s.ingress.name
       - sw.k8s.ingress.type
       - k8s.configmap.name
-{{- end }}
 
   resource/events:
     attributes:
@@ -233,7 +234,6 @@ processors:
       - key: sw.k8s.log.type
         value: event
         action: insert
-{{- if .Values.otel.manifests.enabled }}
   resource/manifest:
     attributes:
       # Collector and Manifest version
@@ -257,7 +257,6 @@ processors:
       - key: sw.k8s.log.type
         value: manifest
         action: insert
-{{- end }}
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   swk8sattributes:
@@ -265,10 +264,10 @@ processors:
 
 receivers:
   k8s_events:
-{{- if .Values.otel.manifests.enabled }}
   k8sobjects:
     auth_type: serviceAccount
     objects:
+{{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
 {{- end }}
@@ -280,7 +279,14 @@ receivers:
       - name : {{ $resource }}
         mode: watch
 {{- end }}
+{{- else }}
+      - name: "configmaps"
+        mode: pull
+        interval: {{ quote .Values.otel.manifests.pull_every }}
+      - name : "configmaps"
+        mode: watch
 {{- end }}
+
 service:
   extensions:
 {{- if .Values.otel.events.sending_queue.offload_to_disk }}
@@ -311,7 +317,6 @@ service:
       receivers:
         - k8s_events
 {{- end }}
-{{- if .Values.otel.manifests.enabled }}
     logs/manifests:
       exporters:
         - otlp
@@ -324,6 +329,9 @@ service:
         - resource/manifest
         - swk8sattributes
         - transform/cleanup_attributes_for_nonexisting_entities
+{{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
+        - filter/k8s_collector_config_include
+{{- end }}
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
@@ -331,7 +339,6 @@ service:
         - batch
       receivers:
         - k8sobjects
-{{- end }}
   telemetry:
 {{- if .Values.otel.events.telemetry.logs.enabled }}
     logs:

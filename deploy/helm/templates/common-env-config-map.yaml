@@ -5,7 +5,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}
-    config-type: common-env
 data:
   CLUSTER_NAME: {{ quote .Values.cluster.name }}
   CLUSTER_UID: {{ quote (include "common.cluster-uid" .) }}
@@ -13,11 +12,6 @@ data:
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: {{ quote .Values.otel.tls_insecure }}
   MANIFEST_VERSION: {{ quote .Chart.Version }}
   APP_VERSION: {{ quote .Chart.AppVersion }}
-  METRICS_ENABLED: {{ quote .Values.otel.metrics.enabled }}
-  LOGS_ENABLED: {{ quote .Values.otel.logs.enabled }}
-  EVENTS_ENABLED: {{ quote .Values.otel.events.enabled }}
-  NETWORK_EBPF_ENABLED: {{ quote .Values.ebpfNetworkMonitoring.enabled }}
-  SWO_AGENT_ENABLED: {{ quote .Values.swoagent.enabled }}
 {{ if .Values.otel.https_proxy_url }}
   HTTPS_PROXY: {{ quote .Values.otel.https_proxy_url }}
 {{ end }}
