@@ -43,6 +43,60 @@ entries:
       artifacthub.io/prerelease: "true"
     apiVersion: v2
     appVersion: 0.12.0
+    created: "2024-12-12T21:08:24.141358054Z"
+    dependencies:
+    - condition: kube-state-metrics.enabled
+      name: kube-state-metrics
+      repository: https://prometheus-community.github.io/helm-charts
+      version: ~> 5.26.0
+    - alias: operator
+      condition: operator.enabled
+      name: opentelemetry-operator
+      repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+      version: 0.68.3
+    - alias: certmanager
+      condition: certmanager.enabled
+      name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.16.1
+    description: SolarWinds Kubernetes Integration
+    digest: 89c0c46405f793808be6aa97f87a1ebf74548b003d3f75593fa3372c2b3cf181
+    home: https://solarwinds.com/
+    icon: https://helm.solarwinds.com/favicon.png
+    keywords:
+    - monitoring
+    - observability
+    - metric
+    - logs
+    - events
+    - kubernetes
+    maintainers:
+    - email: support@solarwinds.com
+      name: SolarWinds
+    name: swo-k8s-collector
+    sources:
+    - https://github.com/solarwinds/swi-k8s-opentelemetry-collector/deploy/helm/
+    urls:
+    - https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/download/swo-k8s-collector-4.3.0-alpha.7/swo-k8s-collector-4.3.0-alpha.7.tgz
+    version: 4.3.0-alpha.7
+  - annotations:
+      artifacthub.io/images: |
+        - name: ebpf-kernelCollector
+          image: solarwinds/opentelemetry-ebpf-kernel-collector:v0.10.3
+          whitelisted: true
+        - name: ebpf-k8sCollectorWatcher
+          image: solarwinds/opentelemetry-ebpf-k8s-watcher:v0.10.3
+          whitelisted: true
+        - name: ebpf-k8sCollectorRelay
+          image: solarwinds/opentelemetry-ebpf-k8s-relay:v0.10.3
+          whitelisted: true
+        - name: ebpf-reducer
+          image: solarwinds/opentelemetry-ebpf-reducer:v0.10.3
+          whitelisted: true
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/prerelease: "true"
+    apiVersion: v2
+    appVersion: 0.12.0
     created: "2024-12-04T08:48:03.021801782Z"
     dependencies:
     - condition: kube-state-metrics.enabled
@@ -4296,4 +4350,4 @@ entries:
     urls:
     - https://helm.solarwinds.com/swo-k8s-collector-2.0.2-alpha.tgz
     version: 2.0.2-alpha
-generated: "2024-12-04T08:48:03.022396328Z"
+generated: "2024-12-12T21:08:24.141844954Z"
