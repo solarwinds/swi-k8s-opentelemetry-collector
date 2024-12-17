@@ -1,4 +1,4 @@
-{{- if and .Values.otel.logs.enabled .Values.otel.windows.enabled }}
+{{- if and (or .Values.otel.logs.enabled .Values.otel.metrics.enabled) .Values.otel.windows.enabled }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
