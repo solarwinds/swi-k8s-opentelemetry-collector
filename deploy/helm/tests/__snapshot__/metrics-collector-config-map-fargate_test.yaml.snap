@@ -1589,6 +1589,9 @@ Metrics config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/scope:
           metric_statements:
           - context: scope
@@ -1794,7 +1797,6 @@ Metrics config should match snapshot when using default values:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - filter/ebpf
             - metricstransform/rename-otel
             - resource/otlp-metrics
             receivers:
