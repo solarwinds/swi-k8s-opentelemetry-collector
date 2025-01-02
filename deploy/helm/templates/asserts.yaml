@@ -9,3 +9,11 @@
 {{- if mustRegexMatch "^[\\s]+$" .Values.cluster.uid -}}
 {{ fail "If specified, the custom cluster UID should be a valid string." }}
 {{- end -}}
+
+{{- if empty .Capabilities.HelmVersion.Version -}}
+{{ fail "This version of Helm is not supported. Please use 3.9.0 or newer." }}
+{{- end -}}
+
+{{- if eq ((semver "3.9.0").Compare (semver .Capabilities.HelmVersion.Version)) 1 -}}
+{{ fail "This version of Helm is not supported. Please use 3.9.0 or newer." }}
+{{- end -}}
