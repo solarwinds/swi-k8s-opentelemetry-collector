@@ -383,10 +383,10 @@ Custom events filter with new syntax:
             statements:
             - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
               == "Pod" and body["status"]["phase"] != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"]
               != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"]
               != nil
         transform/severity:
@@ -941,10 +941,10 @@ Custom events filter with old syntax:
             statements:
             - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
               == "Pod" and body["status"]["phase"] != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"]
               != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"]
               != nil
         transform/severity:
@@ -1492,10 +1492,10 @@ Events config should match snapshot when using default values:
             statements:
             - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
               == "Pod" and body["status"]["phase"] != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"]
               != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"]
               != nil
         transform/severity:
@@ -2042,10 +2042,10 @@ Events config should not contain manifest collection pipeline when disabled:
             statements:
             - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
               == "Pod" and body["status"]["phase"] != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"]
               != nil
-            - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
+            - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"])
               where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"]
               != nil
         transform/severity:

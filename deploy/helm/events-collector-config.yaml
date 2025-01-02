@@ -125,8 +125,8 @@ processors:
           - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"] == "Pod" and body["status"]["phase"] != nil
 
           # status reason
-          - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"]) where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"] != nil
-          - set(attributes["sw.k8s.pod.statusReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"]) where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"] != nil
+          - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"]) where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["waiting"]["reason"] != nil
+          - set(attributes["sw.k8s.pod.phaseReason"], body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"]) where body["kind"] == "Pod" and body["status"]["containerStatuses"][0]["state"]["terminated"]["reason"] != nil
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
