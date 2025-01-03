@@ -173,7 +173,7 @@ pod_association:
 common.image - Helper template to determine the image path based on various conditions.
 
 Usage:
-{{ include "common.image" (tuple $root $path $nameObj $defaultFullImage $defaultTag) }}
+  {{ include "common.image" (tuple $root $path $nameObj $defaultFullImage $defaultTag $defaultKey) }}
 
 Where:
 - $root: The root context of the chart (usually passed as '.' from the calling template).
@@ -183,6 +183,7 @@ Where:
   - If a slice, it expects two elements:
     - The first element is the key name for the otel image configuration.
     - The second element is the key name for the Azure image configuration.
+- $defaultKey: A unique key that is used for retrieving default values of the image if autoupdate is enabled.
 - $defaultFullImage: (Optional) A default image (including tag) to use if the specified image is not found. 
   - Expected format: "repository/image:tag".
 - $defaultTag: (Optional) A default tag to use if no tag is specified in the image configuration.
@@ -211,15 +212,19 @@ Example:
   {{- $azureName = $nameObj -}}
 {{- end -}}
 
+{{- $defaultKey := "" -}}
+{{- if gt (len .) 3 -}}
+  {{- $defaultKey = index . 3 -}}
+{{- end -}}
+
 {{- $defaultFullImage := "" -}}
 {{- $defaultImage := "" -}}
 {{- $defaultTag := "" -}}
-{{- if gt (len .) 3 -}}
-  {{- $defaultFullImage = index . 3 -}}
-{{- end -}}
-
 {{- if gt (len .) 4 -}}
-  {{- $defaultTag = index . 4 -}}
+  {{- $defaultFullImage = index . 4 -}}
+{{- end -}}
+{{- if gt (len .) 5 -}}
+  {{- $defaultTag = index . 5 -}}
 {{- end -}}
 
 {{- if $defaultFullImage -}}
@@ -252,6 +257,23 @@ Example:
   {{- $valuesPath := index $path $name -}}
   {{- $valuesRepository := index $valuesPath "repository" -}}
   {{- $valuesTag := index $valuesPath "tag" -}}
+  {{- $valuesPullPolicy := index $valuesPath "pullPolicy" -}}
+
+  {{- if $root.Values.autoupdate.enabled }}
+    {{- $defaultImagesJson := include "common.defaultImages" $root -}}
+    {{- $defaultImages := fromJson $defaultImagesJson -}}
+    {{- $defaultImage := index $defaultImages $defaultKey -}}
+    {{- $validRepository := index $defaultImage "repository" -}}
+    {{- $validTag := index $defaultImage "tag" -}}
+    {{- $validPullPolicy := index $defaultImage "pullPolicy" | default "IfNotPresent" -}}
+
+    {{- if and (ne $defaultKey "") $defaultImage }}
+      {{- if or (ne $valuesRepository $validRepository) (ne $valuesTag $validTag) (ne $valuesPullPolicy $validPullPolicy) }}
+        {{- fail (printf "Autoupdate is enabled, but the default image was changed for key '%s' (repo|tag|pullPolicy differ)." $defaultKey) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  
   {{- $repo := $valuesRepository | default $defaultImage -}}
   {{- $tag := $valuesTag | default $defaultTag -}}
   {{- if $tag -}}
@@ -343,4 +365,58 @@ Usage:
 */}}
 {{- define "isSwiEndpointCheckEnabled" -}}
 {{- ternary "true" "" (and .Values.otel.swi_endpoint_check.enabled (ternary true .Values.otel.metrics.swi_endpoint_check (eq .Values.otel.metrics.swi_endpoint_check nil))) -}}
+{{- end -}}
+
+
+{{/*
+Backup validation set of default images from values.yaml for checking if user has changed something.
+*/}}
+{{- define "common.defaultImages" -}}
+{
+  "autoupdate.image": {
+    "repository": "alpine/k8s",
+    "tag": "1.27.16",
+    "pullPolicy": "IfNotPresent"
+  },
+  "otel.image": {
+    "repository": "solarwinds/swi-opentelemetry-collector",
+    "tag": "",
+    "pullPolicy": "IfNotPresent"
+  },
+  "otel.init_images.busy_box": {
+    "repository": "busybox",
+    "tag": "1.36.1",
+    "pullPolicy": "IfNotPresent"
+  },
+  "otel.windows.image": {
+    "repository": "solarwinds/swi-opentelemetry-collector",
+    "tag": "",
+    "pullPolicy": "IfNotPresent"
+  },
+  "swoagent.image": {
+    "repository": "solarwinds/swo-agent",
+    "tag": "v2.10.68",
+    "pullPolicy": "IfNotPresent"
+  },
+  "ebpfNetworkMonitoring.k8sCollector.watcher.image": {
+    "repository": "solarwinds/opentelemetry-ebpf-k8s-watcher",
+    "tag": "v0.10.3",
+    "pullPolicy": "IfNotPresent"
+  },
+  "ebpfNetworkMonitoring.k8sCollector.relay.image": {
+    "repository": "solarwinds/opentelemetry-ebpf-k8s-relay",
+    "tag": "v0.10.3",
+    "pullPolicy": "IfNotPresent"
+  },
+  "ebpfNetworkMonitoring.reducer.image": {
+    "repository": "solarwinds/opentelemetry-ebpf-reducer",
+    "tag": "v0.10.3",
+    "pullPolicy": "IfNotPresent"
+  },
+  "ebpfNetworkMonitoring.kernelCollector.image": {
+    "repository": "solarwinds/opentelemetry-ebpf-kernel-collector",
+    "tag": "v0.10.3",
+    "pullPolicy": "IfNotPresent"
+  }
+}
 {{- end -}}

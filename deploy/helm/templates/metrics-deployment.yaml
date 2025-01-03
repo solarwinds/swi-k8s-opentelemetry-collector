@@ -68,7 +68,7 @@ spec:
       initContainers:
         {{- if and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url }}
         - name: prometheus-check
-          image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box") }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box" "otel.init_images.busy_box") }}"
           imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
           command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"']
           envFrom:
@@ -77,7 +77,7 @@ spec:
         {{- end }}
         {{- if include "isSwiEndpointCheckEnabled" . }}
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" "otel.image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
             - /swi-otelcol
@@ -113,7 +113,7 @@ spec:
               drop:
               - ALL
 
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" "otel.image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
             - name: MY_POD_IP
