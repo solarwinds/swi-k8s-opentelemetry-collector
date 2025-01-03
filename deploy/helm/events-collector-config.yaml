@@ -234,6 +234,7 @@ processors:
       - key: sw.k8s.log.type
         value: event
         action: insert
+
   resource/manifest:
     attributes:
       # Collector and Manifest version
@@ -257,6 +258,38 @@ processors:
       - key: sw.k8s.log.type
         value: manifest
         action: insert
+
+  resourcedetection/providers:
+    detectors: ["ec2","azure","openshift"]
+    timeout: 2s
+    override: false
+    azure:
+      resource_attributes:
+        azure.vm.scaleset.name:
+          enabled: false
+        azure.vm.size:
+          enabled: false
+        host.id:
+          enabled: false
+        host.name:
+          enabled: false
+    openshift:
+      resource_attributes:
+        k8s.cluster.name:
+          enabled: false
+    ec2:
+      resource_attributes:
+        cloud.availability_zone:
+          enabled: false
+        host.id:
+          enabled: false
+        host.image.id:
+          enabled: false
+        host.name:
+          enabled: false
+        host.type:
+          enabled: false
+
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   swk8sattributes:
@@ -327,6 +360,7 @@ service:
         - transform/set_labels_and_annotations_for_entities
         - transform/stringify_body
         - resource/manifest
+        - resourcedetection/providers
         - swk8sattributes
         - transform/cleanup_attributes_for_nonexisting_entities
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
