@@ -121,7 +121,7 @@ processors:
     log_statements:
       - context: log
         statements:
-          - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"] == "Pod" and body["status"]["phase"] != nil
+          - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"] == "Pod" and body["status"]["phase"] != nil
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore

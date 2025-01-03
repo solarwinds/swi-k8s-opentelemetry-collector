@@ -381,8 +381,8 @@ Custom events filter with new syntax:
           log_statements:
           - context: log
             statements:
-            - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
-              == "Pod" and body["status"]["phase"] != nil
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -933,8 +933,8 @@ Custom events filter with old syntax:
           log_statements:
           - context: log
             statements:
-            - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
-              == "Pod" and body["status"]["phase"] != nil
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1478,8 +1478,8 @@ Events config should match snapshot when using default values:
           log_statements:
           - context: log
             statements:
-            - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
-              == "Pod" and body["status"]["phase"] != nil
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -2022,8 +2022,8 @@ Events config should not contain manifest collection pipeline when disabled:
           log_statements:
           - context: log
             statements:
-            - set(attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"]
-              == "Pod" and body["status"]["phase"] != nil
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
