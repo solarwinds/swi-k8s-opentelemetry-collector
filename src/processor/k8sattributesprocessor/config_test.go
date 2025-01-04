@@ -20,6 +20,7 @@ package swk8sattributesprocessor
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,6 +49,7 @@ func TestLoadConfig(t *testing.T) {
 				Extract: ExtractConfig{
 					Metadata: enabledAttributes(),
 				},
+				WaitForMetadataTimeout: 10 * time.Second,
 			},
 		},
 		{
@@ -363,7 +365,9 @@ func TestLoadConfig(t *testing.T) {
 						{Name: "jaeger-collector"},
 					},
 				},
+				WaitForMetadataTimeout: 10 * time.Second,
 			},
+			disallowRegex: false,
 		},
 		{
 			id: component.NewIDWithName(metadata.Type, "3"),
@@ -385,6 +389,7 @@ func TestLoadConfig(t *testing.T) {
 						{Name: "jaeger-collector"},
 					},
 				},
+				WaitForMetadataTimeout: 10 * time.Second,
 			},
 		},
 		{
@@ -407,7 +412,9 @@ func TestLoadConfig(t *testing.T) {
 						{Name: "jaeger-collector"},
 					},
 				},
+				WaitForMetadataTimeout: 10 * time.Second,
 			},
+			disallowRegex: false,
 		},
 		{
 			id: component.NewIDWithName(metadata.Type, "too_many_sources"),
@@ -462,10 +469,10 @@ func TestLoadConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.id.String(), func(t *testing.T) {
-			if tt.disallowRegex {
-				require.Nil(t, featuregate.GlobalRegistry().Set(disallowFieldExtractConfigRegex.ID(), true))
+			if !tt.disallowRegex {
+				require.NoError(t, featuregate.GlobalRegistry().Set(disallowFieldExtractConfigRegex.ID(), false))
 				t.Cleanup(func() {
-					require.Nil(t, featuregate.GlobalRegistry().Set(disallowFieldExtractConfigRegex.ID(), false))
+					require.NoError(t, featuregate.GlobalRegistry().Set(disallowFieldExtractConfigRegex.ID(), true))
 				})
 			}
 			cm, err := confmaptest.LoadConf(filepath.Join("testdata", "config.yaml"))
