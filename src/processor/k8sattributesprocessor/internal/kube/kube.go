@@ -103,7 +103,7 @@ type Client interface {
 	GetPod(PodIdentifier) (*Pod, bool)
 	GetResource(string, ResourceIdentifier) (KubernetesResource, bool)
 	GetNamespace(string) (*Namespace, bool)
-	Start()
+	Start() error
 	Stop()
 }
 
@@ -118,6 +118,8 @@ type ClientProvider func(
 	APIClientsetProvider,
 	InformerProvider,
 	InformerProviderNamespace,
+	bool,
+	time.Duration,
 	map[string]*ClientResource) (Client, error)
 
 // APIClientsetProvider defines a func type that initializes and return a new kubernetes

@@ -30,6 +30,8 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
@@ -59,18 +61,18 @@ func newPodIdentifier(from string, name string, value string) PodIdentifier {
 }
 
 func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
-	assert.Equal(t, 0, len(c.Pods))
+	assert.Empty(t, c.Pods)
 
 	// pod without IP
 	pod := &api_v1.Pod{}
 	handler(pod)
-	assert.Equal(t, 0, len(c.Pods))
+	assert.Empty(t, c.Pods)
 
 	pod = &api_v1.Pod{}
 	pod.Name = "podA"
 	pod.Status.PodIP = "1.1.1.1"
 	handler(pod)
-	assert.Equal(t, 2, len(c.Pods))
+	assert.Len(t, c.Pods, 2)
 	got := c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")]
 	assert.Equal(t, "1.1.1.1", got.Address)
 	assert.Equal(t, "podA", got.Name)
@@ -80,7 +82,7 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
 	pod.Name = "podB"
 	pod.Status.PodIP = "1.1.1.1"
 	handler(pod)
-	assert.Equal(t, 2, len(c.Pods))
+	assert.Len(t, c.Pods, 2)
 	got = c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")]
 	assert.Equal(t, "1.1.1.1", got.Address)
 	assert.Equal(t, "podB", got.Name)
@@ -91,7 +93,7 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
 	pod.Status.PodIP = "2.2.2.2"
 	pod.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	handler(pod)
-	assert.Equal(t, 5, len(c.Pods))
+	assert.Len(t, c.Pods, 5)
 	got = c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "2.2.2.2")]
 	assert.Equal(t, "2.2.2.2", got.Address)
 	assert.Equal(t, "podC", got.Name)
@@ -103,16 +105,16 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
 }
 
 func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
-	assert.Equal(t, 0, len(c.Namespaces))
+	assert.Empty(t, c.Namespaces)
 
 	namespace := &api_v1.Namespace{}
 	handler(namespace)
-	assert.Equal(t, 0, len(c.Namespaces))
+	assert.Empty(t, c.Namespaces)
 
 	namespace = &api_v1.Namespace{}
 	namespace.Name = "namespaceA"
 	handler(namespace)
-	assert.Equal(t, 1, len(c.Namespaces))
+	assert.Len(t, c.Namespaces, 1)
 	got := c.Namespaces["namespaceA"]
 	assert.Equal(t, "namespaceA", got.Name)
 	assert.Equal(t, "", got.NamespaceUID)
@@ -121,19 +123,18 @@ func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj an
 	namespace.Name = "namespaceB"
 	namespace.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	handler(namespace)
-	assert.Equal(t, 2, len(c.Namespaces))
+	assert.Len(t, c.Namespaces, 2)
 	got = c.Namespaces["namespaceB"]
 	assert.Equal(t, "namespaceB", got.Name)
 	assert.Equal(t, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", got.NamespaceUID)
 }
 
 func TestDefaultClientset(t *testing.T) {
-	c, err := New(componenttest.NewNopTelemetrySettings(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, map[string]*ClientResource{})
-	assert.Error(t, err)
-	assert.Equal(t, "invalid authType for kubernetes: ", err.Error())
+	c, err := New(componenttest.NewNopTelemetrySettings(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, nil, nil, nil, false, 10*time.Second, map[string]*ClientResource{})
+	require.EqualError(t, err, "invalid authType for kubernetes: ")
 	assert.Nil(t, c)
 
-	c, err = New(componenttest.NewNopTelemetrySettings(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, map[string]*ClientResource{})
+	c, err = New(componenttest.NewNopTelemetrySettings(), k8sconfig.APIConfig{}, ExtractionRules{}, Filters{}, []Association{}, Excludes{}, newFakeAPIClientset, nil, nil, false, 10*time.Second, map[string]*ClientResource{})
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 }
@@ -149,14 +150,19 @@ func TestBadFilters(t *testing.T) {
 		newFakeAPIClientset,
 		NewFakeInformer,
 		NewFakeNamespaceInformer,
+		false,
+		10*time.Second,
 		map[string]*ClientResource{
-			MetadataFromDeployment:  newEmptyClientResource(),
-			MetadataFromStatefulSet: newEmptyClientResource(),
-			MetadataFromReplicaSet:  newEmptyClientResource(),
-			MetadataFromDaemonSet:   newEmptyClientResource(),
-			MetadataFromJob:         newEmptyClientResource(),
-			MetadataFromCronJob:     newEmptyClientResource(),
-			MetadataFromNode:        newEmptyClientResource(),
+			MetadataFromDeployment:            newEmptyClientResource(),
+			MetadataFromStatefulSet:           newEmptyClientResource(),
+			MetadataFromReplicaSet:            newEmptyClientResource(),
+			MetadataFromDaemonSet:             newEmptyClientResource(),
+			MetadataFromJob:                   newEmptyClientResource(),
+			MetadataFromCronJob:               newEmptyClientResource(),
+			MetadataFromNode:                  newEmptyClientResource(),
+			MetadataFromPersistentVolume:      newEmptyClientResource(),
+			MetadataFromPersistentVolumeClaim: newEmptyClientResource(),
+			MetadataFromService:               newEmptyClientResource(),
 		},
 	)
 	assert.Error(t, err)
@@ -173,7 +179,7 @@ func TestClientStartStop(t *testing.T) {
 	done := make(chan struct{})
 	assert.False(t, fctr.HasStopped())
 	go func() {
-		c.Start()
+		assert.NoError(t, c.Start())
 		close(done)
 	}()
 	c.Stop()
@@ -204,18 +210,22 @@ func TestConstructorErrors(t *testing.T) {
 			clientProvider,
 			NewFakeInformer,
 			NewFakeNamespaceInformer,
+			false,
+			10*time.Second,
 			map[string]*ClientResource{
-				MetadataFromDeployment:  newEmptyClientResource(),
-				MetadataFromStatefulSet: newEmptyClientResource(),
-				MetadataFromReplicaSet:  newEmptyClientResource(),
-				MetadataFromDaemonSet:   newEmptyClientResource(),
-				MetadataFromJob:         newEmptyClientResource(),
-				MetadataFromCronJob:     newEmptyClientResource(),
-				MetadataFromNode:        newEmptyClientResource(),
+				MetadataFromDeployment:            newEmptyClientResource(),
+				MetadataFromStatefulSet:           newEmptyClientResource(),
+				MetadataFromReplicaSet:            newEmptyClientResource(),
+				MetadataFromDaemonSet:             newEmptyClientResource(),
+				MetadataFromJob:                   newEmptyClientResource(),
+				MetadataFromCronJob:               newEmptyClientResource(),
+				MetadataFromNode:                  newEmptyClientResource(),
+				MetadataFromPersistentVolume:      newEmptyClientResource(),
+				MetadataFromPersistentVolumeClaim: newEmptyClientResource(),
+				MetadataFromService:               newEmptyClientResource(),
 			})
 		assert.Nil(t, c)
-		assert.Error(t, err)
-		assert.Equal(t, "error creating k8s client", err.Error())
+		require.EqualError(t, err, "error creating k8s client")
 		assert.Equal(t, apiCfg, gotAPIConfig)
 	})
 }
@@ -232,7 +242,7 @@ func TestNamespaceAdd(t *testing.T) {
 
 func TestPodHostNetwork(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.Pods))
+	assert.Empty(t, c.Pods)
 
 	// pod will not be added if no rule matches
 	pod := &api_v1.Pod{}
@@ -240,7 +250,7 @@ func TestPodHostNetwork(t *testing.T) {
 	pod.Status.PodIP = "1.1.1.1"
 	pod.Spec.HostNetwork = true
 	c.handlePodAdd(pod)
-	assert.Equal(t, 0, len(c.Pods))
+	assert.Empty(t, c.Pods)
 
 	// pod will be added if rule matches
 	pod.Name = "podB"
@@ -248,7 +258,7 @@ func TestPodHostNetwork(t *testing.T) {
 	pod.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	pod.Spec.HostNetwork = true
 	c.handlePodAdd(pod)
-	assert.Equal(t, 1, len(c.Pods))
+	assert.Len(t, c.Pods, 1)
 	got := c.Pods[newPodIdentifier("resource_attribute", "k8s.pod.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")]
 	assert.Equal(t, "2.2.2.2", got.Address)
 	assert.Equal(t, "podB", got.Name)
@@ -260,14 +270,14 @@ func TestPodHostNetwork(t *testing.T) {
 // correctly
 func TestPodCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.Pods))
+	assert.Empty(t, c.Pods)
 
 	// pod is created in Pending phase. At this point it has a UID but no start time or pod IP address
 	pod := &api_v1.Pod{}
 	pod.Name = "podD"
 	pod.UID = "11111111-2222-3333-4444-555555555555"
 	c.handlePodAdd(pod)
-	assert.Equal(t, 1, len(c.Pods))
+	assert.Len(t, c.Pods, 1)
 	got := c.Pods[newPodIdentifier("resource_attribute", "k8s.pod.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "", got.Address)
 	assert.Equal(t, "podD", got.Name)
@@ -278,7 +288,7 @@ func TestPodCreate(t *testing.T) {
 	startTime := meta_v1.NewTime(time.Now())
 	pod.Status.StartTime = &startTime
 	c.handlePodUpdate(&api_v1.Pod{}, pod)
-	assert.Equal(t, 1, len(c.Pods))
+	assert.Len(t, c.Pods, 1)
 	got = c.Pods[newPodIdentifier("resource_attribute", "k8s.pod.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "", got.Address)
 	assert.Equal(t, "podD", got.Name)
@@ -287,7 +297,7 @@ func TestPodCreate(t *testing.T) {
 	// pod is Running and has an IP address
 	pod.Status.PodIP = "3.3.3.3"
 	c.handlePodUpdate(&api_v1.Pod{}, pod)
-	assert.Equal(t, 3, len(c.Pods))
+	assert.Len(t, c.Pods, 3)
 	got = c.Pods[newPodIdentifier("resource_attribute", "k8s.pod.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "3.3.3.3", got.Address)
 	assert.Equal(t, "podD", got.Name)
@@ -314,7 +324,7 @@ func TestPodAddOutOfSync(t *testing.T) {
 			},
 		},
 	})
-	assert.Equal(t, 0, len(c.Pods))
+	assert.Empty(t, c.Pods)
 
 	pod := &api_v1.Pod{}
 	pod.Name = "podA"
@@ -322,7 +332,7 @@ func TestPodAddOutOfSync(t *testing.T) {
 	startTime := meta_v1.NewTime(time.Now())
 	pod.Status.StartTime = &startTime
 	c.handlePodAdd(pod)
-	assert.Equal(t, 3, len(c.Pods))
+	assert.Len(t, c.Pods, 3)
 	got := c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")]
 	assert.Equal(t, "1.1.1.1", got.Address)
 	assert.Equal(t, "podA", got.Name)
@@ -336,7 +346,7 @@ func TestPodAddOutOfSync(t *testing.T) {
 	startTime2 := meta_v1.NewTime(time.Now().Add(-time.Second * 10))
 	pod2.Status.StartTime = &startTime2
 	c.handlePodAdd(pod2)
-	assert.Equal(t, 4, len(c.Pods))
+	assert.Len(t, c.Pods, 4)
 	got = c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")]
 	assert.Equal(t, "1.1.1.1", got.Address)
 	assert.Equal(t, "podA", got.Name)
@@ -364,7 +374,7 @@ func TestNamespaceUpdate(t *testing.T) {
 func TestPodDelete(t *testing.T) {
 	c, _ := newTestClient(t)
 	podAddAndUpdateTest(t, c, c.handlePodAdd)
-	assert.Equal(t, 5, len(c.Pods))
+	assert.Len(t, c.Pods, 5)
 	assert.Equal(t, "1.1.1.1", c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")].Address)
 
 	// delete empty IP pod
@@ -375,10 +385,10 @@ func TestPodDelete(t *testing.T) {
 	pod := &api_v1.Pod{}
 	pod.Status.PodIP = "9.9.9.9"
 	c.handlePodDelete(pod)
-	assert.Equal(t, 5, len(c.Pods))
+	assert.Len(t, c.Pods, 5)
 	got := c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")]
 	assert.Equal(t, "1.1.1.1", got.Address)
-	assert.Equal(t, 0, len(c.deleteQueue))
+	assert.Empty(t, c.deleteQueue)
 
 	// delete matching IP with wrong name/different pod
 	c.deleteQueue = c.deleteQueue[:0]
@@ -386,9 +396,9 @@ func TestPodDelete(t *testing.T) {
 	pod.Status.PodIP = "1.1.1.1"
 	c.handlePodDelete(pod)
 	got = c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")]
-	assert.Equal(t, 5, len(c.Pods))
+	assert.Len(t, c.Pods, 5)
 	assert.Equal(t, "1.1.1.1", got.Address)
-	assert.Equal(t, 0, len(c.deleteQueue))
+	assert.Empty(t, c.deleteQueue)
 
 	// delete matching IP and name
 	c.deleteQueue = c.deleteQueue[:0]
@@ -397,8 +407,8 @@ func TestPodDelete(t *testing.T) {
 	pod.Status.PodIP = "1.1.1.1"
 	tsBeforeDelete := time.Now()
 	c.handlePodDelete(pod)
-	assert.Equal(t, 5, len(c.Pods))
-	assert.Equal(t, 3, len(c.deleteQueue))
+	assert.Len(t, c.Pods, 5)
+	assert.Len(t, c.deleteQueue, 3)
 	deleteRequest := c.deleteQueue[0]
 	assert.Equal(t, newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1"), deleteRequest.id)
 	assert.Equal(t, "podB", deleteRequest.podName)
@@ -413,8 +423,8 @@ func TestPodDelete(t *testing.T) {
 	pod.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	tsBeforeDelete = time.Now()
 	c.handlePodDelete(cache.DeletedFinalStateUnknown{Obj: pod})
-	assert.Equal(t, 5, len(c.Pods))
-	assert.Equal(t, 5, len(c.deleteQueue))
+	assert.Len(t, c.Pods, 5)
+	assert.Len(t, c.deleteQueue, 5)
 	deleteRequest = c.deleteQueue[0]
 	assert.Equal(t, newPodIdentifier("connection", "k8s.pod.ip", "2.2.2.2"), deleteRequest.id)
 	assert.Equal(t, "podC", deleteRequest.podName)
@@ -430,7 +440,7 @@ func TestPodDelete(t *testing.T) {
 func TestNamespaceDelete(t *testing.T) {
 	c, _ := newTestClient(t)
 	namespaceAddAndUpdateTest(t, c, c.handleNamespaceAdd)
-	assert.Equal(t, 2, len(c.Namespaces))
+	assert.Len(t, c.Namespaces, 2)
 	assert.Equal(t, "namespaceA", c.Namespaces["namespaceA"].Name)
 
 	// delete empty namespace
@@ -440,32 +450,32 @@ func TestNamespaceDelete(t *testing.T) {
 	namespace := &api_v1.Namespace{}
 	namespace.Name = "namespaceC"
 	c.handleNamespaceDelete(namespace)
-	assert.Equal(t, 2, len(c.Namespaces))
+	assert.Len(t, c.Namespaces, 2)
 	got := c.Namespaces["namespaceA"]
 	assert.Equal(t, "namespaceA", got.Name)
 	// delete non-existent namespace when DeletedFinalStateUnknown
 	c.handleNamespaceDelete(cache.DeletedFinalStateUnknown{Obj: namespace})
-	assert.Equal(t, 2, len(c.Namespaces))
+	assert.Len(t, c.Namespaces, 2)
 	got = c.Namespaces["namespaceA"]
 	assert.Equal(t, "namespaceA", got.Name)
 
 	// delete namespace A
 	namespace.Name = "namespaceA"
 	c.handleNamespaceDelete(namespace)
-	assert.Equal(t, 1, len(c.Namespaces))
+	assert.Len(t, c.Namespaces, 1)
 	got = c.Namespaces["namespaceB"]
 	assert.Equal(t, "namespaceB", got.Name)
 
 	// delete namespace B when DeletedFinalStateUnknown
 	namespace.Name = "namespaceB"
 	c.handleNamespaceDelete(cache.DeletedFinalStateUnknown{Obj: namespace})
-	assert.Equal(t, 0, len(c.Namespaces))
+	assert.Empty(t, c.Namespaces)
 }
 
 func TestDeleteQueue(t *testing.T) {
 	c, _ := newTestClient(t)
 	podAddAndUpdateTest(t, c, c.handlePodAdd)
-	assert.Equal(t, 5, len(c.Pods))
+	assert.Len(t, c.Pods, 5)
 	assert.Equal(t, "1.1.1.1", c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")].Address)
 
 	// delete pod
@@ -473,8 +483,8 @@ func TestDeleteQueue(t *testing.T) {
 	pod.Name = "podB"
 	pod.Status.PodIP = "1.1.1.1"
 	c.handlePodDelete(pod)
-	assert.Equal(t, 5, len(c.Pods))
-	assert.Equal(t, 3, len(c.deleteQueue))
+	assert.Len(t, c.Pods, 5)
+	assert.Len(t, c.deleteQueue, 3)
 }
 
 func TestDeleteLoop(t *testing.T) {
@@ -484,30 +494,30 @@ func TestDeleteLoop(t *testing.T) {
 	pod := &api_v1.Pod{}
 	pod.Status.PodIP = "1.1.1.1"
 	c.handlePodAdd(pod)
-	assert.Equal(t, 2, len(c.Pods))
-	assert.Equal(t, 0, len(c.deleteQueue))
+	assert.Len(t, c.Pods, 2)
+	assert.Empty(t, c.deleteQueue)
 
 	c.handlePodDelete(pod)
-	assert.Equal(t, 2, len(c.Pods))
-	assert.Equal(t, 3, len(c.deleteQueue))
+	assert.Len(t, c.Pods, 2)
+	assert.Len(t, c.deleteQueue, 3)
 
 	gracePeriod := time.Millisecond * 500
 	go c.deleteLoop(time.Millisecond, gracePeriod)
 	go func() {
 		time.Sleep(time.Millisecond * 50)
 		c.m.Lock()
-		assert.Equal(t, 2, len(c.Pods))
+		assert.Len(t, c.Pods, 2)
 		c.m.Unlock()
 		c.deleteMut.Lock()
-		assert.Equal(t, 3, len(c.deleteQueue))
+		assert.Len(t, c.deleteQueue, 3)
 		c.deleteMut.Unlock()
 
 		time.Sleep(gracePeriod + (time.Millisecond * 50))
 		c.m.Lock()
-		assert.Equal(t, 0, len(c.Pods))
+		assert.Empty(t, c.Pods)
 		c.m.Unlock()
 		c.deleteMut.Lock()
-		assert.Equal(t, 0, len(c.deleteQueue))
+		assert.Empty(t, c.deleteQueue)
 		c.deleteMut.Unlock()
 		close(c.stopCh)
 	}()
@@ -526,7 +536,7 @@ func TestGetIgnoredPod(t *testing.T) {
 }
 
 func TestHandlerWrongType(t *testing.T) {
-	c, logs := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, logs := newTestClientWithRulesAndFilters(t, Filters{})
 	assert.Equal(t, 0, logs.Len())
 	c.handlePodAdd(1)
 	c.handlePodDelete(1)
@@ -538,7 +548,7 @@ func TestHandlerWrongType(t *testing.T) {
 }
 
 func TestExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	// Disable saving ip into k8s.pod.ip
 	c.Associations[0].Sources[0].Name = ""
@@ -848,7 +858,7 @@ func TestExtractionRules(t *testing.T) {
 }
 
 func TestNamespaceExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	namespace := &api_v1.Namespace{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -992,14 +1002,13 @@ func TestFilters(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, tc.filters)
+			c, _ := newTestClientWithRulesAndFilters(t, tc.filters)
 			inf := c.informer.(*FakeInformer)
 			assert.Equal(t, tc.filters.Namespace, inf.namespace)
 			assert.Equal(t, tc.labels, inf.labelSelector.String())
 			assert.Equal(t, tc.fields, inf.fieldSelector.String())
 		})
 	}
-
 }
 
 func TestPodIgnorePatterns(t *testing.T) {
@@ -1095,17 +1104,21 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 			Containers: []api_v1.Container{
 				{
 					Name:  "container1",
-					Image: "test/image1:0.1.0",
+					Image: "example.com:5000/test/image1:0.1.0",
 				},
 				{
 					Name:  "container2",
-					Image: "example.com:port1/image2:0.2.0",
+					Image: "example.com:81/image2@sha256:430ac608abaa332de4ce45d68534447c7a206edc5e98aaff9923ecc12f8a80d9",
+				},
+				{
+					Name:  "container3",
+					Image: "example-website.com/image3:1.0@sha256:4b0b1b6f6cdd3e5b9e55f74a1e8d19ed93a3f5a04c6b6c3c57c4e6d19f6b7c4d",
 				},
 			},
 			InitContainers: []api_v1.Container{
 				{
 					Name:  "init_container",
-					Image: "test/init-image:1.0.2",
+					Image: "test/init-image",
 				},
 			},
 		},
@@ -1120,7 +1133,13 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 				{
 					Name:         "container2",
 					ContainerID:  "docker://container2-id-456",
-					ImageID:      "sha256:430ac608abaa332de4ce45d68534447c7a206edc5e98aaff9923ecc12f8a80d9",
+					ImageID:      "sha256:4b0b1b6f6cdd3e5b9e55f74a1e8d19ed93a3f5a04c6b6c3c57c4e6d19f6b7c4d",
+					RestartCount: 2,
+				},
+				{
+					Name:         "container3",
+					ContainerID:  "docker://container3-id-abc",
+					ImageID:      "docker.io/otel/collector:2.0.0@sha256:430ac608abaa332de4ce45d68534447c7a206edc5e98aaff9923ecc12f8a80d9",
 					RestartCount: 2,
 				},
 			},
@@ -1164,13 +1183,15 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 			pod: &pod,
 			want: PodContainers{
 				ByID: map[string]*Container{
-					"container1-id-123":     {ImageName: "test/image1"},
-					"container2-id-456":     {ImageName: "example.com:port1/image2"},
+					"container1-id-123":     {ImageName: "example.com:5000/test/image1"},
+					"container2-id-456":     {ImageName: "example.com:81/image2"},
+					"container3-id-abc":     {ImageName: "example-website.com/image3"},
 					"init-container-id-789": {ImageName: "test/init-image"},
 				},
 				ByName: map[string]*Container{
-					"container1":     {ImageName: "test/image1"},
-					"container2":     {ImageName: "example.com:port1/image2"},
+					"container1":     {ImageName: "example.com:5000/test/image1"},
+					"container2":     {ImageName: "example.com:81/image2"},
+					"container3":     {ImageName: "example-website.com/image3"},
 					"init_container": {ImageName: "test/init-image"},
 				},
 			},
@@ -1215,6 +1236,11 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 							2: {ContainerID: "container2-id-456"},
 						},
 					},
+					"container3-id-abc": {
+						Statuses: map[int]ContainerStatus{
+							2: {ContainerID: "container3-id-abc"},
+						},
+					},
 					"init-container-id-789": {
 						Statuses: map[int]ContainerStatus{
 							0: {ContainerID: "init-container-id-789"},
@@ -1230,6 +1256,11 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 					"container2": {
 						Statuses: map[int]ContainerStatus{
 							2: {ContainerID: "container2-id-456"},
+						},
+					},
+					"container3": {
+						Statuses: map[int]ContainerStatus{
+							2: {ContainerID: "container3-id-abc"},
 						},
 					},
 					"init_container": {
@@ -1258,6 +1289,11 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 							2: {},
 						},
 					},
+					"container3-id-abc": {
+						Statuses: map[int]ContainerStatus{
+							2: {ImageRepoDigest: "docker.io/otel/collector:2.0.0@sha256:430ac608abaa332de4ce45d68534447c7a206edc5e98aaff9923ecc12f8a80d9"},
+						},
+					},
 					"init-container-id-789": {
 						Statuses: map[int]ContainerStatus{
 							0: {ImageRepoDigest: "ghcr.io/initimage1@sha256:42e8ba40f9f70d604684c3a2a0ed321206b7e2e3509fdb2c8836d34f2edfb57b"},
@@ -1273,6 +1309,11 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 					"container2": {
 						Statuses: map[int]ContainerStatus{
 							2: {},
+						},
+					},
+					"container3": {
+						Statuses: map[int]ContainerStatus{
+							2: {ImageRepoDigest: "docker.io/otel/collector:2.0.0@sha256:430ac608abaa332de4ce45d68534447c7a206edc5e98aaff9923ecc12f8a80d9"},
 						},
 					},
 					"init_container": {
@@ -1295,22 +1336,28 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 			want: PodContainers{
 				ByID: map[string]*Container{
 					"container1-id-123": {
-						ImageName: "test/image1",
+						ImageName: "example.com:5000/test/image1",
 						ImageTag:  "0.1.0",
 						Statuses: map[int]ContainerStatus{
 							0: {ContainerID: "container1-id-123", ImageRepoDigest: "docker.io/otel/collector@sha256:55d008bc28344c3178645d40e7d07df30f9d90abe4b53c3fc4e5e9c0295533da"},
 						},
 					},
 					"container2-id-456": {
-						ImageName: "example.com:port1/image2",
-						ImageTag:  "0.2.0",
+						ImageName: "example.com:81/image2",
 						Statuses: map[int]ContainerStatus{
 							2: {ContainerID: "container2-id-456"},
 						},
 					},
+					"container3-id-abc": {
+						ImageName: "example-website.com/image3",
+						ImageTag:  "1.0",
+						Statuses: map[int]ContainerStatus{
+							2: {ContainerID: "container3-id-abc", ImageRepoDigest: "docker.io/otel/collector:2.0.0@sha256:430ac608abaa332de4ce45d68534447c7a206edc5e98aaff9923ecc12f8a80d9"},
+						},
+					},
 					"init-container-id-789": {
 						ImageName: "test/init-image",
-						ImageTag:  "1.0.2",
+						ImageTag:  "latest",
 						Statuses: map[int]ContainerStatus{
 							0: {ContainerID: "init-container-id-789", ImageRepoDigest: "ghcr.io/initimage1@sha256:42e8ba40f9f70d604684c3a2a0ed321206b7e2e3509fdb2c8836d34f2edfb57b"},
 						},
@@ -1318,22 +1365,28 @@ func Test_extractPodContainersAttributes(t *testing.T) {
 				},
 				ByName: map[string]*Container{
 					"container1": {
-						ImageName: "test/image1",
+						ImageName: "example.com:5000/test/image1",
 						ImageTag:  "0.1.0",
 						Statuses: map[int]ContainerStatus{
 							0: {ContainerID: "container1-id-123", ImageRepoDigest: "docker.io/otel/collector@sha256:55d008bc28344c3178645d40e7d07df30f9d90abe4b53c3fc4e5e9c0295533da"},
 						},
 					},
 					"container2": {
-						ImageName: "example.com:port1/image2",
-						ImageTag:  "0.2.0",
+						ImageName: "example.com:81/image2",
 						Statuses: map[int]ContainerStatus{
 							2: {ContainerID: "container2-id-456"},
 						},
 					},
+					"container3": {
+						ImageName: "example-website.com/image3",
+						ImageTag:  "1.0",
+						Statuses: map[int]ContainerStatus{
+							2: {ContainerID: "container3-id-abc", ImageRepoDigest: "docker.io/otel/collector:2.0.0@sha256:430ac608abaa332de4ce45d68534447c7a206edc5e98aaff9923ecc12f8a80d9"},
+						},
+					},
 					"init_container": {
 						ImageName: "test/init-image",
-						ImageTag:  "1.0.2",
+						ImageTag:  "latest",
 						Statuses: map[int]ContainerStatus{
 							0: {ContainerID: "init-container-id-789", ImageRepoDigest: "ghcr.io/initimage1@sha256:42e8ba40f9f70d604684c3a2a0ed321206b7e2e3509fdb2c8836d34f2edfb57b"},
 						},
@@ -1390,9 +1443,7 @@ func Test_extractField(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.args.r.extractField(tt.args.v); got != tt.want {
-				t.Errorf("extractField() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, tt.args.r.extractField(tt.args.v), "extractField()")
 		})
 	}
 }
@@ -1424,7 +1475,7 @@ func TestErrorSelectorsFromFilters(t *testing.T) {
 }
 
 func TestExtractNamespaceLabelsAnnotations(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 	testCases := []struct {
 		name                   string
 		shouldExtractNamespace bool
@@ -1482,7 +1533,7 @@ func TestExtractNamespaceLabelsAnnotations(t *testing.T) {
 	}
 }
 
-func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters) (*WatchClient, *observer.ObservedLogs) {
+func newTestClientWithRulesAndFilters(t *testing.T, f Filters) (*WatchClient, *observer.ObservedLogs) {
 	set := componenttest.NewNopTelemetrySettings()
 	observedLogger, logs := observer.New(zapcore.WarnLevel)
 	set.Logger = zap.New(observedLogger)
@@ -1513,13 +1564,15 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 	c, err := New(
 		set,
 		k8sconfig.APIConfig{},
-		e,
+		ExtractionRules{},
 		f,
 		podAssociations,
 		exclude,
 		newFakeAPIClientset,
 		NewFakeInformer,
 		NewFakeNamespaceInformer,
+		false,
+		10*time.Second,
 		map[string]*ClientResource{
 			MetadataFromDeployment:            newClientResource("k8s.deployment.uid"),
 			MetadataFromStatefulSet:           newClientResource("k8s.statefulset.uid"),
@@ -1560,5 +1613,80 @@ func newEmptyClientResource() *ClientResource {
 }
 
 func newTestClient(t *testing.T) (*WatchClient, *observer.ObservedLogs) {
-	return newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	return newTestClientWithRulesAndFilters(t, Filters{})
+}
+
+type neverSyncedFakeClient struct {
+	cache.SharedInformer
+}
+
+type neverSyncedResourceEventHandlerRegistration struct {
+	cache.ResourceEventHandlerRegistration
+}
+
+func (n *neverSyncedResourceEventHandlerRegistration) HasSynced() bool {
+	return false
+}
+
+func (n *neverSyncedFakeClient) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+	delegate, err := n.SharedInformer.AddEventHandler(handler)
+	if err != nil {
+		return nil, err
+	}
+	return &neverSyncedResourceEventHandlerRegistration{ResourceEventHandlerRegistration: delegate}, nil
+}
+
+func TestWaitForMetadata(t *testing.T) {
+	testCases := []struct {
+		name             string
+		informerProvider InformerProvider
+		err              bool
+	}{{
+		name:             "no wait",
+		informerProvider: NewFakeInformer,
+		err:              false,
+	}, {
+		name: "wait but never synced",
+		informerProvider: func(client kubernetes.Interface, namespace string, labelSelector labels.Selector, fieldSelector fields.Selector) cache.SharedInformer {
+			return &neverSyncedFakeClient{NewFakeInformer(client, namespace, labelSelector, fieldSelector)}
+		},
+		err: true,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, err := New(
+				componenttest.NewNopTelemetrySettings(),
+				k8sconfig.APIConfig{},
+				ExtractionRules{},
+				Filters{},
+				[]Association{},
+				Excludes{},
+				newFakeAPIClientset,
+				tc.informerProvider,
+				nil,
+				true,
+				1*time.Second,
+				map[string]*ClientResource{
+					MetadataFromDeployment:            newEmptyClientResource(),
+					MetadataFromStatefulSet:           newEmptyClientResource(),
+					MetadataFromReplicaSet:            newEmptyClientResource(),
+					MetadataFromDaemonSet:             newEmptyClientResource(),
+					MetadataFromJob:                   newEmptyClientResource(),
+					MetadataFromCronJob:               newEmptyClientResource(),
+					MetadataFromNode:                  newEmptyClientResource(),
+					MetadataFromPersistentVolume:      newEmptyClientResource(),
+					MetadataFromPersistentVolumeClaim: newEmptyClientResource(),
+					MetadataFromService:               newEmptyClientResource(),
+				})
+			require.NoError(t, err)
+
+			err = c.Start()
+			if tc.err {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

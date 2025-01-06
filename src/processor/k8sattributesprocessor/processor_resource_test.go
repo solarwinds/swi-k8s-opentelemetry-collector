@@ -72,6 +72,7 @@ func testProcessorAddResourceLabels(t *testing.T, resourceType, resourceName, re
 		generateTraces(resourceFunc...),
 		generateMetrics(resourceFunc...),
 		generateLogs(resourceFunc...),
+		generateProfiles(resourceFunc...),
 		func(err error) {
 			assert.NoError(t, err)
 		})
@@ -105,6 +106,7 @@ func TestProcessorNoResources(t *testing.T) {
 		generateTraces(resourceFunc...),
 		generateMetrics(resourceFunc...),
 		generateLogs(resourceFunc...),
+		generateProfiles(resourceFunc...),
 		func(err error) {
 			assert.NoError(t, err)
 		})

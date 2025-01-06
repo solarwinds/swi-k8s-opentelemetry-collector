@@ -20,6 +20,7 @@ package swk8sattributesprocessor // import "github.com/solarwinds/swi-k8s-opente
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
@@ -30,7 +31,7 @@ import (
 
 var disallowFieldExtractConfigRegex = featuregate.GlobalRegistry().MustRegister(
 	"k8sattr.fieldExtractConfigRegex.disallow",
-	featuregate.StageAlpha,
+	featuregate.StageBeta,
 	featuregate.WithRegisterDescription("When enabled, usage of the FieldExtractConfig.Regex field is disallowed"),
 	featuregate.WithRegisterFromVersion("v0.106.0"),
 )
@@ -64,6 +65,12 @@ type Config struct {
 	// Exclude section allows to define names of pod that should be
 	// ignored while tagging.
 	Exclude ExcludeConfig `mapstructure:"exclude"`
+
+	// WaitForMetadata is a flag that determines if the processor should wait k8s metadata to be synced when starting.
+	WaitForMetadata bool `mapstructure:"wait_for_metadata"`
+
+	// WaitForMetadataTimeout is the maximum time the processor will wait for the k8s metadata to be synced.
+	WaitForMetadataTimeout time.Duration `mapstructure:"wait_for_metadata_timeout"`
 
 	// Section allows to define rules for extracting annotations and labels from Deployment
 	Deployment DeploymentConfig `mapstructure:"deployment"`
