@@ -100,6 +100,9 @@ processors:
           - delete_key(resource.attributes, "k8s.job.name") where resource.attributes["sw.k8s.job.found"] == "false"
           - delete_key(resource.attributes, "k8s.cronjob.name") where resource.attributes["sw.k8s.cronjob.found"] == "false"
           - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"] == "false"
+          - delete_key(resource.attributes, "k8s.persistentvolume.name") where resource.attributes["sw.k8s.persistentvolume.found"] == "false"
+          - delete_key(resource.attributes, "k8s.persistentvolumeclaim.name") where resource.attributes["sw.k8s.persistentvolumeclaim.found"] == "false"
+          - delete_key(resource.attributes, "k8s.service.name") where resource.attributes["sw.k8s.service.found"] == "false"
           - delete_key(resource.attributes, "sw.k8s.pod.found")
           - delete_key(resource.attributes, "sw.k8s.deployment.found")
           - delete_key(resource.attributes, "sw.k8s.statefulset.found")
@@ -108,6 +111,9 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.job.found")
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
+          - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+          - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+          - delete_key(resource.attributes, "sw.k8s.service.found")
 
   transform/stringify_body:
     error_mode: ignore
