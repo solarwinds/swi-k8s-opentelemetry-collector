@@ -91,6 +91,41 @@ Custom events filter with new syntax:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -528,6 +563,7 @@ Custom events filter with new syntax:
             - transform/set_labels_and_annotations_for_entities
             - transform/stringify_body
             - resource/manifest
+            - resourcedetection/providers
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - transform/scope
@@ -635,6 +671,41 @@ Custom events filter with old syntax:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -1072,6 +1143,7 @@ Custom events filter with old syntax:
             - transform/set_labels_and_annotations_for_entities
             - transform/stringify_body
             - resource/manifest
+            - resourcedetection/providers
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - transform/scope
@@ -1172,6 +1244,41 @@ Events config should match snapshot when using default values:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -1608,6 +1715,7 @@ Events config should match snapshot when using default values:
             - transform/set_labels_and_annotations_for_entities
             - transform/stringify_body
             - resource/manifest
+            - resourcedetection/providers
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - transform/scope
@@ -1708,6 +1816,41 @@ Events config should not contain manifest collection pipeline when disabled:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -2084,6 +2227,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - transform/set_labels_and_annotations_for_entities
             - transform/stringify_body
             - resource/manifest
+            - resourcedetection/providers
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/k8s_collector_config_include
