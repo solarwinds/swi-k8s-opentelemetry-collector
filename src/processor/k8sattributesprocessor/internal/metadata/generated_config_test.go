@@ -83,9 +83,9 @@ func TestResourceAttributesConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadResourceAttributesConfig(t, tt.name)
-			if diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(ResourceAttributeConfig{})); diff != "" {
-				t.Errorf("Config mismatch (-expected +actual):\n%s", diff)
-			}
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(ResourceAttributeConfig{}))
+			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
+
 		})
 	}
 }
@@ -101,4 +101,3 @@ func loadResourceAttributesConfig(t *testing.T, name string) ResourceAttributesC
 	require.NoError(t, sub.Unmarshal(&cfg))
 	return cfg
 }
-

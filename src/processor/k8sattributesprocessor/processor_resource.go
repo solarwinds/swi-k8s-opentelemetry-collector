@@ -54,9 +54,7 @@ func processGenericResource(
 			kp.logger.Debug(fmt.Sprintf("getting the %s", resourceType), zap.Any(resourceType, k8sResource))
 
 			for key, val := range k8sResource.GetAttributes() {
-				if _, found := resource.Attributes().Get(key); !found {
-					resource.Attributes().PutStr(key, val)
-				}
+				setResourceAttribute(resource.Attributes(), key, val)
 			}
 
 			if kp.setObjectExistence {

@@ -19,29 +19,36 @@ package swk8sattributesprocessor // import "github.com/solarwinds/swi-k8s-opente
 
 import (
 	"context"
+	"time"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/consumer/xconsumer"
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/processor/processorhelper"
+	"go.opentelemetry.io/collector/processor/processorhelper/xprocessorhelper"
+	"go.opentelemetry.io/collector/processor/xprocessor"
 
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig"
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/kube"
 	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor/internal/metadata"
 )
 
-var kubeClientProvider = kube.ClientProvider(nil)
-var consumerCapabilities = consumer.Capabilities{MutatesData: true}
-var defaultExcludes = ExcludeConfig{Pods: []ExcludePodConfig{{Name: "jaeger-agent"}, {Name: "jaeger-collector"}}}
+var (
+	kubeClientProvider   = kube.ClientProvider(nil)
+	consumerCapabilities = consumer.Capabilities{MutatesData: true}
+	defaultExcludes      = ExcludeConfig{Pods: []ExcludePodConfig{{Name: "jaeger-agent"}, {Name: "jaeger-collector"}}}
+)
 
 // NewFactory returns a new factory for the k8s processor.
 func NewFactory() processor.Factory {
-	return processor.NewFactory(
+	return xprocessor.NewFactory(
 		metadata.Type,
 		createDefaultConfig,
-		processor.WithTraces(createTracesProcessor, metadata.TracesStability),
-		processor.WithMetrics(createMetricsProcessor, metadata.MetricsStability),
-		processor.WithLogs(createLogsProcessor, metadata.LogsStability),
+		xprocessor.WithTraces(createTracesProcessor, metadata.TracesStability),
+		xprocessor.WithMetrics(createMetricsProcessor, metadata.MetricsStability),
+		xprocessor.WithLogs(createLogsProcessor, metadata.LogsStability),
+		xprocessor.WithProfiles(createProfilesProcessor, metadata.ProfilesStability),
 	)
 }
 
@@ -52,6 +59,7 @@ func createDefaultConfig() component.Config {
 		Extract: ExtractConfig{
 			Metadata: enabledAttributes(),
 		},
+		WaitForMetadataTimeout: 10 * time.Second,
 	}
 }
 
@@ -80,6 +88,15 @@ func createMetricsProcessor(
 	nextMetricsConsumer consumer.Metrics,
 ) (processor.Metrics, error) {
 	return createMetricsProcessorWithOptions(ctx, params, cfg, nextMetricsConsumer)
+}
+
+func createProfilesProcessor(
+	ctx context.Context,
+	params processor.Settings,
+	cfg component.Config,
+	nextProfilesConsumer xconsumer.Profiles,
+) (xprocessor.Profiles, error) {
+	return createProfilesProcessorWithOptions(ctx, params, cfg, nextProfilesConsumer)
 }
 
 func createTracesProcessorWithOptions(
@@ -142,6 +159,27 @@ func createLogsProcessorWithOptions(
 		processorhelper.WithShutdown(kp.Shutdown))
 }
 
+func createProfilesProcessorWithOptions(
+	ctx context.Context,
+	set processor.Settings,
+	cfg component.Config,
+	nextProfilesConsumer xconsumer.Profiles,
+	options ...option,
+) (xprocessor.Profiles, error) {
+	kp := createKubernetesProcessor(set, cfg, options...)
+
+	return xprocessorhelper.NewProfiles(
+		ctx,
+		set,
+		cfg,
+		nextProfilesConsumer,
+		kp.processProfiles,
+		xprocessorhelper.WithCapabilities(consumerCapabilities),
+		xprocessorhelper.WithStart(kp.Start),
+		xprocessorhelper.WithShutdown(kp.Shutdown),
+	)
+}
+
 func createKubernetesProcessor(
 	params processor.Settings,
 	cfg component.Config,
@@ -182,7 +220,13 @@ func createProcessorOpts(cfg component.Config) []option {
 	opts = append(opts, withAPIConfig(oCfg.APIConfig))
 
 	opts = append(opts, withExtractPodAssociations(oCfg.Association...))
+
 	opts = append(opts, withExcludes(oCfg.Exclude))
+
+	opts = append(opts, withWaitForMetadataTimeout(oCfg.WaitForMetadataTimeout))
+	if oCfg.WaitForMetadata {
+		opts = append(opts, withWaitForMetadata(true))
+	}
 
 	opts = append(opts, createDeploymentProcessorOpts(oCfg.Deployment)...)
 	opts = append(opts, createStatefulSetProcessorOpts(oCfg.StatefulSet)...)

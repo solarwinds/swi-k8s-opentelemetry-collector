@@ -19,6 +19,7 @@ package kube // import "github.com/solarwinds/swi-k8s-opentelemetry-collector/pr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -53,16 +54,18 @@ var enableRFC3339Timestamp = featuregate.GlobalRegistry().MustRegister(
 
 // WatchClient is the main interface provided by this package to a kubernetes cluster.
 type WatchClient struct {
-	m                 sync.RWMutex
-	deleteMut         sync.Mutex
-	logger            *zap.Logger
-	kc                kubernetes.Interface
-	informer          cache.SharedInformer
-	namespaceInformer cache.SharedInformer
-	replicasetRegex   *regexp.Regexp
-	cronJobRegex      *regexp.Regexp
-	deleteQueue       []deleteRequest
-	stopCh            chan struct{}
+	m                      sync.RWMutex
+	deleteMut              sync.Mutex
+	logger                 *zap.Logger
+	kc                     kubernetes.Interface
+	informer               cache.SharedInformer
+	namespaceInformer      cache.SharedInformer
+	replicasetRegex        *regexp.Regexp
+	cronJobRegex           *regexp.Regexp
+	deleteQueue            []deleteRequest
+	stopCh                 chan struct{}
+	waitForMetadata        bool
+	waitForMetadataTimeout time.Duration
 
 	// A map containing Pod related data, used to associate them with resources.
 	// Key can be either an IP address or Pod UID
@@ -109,6 +112,8 @@ func New(
 	newClientSet APIClientsetProvider,
 	newInformer InformerProvider,
 	newNamespaceInformer InformerProviderNamespace,
+	waitForMetadata bool,
+	waitForMetadataTimeout time.Duration,
 	clientResources map[string]*ClientResource) (Client, error) {
 	telemetryBuilder, err := metadata.NewTelemetryBuilder(set)
 	if err != nil {
@@ -116,15 +121,17 @@ func New(
 	}
 
 	c := &WatchClient{
-		logger:           set.Logger,
-		Rules:            rules,
-		Filters:          filters,
-		Associations:     associations,
-		Exclude:          exclude,
-		replicasetRegex:  rRegex,
-		cronJobRegex:     cronJobRegex,
-		stopCh:           make(chan struct{}),
-		telemetryBuilder: telemetryBuilder,
+		logger:                 set.Logger,
+		Rules:                  rules,
+		Filters:                filters,
+		Associations:           associations,
+		Exclude:                exclude,
+		replicasetRegex:        rRegex,
+		cronJobRegex:           cronJobRegex,
+		stopCh:                 make(chan struct{}),
+		telemetryBuilder:       telemetryBuilder,
+		waitForMetadata:        waitForMetadata,
+		waitForMetadataTimeout: waitForMetadataTimeout,
 	}
 	go c.deleteLoop(time.Second*30, defaultPodDeleteGracePeriod)
 
@@ -305,66 +312,53 @@ func New(
 }
 
 // Start registers pod event handlers and starts watching the kubernetes cluster for pod changes.
-func (c *WatchClient) Start() {
-	_, err := c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+func (c *WatchClient) Start() error {
+	synced := make([]cache.InformerSynced, 0)
+	reg, err := c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handlePodAdd,
 		UpdateFunc: c.handlePodUpdate,
 		DeleteFunc: c.handlePodDelete,
 	})
 	if err != nil {
-		c.logger.Error("error adding event handler to pod informer", zap.Error(err))
+		return err
 	}
+	synced = append(synced, reg.HasSynced)
 	go c.informer.Run(c.stopCh)
 
-	_, err = c.namespaceInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	reg, err = c.namespaceInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleNamespaceAdd,
 		UpdateFunc: c.handleNamespaceUpdate,
 		DeleteFunc: c.handleNamespaceDelete,
 	})
 	if err != nil {
-		c.logger.Error("error adding event handler to namespace informer", zap.Error(err))
+		return err
 	}
+	synced = append(synced, reg.HasSynced)
 	go c.namespaceInformer.Run(c.stopCh)
 
-	if c.DeploymentClient != nil {
-		c.DeploymentClient.Start()
+	clients := []*WatchResourceClient[KubernetesResource]{c.DeploymentClient, c.StatefulSetClient, c.ReplicaSetClient, c.DaemonSetClient, c.JobClient, c.CronJobClient, c.NodeClient, c.PersistentVolumeClient, c.PersistentVolumeClaimClient, c.ServiceClient}
+	for _, client := range clients {
+		if client != nil {
+			reg, err := client.Start()
+			if err != nil {
+				return err
+			}
+			synced = append(synced, reg.HasSynced)
+		}
 	}
 
-	if c.StatefulSetClient != nil {
-		c.StatefulSetClient.Start()
-	}
+	if c.waitForMetadata {
+		timeoutCh := make(chan struct{})
+		t := time.AfterFunc(c.waitForMetadataTimeout, func() {
+			close(timeoutCh)
+		})
+		defer t.Stop()
+		if !cache.WaitForCacheSync(timeoutCh, synced...) {
+			return errors.New("failed to wait for caches to sync")
+		}
 
-	if c.ReplicaSetClient != nil {
-		c.ReplicaSetClient.Start()
 	}
-
-	if c.DaemonSetClient != nil {
-		c.DaemonSetClient.Start()
-	}
-
-	if c.JobClient != nil {
-		c.JobClient.Start()
-	}
-
-	if c.CronJobClient != nil {
-		c.CronJobClient.Start()
-	}
-
-	if c.NodeClient != nil {
-		c.NodeClient.Start()
-	}
-
-	if c.PersistentVolumeClient != nil {
-		c.PersistentVolumeClient.Start()
-	}
-
-	if c.PersistentVolumeClaimClient != nil {
-		c.PersistentVolumeClaimClient.Start()
-	}
-
-	if c.ServiceClient != nil {
-		c.ServiceClient.Start()
-	}
+	return nil
 }
 
 // Stop signals the the k8s watcher/informer to stop watching for new events.
@@ -649,7 +643,6 @@ func (c *WatchClient) extractPodAttributes(pod *api_v1.Pod) map[string]string {
 
 // This function removes all data from the Pod except what is required by extraction rules and pod association
 func removeUnnecessaryPodData(pod *api_v1.Pod, rules ExtractionRules) *api_v1.Pod {
-
 	// name, namespace, uid, start time and ip are needed for identifying Pods
 	// there's room to optimize this further, it's kept this way for simplicity
 	transformedPod := api_v1.Pod{
@@ -743,6 +736,30 @@ func removeUnnecessaryPodData(pod *api_v1.Pod, rules ExtractionRules) *api_v1.Po
 	return &transformedPod
 }
 
+// parseNameAndTagFromImage parses the image name and tag for differently-formatted image names.
+// returns "latest" as the default if tag not present. also checks if the image contains a digest.
+// if it does, no latest tag is assumed.
+func parseNameAndTagFromImage(image string) (name, tag string, err error) {
+	ref, err := reference.Parse(image)
+	if err != nil {
+		return
+	}
+	namedRef, ok := ref.(reference.Named)
+	if !ok {
+		return "", "", errors.New("cannot retrieve image name")
+	}
+	name = namedRef.Name()
+	if taggedRef, ok := namedRef.(reference.Tagged); ok {
+		tag = taggedRef.Tag()
+	}
+	if tag == "" {
+		if digestedRef, ok := namedRef.(reference.Digested); !ok || digestedRef.String() == "" {
+			tag = "latest"
+		}
+	}
+	return
+}
+
 func (c *WatchClient) extractPodContainersAttributes(pod *api_v1.Pod) PodContainers {
 	containers := PodContainers{
 		ByID:   map[string]*Container{},
@@ -754,16 +771,14 @@ func (c *WatchClient) extractPodContainersAttributes(pod *api_v1.Pod) PodContain
 	if c.Rules.ContainerImageName || c.Rules.ContainerImageTag {
 		for _, spec := range append(pod.Spec.Containers, pod.Spec.InitContainers...) {
 			container := &Container{}
-			nameTagSep := strings.LastIndex(spec.Image, ":")
-			if c.Rules.ContainerImageName {
-				if nameTagSep > 0 {
-					container.ImageName = spec.Image[:nameTagSep]
-				} else {
-					container.ImageName = spec.Image
+			name, tag, err := parseNameAndTagFromImage(spec.Image)
+			if err == nil {
+				if c.Rules.ContainerImageName {
+					container.ImageName = name
 				}
-			}
-			if c.Rules.ContainerImageTag && nameTagSep > 0 {
-				container.ImageTag = spec.Image[nameTagSep+1:]
+				if c.Rules.ContainerImageTag {
+					container.ImageTag = tag
+				}
 			}
 			containers.ByName[spec.Name] = container
 		}

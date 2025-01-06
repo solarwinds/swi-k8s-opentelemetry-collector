@@ -58,9 +58,9 @@ func NewWatchStatefulSetClient(
 		conventions.AttributeK8SStatefulSetName,
 		conventions.AttributeK8SStatefulSetUID,
 		client.telemetryBuilder.OtelsvcK8sStatefulSetTableSize,
-		client.telemetryBuilder.OtelsvcK8sPodAdded,
-		client.telemetryBuilder.OtelsvcK8sPodUpdated,
-		client.telemetryBuilder.OtelsvcK8sPodDeleted,
+		client.telemetryBuilder.OtelsvcK8sStatefulSetAdded,
+		client.telemetryBuilder.OtelsvcK8sStatefulSetUpdated,
+		client.telemetryBuilder.OtelsvcK8sStatefulSetDeleted,
 		newStatefulSetSharedInformer,
 	)
 }
@@ -286,16 +286,16 @@ func NewWatchResourceClient[T KubernetesResource](
 }
 
 // Start registers pod event handlers and starts watching the kubernetes cluster for pod changes.
-func (c *WatchResourceClient[T]) Start() {
-	_, err := c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+func (c *WatchResourceClient[T]) Start() (reg cache.ResourceEventHandlerRegistration, err error) {
+	reg, err = c.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.handleResourceAdd,
 		UpdateFunc: c.handleResourceUpdate,
 		DeleteFunc: c.handleResourceDelete,
 	})
-	if err != nil {
-		c.client.logger.Error("error adding event handler to deployment informer", zap.Error(err))
+	if err == nil {
+		go c.informer.Run(c.client.stopCh)
 	}
-	go c.informer.Run(c.client.stopCh)
+	return
 }
 
 func (c *WatchResourceClient[T]) handleResourceAdd(obj any) {
