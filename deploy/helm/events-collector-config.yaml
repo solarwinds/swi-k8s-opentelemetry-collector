@@ -122,6 +122,12 @@ processors:
         statements:
           # convert body to string
           - set(body, body.string)
+  transform/set_status_for_pods:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"] == "Pod" and body["status"]["phase"] != nil
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
@@ -369,6 +375,7 @@ service:
         - transform/manifest
         - groupbyattrs/manifest
         - transform/set_labels_and_annotations_for_entities
+        - transform/set_status_for_pods
         - transform/stringify_body
         - resource/manifest
         - resourcedetection/providers

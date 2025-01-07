@@ -420,6 +420,13 @@ Custom events filter with new syntax:
               or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
               == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
               and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -570,6 +577,7 @@ Custom events filter with new syntax:
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
@@ -1009,6 +1017,13 @@ Custom events filter with old syntax:
               or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
               == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
               and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1159,6 +1174,7 @@ Custom events filter with old syntax:
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
@@ -1591,6 +1607,13 @@ Events config should match snapshot when using default values:
               or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
               == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
               and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1740,6 +1763,7 @@ Events config should match snapshot when using default values:
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
@@ -2172,6 +2196,13 @@ Events config should not contain manifest collection pipeline when disabled:
               or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
               == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
               and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -2261,6 +2292,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
