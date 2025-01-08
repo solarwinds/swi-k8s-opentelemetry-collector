@@ -679,7 +679,6 @@ processors:
       - image
       - image_id
       - k8s.node.name
-      - sw.k8s.pod.status
       - sw.k8s.namespace.status
       - sw.k8s.node.status
       - sw.k8s.container.status
@@ -720,16 +719,6 @@ processors:
         - k8s.kube_namespace_status_phase
     actions:
       - key: sw.k8s.namespace.status
-        from_attribute: phase
-        action: insert
-
-  attributes/attributes_pod_status:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_pod_status_phase
-    actions:
-      - key: sw.k8s.pod.status
         from_attribute: phase
         action: insert
 
@@ -1188,7 +1177,6 @@ service:
         - filter/preprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
-        - attributes/attributes_pod_status
         - attributes/attributes_namespace_status
         - cumulativetodelta
         - deltatorate
