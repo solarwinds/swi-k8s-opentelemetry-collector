@@ -13,6 +13,8 @@ metadata:
     {{- if .Values.otel.metrics.telemetry.metrics.podMonitor.additionalLabels }}
     {{- toYaml .Values.otel.metrics.telemetry.metrics.podMonitor.additionalLabels | nindent 4 }}
     {{- end }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
 spec:
   selector:
     matchLabels:
