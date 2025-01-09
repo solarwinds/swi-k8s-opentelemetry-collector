@@ -18,6 +18,8 @@
 package swk8sattributesprocessor
 
 import (
+	"time"
+
 	"go.opentelemetry.io/collector/component"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -58,6 +60,8 @@ func newFakeClient(
 	_ kube.APIClientsetProvider,
 	_ kube.InformerProvider,
 	_ kube.InformerProviderNamespace,
+	_ bool,
+	_ time.Duration,
 	_ map[string]*kube.ClientResource) (kube.Client, error) {
 	cs := fake.NewSimpleClientset()
 
@@ -65,13 +69,16 @@ func newFakeClient(
 	return &fakeClient{
 		Pods: map[kube.PodIdentifier]*kube.Pod{},
 		Resources: map[string]map[kube.ResourceIdentifier]kube.KubernetesResource{
-			kube.MetadataFromDeployment:  {},
-			kube.MetadataFromStatefulSet: {},
-			kube.MetadataFromReplicaSet:  {},
-			kube.MetadataFromDaemonSet:   {},
-			kube.MetadataFromJob:         {},
-			kube.MetadataFromCronJob:     {},
-			kube.MetadataFromNode:        {},
+			kube.MetadataFromDeployment:            {},
+			kube.MetadataFromStatefulSet:           {},
+			kube.MetadataFromReplicaSet:            {},
+			kube.MetadataFromDaemonSet:             {},
+			kube.MetadataFromJob:                   {},
+			kube.MetadataFromCronJob:               {},
+			kube.MetadataFromNode:                  {},
+			kube.MetadataFromPersistentVolume:      {},
+			kube.MetadataFromPersistentVolumeClaim: {},
+			kube.MetadataFromService:               {},
 		},
 		Rules:             rules,
 		Filters:           filters,
@@ -95,10 +102,11 @@ func (f *fakeClient) GetNamespace(namespace string) (*kube.Namespace, bool) {
 }
 
 // Start is a noop for FakeClient.
-func (f *fakeClient) Start() {
+func (f *fakeClient) Start() error {
 	if f.Informer != nil {
-		f.Informer.Run(f.StopCh)
+		go f.Informer.Run(f.StopCh)
 	}
+	return nil
 }
 
 // Stop is a noop for FakeClient.

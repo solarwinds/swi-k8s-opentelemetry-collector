@@ -679,7 +679,6 @@ processors:
       - image
       - image_id
       - k8s.node.name
-      - sw.k8s.pod.status
       - sw.k8s.namespace.status
       - sw.k8s.node.status
       - sw.k8s.container.status
@@ -723,16 +722,6 @@ processors:
         from_attribute: phase
         action: insert
 
-  attributes/attributes_pod_status:
-    include:
-      match_type: regexp
-      metric_names:
-        - kube_pod_status_phase
-    actions:
-      - key: sw.k8s.pod.status
-        from_attribute: phase
-        action: insert
-
   {{- include "common-config.resource-metrics" . | nindent 2 }}
 
   transform/cleanup_attributes_for_nonexisting_entities:
@@ -748,6 +737,9 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.job.found")
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
+          - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+          - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+          - delete_key(resource.attributes, "sw.k8s.service.found")
 
   attributes/remove_prometheus_attributes_endpoint:
     exclude:
@@ -862,8 +854,6 @@ processors:
           name == "kube_service_spec_type" or
           name == "kube_service_spec_external_ip" or
           name == "kube_service_status_load_balancer_ingress" or
-          name == "kube_endpoint_address_not_ready" or
-          name == "kube_endpoint_address_available" or
           name == "kube_endpoint_info" or
           name == "kube_endpoint_created" or
           name == "kube_endpoint_ports" or
@@ -1187,7 +1177,6 @@ service:
         - filter/preprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
-        - attributes/attributes_pod_status
         - attributes/attributes_namespace_status
         - cumulativetodelta
         - deltatorate

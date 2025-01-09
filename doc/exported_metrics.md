@@ -271,8 +271,6 @@ The following tables contain the list of all metrics exported by the swi-k8s-ope
 | Metric | Type | Unit | Description | native/custom |
 | ---    | ---  | ---  | ---         | ---           |
 | k8s.kube_endpoint_annotations| Gauge |  | Kubernetes annotations converted to Prometheus labels | native |
-| k8s.kube_endpoint_address_not_ready| Gauge |  |  | native |
-| k8s.kube_endpoint_address_available| Gauge |  |  | native |
 | k8s.kube_endpoint_info| Gauge |  | Information about Endpoint | native |
 | k8s.kube_endpoint_labels| Gauge |  | Kubernetes labels converted to Prometheus labels | native |
 | k8s.kube_endpoint_created| Gauge |  | Unix creation timestamp | native |

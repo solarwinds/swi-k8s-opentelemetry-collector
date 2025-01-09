@@ -100,6 +100,9 @@ processors:
           - delete_key(resource.attributes, "k8s.job.name") where resource.attributes["sw.k8s.job.found"] == "false"
           - delete_key(resource.attributes, "k8s.cronjob.name") where resource.attributes["sw.k8s.cronjob.found"] == "false"
           - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"] == "false"
+          - delete_key(resource.attributes, "k8s.persistentvolume.name") where resource.attributes["sw.k8s.persistentvolume.found"] == "false"
+          - delete_key(resource.attributes, "k8s.persistentvolumeclaim.name") where resource.attributes["sw.k8s.persistentvolumeclaim.found"] == "false"
+          - delete_key(resource.attributes, "k8s.service.name") where resource.attributes["sw.k8s.service.found"] == "false"
           - delete_key(resource.attributes, "sw.k8s.pod.found")
           - delete_key(resource.attributes, "sw.k8s.deployment.found")
           - delete_key(resource.attributes, "sw.k8s.statefulset.found")
@@ -108,6 +111,9 @@ processors:
           - delete_key(resource.attributes, "sw.k8s.job.found")
           - delete_key(resource.attributes, "sw.k8s.cronjob.found")
           - delete_key(resource.attributes, "sw.k8s.node.found")
+          - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+          - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+          - delete_key(resource.attributes, "sw.k8s.service.found")
 
   transform/stringify_body:
     error_mode: ignore
@@ -116,8 +122,13 @@ processors:
         statements:
           # convert body to string
           - set(body, body.string)
+  transform/set_status_for_pods:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"] == "Pod" and body["status"]["phase"] != nil
 
-{{- if .Values.otel.manifests.enabled }}
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
     log_statements:
@@ -151,8 +162,12 @@ processors:
           
           # Set labels to resource attributes
           - merge_maps(resource.attributes, cache["labels"], "upsert") where ({{ $joinedConditions }}) and cache["labels"] != nil
-{{- end }}
-{{- if .Values.otel.manifests.enabled }}
+  filter/k8s_collector_config_include:
+    error_mode: ignore
+    logs:
+      log_record:
+        - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] != "values-config-map"
+
   transform/manifest:
       error_mode: ignore
       log_statements:
@@ -183,14 +198,13 @@ processors:
             - delete_key(attributes, "k8s.resource.name")
             - delete_key(attributes, "event.name")
             - delete_key(attributes, "event.domain")
-{{- end }}
   transform/scope:
     log_statements:
       - context: scope
         statements:
           - set(name, "")
           - set(version, "")
-{{- if .Values.otel.manifests.enabled }}
+
   groupbyattrs/manifest:
     keys:
       - k8s.pod.name
@@ -208,7 +222,6 @@ processors:
       - k8s.ingress.name
       - sw.k8s.ingress.type
       - k8s.configmap.name
-{{- end }}
 
   resource/events:
     attributes:
@@ -233,7 +246,7 @@ processors:
       - key: sw.k8s.log.type
         value: event
         action: insert
-{{- if .Values.otel.manifests.enabled }}
+
   resource/manifest:
     attributes:
       # Collector and Manifest version
@@ -257,7 +270,43 @@ processors:
       - key: sw.k8s.log.type
         value: manifest
         action: insert
-{{- end }}
+
+  resourcedetection/providers:
+    detectors: ["ec2","azure","openshift"]
+    timeout: 2s
+    override: false
+    azure:
+      # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region, azure.resourcegroup.name
+      resource_attributes:
+        azure.vm.name:
+          enabled: false
+        azure.vm.scaleset.name:
+          enabled: false
+        azure.vm.size:
+          enabled: false
+        host.id:
+          enabled: false
+        host.name:
+          enabled: false
+    openshift:
+      # keep: cloud.platform, cloud.provider, cloud.region
+      resource_attributes:
+        k8s.cluster.name:
+          enabled: false
+    ec2:
+      # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region
+      resource_attributes:
+        cloud.availability_zone:
+          enabled: false
+        host.id:
+          enabled: false
+        host.image.id:
+          enabled: false
+        host.name:
+          enabled: false
+        host.type:
+          enabled: false
+
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   swk8sattributes:
@@ -265,10 +314,10 @@ processors:
 
 receivers:
   k8s_events:
-{{- if .Values.otel.manifests.enabled }}
   k8sobjects:
     auth_type: serviceAccount
     objects:
+{{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
 {{- end }}
@@ -280,7 +329,14 @@ receivers:
       - name : {{ $resource }}
         mode: watch
 {{- end }}
+{{- else }}
+      - name: "configmaps"
+        mode: pull
+        interval: {{ quote .Values.otel.manifests.pull_every }}
+      - name : "configmaps"
+        mode: watch
 {{- end }}
+
 service:
   extensions:
 {{- if .Values.otel.events.sending_queue.offload_to_disk }}
@@ -311,7 +367,6 @@ service:
       receivers:
         - k8s_events
 {{- end }}
-{{- if .Values.otel.manifests.enabled }}
     logs/manifests:
       exporters:
         - otlp
@@ -320,10 +375,15 @@ service:
         - transform/manifest
         - groupbyattrs/manifest
         - transform/set_labels_and_annotations_for_entities
+        - transform/set_status_for_pods
         - transform/stringify_body
         - resource/manifest
+        - resourcedetection/providers
         - swk8sattributes
         - transform/cleanup_attributes_for_nonexisting_entities
+{{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
+        - filter/k8s_collector_config_include
+{{- end }}
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
@@ -331,7 +391,6 @@ service:
         - batch
       receivers:
         - k8sobjects
-{{- end }}
   telemetry:
 {{- if .Values.otel.events.telemetry.logs.enabled }}
     logs:

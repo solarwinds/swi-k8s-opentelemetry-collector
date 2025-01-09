@@ -34,15 +34,6 @@ Metrics config should match snapshot when fargate is enabled:
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
-        attributes/attributes_pod_status:
-          actions:
-          - action: insert
-            from_attribute: phase
-            key: sw.k8s.pod.status
-          include:
-            match_type: regexp
-            metric_names:
-            - kube_pod_status_phase
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -273,8 +264,7 @@ Metrics config should match snapshot when fargate is enabled:
               or\nname == \"kube_persistentvolumeclaim_created\" or\nname == \"kube_pod_spec_volumes_persistentvolumeclaims_info\"
               or\nname == \"kube_service_info\" or\nname == \"kube_service_created\" or\nname
               == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
-              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_address_not_ready\"
-              or\nname == \"kube_endpoint_address_available\" or\nname == \"kube_endpoint_info\"
+              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
               or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
               or\nname == \"kube_endpoint_address\"\n)\n"
         filter/preprocessing:
@@ -394,7 +384,6 @@ Metrics config should match snapshot when fargate is enabled:
           - image
           - image_id
           - k8s.node.name
-          - sw.k8s.pod.status
           - sw.k8s.namespace.status
           - sw.k8s.node.status
           - sw.k8s.container.status
@@ -1589,6 +1578,9 @@ Metrics config should match snapshot when fargate is enabled:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/scope:
           metric_statements:
           - context: scope
@@ -1822,7 +1814,6 @@ Metrics config should match snapshot when fargate is enabled:
             - filter/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
-            - attributes/attributes_pod_status
             - attributes/attributes_namespace_status
             - cumulativetodelta
             - deltatorate
@@ -1887,15 +1878,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
-        attributes/attributes_pod_status:
-          actions:
-          - action: insert
-            from_attribute: phase
-            key: sw.k8s.pod.status
-          include:
-            match_type: regexp
-            metric_names:
-            - kube_pod_status_phase
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -2129,8 +2111,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               or\nname == \"kube_persistentvolumeclaim_created\" or\nname == \"kube_pod_spec_volumes_persistentvolumeclaims_info\"
               or\nname == \"kube_service_info\" or\nname == \"kube_service_created\" or\nname
               == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
-              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_address_not_ready\"
-              or\nname == \"kube_endpoint_address_available\" or\nname == \"kube_endpoint_info\"
+              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
               or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
               or\nname == \"kube_endpoint_address\"\n)\n"
         filter/preprocessing:
@@ -2250,7 +2231,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - image
           - image_id
           - k8s.node.name
-          - sw.k8s.pod.status
           - sw.k8s.namespace.status
           - sw.k8s.node.status
           - sw.k8s.container.status
@@ -3445,6 +3425,9 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/scope:
           metric_statements:
           - context: scope
@@ -3613,7 +3596,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - filter/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
-            - attributes/attributes_pod_status
             - attributes/attributes_namespace_status
             - cumulativetodelta
             - deltatorate
@@ -3685,15 +3667,6 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
-        attributes/attributes_pod_status:
-          actions:
-          - action: insert
-            from_attribute: phase
-            key: sw.k8s.pod.status
-          include:
-            match_type: regexp
-            metric_names:
-            - kube_pod_status_phase
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -3927,8 +3900,7 @@ Metrics config should match snapshot when using default values:
               or\nname == \"kube_persistentvolumeclaim_created\" or\nname == \"kube_pod_spec_volumes_persistentvolumeclaims_info\"
               or\nname == \"kube_service_info\" or\nname == \"kube_service_created\" or\nname
               == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
-              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_address_not_ready\"
-              or\nname == \"kube_endpoint_address_available\" or\nname == \"kube_endpoint_info\"
+              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
               or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
               or\nname == \"kube_endpoint_address\"\n)\n"
         filter/preprocessing:
@@ -4048,7 +4020,6 @@ Metrics config should match snapshot when using default values:
           - image
           - image_id
           - k8s.node.name
-          - sw.k8s.pod.status
           - sw.k8s.namespace.status
           - sw.k8s.node.status
           - sw.k8s.container.status
@@ -5243,6 +5214,9 @@ Metrics config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/scope:
           metric_statements:
           - context: scope
@@ -5396,7 +5370,6 @@ Metrics config should match snapshot when using default values:
             - filter/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
-            - attributes/attributes_pod_status
             - attributes/attributes_namespace_status
             - cumulativetodelta
             - deltatorate

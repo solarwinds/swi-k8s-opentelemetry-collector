@@ -23,13 +23,19 @@ Custom events filter with new syntax:
           endpoint: 0.0.0.0:13133
       processors:
         batch:
-          send_batch_max_size: 512
-          send_batch_size: 512
+          send_batch_max_size: 64
+          send_batch_size: 64
           timeout: 1s
         filter:
           logs:
             log_record:
             - not(IsMatch(resource.attributes["k8s.namespace.name"], "^.*$"))
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -49,8 +55,8 @@ Custom events filter with new syntax:
           - k8s.configmap.name
         memory_limiter:
           check_interval: 1s
-          limit_mib: 512
-          spike_limit_mib: 128
+          limit_mib: 800
+          spike_limit_mib: 300
         resource/events:
           attributes:
           - action: insert
@@ -85,6 +91,41 @@ Custom events filter with new syntax:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -200,6 +241,12 @@ Custom events filter with new syntax:
               == "false"
             - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
               == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolume.name") where resource.attributes["sw.k8s.persistentvolume.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolumeclaim.name") where resource.attributes["sw.k8s.persistentvolumeclaim.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.service.name") where resource.attributes["sw.k8s.service.found"]
+              == "false"
             - delete_key(resource.attributes, "sw.k8s.pod.found")
             - delete_key(resource.attributes, "sw.k8s.deployment.found")
             - delete_key(resource.attributes, "sw.k8s.statefulset.found")
@@ -208,6 +255,9 @@ Custom events filter with new syntax:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/entity_attributes:
           log_statements:
           - context: log
@@ -370,6 +420,13 @@ Custom events filter with new syntax:
               or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
               == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
               and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -520,8 +577,10 @@ Custom events filter with new syntax:
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
             - transform/stringify_body
             - resource/manifest
+            - resourcedetection/providers
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - transform/scope
@@ -558,8 +617,8 @@ Custom events filter with old syntax:
           endpoint: 0.0.0.0:13133
       processors:
         batch:
-          send_batch_max_size: 512
-          send_batch_size: 512
+          send_batch_max_size: 64
+          send_batch_size: 64
           timeout: 1s
         filter:
           logs:
@@ -568,6 +627,12 @@ Custom events filter with old syntax:
               record_attributes:
               - key: k8s.namespace.name
                 value: ^.*$
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -587,8 +652,8 @@ Custom events filter with old syntax:
           - k8s.configmap.name
         memory_limiter:
           check_interval: 1s
-          limit_mib: 512
-          spike_limit_mib: 128
+          limit_mib: 800
+          spike_limit_mib: 300
         resource/events:
           attributes:
           - action: insert
@@ -623,6 +688,41 @@ Custom events filter with old syntax:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -738,6 +838,12 @@ Custom events filter with old syntax:
               == "false"
             - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
               == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolume.name") where resource.attributes["sw.k8s.persistentvolume.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolumeclaim.name") where resource.attributes["sw.k8s.persistentvolumeclaim.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.service.name") where resource.attributes["sw.k8s.service.found"]
+              == "false"
             - delete_key(resource.attributes, "sw.k8s.pod.found")
             - delete_key(resource.attributes, "sw.k8s.deployment.found")
             - delete_key(resource.attributes, "sw.k8s.statefulset.found")
@@ -746,6 +852,9 @@ Custom events filter with old syntax:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/entity_attributes:
           log_statements:
           - context: log
@@ -908,6 +1017,13 @@ Custom events filter with old syntax:
               or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
               == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
               and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1058,8 +1174,10 @@ Custom events filter with old syntax:
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
             - transform/stringify_body
             - resource/manifest
+            - resourcedetection/providers
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - transform/scope
@@ -1096,9 +1214,15 @@ Events config should match snapshot when using default values:
           endpoint: 0.0.0.0:13133
       processors:
         batch:
-          send_batch_max_size: 512
-          send_batch_size: 512
+          send_batch_max_size: 64
+          send_batch_size: 64
           timeout: 1s
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -1118,8 +1242,8 @@ Events config should match snapshot when using default values:
           - k8s.configmap.name
         memory_limiter:
           check_interval: 1s
-          limit_mib: 512
-          spike_limit_mib: 128
+          limit_mib: 800
+          spike_limit_mib: 300
         resource/events:
           attributes:
           - action: insert
@@ -1154,6 +1278,41 @@ Events config should match snapshot when using default values:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -1269,6 +1428,12 @@ Events config should match snapshot when using default values:
               == "false"
             - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
               == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolume.name") where resource.attributes["sw.k8s.persistentvolume.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolumeclaim.name") where resource.attributes["sw.k8s.persistentvolumeclaim.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.service.name") where resource.attributes["sw.k8s.service.found"]
+              == "false"
             - delete_key(resource.attributes, "sw.k8s.pod.found")
             - delete_key(resource.attributes, "sw.k8s.deployment.found")
             - delete_key(resource.attributes, "sw.k8s.statefulset.found")
@@ -1277,6 +1442,9 @@ Events config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/entity_attributes:
           log_statements:
           - context: log
@@ -1439,6 +1607,13 @@ Events config should match snapshot when using default values:
               or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
               == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
               and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1588,8 +1763,10 @@ Events config should match snapshot when using default values:
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
             - transform/stringify_body
             - resource/manifest
+            - resourcedetection/providers
             - swk8sattributes
             - transform/cleanup_attributes_for_nonexisting_entities
             - transform/scope
@@ -1626,13 +1803,36 @@ Events config should not contain manifest collection pipeline when disabled:
           endpoint: 0.0.0.0:13133
       processors:
         batch:
-          send_batch_max_size: 512
-          send_batch_size: 512
+          send_batch_max_size: 64
+          send_batch_size: 64
           timeout: 1s
+        filter/k8s_collector_config_include:
+          error_mode: ignore
+          logs:
+            log_record:
+            - resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              != "values-config-map"
+        groupbyattrs/manifest:
+          keys:
+          - k8s.pod.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.replicaset.name
+          - k8s.daemonset.name
+          - k8s.job.name
+          - k8s.cronjob.name
+          - k8s.node.name
+          - k8s.namespace.name
+          - k8s.service.name
+          - k8s.persistentvolume.name
+          - k8s.persistentvolumeclaim.name
+          - k8s.ingress.name
+          - sw.k8s.ingress.type
+          - k8s.configmap.name
         memory_limiter:
           check_interval: 1s
-          limit_mib: 512
-          spike_limit_mib: 128
+          limit_mib: 800
+          spike_limit_mib: 300
         resource/events:
           attributes:
           - action: insert
@@ -1650,6 +1850,58 @@ Events config should not contain manifest collection pipeline when disabled:
           - action: insert
             key: sw.k8s.log.type
             value: event
+        resource/manifest:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.k8s.log.type
+            value: manifest
+        resourcedetection/providers:
+          azure:
+            resource_attributes:
+              azure.vm.name:
+                enabled: false
+              azure.vm.scaleset.name:
+                enabled: false
+              azure.vm.size:
+                enabled: false
+              host.id:
+                enabled: false
+              host.name:
+                enabled: false
+          detectors:
+          - ec2
+          - azure
+          - openshift
+          ec2:
+            resource_attributes:
+              cloud.availability_zone:
+                enabled: false
+              host.id:
+                enabled: false
+              host.image.id:
+                enabled: false
+              host.name:
+                enabled: false
+              host.type:
+                enabled: false
+          openshift:
+            resource_attributes:
+              k8s.cluster.name:
+                enabled: false
+          override: false
+          timeout: 2s
         swk8sattributes:
           auth_type: serviceAccount
           cronjob:
@@ -1765,6 +2017,12 @@ Events config should not contain manifest collection pipeline when disabled:
               == "false"
             - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
               == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolume.name") where resource.attributes["sw.k8s.persistentvolume.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.persistentvolumeclaim.name") where resource.attributes["sw.k8s.persistentvolumeclaim.found"]
+              == "false"
+            - delete_key(resource.attributes, "k8s.service.name") where resource.attributes["sw.k8s.service.found"]
+              == "false"
             - delete_key(resource.attributes, "sw.k8s.pod.found")
             - delete_key(resource.attributes, "sw.k8s.deployment.found")
             - delete_key(resource.attributes, "sw.k8s.statefulset.found")
@@ -1773,6 +2031,9 @@ Events config should not contain manifest collection pipeline when disabled:
             - delete_key(resource.attributes, "sw.k8s.job.found")
             - delete_key(resource.attributes, "sw.k8s.cronjob.found")
             - delete_key(resource.attributes, "sw.k8s.node.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
+            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
+            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/entity_attributes:
           log_statements:
           - context: log
@@ -1797,6 +2058,50 @@ Events config should not contain manifest collection pipeline when disabled:
               where attributes["k8s.namespace.name"] != nil
             - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
               != nil
+        transform/manifest:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+              != nil
+            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
+              == "ConfigMap"
+            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
+              == "CronJob"
+            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
+              == "DaemonSet"
+            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
+              == "Deployment"
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress"
+            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+              == "Job"
+            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+              == "Node"
+            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
+              where body["kind"] == "PersistentVolumeClaim"
+            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
+              body["kind"] == "PersistentVolume"
+            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+              == "Pod"
+            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
+              == "ReplicaSet"
+            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
+              == "Service"
+            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
+              == "StatefulSet"
+            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
+            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
+              == "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
+              "Ingress" or body["kind"] == "VirtualService"
+            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
+            - delete_key(attributes, "k8s.resource.name")
+            - delete_key(attributes, "event.name")
+            - delete_key(attributes, "event.domain")
         transform/namespace:
           log_statements:
           - context: log
@@ -1808,6 +2113,96 @@ Events config should not contain manifest collection pipeline when disabled:
             statements:
             - set(name, "")
             - set(version, "")
+        transform/set_labels_and_annotations_for_entities:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
+              == "ConfigMap" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
+              == "CronJob" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
+              == "DaemonSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
+              == "Deployment" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
+              == "Ingress" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
+              "Job" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
+              "Node" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
+              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
+              == "PersistentVolume" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
+              "Pod" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
+              == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
+              == "Service" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
+              == "StatefulSet" and cache["annotations"] != nil
+            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["annotations"] != nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
+              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
+              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
+              == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume"
+              or body["kind"] == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] ==
+              "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
+              == "PersistentVolumeClaim" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
+              == "PersistentVolume" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
+              and cache["labels"] != nil
+            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
+              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
+              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "Job" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
+              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
+              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet")
+              and cache["labels"] != nil
+        transform/set_status_for_pods:
+          error_mode: ignore
+          log_statements:
+          - context: log
+            statements:
+            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
+              body["kind"] == "Pod" and body["status"]["phase"] != nil
         transform/severity:
           log_statements:
           - context: log
@@ -1862,6 +2257,14 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(body, body.string)
       receivers:
         k8s_events: null
+        k8sobjects:
+          auth_type: serviceAccount
+          objects:
+          - interval: 60m
+            mode: pull
+            name: configmaps
+          - mode: watch
+            name: configmaps
       service:
         extensions:
         - health_check
@@ -1881,6 +2284,25 @@ Events config should not contain manifest collection pipeline when disabled:
             - batch
             receivers:
             - k8s_events
+          logs/manifests:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/manifest
+            - groupbyattrs/manifest
+            - transform/set_labels_and_annotations_for_entities
+            - transform/set_status_for_pods
+            - transform/stringify_body
+            - resource/manifest
+            - resourcedetection/providers
+            - swk8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
+            - filter/k8s_collector_config_include
+            - transform/scope
+            - batch
+            receivers:
+            - k8sobjects
         telemetry:
           logs:
             level: info

@@ -7,13 +7,13 @@ import (
 )
 
 var (
-	Type = component.MustNewType("swk8sattributes")
+	Type      = component.MustNewType("swk8sattributes")
 	ScopeName = "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor"
 )
 
-
 const (
-	LogsStability    = component.StabilityLevelBeta
-	MetricsStability = component.StabilityLevelBeta
-	TracesStability  = component.StabilityLevelBeta
+	ProfilesStability = component.StabilityLevelDevelopment
+	LogsStability     = component.StabilityLevelBeta
+	MetricsStability  = component.StabilityLevelBeta
+	TracesStability   = component.StabilityLevelBeta
 )

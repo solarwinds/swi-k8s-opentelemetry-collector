@@ -30,13 +30,13 @@ import (
 )
 
 func deploymentAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj any)) {
-	assert.Equal(t, 0, len(c.DeploymentClient.Resources))
+	assert.Empty(t, c.DeploymentClient.Resources)
 
 	deployment := &appsv1.Deployment{}
 	deployment.Name = "deploymentA"
 	deployment.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	handler(deployment)
-	assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+	assert.Len(t, c.DeploymentClient.Resources, 1)
 	got := c.DeploymentClient.Resources[newResourceIdentifier("resource_attribute", "k8s.deployment.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")]
 	assert.Equal(t, "deploymentA", got.GetName())
 	assert.Equal(t, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", got.GetUID())
@@ -51,14 +51,14 @@ func TestDeploymentAdd(t *testing.T) {
 // correctly
 func TestDeploymentCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.DeploymentClient.Resources))
+	assert.Empty(t, c.DeploymentClient.Resources)
 
 	// deployment is created in Pending phase. At this point it has a UID but no start time
 	deployment := &appsv1.Deployment{}
 	deployment.Name = "deployment1"
 	deployment.UID = "11111111-2222-3333-4444-555555555555"
 	c.DeploymentClient.handleResourceAdd(deployment)
-	assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+	assert.Len(t, c.DeploymentClient.Resources, 1)
 	got := c.DeploymentClient.Resources[newResourceIdentifier("resource_attribute", "k8s.deployment.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "deployment1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -66,7 +66,7 @@ func TestDeploymentCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	deployment.CreationTimestamp = startTime
 	c.DeploymentClient.handleResourceUpdate(&appsv1.Deployment{}, deployment)
-	assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+	assert.Len(t, c.DeploymentClient.Resources, 1)
 	got = c.DeploymentClient.Resources[newResourceIdentifier("resource_attribute", "k8s.deployment.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "deployment1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -111,12 +111,12 @@ func TestDeploymentDelete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c, _ := newTestClient(t)
 			deploymentAddAndUpdateTest(t, c, c.DeploymentClient.handleResourceAdd)
-			assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+			assert.Len(t, c.DeploymentClient.Resources, 1)
 
 			c.DeploymentClient.handleResourceDelete(tt.objToDelete)
 
-			assert.Equal(t, 1, len(c.DeploymentClient.Resources))
-			assert.Equal(t, 1, len(c.DeploymentClient.deleteQueue))
+			assert.Len(t, c.DeploymentClient.Resources, 1)
+			assert.Len(t, c.DeploymentClient.deleteQueue, 1)
 			deleteRequest := c.DeploymentClient.deleteQueue[0]
 			assert.Equal(t, newResourceIdentifier("resource_attribute", "k8s.deployment.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"), deleteRequest.id)
 			assert.Equal(t, "deploymentA", deleteRequest.resourceName)
@@ -126,7 +126,7 @@ func TestDeploymentDelete(t *testing.T) {
 }
 
 func TestDeploymentExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -285,14 +285,14 @@ func TestStatefulSetAdd(t *testing.T) {
 // correctly
 func TestStatefulSetCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.StatefulSetClient.Resources))
+	assert.Empty(t, c.StatefulSetClient.Resources)
 
 	// statefulset is created in Pending phase. At this point it has a UID but no start time
 	statefulSet := &appsv1.StatefulSet{}
 	statefulSet.Name = "statefulSet1"
 	statefulSet.UID = "11111111-2222-3333-4444-555555555555"
 	c.StatefulSetClient.handleResourceAdd(statefulSet)
-	assert.Equal(t, 1, len(c.StatefulSetClient.Resources))
+	assert.Len(t, c.StatefulSetClient.Resources, 1)
 	got := c.StatefulSetClient.Resources[newResourceIdentifier("resource_attribute", "k8s.statefulset.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "statefulSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -300,7 +300,7 @@ func TestStatefulSetCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	statefulSet.CreationTimestamp = startTime
 	c.StatefulSetClient.handleResourceUpdate(&appsv1.StatefulSet{}, statefulSet)
-	assert.Equal(t, 1, len(c.StatefulSetClient.Resources))
+	assert.Len(t, c.StatefulSetClient.Resources, 1)
 	got = c.StatefulSetClient.Resources[newResourceIdentifier("resource_attribute", "k8s.statefulset.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "statefulSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -315,7 +315,7 @@ func TestStatefulSetUpdate(t *testing.T) {
 }
 
 func TestStatefulSetExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	statefulSet := &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -413,14 +413,14 @@ func TestReplicaSetAdd(t *testing.T) {
 
 func TestReplicaSetCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.ReplicaSetClient.Resources))
+	assert.Empty(t, c.ReplicaSetClient.Resources)
 
 	// ReplicaSet is created in Pending phase. At this point it has a UID but no start time
 	replicaSet := &appsv1.ReplicaSet{}
 	replicaSet.Name = "replicaSet1"
 	replicaSet.UID = "11111111-2222-3333-4444-555555555555"
 	c.ReplicaSetClient.handleResourceAdd(replicaSet)
-	assert.Equal(t, 1, len(c.ReplicaSetClient.Resources))
+	assert.Len(t, c.ReplicaSetClient.Resources, 1)
 	got := c.ReplicaSetClient.Resources[newResourceIdentifier("resource_attribute", "k8s.replicaset.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "replicaSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -428,7 +428,7 @@ func TestReplicaSetCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	replicaSet.CreationTimestamp = startTime
 	c.ReplicaSetClient.handleResourceUpdate(&appsv1.ReplicaSet{}, replicaSet)
-	assert.Equal(t, 1, len(c.ReplicaSetClient.Resources))
+	assert.Len(t, c.ReplicaSetClient.Resources, 1)
 	got = c.ReplicaSetClient.Resources[newResourceIdentifier("resource_attribute", "k8s.replicaset.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "replicaSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -443,7 +443,7 @@ func TestReplicaSetUpdate(t *testing.T) {
 }
 
 func TestReplicaSetExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	replicaSet := &appsv1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -543,14 +543,14 @@ func TestDaemonSetAdd(t *testing.T) {
 // correctly
 func TestDaemonSetCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.DaemonSetClient.Resources))
+	assert.Empty(t, c.DaemonSetClient.Resources)
 
 	// DaemonSet is created in Pending phase. At this point it has a UID but no start time
 	daemonSet := &appsv1.DaemonSet{}
 	daemonSet.Name = "daemonSet1"
 	daemonSet.UID = "11111111-2222-3333-4444-555555555555"
 	c.DaemonSetClient.handleResourceAdd(daemonSet)
-	assert.Equal(t, 1, len(c.DaemonSetClient.Resources))
+	assert.Len(t, c.DaemonSetClient.Resources, 1)
 	got := c.DaemonSetClient.Resources[newResourceIdentifier("resource_attribute", "k8s.daemonset.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "daemonSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -558,7 +558,7 @@ func TestDaemonSetCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	daemonSet.CreationTimestamp = startTime
 	c.DaemonSetClient.handleResourceUpdate(&appsv1.DaemonSet{}, daemonSet)
-	assert.Equal(t, 1, len(c.DaemonSetClient.Resources))
+	assert.Len(t, c.DaemonSetClient.Resources, 1)
 	got = c.DaemonSetClient.Resources[newResourceIdentifier("resource_attribute", "k8s.daemonset.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "daemonSet1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -573,7 +573,7 @@ func TestDaemonSetUpdate(t *testing.T) {
 }
 
 func TestDaemonSetExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	daemonSet := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -673,14 +673,14 @@ func TestJobAdd(t *testing.T) {
 // correctly
 func TestJobCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.JobClient.Resources))
+	assert.Empty(t, (c.JobClient.Resources))
 
 	// Job is created in Pending phase. At this point it has a UID but no start time
 	job := &batchv1.Job{}
 	job.Name = "job1"
 	job.UID = "11111111-2222-3333-4444-555555555555"
 	c.JobClient.handleResourceAdd(job)
-	assert.Equal(t, 1, len(c.JobClient.Resources))
+	assert.Len(t, c.JobClient.Resources, 1)
 	got := c.JobClient.Resources[newResourceIdentifier("resource_attribute", "k8s.job.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "job1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -688,7 +688,7 @@ func TestJobCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	job.CreationTimestamp = startTime
 	c.JobClient.handleResourceUpdate(&batchv1.Job{}, job)
-	assert.Equal(t, 1, len(c.JobClient.Resources))
+	assert.Len(t, c.JobClient.Resources, 1)
 	got = c.JobClient.Resources[newResourceIdentifier("resource_attribute", "k8s.job.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "job1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -703,7 +703,7 @@ func TestJobUpdate(t *testing.T) {
 }
 
 func TestJobExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -802,14 +802,14 @@ func TestCronJobAdd(t *testing.T) {
 // correctly
 func TestCronJobCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.CronJobClient.Resources))
+	assert.Empty(t, c.CronJobClient.Resources)
 
 	// CronJob is created in Pending phase. At this point it has a UID but no start time
 	cronJob := &batchv1.CronJob{}
 	cronJob.Name = "cronJob1"
 	cronJob.UID = "11111111-2222-3333-4444-555555555555"
 	c.CronJobClient.handleResourceAdd(cronJob)
-	assert.Equal(t, 1, len(c.CronJobClient.Resources))
+	assert.Len(t, c.CronJobClient.Resources, 1)
 	got := c.CronJobClient.Resources[newResourceIdentifier("resource_attribute", "k8s.cronjob.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "cronJob1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -817,7 +817,7 @@ func TestCronJobCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	cronJob.CreationTimestamp = startTime
 	c.CronJobClient.handleResourceUpdate(&batchv1.CronJob{}, cronJob)
-	assert.Equal(t, 1, len(c.CronJobClient.Resources))
+	assert.Len(t, c.CronJobClient.Resources, 1)
 	got = c.CronJobClient.Resources[newResourceIdentifier("resource_attribute", "k8s.cronjob.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "cronJob1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -832,7 +832,7 @@ func TestCronJobUpdate(t *testing.T) {
 }
 
 func TestCronJobExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	cronJob := &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -932,14 +932,14 @@ func TestNodeAdd(t *testing.T) {
 // correctly
 func TestNodeCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.NodeClient.Resources))
+	assert.Empty(t, c.NodeClient.Resources)
 
 	// Node is created in Pending phase. At this point it has a UID but no start time
 	node := &corev1.Node{}
 	node.Name = "node1"
 	node.UID = "11111111-2222-3333-4444-555555555555"
 	c.NodeClient.handleResourceAdd(node)
-	assert.Equal(t, 1, len(c.NodeClient.Resources))
+	assert.Len(t, c.NodeClient.Resources, 1)
 	got := c.NodeClient.Resources[newResourceIdentifier("resource_attribute", "k8s.node.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "node1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -947,7 +947,7 @@ func TestNodeCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	node.CreationTimestamp = startTime
 	c.NodeClient.handleResourceUpdate(&corev1.Node{}, node)
-	assert.Equal(t, 1, len(c.NodeClient.Resources))
+	assert.Len(t, c.NodeClient.Resources, 1)
 	got = c.NodeClient.Resources[newResourceIdentifier("resource_attribute", "k8s.node.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "node1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -962,7 +962,7 @@ func TestNodeUpdate(t *testing.T) {
 }
 
 func TestNodeExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	node := &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1061,14 +1061,14 @@ func TestPersistentVolumeAdd(t *testing.T) {
 // TestPersistentVolumeCreate tests that a new PersistentVolume
 func TestPersistentVolumeCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.PersistentVolumeClient.Resources))
+	assert.Empty(t, c.PersistentVolumeClient.Resources)
 
 	// PersistentVolume is created in Pending phase. At this point it has a UID but no start time
 	persistentVolume := &corev1.PersistentVolume{}
 	persistentVolume.Name = "persistentVolume1"
 	persistentVolume.UID = "11111111-2222-3333-4444-555555555555"
 	c.PersistentVolumeClient.handleResourceAdd(persistentVolume)
-	assert.Equal(t, 1, len(c.PersistentVolumeClient.Resources))
+	assert.Len(t, c.PersistentVolumeClient.Resources, 1)
 	got := c.PersistentVolumeClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolume.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "persistentVolume1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -1076,7 +1076,7 @@ func TestPersistentVolumeCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	persistentVolume.CreationTimestamp = startTime
 	c.PersistentVolumeClient.handleResourceUpdate(&corev1.PersistentVolume{}, persistentVolume)
-	assert.Equal(t, 1, len(c.PersistentVolumeClient.Resources))
+	assert.Len(t, c.PersistentVolumeClient.Resources, 1)
 	got = c.PersistentVolumeClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolume.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "persistentVolume1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -1091,7 +1091,7 @@ func TestPersistentVolumeUpdate(t *testing.T) {
 }
 
 func TestPersistentVolumeExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	persistentVolume := &corev1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1190,14 +1190,14 @@ func TestPersistentVolumeClaimAdd(t *testing.T) {
 // TestPersistentVolumeClaimCreate tests that a new PersistentVolumeClaim
 func TestPersistentVolumeClaimCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.PersistentVolumeClaimClient.Resources))
+	assert.Empty(t, c.PersistentVolumeClaimClient.Resources)
 
 	// PersistentVolumeClaim is created in Pending phase. At this point it has a UID but no start time
 	persistentVolumeClaim := &corev1.PersistentVolumeClaim{}
 	persistentVolumeClaim.Name = "persistentVolumeClaim1"
 	persistentVolumeClaim.UID = "11111111-2222-3333-4444-555555555555"
 	c.PersistentVolumeClaimClient.handleResourceAdd(persistentVolumeClaim)
-	assert.Equal(t, 1, len(c.PersistentVolumeClaimClient.Resources))
+	assert.Len(t, c.PersistentVolumeClaimClient.Resources, 1)
 	got := c.PersistentVolumeClaimClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolumeclaim.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "persistentVolumeClaim1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -1205,7 +1205,7 @@ func TestPersistentVolumeClaimCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	persistentVolumeClaim.CreationTimestamp = startTime
 	c.PersistentVolumeClaimClient.handleResourceUpdate(&corev1.PersistentVolumeClaim{}, persistentVolumeClaim)
-	assert.Equal(t, 1, len(c.PersistentVolumeClaimClient.Resources))
+	assert.Len(t, c.PersistentVolumeClaimClient.Resources, 1)
 	got = c.PersistentVolumeClaimClient.Resources[newResourceIdentifier("resource_attribute", "k8s.persistentvolumeclaim.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "persistentVolumeClaim1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -1220,7 +1220,7 @@ func TestPersistentVolumeClaimUpdate(t *testing.T) {
 }
 
 func TestPersistentVolumeClaimExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	persistentVolumeClaim := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1319,14 +1319,14 @@ func TestServiceAdd(t *testing.T) {
 // TestServiceCreate tests that a new Service
 func TestServiceCreate(t *testing.T) {
 	c, _ := newTestClient(t)
-	assert.Equal(t, 0, len(c.ServiceClient.Resources))
+	assert.Empty(t, c.ServiceClient.Resources)
 
 	// Service is created in Pending phase. At this point it has a UID but no start time
 	service := &corev1.Service{}
 	service.Name = "service1"
 	service.UID = "11111111-2222-3333-4444-555555555555"
 	c.ServiceClient.handleResourceAdd(service)
-	assert.Equal(t, 1, len(c.ServiceClient.Resources))
+	assert.Len(t, c.ServiceClient.Resources, 1)
 	got := c.ServiceClient.Resources[newResourceIdentifier("resource_attribute", "k8s.service.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "service1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -1334,7 +1334,7 @@ func TestServiceCreate(t *testing.T) {
 	startTime := metav1.NewTime(time.Now())
 	service.CreationTimestamp = startTime
 	c.ServiceClient.handleResourceUpdate(&corev1.Service{}, service)
-	assert.Equal(t, 1, len(c.ServiceClient.Resources))
+	assert.Len(t, c.ServiceClient.Resources, 1)
 	got = c.ServiceClient.Resources[newResourceIdentifier("resource_attribute", "k8s.service.uid", "11111111-2222-3333-4444-555555555555")]
 	assert.Equal(t, "service1", got.GetName())
 	assert.Equal(t, "11111111-2222-3333-4444-555555555555", got.GetUID())
@@ -1349,7 +1349,7 @@ func TestServiceUpdate(t *testing.T) {
 }
 
 func TestServiceExtractionRules(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1442,7 +1442,7 @@ func TestResourceDeleteLoop(t *testing.T) {
 	c, _ := newTestClient(t)
 
 	deploymentAddAndUpdateTest(t, c, c.DeploymentClient.handleResourceAdd)
-	assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+	assert.Len(t, c.DeploymentClient.Resources, 1)
 
 	deployment := &appsv1.Deployment{}
 	deployment.Name = "deploymentA"
@@ -1454,18 +1454,18 @@ func TestResourceDeleteLoop(t *testing.T) {
 	go func() {
 		time.Sleep(time.Millisecond * 50)
 		c.m.Lock()
-		assert.Equal(t, 1, len(c.DeploymentClient.Resources))
+		assert.Len(t, c.DeploymentClient.Resources, 1)
 		c.m.Unlock()
 		c.deleteMut.Lock()
-		assert.Equal(t, 1, len(c.DeploymentClient.deleteQueue))
+		assert.Len(t, c.DeploymentClient.deleteQueue, 1)
 		c.deleteMut.Unlock()
 
 		time.Sleep(gracePeriod + (time.Millisecond * 50))
 		c.m.Lock()
-		assert.Equal(t, 0, len(c.DeploymentClient.Resources))
+		assert.Empty(t, c.DeploymentClient.Resources)
 		c.m.Unlock()
 		c.deleteMut.Lock()
-		assert.Equal(t, 0, len(c.DeploymentClient.deleteQueue))
+		assert.Empty(t, c.DeploymentClient.deleteQueue)
 		c.deleteMut.Unlock()
 		close(c.stopCh)
 	}()
@@ -1473,7 +1473,7 @@ func TestResourceDeleteLoop(t *testing.T) {
 }
 
 func TestExtractResourceLabelsAnnotations(t *testing.T) {
-	c, _ := newTestClientWithRulesAndFilters(t, ExtractionRules{}, Filters{})
+	c, _ := newTestClientWithRulesAndFilters(t, Filters{})
 	testCases := []struct {
 		name                    string
 		shouldExtractDeployment bool
@@ -1533,13 +1533,13 @@ func TestExtractResourceLabelsAnnotations(t *testing.T) {
 
 // Utility function for add and update tests
 func resourceAddAndUpdateTest(t *testing.T, resourceType string, resource metav1.Object, client *WatchResourceClient[KubernetesResource], handler func(obj any)) {
-	assert.Equal(t, 0, len(client.Resources))
+	assert.Empty(t, client.Resources)
 
 	resourceUID := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	resource.SetName("resourceA")
 	resource.SetUID(types.UID(resourceUID))
 	handler(resource)
-	assert.Equal(t, 1, len(client.Resources))
+	assert.Len(t, client.Resources, 1)
 	got := client.Resources[newResourceIdentifier("resource_attribute", "k8s."+resourceType+".uid", resourceUID)]
 	assert.Equal(t, "resourceA", got.GetName())
 	assert.Equal(t, resourceUID, string(got.GetUID()))
