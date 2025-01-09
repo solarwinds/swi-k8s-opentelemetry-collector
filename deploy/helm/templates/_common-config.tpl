@@ -431,7 +431,6 @@ groupbyattrs/all:
     - image
     - image_id
     - k8s.node.name
-    - sw.k8s.pod.status
     - sw.k8s.namespace.status
     - sw.k8s.node.status
     - sw.k8s.container.status
