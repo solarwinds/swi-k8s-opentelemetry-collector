@@ -5,7 +5,9 @@ metadata:
   name: {{ include "common.fullname" (tuple . "-kernel-collector") }}
   namespace: {{ .Release.Namespace }}
   labels:
-{{ include "common.labels" . | nindent 4 }}
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
 spec:
   selector:
     matchLabels:
@@ -18,6 +20,7 @@ spec:
 {{ include "common.pod-labels" . | indent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/network/configmap.yaml") . | sha256sum }}
+{{ include "common.annotations" . | indent 8 }}
     spec:
       terminationGracePeriodSeconds: 30
       securityContext:

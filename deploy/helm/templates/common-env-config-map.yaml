@@ -5,6 +5,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
 data:
   CLUSTER_NAME: {{ quote .Values.cluster.name }}
   CLUSTER_UID: {{ quote (include "common.cluster-uid" .) }}

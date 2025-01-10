@@ -67,7 +67,6 @@ Common labels
 app.kubernetes.io/part-of: swo-k8s-collector
 app.kubernetes.io/instance: {{ template "common.fullname" . }}
 app.kubernetes.io/managed-by: {{ .Release.Name }}
-swo.cloud.solarwinds.com/cluster-uid: {{ (include "common.cluster-uid" .) }}
 {{- if .Chart.AppVersion }}
 helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -77,6 +76,12 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 {{- end -}}
 
+{{/*
+Common annotations
+*/}}
+{{- define "common.annotations" -}}
+swo.cloud.solarwinds.com/cluster-uid: {{ (include "common.cluster-uid" .) }}
+{{- end -}}
 
 {{/*
 Event which are considered as error

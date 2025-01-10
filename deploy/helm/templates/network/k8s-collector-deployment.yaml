@@ -5,6 +5,8 @@ metadata:
   name: {{ include "common.fullname" (tuple . "-network-k8s-collector") }}
   labels:
 {{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -23,6 +25,7 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/network/configmap.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
+{{ include "common.annotations" . | indent 8 }}
     spec:
       nodeSelector:
         kubernetes.io/os: linux

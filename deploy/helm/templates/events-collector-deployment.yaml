@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
 spec:
   replicas: 1
   selector:
@@ -17,6 +19,7 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/events-collector-config-map.yaml") . | sha256sum }}
         checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
+{{ include "common.annotations" . | indent 8 }}
 {{- if .Values.otel.events.telemetry.metrics.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._1 | quote }}
