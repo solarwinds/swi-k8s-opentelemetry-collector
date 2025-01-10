@@ -89,7 +89,7 @@ spec:
       {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" "otel.image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
             - /swi-otelcol
@@ -111,7 +111,7 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" "otel.image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           securityContext: 
             readOnlyRootFilesystem: true

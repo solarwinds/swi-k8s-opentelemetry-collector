@@ -49,7 +49,7 @@ spec:
       {{- end }}
       containers:
         - name: swo-agent
-          image: "{{ include "common.image" (tuple . .Values.swoagent (tuple "image" "swoagent")) }}"
+          image: "{{ include "common.image" (tuple . .Values.swoagent (tuple "image" "swoagent") "swoagent.image") }}"
           imagePullPolicy: {{ .Values.swoagent.image.pullPolicy }}
           env:
             - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
