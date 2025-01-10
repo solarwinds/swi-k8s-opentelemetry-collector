@@ -5,6 +5,8 @@ metadata:
   name: {{ include "common.fullname" (tuple . "-network-k8s-reducer") }}
   labels:
 {{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
 spec:
   replicas: 1
   strategy:
@@ -20,6 +22,7 @@ spec:
 {{ include "common.pod-labels" . | indent 8 }}
       annotations:
         checksum/values: {{ toJson .Values | sha256sum }}
+{{ include "common.annotations" . | indent 8 }}
     spec:
       nodeSelector:
         kubernetes.io/os: linux
