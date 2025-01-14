@@ -131,9 +131,8 @@ jobs:
           helm repo add solarwinds https://helm.solarwinds.com
           helm repo update
 
-      - name: Deploy mocks.yaml
-        run: kubectl apply -f tests/deploy/base/mocks.yaml
-
+      - name: Deploy timeseries-mock-service
+        run: helm install timeseries-mock-service tests/deploy/timeseries-mock-service
 
       - name: Create Dockerfile with Helm repository
         run: |
@@ -196,12 +195,11 @@ jobs:
             --create-namespace \
             --namespace swo-k8s-collector \
             --set cluster.name=test-cluster \
-            --set otel.endpoint=timeseries-mock-service:9082 \
+            --set otel.endpoint=timeseries-mock-service.default.svc.cluster.local:9082 \
             --set otel.api_token=not_set \
             --set autoupdate.enabled=true \
             --set autoupdate.devel=true \
-            --set otel.metrics.swi_endpoint_check=false \
-            --set otel.metrics.prometheus_check=false \
+            --set otel.tls_insecure=true \
             --set otel.metrics.resources.requests.memory=100Mi \
             --set otel.events.resources.requests.memory=100Mi \
             --set otel.logs.resources.requests.memory=100Mi \
