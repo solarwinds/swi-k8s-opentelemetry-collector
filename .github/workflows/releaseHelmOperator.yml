@@ -1,0 +1,47 @@
+name: Release Helm Operator
+
+on:
+  pull_request:
+    branches: 
+      - master
+      - release/** 
+jobs:  
+  deploy_operator:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to push chart release and create a release (helm/chart-releaser-action)
+      id-token: write # needed for signing
+      pull-requests: write # needed to create pull-request
+    name: Deploy Helm chart to GitHub pages    
+    env:
+     OPERATOR_REPO: eduardtichy641/openshift
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:     
+          submodules: true
+          fetch-depth: 0
+      - name: Get operator version
+        run: |
+         export OPERATOR_VERSION=$(yq eval '.version' deploy/helm/Chart.yaml)
+         echo "OPERATOR_VERSION=$OPERATOR_VERSION" >> $GITHUB_ENV
+      - name: Install operator-sdk
+        run: | 
+          sudo apt-get update
+          sudo apt-get install -y curl tar
+          export OPERATOR_SDK_VERSION=v1.39.0
+          curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64
+          chmod +x operator-sdk_linux_amd64
+          sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk      
+      - name: Create operator image
+        run: |
+          mkdir deploy/swi-k8s-collector-operator
+          cd deploy/swi-k8s-collector-operator
+          operator-sdk init --plugins=helm --domain solarwinds.com 
+          operator-sdk create api --helm-chart=../helm                    
+          make docker-build IMG=$OPERATOR_REPO:$OPERATOR_VERSION
+      - name: Publish operator image
+        run: |
+          cd deploy/swi-k8s-collector-operator
+          make docker-push IMG=$OPERATOR_REPO:$OPERATOR_VERSION
+          
