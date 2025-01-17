@@ -25,6 +25,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatorateprocessor v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/groupbyattrsprocessor v0.116.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricsgenerationprocessor v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.116.0
@@ -38,7 +39,6 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.116.0
-	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.116.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v0.116.0
@@ -224,8 +224,6 @@ require (
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.29 // indirect
 	github.com/shirou/gopsutil/v4 v4.24.11 // indirect
-	github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/coreinternal v0.116.0 // indirect
-	github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.116.0 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
@@ -332,8 +330,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.116.0 => ../processor/k8sattributesprocessor
 
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.116.0 => ../internal/k8sconfig
 
