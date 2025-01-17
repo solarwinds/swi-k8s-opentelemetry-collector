@@ -330,7 +330,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.116.0 => ../internal/k8sconfig
-
-replace github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/coreinternal v0.116.0 => ../internal/coreinternal
