@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.23.4-bookworm AS base
+FROM docker.io/library/golang:1.23.5-bookworm AS base
 WORKDIR /src
 COPY ["./src/", "./src/"]
 
