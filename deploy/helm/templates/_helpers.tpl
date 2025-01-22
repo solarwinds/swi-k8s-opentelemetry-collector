@@ -124,30 +124,9 @@ attributes["k8s.event.reason"] == "ProbeWarning"
 or attributes["k8s.event.reason"] == "Unhealthy"
 {{- end -}}
 
-{{- define "common.k8s-instrumentation.resource.namespaced" -}}
-{{ index . 1 }}:
-  extract:
-  association:
-  - sources:
-      - from: resource_attribute
-        name: k8s.{{ index . 1 }}.name
-      - from: resource_attribute
-        name: k8s.namespace.name
-{{- end -}}
-
-{{- define "common.k8s-instrumentation.resource" -}}
-{{ index . 1 }}:
-  extract:
-  association:
-  - sources:
-      - from: resource_attribute
-        name: k8s.{{ index . 1 }}.name
-{{- end -}}
-
 {{- define "common.k8s-instrumentation" -}}
 auth_type: "serviceAccount"
 passthrough: false
-set_object_existence: true
 extract:
   metadata:
     - k8s.deployment.name
@@ -163,16 +142,6 @@ pod_association:
         name: k8s.pod.name
       - from: resource_attribute
         name: k8s.namespace.name
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "deployment") }}
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "statefulset") }}
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "replicaset") }}
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "daemonset") }}
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "job") }}
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "cronjob") }}
-{{ include "common.k8s-instrumentation.resource" (tuple . "persistentvolume") }}
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "persistentvolumeclaim") }}
-{{ include "common.k8s-instrumentation.resource" (tuple . "node") }}
-{{ include "common.k8s-instrumentation.resource.namespaced" (tuple . "service") }}
 {{- end -}}
 
 {{/*

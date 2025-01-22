@@ -27,7 +27,7 @@ extensions:
     endpoint: 0.0.0.0:13133
 
 processors:
-  swk8sattributes:
+  k8sattributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
   memory_limiter:
 {{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
@@ -724,23 +724,6 @@ processors:
 
   {{- include "common-config.resource-metrics" . | nindent 2 }}
 
-  transform/cleanup_attributes_for_nonexisting_entities:
-    metric_statements:
-      - context: metric
-        statements:
-          - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"] == "false"
-          - delete_key(resource.attributes, "sw.k8s.pod.found")
-          - delete_key(resource.attributes, "sw.k8s.deployment.found")
-          - delete_key(resource.attributes, "sw.k8s.statefulset.found")
-          - delete_key(resource.attributes, "sw.k8s.replicaset.found")
-          - delete_key(resource.attributes, "sw.k8s.daemonset.found")
-          - delete_key(resource.attributes, "sw.k8s.job.found")
-          - delete_key(resource.attributes, "sw.k8s.cronjob.found")
-          - delete_key(resource.attributes, "sw.k8s.node.found")
-          - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
-          - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
-          - delete_key(resource.attributes, "sw.k8s.service.found")
-
   attributes/remove_prometheus_attributes_endpoint:
     exclude:
       match_type: regexp
@@ -1187,8 +1170,7 @@ service:
         - metricstransform/aggregate_pod_level
         - groupbyattrs/all
         - resource/metrics
-        - swk8sattributes
-        - transform/cleanup_attributes_for_nonexisting_entities
+        - k8sattributes
 {{- if .Values.otel.metrics.filter }}
         - filter
 {{- end }}
