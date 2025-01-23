@@ -152,6 +152,12 @@ processors:
       - key: sw.k8s.container.init
         action: insert
         value: "false"
+  transform/identify_sidecar_container:
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(attributes["sw.k8s.container.sidecar"], "false") where metric.name == "kube_pod_init_container_info"
+          - set(attributes["sw.k8s.container.sidecar"], "true") where metric.name == "kube_pod_init_container_info" and attributes["restart_policy"] == "Always"
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
 
   metricstransform/rename:
@@ -683,6 +689,7 @@ processors:
       - sw.k8s.node.status
       - sw.k8s.container.status
       - sw.k8s.container.init
+      - sw.k8s.container.sidecar
       - daemonset
       - statefulset
       - deployment
@@ -1172,6 +1179,7 @@ service:
         - attributes/unify_pod_attribute
         - attributes/identify_init_container
         - attributes/identify_standard_container
+        - transform/identify_sidecar_container
         - metricstransform/rename
         - metricstransform/preprocessing
         - filter/preprocessing
