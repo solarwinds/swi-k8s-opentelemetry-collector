@@ -388,6 +388,7 @@ Metrics config should match snapshot when using default values:
           - sw.k8s.node.status
           - sw.k8s.container.status
           - sw.k8s.container.init
+          - sw.k8s.container.sidecar
           - daemonset
           - statefulset
           - deployment
@@ -1581,6 +1582,14 @@ Metrics config should match snapshot when using default values:
             - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
             - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
             - delete_key(resource.attributes, "sw.k8s.service.found")
+        transform/identify_sidecar_container:
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(attributes["sw.k8s.container.sidecar"], "false") where metric.name ==
+              "kube_pod_init_container_info"
+            - set(attributes["sw.k8s.container.sidecar"], "true") where metric.name == "kube_pod_init_container_info"
+              and attributes["restart_policy"] == "Always"
         transform/scope:
           metric_statements:
           - context: scope
@@ -1809,6 +1818,7 @@ Metrics config should match snapshot when using default values:
             - attributes/unify_pod_attribute
             - attributes/identify_init_container
             - attributes/identify_standard_container
+            - transform/identify_sidecar_container
             - metricstransform/rename
             - metricstransform/preprocessing
             - filter/preprocessing
