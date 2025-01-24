@@ -36,6 +36,7 @@ import (
 	receivercreator "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator"
 	simpleprometheusreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver"
 	windowseventlogreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver"
+	"github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/podlogsprocessor"
 	swk8sattributesprocessor "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/connector"
@@ -118,6 +119,7 @@ func components() (otelcol.Factories, error) {
 		filterprocessor.NewFactory(),
 		attributesprocessor.NewFactory(),
 		swk8sattributesprocessor.NewFactory(),
+		podlogsprocessor.NewFactory(),
 		resourcedetectionprocessor.NewFactory(),
 	)
 	if err != nil {
@@ -137,6 +139,7 @@ func components() (otelcol.Factories, error) {
 	factories.ProcessorModules[filterprocessor.NewFactory().Type()] = "github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.116.0"
 	factories.ProcessorModules[attributesprocessor.NewFactory().Type()] = "github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.116.0"
 	factories.ProcessorModules[swk8sattributesprocessor.NewFactory().Type()] = "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.116.0"
+	factories.ProcessorModules[podlogsprocessor.NewFactory().Type()] = "github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/podlogsprocessor v0.116.0"
 	factories.ProcessorModules[resourcedetectionprocessor.NewFactory().Type()] = "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.116.0"
 
 	factories.Connectors, err = connector.MakeFactoryMap(

@@ -38,11 +38,12 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.116.0
+	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/podlogsprocessor v0.116.0
 	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.116.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
-	go.opentelemetry.io/collector/component v0.116.0
-	go.opentelemetry.io/collector/component/componenttest v0.116.0
+	go.opentelemetry.io/collector/component v0.117.0
+	go.opentelemetry.io/collector/component/componenttest v0.117.0
 	go.opentelemetry.io/collector/confmap v1.22.0
 	go.opentelemetry.io/collector/confmap/provider/envprovider v1.22.0
 	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.22.0
@@ -55,7 +56,7 @@ require (
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.116.0
 	go.opentelemetry.io/collector/extension v0.116.0
 	go.opentelemetry.io/collector/otelcol v0.116.0
-	go.opentelemetry.io/collector/processor v0.116.0
+	go.opentelemetry.io/collector/processor v0.117.0
 	go.opentelemetry.io/collector/processor/batchprocessor v0.116.0
 	go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.116.0
 	go.opentelemetry.io/collector/receiver v0.116.0
@@ -66,7 +67,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.32.0
 	go.opentelemetry.io/otel/sdk/log v0.8.0
 	golang.org/x/sys v0.28.0
-	google.golang.org/grpc v1.68.1
+	google.golang.org/grpc v1.69.2
 )
 
 require (
@@ -105,7 +106,7 @@ require (
 	github.com/elastic/go-grok v0.3.1 // indirect
 	github.com/elastic/lunes v0.1.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
-	github.com/envoyproxy/go-control-plane v0.13.0 // indirect
+	github.com/envoyproxy/go-control-plane v0.13.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
 	github.com/expr-lang/expr v1.16.9 // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -240,7 +241,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/collector v0.116.0 // indirect
 	go.opentelemetry.io/collector/client v1.22.0 // indirect
-	go.opentelemetry.io/collector/component/componentstatus v0.116.0 // indirect
+	go.opentelemetry.io/collector/component/componentstatus v0.117.0 // indirect
 	go.opentelemetry.io/collector/config/configauth v0.116.0 // indirect
 	go.opentelemetry.io/collector/config/configcompression v1.22.0 // indirect
 	go.opentelemetry.io/collector/config/configgrpc v0.116.0 // indirect
@@ -248,16 +249,16 @@ require (
 	go.opentelemetry.io/collector/config/confignet v1.22.0 // indirect
 	go.opentelemetry.io/collector/config/configopaque v1.22.0 // indirect
 	go.opentelemetry.io/collector/config/configretry v1.22.0 // indirect
-	go.opentelemetry.io/collector/config/configtelemetry v0.116.0 // indirect
+	go.opentelemetry.io/collector/config/configtelemetry v0.117.0 // indirect
 	go.opentelemetry.io/collector/config/configtls v1.22.0 // indirect
 	go.opentelemetry.io/collector/config/internal v0.116.0 // indirect
 	go.opentelemetry.io/collector/connector/connectortest v0.116.0 // indirect
 	go.opentelemetry.io/collector/connector/xconnector v0.116.0 // indirect
-	go.opentelemetry.io/collector/consumer v1.22.0 // indirect
+	go.opentelemetry.io/collector/consumer v1.23.0 // indirect
 	go.opentelemetry.io/collector/consumer/consumererror v0.116.0 // indirect
 	go.opentelemetry.io/collector/consumer/consumererror/xconsumererror v0.116.0 // indirect
-	go.opentelemetry.io/collector/consumer/consumertest v0.116.0 // indirect
-	go.opentelemetry.io/collector/consumer/xconsumer v0.116.0 // indirect
+	go.opentelemetry.io/collector/consumer/consumertest v0.117.0 // indirect
+	go.opentelemetry.io/collector/consumer/xconsumer v0.117.0 // indirect
 	go.opentelemetry.io/collector/exporter/exporterhelper/xexporterhelper v0.116.0 // indirect
 	go.opentelemetry.io/collector/exporter/exportertest v0.116.0 // indirect
 	go.opentelemetry.io/collector/exporter/xexporter v0.116.0 // indirect
@@ -269,14 +270,14 @@ require (
 	go.opentelemetry.io/collector/internal/fanoutconsumer v0.116.0 // indirect
 	go.opentelemetry.io/collector/internal/memorylimiter v0.116.0 // indirect
 	go.opentelemetry.io/collector/internal/sharedcomponent v0.116.0 // indirect
-	go.opentelemetry.io/collector/pdata v1.22.0 // indirect
-	go.opentelemetry.io/collector/pdata/pprofile v0.116.0 // indirect
-	go.opentelemetry.io/collector/pdata/testdata v0.116.0 // indirect
-	go.opentelemetry.io/collector/pipeline v0.116.0 // indirect
+	go.opentelemetry.io/collector/pdata v1.23.0 // indirect
+	go.opentelemetry.io/collector/pdata/pprofile v0.117.0 // indirect
+	go.opentelemetry.io/collector/pdata/testdata v0.117.0 // indirect
+	go.opentelemetry.io/collector/pipeline v0.117.0 // indirect
 	go.opentelemetry.io/collector/pipeline/xpipeline v0.116.0 // indirect
 	go.opentelemetry.io/collector/processor/processorhelper/xprocessorhelper v0.116.0 // indirect
-	go.opentelemetry.io/collector/processor/processortest v0.116.0 // indirect
-	go.opentelemetry.io/collector/processor/xprocessor v0.116.0 // indirect
+	go.opentelemetry.io/collector/processor/processortest v0.117.0 // indirect
+	go.opentelemetry.io/collector/processor/xprocessor v0.117.0 // indirect
 	go.opentelemetry.io/collector/receiver/receivertest v0.116.0 // indirect
 	go.opentelemetry.io/collector/receiver/xreceiver v0.116.0 // indirect
 	go.opentelemetry.io/collector/semconv v0.116.0 // indirect
@@ -317,7 +318,7 @@ require (
 	google.golang.org/api v0.188.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	google.golang.org/protobuf v1.36.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -334,6 +335,8 @@ require (
 )
 
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.116.0 => ../processor/k8sattributesprocessor
+
+replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/podlogsprocessor v0.116.0 => ../processor/podlogsprocessor
 
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.116.0 => ../internal/k8sconfig
 

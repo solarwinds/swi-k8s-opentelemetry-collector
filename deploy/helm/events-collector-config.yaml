@@ -43,6 +43,7 @@ extensions:
     endpoint: 0.0.0.0:13133
 
 processors:
+  podlogsprocessor:
   memory_limiter:
 {{ toYaml .Values.otel.events.memory_limiter | indent 4 }}
 
@@ -378,8 +379,9 @@ service:
         - transform/set_status_for_pods
         - transform/stringify_body
         - resource/manifest
-        - resourcedetection/providers
+#        - resourcedetection/providers
         - swk8sattributes
+        - podlogsprocessor
         - transform/cleanup_attributes_for_nonexisting_entities
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
         - filter/k8s_collector_config_include
