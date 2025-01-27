@@ -53,38 +53,32 @@ func (kp *kubernetesprocessor) processLogs(_ context.Context, ld plog.Logs) (plo
 
 func (kp *kubernetesprocessor) extractManifests(resourceLogs plog.ResourceLogsSlice) ([]Manifest, error) {
 	manifests := make([]Manifest, 0)
-	resourceLogsLength := resourceLogs.Len()
 
-	for i := range resourceLogsLength {
-		resourceLog := resourceLogs.At(i)
-		scopeLogs := resourceLog.ScopeLogs()
-		scopeLogsLength := scopeLogs.Len()
+	for i := range resourceLogs.Len() {
+		rl := resourceLogs.At(i)
+		scopeLogs := rl.ScopeLogs()
 
-		for j := range scopeLogsLength {
-			scopeLog := scopeLogs.At(j)
-			logRecords := scopeLog.LogRecords()
-			logRecordsLength := logRecords.Len()
+		for j := range scopeLogs.Len() {
+			sl := scopeLogs.At(j)
+			logRecords := sl.LogRecords()
 
-			for k := range logRecordsLength {
-				logRecord := logRecords.At(k)
-				attrs := logRecord.Attributes()
+			for k := range logRecords.Len() {
+				lr := logRecords.At(k)
+				attrs := lr.Attributes()
 
 				if !isPodLog(attrs) {
-					continue
+					break
 				}
 
-				body := logRecord.Body().AsString()
-				var logResult Manifest
+				body := lr.Body().AsString()
+				var m Manifest
 
-				err := json.Unmarshal([]byte(body), &logResult)
+				err := json.Unmarshal([]byte(body), &m)
 				if err != nil {
-					// TODO: Handle error, return empty or original logs?
-					kp.logger.Info("ERROR while unmarshaling")
+					kp.logger.Error("Error while unmarshalling manifest", zap.Error(err))
 					return nil, err
 				}
-
-				manifests = append(manifests, logResult)
-
+				manifests = append(manifests, m)
 			}
 		}
 	}
