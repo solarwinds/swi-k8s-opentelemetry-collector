@@ -15,21 +15,44 @@ type kubernetesprocessor struct {
 	logger            *zap.Logger
 }
 
-type podStatus struct {
-	ContainerStatuses []struct {
-		Name        string                 `json:"name"`
-		ContainerId string                 `json:"containerID"`
-		State       map[string]interface{} `json:"state"`
-	}
-}
-
-type bodyLog struct {
-	Kind      string    `json:"kind"`
-	PodStatus podStatus `json:"status"`
+type Container struct {
+	Name               string
+	ContainerId        string
+	State              string
+	IsInitContainer    bool
+	IsSidecarContainer bool
+	Timestamp          string
 }
 
 func (kp *kubernetesprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
+	containers := make([]Container, 0)
+
+	manifests, err := kp.extractManifests(resourceLogs)
+	if err != nil {
+		kp.logger.Info("ERROR while extracting manifests")
+		return plog.NewLogs(), err
+	}
+
+	if len(manifests) == 0 {
+		kp.logger.Info("No manifests found")
+		return ld, nil
+	}
+
+	for _, m := range manifests {
+		containers = append(containers, m.extractContainers(kp.logger)...)
+	}
+
+	newResourceLogs := ld.ResourceLogs().AppendEmpty()
+	newResource := newResourceLogs.Resource()
+	newResource.Attributes().PutStr("sw.k8s.log.type", "manifest")
+	addContainerResourceLog(newResourceLogs, containers)
+
+	return ld, nil
+}
+
+func (kp *kubernetesprocessor) extractManifests(resourceLogs plog.ResourceLogsSlice) ([]Manifest, error) {
+	manifests := make([]Manifest, 0)
 	resourceLogsLength := resourceLogs.Len()
 
 	for i := range resourceLogsLength {
@@ -44,38 +67,41 @@ func (kp *kubernetesprocessor) processLogs(_ context.Context, ld plog.Logs) (plo
 
 			for k := range logRecordsLength {
 				logRecord := logRecords.At(k)
-				attributes := logRecord.Attributes()
+				attrs := logRecord.Attributes()
 
-				if !isPodLog(attributes) {
+				if !isPodLog(attrs) {
 					continue
 				}
 
 				body := logRecord.Body().AsString()
-				var logResult bodyLog
+				var logResult Manifest
 
 				err := json.Unmarshal([]byte(body), &logResult)
 				if err != nil {
 					// TODO: Handle error, return empty or original logs?
 					kp.logger.Info("ERROR while unmarshaling")
-					return plog.Logs{}, err
+					return nil, err
 				}
 
-				attrs := logRecord.Attributes()
-				statuses := attrs.PutEmptySlice("containers")
-				for _, c := range logResult.PodStatus.ContainerStatuses {
-					containerMap := statuses.AppendEmpty().SetEmptyMap()
-					containerMap.PutStr("name", c.Name)
-					containerMap.PutStr("id", c.ContainerId)
-					for key, _ := range c.State {
-						containerMap.PutStr("status", key)
-						break
-					}
-				}
+				manifests = append(manifests, logResult)
+
 			}
 		}
 	}
+	return manifests, nil
+}
 
-	return ld, nil
+func addContainerResourceLog(rl plog.ResourceLogs, containers []Container) {
+	newScopeLogs := rl.ScopeLogs().AppendEmpty()
+	for c := range containers {
+		lr := newScopeLogs.LogRecords().AppendEmpty()
+		lr.Attributes().PutStr("k8s.pod.container", containers[c].Name)
+		lr.Attributes().PutStr("k8s.pod.container.id", containers[c].ContainerId)
+		lr.Attributes().PutStr("k8s.pod.container.state", containers[c].State)
+		lr.Attributes().PutStr("k8s.pod.container.timestamp", containers[c].Timestamp)
+		lr.Attributes().PutStr("k8s.pod.container.isInitContainer", "false")
+		lr.Attributes().PutStr("k8s.pod.container.isSidecarContainer", "false")
+	}
 }
 
 func isPodLog(attributes pcommon.Map) bool {
@@ -86,10 +112,6 @@ func isPodLog(attributes pcommon.Map) bool {
 func (p *kubernetesprocessor) logResourceAttributes(rl plog.ResourceLogs) {
 	j, _ := json.Marshal(rl)
 	p.logger.Info("Resource logs", zap.String("resource-logs", string(j)))
-}
-
-func (p *kubernetesprocessor) addAttributes(_ context.Context, attributes pcommon.Map) {
-	attributes.PutStr("janca.attribute", "ACHJO")
 }
 
 func (kp *kubernetesprocessor) Start(_ context.Context, _ component.Host) error {
