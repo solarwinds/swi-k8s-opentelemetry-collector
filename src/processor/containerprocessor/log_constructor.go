@@ -73,7 +73,7 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	tm.PutStr(k8sPodName, md.PodName)
 	tm.PutStr(k8sNamespaceName, md.Namespace)
 	tm.PutStr(k8sContainerName, c.Name)
-	tm.PutStr(swK8sClusterUid, "TODO")
+	tm.PutStr(swK8sClusterUid, md.Annotations.ClusterUid)
 
 	// Additional attributes
 	attrs.PutStr(k8sContainerId, c.ContainerId)
