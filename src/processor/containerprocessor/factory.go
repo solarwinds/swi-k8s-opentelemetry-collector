@@ -35,37 +35,19 @@ func createLogsProcessor(
 	cfg component.Config,
 	nextLogsConsumer consumer.Logs,
 ) (processor.Logs, error) {
-	return createLogsProcessorWithOptions(ctx, params, cfg, nextLogsConsumer)
-}
-
-func createLogsProcessorWithOptions(
-	ctx context.Context,
-	set processor.Settings,
-	cfg component.Config,
-	nextLogsConsumer consumer.Logs,
-) (processor.Logs, error) {
-	kp := createKubernetesProcessor(set, cfg)
-
-	return processorhelper.NewLogs(
-		ctx,
-		set,
-		createDefaultConfig(),
-		nextLogsConsumer,
-		kp.processLogs,
-		processorhelper.WithCapabilities(consumerCapabilities),
-		processorhelper.WithStart(kp.Start),
-		processorhelper.WithShutdown(kp.Shutdown))
-}
-
-func createKubernetesProcessor(
-	params processor.Settings,
-	cfg component.Config,
-) *containerprocessor {
-	kp := &containerprocessor{
+	cp := &containerprocessor{
 		logger:            params.Logger,
 		cfg:               cfg,
 		telemetrySettings: params.TelemetrySettings,
 	}
 
-	return kp
+	return processorhelper.NewLogs(
+		ctx,
+		params,
+		createDefaultConfig(),
+		nextLogsConsumer,
+		cp.processLogs,
+		processorhelper.WithCapabilities(consumerCapabilities),
+		processorhelper.WithStart(cp.Start),
+		processorhelper.WithShutdown(cp.Shutdown))
 }
