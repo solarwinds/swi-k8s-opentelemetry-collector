@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type kubernetesprocessor struct {
+type containerprocessor struct {
 	cfg               component.Config
 	telemetrySettings component.TelemetrySettings
 	logger            *zap.Logger
@@ -24,23 +24,23 @@ type Container struct {
 	Timestamp          string
 }
 
-func (kp *kubernetesprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
+func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
 	containers := make([]Container, 0)
 
-	manifests, err := kp.extractManifests(resourceLogs)
+	manifests, err := cp.extractManifests(resourceLogs)
 	if err != nil {
-		kp.logger.Info("ERROR while extracting manifests")
+		cp.logger.Info("ERROR while extracting manifests")
 		return plog.NewLogs(), err
 	}
 
 	if len(manifests) == 0 {
-		kp.logger.Info("No manifests found")
+		cp.logger.Info("No manifests found")
 		return ld, nil
 	}
 
 	for _, m := range manifests {
-		containers = append(containers, m.extractContainers(kp.logger)...)
+		containers = append(containers, m.extractContainers(cp.logger)...)
 	}
 
 	newResourceLogs := ld.ResourceLogs().AppendEmpty()
@@ -51,7 +51,7 @@ func (kp *kubernetesprocessor) processLogs(_ context.Context, ld plog.Logs) (plo
 	return ld, nil
 }
 
-func (kp *kubernetesprocessor) extractManifests(resourceLogs plog.ResourceLogsSlice) ([]Manifest, error) {
+func (cp *containerprocessor) extractManifests(resourceLogs plog.ResourceLogsSlice) ([]Manifest, error) {
 	manifests := make([]Manifest, 0)
 
 	for i := range resourceLogs.Len() {
@@ -75,7 +75,7 @@ func (kp *kubernetesprocessor) extractManifests(resourceLogs plog.ResourceLogsSl
 
 				err := json.Unmarshal([]byte(body), &m)
 				if err != nil {
-					kp.logger.Error("Error while unmarshalling manifest", zap.Error(err))
+					cp.logger.Error("Error while unmarshalling manifest", zap.Error(err))
 					return nil, err
 				}
 				manifests = append(manifests, m)
@@ -103,15 +103,15 @@ func isPodLog(attributes pcommon.Map) bool {
 	return kind.Str() == "Pod"
 }
 
-func (p *kubernetesprocessor) logResourceAttributes(rl plog.ResourceLogs) {
+func (cp *containerprocessor) logResourceAttributes(rl plog.ResourceLogs) {
 	j, _ := json.Marshal(rl)
-	p.logger.Info("Resource logs", zap.String("resource-logs", string(j)))
+	cp.logger.Info("Resource logs", zap.String("resource-logs", string(j)))
 }
 
-func (kp *kubernetesprocessor) Start(_ context.Context, _ component.Host) error {
+func (cp *containerprocessor) Start(_ context.Context, _ component.Host) error {
 	return nil
 }
 
-func (kp *kubernetesprocessor) Shutdown(_ context.Context) error {
+func (cp *containerprocessor) Shutdown(_ context.Context) error {
 	return nil
 }

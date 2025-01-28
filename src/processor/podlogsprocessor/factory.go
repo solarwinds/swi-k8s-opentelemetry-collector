@@ -60,8 +60,8 @@ func createLogsProcessorWithOptions(
 func createKubernetesProcessor(
 	params processor.Settings,
 	cfg component.Config,
-) *kubernetesprocessor {
-	kp := &kubernetesprocessor{
+) *containerprocessor {
+	kp := &containerprocessor{
 		logger:            params.Logger,
 		cfg:               cfg,
 		telemetrySettings: params.TelemetrySettings,
