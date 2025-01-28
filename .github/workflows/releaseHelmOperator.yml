@@ -1,7 +1,7 @@
 name: Release Helm Operator
 
 on:
-  pull_request:
+  push:
     branches:
       - master
       - release/**
@@ -14,7 +14,7 @@ jobs:
       contents: write # to push chart release and create a release (helm/chart-releaser-action)
       id-token: write # needed for signing
       pull-requests: write # needed to create pull-request
-    name: Deploy operator image to dockerhub
+    name: Deploy operator and bundle images to dockerhub
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
