@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeseries-mock-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: timeseries-mock-service
+  template:
+    metadata:
+      labels:
+        app: timeseries-mock-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+    spec:
+      securityContext:
+        runAsUser: 0
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: opentelemetry-collector
+          command:
+            - /otelcol-contrib
+            - --config=/conf/relay.yaml
+          securityContext:
+            runAsUser: 0
+          image: {{ .Values.otel.image }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+          ports:
+            - name: otlp
+              containerPort: 9082
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          volumeMounts:
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+            - name: output
+              mountPath: /data
+        - name: file-provider
+          image: {{ .Values.fileProvider.image }}
+          command: ['sh', '-c', 'touch /usr/share/nginx/html/events.json && touch /usr/share/nginx/html/metrics.json && touch /usr/share/nginx/html/logs.json && touch /usr/share/nginx/html/manifests.json && chmod -R 777 /usr/share/nginx/html && nginx -g "daemon off;"']
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+          - name: output
+            mountPath: /usr/share/nginx/html
+          ports:
+          - name: html
+            containerPort: 80
+      volumes:
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: timeseries-mock-service-config
+            items:
+              - key: relay
+                path: relay.yaml
+        - name: output
+          emptyDir: {}

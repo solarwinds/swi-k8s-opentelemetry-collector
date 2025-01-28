@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timeseries-mock-service-config
+data:
+  relay: |
+    exporters:
+      file/logs:
+        path: /data/logs.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
+      file/metrics:
+        path: /data/metrics.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
+      file/events:
+        path: /data/events.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
+      file/manifests:
+        path: /data/manifests.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
+      prometheus:
+        endpoint: "0.0.0.0:8080"
+        namespace: output
+        send_timestamps: true
+        metric_expiration: 1m
+        enable_open_metrics: true
+        resource_to_telemetry_conversion:
+          enabled: true
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+    processors:
+      filter/events:
+        logs:
+          log_record:
+            - not(IsMatch(resource.attributes["sw.k8s.log.type"], "event"))
+      filter/manifests:
+        logs:
+          log_record:
+            - not(IsMatch(resource.attributes["sw.k8s.log.type"], "manifest"))
+      filter/logs:
+        logs:
+          log_record:
+            - IsMatch(resource.attributes["sw.k8s.log.type"], "event")
+            - IsMatch(resource.attributes["sw.k8s.log.type"], "manifest")
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:9082
+    service:
+      extensions:
+      - health_check
+      pipelines:
+        metrics:
+          exporters:
+          - file/metrics
+          - prometheus
+          processors:
+          receivers:
+          - otlp
+        logs/logs:
+          exporters:
+          - file/logs
+          processors:
+          - filter/logs
+          receivers:
+          - otlp
+        logs/events:
+          exporters:
+          - file/events
+          processors:
+          - filter/events
+          receivers:
+          - otlp
+        logs/manifests:
+          exporters:
+          - file/manifests
+          processors:
+          - filter/manifests
+          receivers:
+          - otlp

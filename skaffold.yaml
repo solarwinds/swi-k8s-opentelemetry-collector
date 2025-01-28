@@ -17,7 +17,6 @@ build:
 manifests:
   kustomize:
     paths:
-      - tests/deploy/base
       - tests/deploy/tests
     buildArgs:
       - --load-restrictor LoadRestrictionsNone
@@ -26,6 +25,11 @@ deploy:
     defaultNamespace: test-namespace
   helm:
     releases:
+      - name: timeseries-mock-service
+        chartPath: tests/deploy/timeseries-mock-service
+        namespace: test-namespace
+        createNamespace: true
+        upgradeOnChange: true
       - name: swi-k8s-opentelemetry-collector
         chartPath: deploy/helm
         namespace: test-namespace
@@ -101,8 +105,6 @@ deploy:
               filter:
                 log_record:
                   - resource.attributes["k8s.namespace.name"] == "test-namespace"
-            swi_endpoint_check:
-              enabled: false
           certmanager:
             enabled: false
           operator:
@@ -145,6 +147,8 @@ profiles:
       local:
         push: true
     patches:
+    - op: remove
+      path: /deploy/helm/releases/0
     - op: replace
       path: /deploy/helm/releases/0/namespace
       value: "{{.TEST_CLUSTER_NAMESPACE}}"
@@ -163,8 +167,6 @@ profiles:
     - op: replace
       path: /deploy/kubectl/defaultNamespace
       value: "{{.TEST_CLUSTER_NAMESPACE}}"
-    - op: remove
-      path: /manifests/kustomize/paths/1
     - op: remove
       path: /manifests/kustomize/paths/0
     - op: replace
@@ -197,7 +199,7 @@ profiles:
                 - ./src/**
     patches:
     - op: remove
-      path: /deploy/helm/releases/1
+      path: /deploy/helm/releases/2
     - op: remove
       path: /portForward/1
     - op: add
@@ -214,9 +216,9 @@ profiles:
       - op: remove
         path: /build/artifacts/0
       - op: remove
-        path: /deploy/helm/releases/0/setValues/otel.image.repository
+        path: /deploy/helm/releases/1/setValues/otel.image.repository
       - op: remove
-        path: /deploy/helm/releases/0/setValues/otel.image.tag
+        path: /deploy/helm/releases/1/setValues/otel.image.tag
     build:
       local:
         push: false
