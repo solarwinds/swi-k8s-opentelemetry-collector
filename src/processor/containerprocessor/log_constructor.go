@@ -22,10 +22,11 @@ const (
 	swK8sClusterUid  = "sw.k8s.cluster.uid"
 
 	// Attributes containing additional information about container
-	k8sContainerStatus  = "sw.k8s.container.status"
-	k8sContainerInit    = "sw.k8s.container.init"
-	k8sContainerSidecar = "sw.k8s.container.sidecar"
-	k8sContainerId      = "container.id"
+	otelEntityAttributes = "otel.entity.attributes"
+	k8sContainerStatus   = "sw.k8s.container.status"
+	k8sContainerInit     = "sw.k8s.container.init"
+	k8sContainerSidecar  = "sw.k8s.container.sidecar"
+	k8sContainerId       = "container.id"
 )
 
 func NewContainerResourceLogs() plog.ResourceLogs {
@@ -68,16 +69,16 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	attrs.PutStr(swEntityType, "KubernetesContainer")
 
 	// Telemetry mapping attributes for entity identification
-	// have to be in a map
 	tm := attrs.PutEmptyMap(otelEntityId)
 	tm.PutStr(k8sPodName, md.PodName)
 	tm.PutStr(k8sNamespaceName, md.Namespace)
 	tm.PutStr(k8sContainerName, c.Name)
 	tm.PutStr(swK8sClusterUid, md.Annotations.ClusterUid)
 
-	// Additional attributes
-	attrs.PutStr(k8sContainerId, c.ContainerId)
-	attrs.PutStr(k8sContainerStatus, c.State)
-	attrs.PutBool(k8sContainerInit, false)
-	attrs.PutBool(k8sContainerSidecar, c.IsSidecarContainer)
+	// Entity attributes for additional information about container
+	ea := attrs.PutEmptyMap(otelEntityAttributes)
+	ea.PutStr(k8sContainerId, c.ContainerId)
+	ea.PutStr(k8sContainerStatus, c.State)
+	ea.PutBool(k8sContainerInit, false)
+	ea.PutBool(k8sContainerSidecar, c.IsSidecarContainer)
 }
