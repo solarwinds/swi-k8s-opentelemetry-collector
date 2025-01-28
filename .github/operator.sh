@@ -7,7 +7,6 @@ set -o pipefail
 SOURCE=$(dirname "$0")/..
 
 DOMAIN="solarwinds.com"
-GROUP="apps"
 
 if [ -z "$DOCKERHUB_IMAGE" ]; then
   DOCKERHUB_IMAGE="solarwinds/solarwinds-otel-operator"
@@ -28,15 +27,20 @@ cd $SOURCE/operator/swi-otel-operator
 operator-sdk init --plugins=helm --domain=$DOMAIN
 
 # Create api
-operator-sdk create api --helm-chart=../../deploy/helm               
+operator-sdk create api --helm-chart=../../deploy/helm
 
 # Build the operator image
 make docker-build IMG=$IMG
 
-##
-## Create bundle requires CVS file, template is prepared and used
+#
+# Create bundle requires CVS file, template is prepared and used
 mkdir ./config/manifests/bases
 cp ../swi-otel-operator.clusterserviceversion.yaml ./config/manifests/bases/swi-otel-operator.clusterserviceversion.yaml
+
+# update metadat image version
+make kustomize
+cd ./config/manifests && ../../bin/kustomize edit add annotation containerImage:"$BUNDLE_IMG"
+cd -
 
 # Generate the operator bundle
 make bundle VERSION=$VERSION IMG=$IMG
