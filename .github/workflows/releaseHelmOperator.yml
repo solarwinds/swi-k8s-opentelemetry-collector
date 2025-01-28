@@ -17,8 +17,6 @@ jobs:
       id-token: write # needed for signing
       pull-requests: write # needed to create pull-request
     name: Deploy Helm chart to GitHub pages    
-    env:
-     OPERATOR_REPO: eduardtichy641/openshift
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -37,7 +35,8 @@ jobs:
           chmod +x operator-sdk_linux_amd64
           sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk      
       - name: Create operator and bundle image
-        run: ./.github/operator.sh  
+        run: |
+          ""./.github/operator.sh"
         shell: bash        
       - name: Docker login
         env:
