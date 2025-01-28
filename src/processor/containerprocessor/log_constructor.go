@@ -7,8 +7,25 @@ import (
 )
 
 const (
+	k8sLogType = "sw.k8s.log.type"
+
+	// Attributes for OTel entity events identification
 	otelEntityEventAsLog = "otel.entity.event_as_log"
-	k8sLogType           = "sw.k8s.log.type"
+	otelEntityEventType  = "otel.entity.event.type"
+	otelEntityId         = "otel.entity.id"
+	swEntityType         = "otel.entity.type"
+
+	// Attributes for telemetry mapping
+	k8sContainerName = "k8s.container.name"
+	k8sNamespaceName = "k8s.namespace.name"
+	k8sPodName       = "k8s.pod.name"
+	swK8sClusterUid  = "sw.k8s.cluster.uid"
+
+	// Attributes containing additional information about container
+	k8sContainerStatus  = "sw.k8s.container.status"
+	k8sContainerInit    = "sw.k8s.container.init"
+	k8sContainerSidecar = "sw.k8s.container.sidecar"
+	k8sContainerId      = "container.id"
 )
 
 func NewContainerResourceLogs() plog.ResourceLogs {
@@ -32,19 +49,35 @@ func transformManifestToContainerLogs(m Manifest) plog.LogRecordSlice {
 	for _, c := range containers {
 		lr := lrs.AppendEmpty()
 		lr.SetTimestamp(pcommon.NewTimestampFromTime(t))
-		decorateLogRecord(lr, m.Metadata, c)
+
+		addTelemetryAttributes(lr.Attributes())
+		addContainerAttributes(lr.Attributes(), m.Metadata, c)
 	}
 
 	return lrs
 }
 
-func decorateLogRecord(lr plog.LogRecord, md Metadata, c Container) {
-	attrs := lr.Attributes()
-	attrs.PutStr("sw.k8s.pod.name", md.PodName)
-	attrs.PutStr("sw.k8s.pod.namespace", md.Namespace)
-	attrs.PutStr("sw.k8s.container.name", c.Name)
-	attrs.PutStr("sw.k8s.container.id", c.ContainerId)
-	attrs.PutStr("sw.k8s.container.state", c.State)
-	attrs.PutBool("sw.k8s.container.init", false)
-	attrs.PutBool("sw.k8s.container.sidecar", c.IsSidecarContainer)
+func addTelemetryAttributes(attrs pcommon.Map) {
+	attrs.PutStr(otelEntityEventType, "entity_state")
+	attrs.PutStr(swEntityType, "KubernetesContainer")
+}
+
+func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
+	// Ingestion attributes
+	attrs.PutStr(otelEntityEventType, "entity_state")
+	attrs.PutStr(swEntityType, "KubernetesContainer")
+
+	// Telemetry mapping attributes for entity identification
+	// have to be in a map
+	tm := attrs.PutEmptyMap(otelEntityId)
+	tm.PutStr(k8sPodName, md.PodName)
+	tm.PutStr(k8sNamespaceName, md.Namespace)
+	tm.PutStr(k8sContainerName, c.Name)
+	tm.PutStr(swK8sClusterUid, "TODO")
+
+	// Additional attributes
+	attrs.PutStr(k8sContainerId, c.ContainerId)
+	attrs.PutStr(k8sContainerStatus, c.State)
+	attrs.PutBool(k8sContainerInit, false)
+	attrs.PutBool(k8sContainerSidecar, c.IsSidecarContainer)
 }

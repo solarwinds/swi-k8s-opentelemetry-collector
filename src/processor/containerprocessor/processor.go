@@ -9,6 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	k8sObjectKind = "k8s.object.kind"
+)
+
 type containerprocessor struct {
 	cfg               component.Config
 	telemetrySettings component.TelemetrySettings
@@ -76,7 +80,7 @@ func (cp *containerprocessor) extractPodManifests(resourceLogs plog.ResourceLogs
 }
 
 func isPodLog(attributes pcommon.Map) bool {
-	kind, _ := attributes.Get("k8s.object.kind")
+	kind, _ := attributes.Get(k8sObjectKind)
 	return kind.Str() == "Pod"
 }
 
