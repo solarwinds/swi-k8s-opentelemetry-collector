@@ -1,6 +1,24 @@
 package containerprocessor
 
-import "go.uber.org/zap"
+type Manifest struct {
+	Kind     string   `json:"kind"`
+	Metadata Metadata `json:"metadata"`
+	Status   Status   `json:"status"`
+	Spec     Spec     `json:"spec"`
+}
+
+type Metadata struct {
+	PodName   string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type Status struct {
+	ContainerStatuses     []statusContainer
+	InitContainerStatuses []statusContainer
+	Conditions            []struct {
+		Timestamp string `json:"lastTransitionTime"`
+	}
+}
 
 type Spec struct {
 	Containers []struct {
@@ -18,84 +36,54 @@ type statusContainer struct {
 	State       map[string]interface{} `json:"state"`
 }
 
-type Status struct {
-	ContainerStatuses     []statusContainer
-	InitContainerStatuses []statusContainer
-	Conditions            []struct {
-		Timestamp string `json:"lastTransitionTime"`
-	}
+type Container struct {
+	Name               string
+	ContainerId        string
+	State              string
+	IsInitContainer    bool
+	IsSidecarContainer bool
 }
 
-type Manifest struct {
-	Kind   string `json:"kind"`
-	Status Status `json:"status"`
-	Spec   Spec   `json:"spec"`
-}
-
-func (m *Manifest) extractContainers(logger *zap.Logger) []Container {
-	containers := make(map[string]Container)
-	for _, container := range m.Spec.getContainers() {
-		containers[container.Name] = container
-	}
-
-	changes := m.Status.Conditions
-	t := changes[len(changes)-1].Timestamp
-	result := make([]Container, 0)
-
-	for _, container := range m.Status.getContainers() {
-		if existing, exists := containers[container.Name]; exists {
-			container.IsInitContainer = existing.IsInitContainer
-			container.IsSidecarContainer = existing.IsSidecarContainer
-		}
-		container.Timestamp = t
-		result = append(result, container)
-	}
-
-	logger.Info("Containers", zap.Any("containers", result))
-
-	return result
-}
-
-func (s *Status) getContainers() []Container {
-	var containers []Container
-	for _, c := range s.ContainerStatuses {
-		containers = append(containers, Container{
-			Name:        c.Name,
-			ContainerId: c.ContainerId,
-			State:       getState(c.State),
-		})
-	}
-
-	for _, ic := range s.InitContainerStatuses {
-		containers = append(containers, Container{
-			Name:        ic.Name,
-			ContainerId: ic.ContainerId,
-			State:       getState(ic.State),
-		})
-	}
-
-	return containers
-}
-
-func (s *Spec) getContainers() []Container {
-	var containers []Container
-	for _, c := range s.Containers {
-		containers = append(containers, Container{
+func (m *Manifest) getContainers() map[string]Container {
+	var containers map[string]Container
+	for _, c := range m.Spec.Containers {
+		containers[c.Name] = Container{
 			Name:               c.Name,
 			IsInitContainer:    false,
 			IsSidecarContainer: false,
-		})
+		}
 	}
 
-	for _, ic := range s.InitContainers {
-		containers = append(containers, Container{
+	for _, ic := range m.Spec.InitContainers {
+		containers[ic.Name] = Container{
 			Name:               ic.Name,
 			IsInitContainer:    true,
 			IsSidecarContainer: ic.RestartPolicy == "Always",
-		})
+		}
 	}
 
+	m.Status.fillStates(containers)
 	return containers
+}
+
+func (s *Status) fillStates(containers map[string]Container) {
+	for _, c := range s.ContainerStatuses {
+		c.fillContainer(containers)
+	}
+
+	for _, ic := range s.InitContainerStatuses {
+		ic.fillContainer(containers)
+	}
+}
+
+func (sc *statusContainer) fillContainer(containers map[string]Container) {
+	c, ok := containers[sc.Name]
+	if !ok {
+		return
+	}
+
+	c.ContainerId = sc.ContainerId
+	c.State = getState(sc.State)
 }
 
 func getState(state map[string]interface{}) string {
