@@ -1,4 +1,4 @@
-package podlogsprocessor
+package containerprocessor
 
 import (
 	"context"
@@ -28,14 +28,14 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 	resourceLogs := ld.ResourceLogs()
 	containers := make([]Container, 0)
 
-	manifests, err := cp.extractManifests(resourceLogs)
+	manifests, err := cp.extractPodManifests(resourceLogs)
 	if err != nil {
-		cp.logger.Info("ERROR while extracting manifests")
-		return plog.NewLogs(), err
+		cp.logger.Warn("Failed to parse manifest for pod log record")
+		return ld, err
 	}
 
 	if len(manifests) == 0 {
-		cp.logger.Info("No manifests found")
+		cp.logger.Debug("No manifests found")
 		return ld, nil
 	}
 
@@ -51,7 +51,7 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 	return ld, nil
 }
 
-func (cp *containerprocessor) extractManifests(resourceLogs plog.ResourceLogsSlice) ([]Manifest, error) {
+func (cp *containerprocessor) extractPodManifests(resourceLogs plog.ResourceLogsSlice) ([]Manifest, error) {
 	manifests := make([]Manifest, 0)
 
 	for i := range resourceLogs.Len() {

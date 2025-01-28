@@ -1,4 +1,4 @@
-module github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/podlogsprocessor
+module github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/containerprocessor
 
 go 1.23.0
 

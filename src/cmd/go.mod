@@ -38,7 +38,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/receivercreator v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/simpleprometheusreceiver v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowseventlogreceiver v0.116.0
-	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/podlogsprocessor v0.116.0
+	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/containerprocessor v0.116.0
 	github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.116.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
@@ -336,7 +336,7 @@ require (
 
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/swk8sattributesprocessor v0.116.0 => ../processor/k8sattributesprocessor
 
-replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/podlogsprocessor v0.116.0 => ../processor/podlogsprocessor
+replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/containerprocessor v0.116.0 => ./../processor/containerprocessor
 
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/internal/k8sconfig v0.116.0 => ../internal/k8sconfig
 

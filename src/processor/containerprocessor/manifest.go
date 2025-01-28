@@ -1,4 +1,4 @@
-package podlogsprocessor
+package containerprocessor
 
 import "go.uber.org/zap"
 

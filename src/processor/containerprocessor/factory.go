@@ -1,4 +1,4 @@
-package podlogsprocessor
+package containerprocessor
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Type                 = component.MustNewType("podlogsprocessor")
+	Type                 = component.MustNewType("containerprocessor")
 	consumerCapabilities = consumer.Capabilities{MutatesData: false}
 )
 
