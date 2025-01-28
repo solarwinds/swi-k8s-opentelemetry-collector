@@ -2,48 +2,46 @@ name: Release Helm Operator
 
 on:
   pull_request:
-    branches: 
+    branches:
       - master
-      - release/** 
-
+      - release/**
 env:
   DOCKERHUB_IMAGE: solarwinds/solarwinds-otel-operator
-
-jobs:  
+jobs:
   deploy_operator:
     runs-on: ubuntu-latest
     permissions:
       contents: write # to push chart release and create a release (helm/chart-releaser-action)
       id-token: write # needed for signing
       pull-requests: write # needed to create pull-request
-    name: Deploy Helm chart to GitHub pages    
+    name: Deploy operator image to dockerhub
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:     
+        with:
           submodules: true
           fetch-depth: 0
       - name: Set env
         run: |
-         export VERSION=$(yq eval '.version' deploy/helm/Chart.yaml)
-         echo "VERSION=$VERSION" >> $GITHUB_ENV
+          export VERSION=$(yq eval '.version' deploy/helm/Chart.yaml)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Install operator-sdk
-        run: | 
+        run: |
           sudo apt-get update
           sudo apt-get install -y curl tar
           curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.39.0/operator-sdk_linux_amd64
           chmod +x operator-sdk_linux_amd64
-          sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk      
-      - name: Create operator and bundle image
+          sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk
+      - name: Build images
         run: |
-          ""./.github/operator.sh"
-        shell: bash        
-      - name: Docker login
-        env:
-          OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
-          OPENTELEMETRY_DOCKER_HUB_CI_USER: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
-        run: echo "$env:OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:OPENTELEMETRY_DOCKER_HUB_CI_USER" --password-stdin
+          "./.github/operator.sh"
+        shell: bash
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
       - name: Publish images
-        run: | 
+        run: |
           docker push ${{ env.DOCKERHUB_IMAGE }}:${{ env.VERSION }}
-          
+          docker push ${{ env.DOCKERHUB_IMAGE }}:${{ env.VERSION }}-bundle
