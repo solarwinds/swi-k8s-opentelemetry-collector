@@ -29,8 +29,8 @@ const (
 	k8sContainerId       = "container.id"
 )
 
-func NewContainerResourceLogs() plog.ResourceLogs {
-	rl := plog.NewResourceLogs()
+func AddContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
+	rl := ld.ResourceLogs().AppendEmpty()
 	rl.Resource().Attributes().PutStr(k8sLogType, "manifest")
 	sl := rl.ScopeLogs().AppendEmpty()
 	sl.Scope().Attributes().PutBool(otelEntityEventAsLog, true)
@@ -38,7 +38,7 @@ func NewContainerResourceLogs() plog.ResourceLogs {
 }
 
 func transformManifestToContainerLogs(m Manifest) plog.LogRecordSlice {
-	var lrs plog.LogRecordSlice
+	lrs := plog.NewLogRecordSlice()
 	conditions := m.Status.Conditions
 	lastChange := conditions[len(conditions)-1].Timestamp
 	t, err := time.Parse(time.RFC3339, lastChange)
@@ -60,6 +60,7 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	// Ingestion attributes
 	attrs.PutStr(otelEntityEventType, "entity_state")
 	attrs.PutStr(swEntityType, "KubernetesContainer")
+	attrs.PutStr(k8sLogType, "manifest")
 
 	// Telemetry mappings
 	tm := attrs.PutEmptyMap(otelEntityId)

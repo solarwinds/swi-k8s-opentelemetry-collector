@@ -48,7 +48,7 @@ type Container struct {
 }
 
 func (m *Manifest) getContainers() map[string]Container {
-	var containers map[string]Container
+	containers := make(map[string]Container, 0)
 	for _, c := range m.Spec.Containers {
 		containers[c.Name] = Container{
 			Name:               c.Name,

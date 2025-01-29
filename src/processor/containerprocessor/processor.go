@@ -32,14 +32,15 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 		return ld, nil
 	}
 
-	rl := NewContainerResourceLogs()
-	rl.CopyTo(ld.ResourceLogs().AppendEmpty())
+	rl := AddContainersResourceLog(ld)
 	lrs := rl.ScopeLogs().At(0).LogRecords()
 
 	for _, m := range manifests {
-		cp.logger.Debug("Processing manifest", zap.String("pod-name", m.Metadata.PodName))
 		containers := transformManifestToContainerLogs(m)
-		containers.MoveAndAppendTo(lrs)
+		for i := range containers.Len() {
+			lr := containers.At(i)
+			lr.CopyTo(lrs.AppendEmpty())
+		}
 	}
 
 	return ld, nil
