@@ -6,7 +6,8 @@ set -o pipefail
 
 SOURCE=$(dirname "$0")/..
 
-DOMAIN="solarwinds.com"
+DOMAIN="com"
+GROUP="solarwinds"
 
 if [ -z "$DOCKERHUB_IMAGE" ]; then
   DOCKERHUB_IMAGE="solarwinds/solarwinds-otel-operator"
@@ -24,10 +25,10 @@ mkdir $SOURCE/operator/swi-otel-operator
 cd $SOURCE/operator/swi-otel-operator
 
 # Initialize the Helm operator project
-operator-sdk init --plugins=helm --domain=$DOMAIN
+operator-sdk init --plugins=helm --domain $DOMAIN
 
 # Create api
-operator-sdk create api --helm-chart=../../deploy/helm
+operator-sdk create api --helm-chart=../../deploy/helm --group $GROUP
 
 # Build the operator image
 make docker-build IMG=$IMG
