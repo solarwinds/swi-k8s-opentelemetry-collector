@@ -60,7 +60,6 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	// Ingestion attributes
 	attrs.PutStr(otelEntityEventType, "entity_state")
 	attrs.PutStr(swEntityType, "KubernetesContainer")
-	attrs.PutStr(k8sLogType, "manifest")
 
 	// Telemetry mappings
 	tm := attrs.PutEmptyMap(otelEntityId)
