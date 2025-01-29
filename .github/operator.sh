@@ -20,9 +20,9 @@ IMG=$DOCKERHUB_IMAGE:$VERSION
 BUNDLE_IMG=$DOCKERHUB_IMAGE:$VERSION-bundle
 
 
-rm $SOURCE/operator/swi-otel-operator -d -r || true
-mkdir $SOURCE/operator/swi-otel-operator
-cd $SOURCE/operator/swi-otel-operator
+rm $SOURCE/operator/swo-otel-operator -d -r || true
+mkdir $SOURCE/operator/swo-otel-operator
+cd $SOURCE/operator/swo-otel-operator
 
 # Initialize the Helm operator project
 operator-sdk init --plugins=helm --domain $DOMAIN
@@ -36,7 +36,7 @@ make docker-build IMG=$IMG
 #
 # Create bundle requires CVS file, template is prepared and used
 mkdir ./config/manifests/bases
-cp ../swi-otel-operator.clusterserviceversion.yaml ./config/manifests/bases/swi-otel-operator.clusterserviceversion.yaml
+cp ../swo-otel-operator.clusterserviceversion.yaml ./config/manifests/bases/
 
 # update metadat image version
 make kustomize
