@@ -16,7 +16,7 @@ Metrics discovery spec should match snapshot when Fargate is enabled:
                     - linux
     containers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - --config=/conf/relay.yaml
         env:
           - name: SOLARWINDS_API_TOKEN
@@ -32,7 +32,7 @@ Metrics discovery spec should match snapshot when Fargate is enabled:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -69,7 +69,7 @@ Metrics discovery spec should match snapshot when Fargate is enabled:
             readOnly: true
     initContainers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - test-connection
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -85,7 +85,7 @@ Metrics discovery spec should match snapshot when Fargate is enabled:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
     securityContext: {}

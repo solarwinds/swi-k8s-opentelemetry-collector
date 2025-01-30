@@ -101,3 +101,13 @@ WARNING: Value `otel.metrics.swi_endpoint_check` was deprecated and will be remo
 WARNING: Autoupdate is enabled. Avoid modifying the default images in values.yaml to ensure scheduled upgrades remain functional.
 {{- println -}}
 {{- end -}}
+
+{{- if eq .Values.otel.image.repository "solarwinds/swi-opentelemetry-collector" -}}
+WARNING: You are using a deprecated image 'solarwinds/swi-opentelemetry-collector' in `otel.image.repository` in your values.yaml. It has been replaced with 'solarwinds/solarwinds-otel-collector' please update your values.yaml.
+{{- println -}}
+{{- end -}}
+
+{{- if eq .Values.otel.windows.image.repository "solarwinds/swi-opentelemetry-collector" -}}
+WARNING: You are using a deprecated image 'solarwinds/swi-opentelemetry-collector' in `otel.windows.image.repository` in your values.yaml. It has been replaced with 'solarwinds/solarwinds-otel-collector' please update your values.yaml.
+{{- println -}}
+{{- end -}}
