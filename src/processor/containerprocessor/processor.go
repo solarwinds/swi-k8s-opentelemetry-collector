@@ -35,9 +35,11 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 
 	wg.Wait()
 
-	rl := AddContainersResourceLog(ld)
-	lrs := rl.ScopeLogs().At(0).LogRecords()
-	logSlice.CopyTo(lrs)
+	if logSlice.Len() > 0 {
+		rl := AddContainersResourceLog(ld)
+		lrs := rl.ScopeLogs().At(0).LogRecords()
+		logSlice.CopyTo(lrs)
+	}
 
 	return ld, nil
 }
