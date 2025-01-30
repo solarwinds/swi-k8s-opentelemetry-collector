@@ -87,6 +87,7 @@ func (sc *statusContainer) fillContainer(containers map[string]Container) {
 
 	c.ContainerId = sc.ContainerId
 	c.State = getState(sc.State)
+	containers[sc.Name] = c
 }
 
 func getState(state map[string]interface{}) string {
