@@ -92,7 +92,7 @@ spec:
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
-            - /swi-otelcol
+            - /solarwinds-otel-collector
             - test-connection
             - --endpoint=$(OTEL_ENVOY_ADDRESS)
             - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -123,7 +123,7 @@ spec:
               - ALL
           command:
             - /wrapper
-            - /swi-otelcol
+            - /solarwinds-otel-collector
             - --config=/conf/relay.yaml
             - --feature-gates=filelog.container.removeOriginalTimeField
           env:
