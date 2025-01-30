@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
+	"sync"
 )
 
 const (
@@ -21,34 +22,40 @@ type containerprocessor struct {
 
 func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
+	manifests := make(chan Manifest)
+	defer close(manifests)
 
-	manifests, err := cp.extractPodManifests(resourceLogs)
-	if err != nil {
-		cp.logger.Warn("Failed to parse manifests")
-		return plog.NewLogs(), err
-	}
+	logSlice := plog.NewLogRecordSlice()
 
-	if len(manifests) == 0 {
-		return ld, nil
-	}
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
+
+	go cp.buildLogRecords(manifests, wg, logSlice)
+	go cp.extractPodManifests(manifests, wg, resourceLogs)
+
+	wg.Wait()
 
 	rl := AddContainersResourceLog(ld)
 	lrs := rl.ScopeLogs().At(0).LogRecords()
+	logSlice.CopyTo(lrs)
 
-	for _, m := range manifests {
+	return ld, nil
+}
+
+func (cp *containerprocessor) buildLogRecords(manifests chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
+	defer wg.Done()
+
+	for m := range manifests {
 		containers := transformManifestToContainerLogs(m)
 		for i := range containers.Len() {
 			lr := containers.At(i)
 			lr.CopyTo(lrs.AppendEmpty())
 		}
 	}
-
-	return ld, nil
 }
 
-func (cp *containerprocessor) extractPodManifests(resourceLogs plog.ResourceLogsSlice) ([]Manifest, error) {
-	manifests := make([]Manifest, 0)
-
+func (cp *containerprocessor) extractPodManifests(c chan Manifest, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
+	wg.Done()
 	for i := range resourceLogs.Len() {
 		rl := resourceLogs.At(i)
 		scopeLogs := rl.ScopeLogs()
@@ -71,13 +78,11 @@ func (cp *containerprocessor) extractPodManifests(resourceLogs plog.ResourceLogs
 				err := json.Unmarshal([]byte(body), &m)
 				if err != nil {
 					cp.logger.Error("Error while unmarshalling manifest", zap.Error(err))
-					return nil, err
 				}
-				manifests = append(manifests, m)
+				c <- m
 			}
 		}
 	}
-	return manifests, nil
 }
 
 func isPodLog(attributes pcommon.Map) bool {
