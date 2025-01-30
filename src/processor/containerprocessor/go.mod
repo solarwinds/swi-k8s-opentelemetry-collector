@@ -8,6 +8,7 @@ require (
 	go.opentelemetry.io/collector/pdata v1.22.0
 	go.opentelemetry.io/collector/processor v0.116.0
 	go.opentelemetry.io/collector/processor/xprocessor v0.116.0
+	go.opentelemetry.io/collector/semconv v0.118.0
 	go.uber.org/zap v1.27.0
 )
 

@@ -3,6 +3,7 @@ package containerprocessor
 import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
+	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 	"time"
 )
 
@@ -15,18 +16,14 @@ const (
 	swEntityType         = "otel.entity.type"
 
 	// Attributes for telemetry mapping
-	otelEntityId     = "otel.entity.id"
-	k8sContainerName = "k8s.container.name"
-	k8sNamespaceName = "k8s.namespace.name"
-	k8sPodName       = "k8s.pod.name"
-	swK8sClusterUid  = "sw.k8s.cluster.uid"
+	otelEntityId    = "otel.entity.id"
+	swK8sClusterUid = "sw.k8s.cluster.uid"
 
 	// Attributes containing additional information about container
 	otelEntityAttributes = "otel.entity.attributes"
 	k8sContainerStatus   = "sw.k8s.container.status"
 	k8sContainerInit     = "sw.k8s.container.init"
 	k8sContainerSidecar  = "sw.k8s.container.sidecar"
-	k8sContainerId       = "container.id"
 )
 
 func AddContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
@@ -76,14 +73,14 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 
 	// Telemetry mappings
 	tm := attrs.PutEmptyMap(otelEntityId)
-	tm.PutStr(k8sPodName, md.PodName)
-	tm.PutStr(k8sNamespaceName, md.Namespace)
-	tm.PutStr(k8sContainerName, c.Name)
+	tm.PutStr(conventions.AttributeK8SPodName, md.PodName)
+	tm.PutStr(conventions.AttributeK8SNamespaceName, md.Namespace)
+	tm.PutStr(conventions.AttributeK8SContainerName, c.Name)
 	tm.PutStr(swK8sClusterUid, md.Annotations.ClusterUid)
 
 	// Entity attributes
 	ea := attrs.PutEmptyMap(otelEntityAttributes)
-	ea.PutStr(k8sContainerId, c.ContainerId)
+	ea.PutStr(conventions.AttributeContainerID, c.ContainerId)
 	ea.PutStr(k8sContainerStatus, c.State)
 	ea.PutBool(k8sContainerInit, false)
 	ea.PutBool(k8sContainerSidecar, c.IsSidecarContainer)

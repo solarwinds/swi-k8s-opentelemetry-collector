@@ -280,7 +280,7 @@ require (
 	go.opentelemetry.io/collector/processor/xprocessor v0.116.0 // indirect
 	go.opentelemetry.io/collector/receiver/receivertest v0.116.0 // indirect
 	go.opentelemetry.io/collector/receiver/xreceiver v0.116.0 // indirect
-	go.opentelemetry.io/collector/semconv v0.116.0 // indirect
+	go.opentelemetry.io/collector/semconv v0.118.0 // indirect
 	go.opentelemetry.io/collector/service v0.116.0 // indirect
 	go.opentelemetry.io/contrib/bridges/otelzap v0.6.0 // indirect
 	go.opentelemetry.io/contrib/config v0.10.0 // indirect
