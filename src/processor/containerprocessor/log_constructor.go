@@ -39,12 +39,7 @@ func AddContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
 
 func transformManifestToContainerLogs(m Manifest) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
-	conditions := m.Status.Conditions
-	lastChange := conditions[len(conditions)-1].Timestamp
-	t, err := time.Parse(time.RFC3339, lastChange)
-	if err != nil {
-		t = time.Now()
-	}
+	t := getTimestampOfLatestChange(m.Status.Conditions)
 
 	containers := m.getContainers()
 	for _, c := range containers {
@@ -54,6 +49,24 @@ func transformManifestToContainerLogs(m Manifest) plog.LogRecordSlice {
 	}
 
 	return lrs
+}
+
+func getTimestampOfLatestChange(changes []struct {
+	Timestamp string `json:"lastTransitionTime"`
+}) time.Time {
+	var t time.Time
+	var lastChange string
+	var err error
+	if len(changes) > 0 {
+		lastChange = changes[len(changes)-1].Timestamp
+		t, err = time.Parse(time.RFC3339, lastChange)
+		if err != nil {
+			t = time.Now()
+		}
+	} else {
+		t = time.Now()
+	}
+	return t
 }
 
 func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
