@@ -62,7 +62,7 @@ func (cp *containerprocessor) extractPodManifests(resourceLogs plog.ResourceLogs
 				attrs := lr.Attributes()
 
 				if !isPodLog(attrs) {
-					break
+					continue
 				}
 
 				body := lr.Body().AsString()
