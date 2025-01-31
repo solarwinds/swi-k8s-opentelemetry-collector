@@ -1487,6 +1487,12 @@ Metrics config should match snapshot when fargate is enabled:
             - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
               == true and IsMatch(attributes["condition"], "^true$") == true and value_double
               > 0
+        transform/cleanup_attributes_for_nonexisting_entities:
+          metric_statements:
+          - context: metric
+            statements:
+            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
+              != nil
         transform/scope:
           metric_statements:
           - context: scope
@@ -1731,6 +1737,7 @@ Metrics config should match snapshot when fargate is enabled:
             - groupbyattrs/all
             - resource/metrics
             - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
@@ -3239,6 +3246,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
               == true and IsMatch(attributes["condition"], "^true$") == true and value_double
               > 0
+        transform/cleanup_attributes_for_nonexisting_entities:
+          metric_statements:
+          - context: metric
+            statements:
+            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
+              != nil
         transform/scope:
           metric_statements:
           - context: scope
@@ -3418,6 +3431,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - groupbyattrs/all
             - resource/metrics
             - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
@@ -4933,6 +4947,12 @@ Metrics config should match snapshot when using default values:
             - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
               == true and IsMatch(attributes["condition"], "^true$") == true and value_double
               > 0
+        transform/cleanup_attributes_for_nonexisting_entities:
+          metric_statements:
+          - context: metric
+            statements:
+            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
+              != nil
         transform/scope:
           metric_statements:
           - context: scope
@@ -5097,6 +5117,7 @@ Metrics config should match snapshot when using default values:
             - groupbyattrs/all
             - resource/metrics
             - k8sattributes
+            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
