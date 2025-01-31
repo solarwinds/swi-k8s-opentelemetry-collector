@@ -213,7 +213,7 @@ processors:
   batch/metrics:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
-  swk8sattributes:
+  k8sattributes:
     auth_type: "serviceAccount"
     passthrough: false
     filter:
@@ -744,7 +744,7 @@ service:
         - transform/syslogify
         - groupbyattrs/common-all
         - resource/container
-        - swk8sattributes
+        - k8sattributes
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
 {{- if (include "logsFilter" .) }}
         - filter/logs
@@ -837,7 +837,7 @@ service:
       processors:
         - memory_limiter
         - filter/histograms
-        - swk8sattributes
+        - k8sattributes
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}

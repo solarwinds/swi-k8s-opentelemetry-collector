@@ -414,6 +414,24 @@ Metrics config should match snapshot when using default values:
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+            - k8s.node.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 2560
@@ -1457,101 +1475,6 @@ Metrics config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
-        swk8sattributes:
-          auth_type: serviceAccount
-          cronjob:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.cronjob.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
-          daemonset:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.daemonset.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
-          deployment:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.deployment.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-            - k8s.node.name
-          job:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.job.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
-          node:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.node.name
-            extract: null
-          passthrough: false
-          persistentvolume:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.persistentvolume.name
-            extract: null
-          persistentvolumeclaim:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.persistentvolumeclaim.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
-          replicaset:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.replicaset.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
-          service:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.service.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
-          set_object_existence: true
-          statefulset:
-            association:
-            - sources:
-              - from: resource_attribute
-                name: k8s.statefulset.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-            extract: null
         transform:
           metric_statements:
           - context: datapoint
@@ -1564,23 +1487,6 @@ Metrics config should match snapshot when using default values:
             - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
               == true and IsMatch(attributes["condition"], "^true$") == true and value_double
               > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - context: metric
-            statements:
-            - delete_key(resource.attributes, "k8s.node.name") where resource.attributes["sw.k8s.node.found"]
-              == "false"
-            - delete_key(resource.attributes, "sw.k8s.pod.found")
-            - delete_key(resource.attributes, "sw.k8s.deployment.found")
-            - delete_key(resource.attributes, "sw.k8s.statefulset.found")
-            - delete_key(resource.attributes, "sw.k8s.replicaset.found")
-            - delete_key(resource.attributes, "sw.k8s.daemonset.found")
-            - delete_key(resource.attributes, "sw.k8s.job.found")
-            - delete_key(resource.attributes, "sw.k8s.cronjob.found")
-            - delete_key(resource.attributes, "sw.k8s.node.found")
-            - delete_key(resource.attributes, "sw.k8s.persistentvolume.found")
-            - delete_key(resource.attributes, "sw.k8s.persistentvolumeclaim.found")
-            - delete_key(resource.attributes, "sw.k8s.service.found")
         transform/scope:
           metric_statements:
           - context: scope
@@ -1824,8 +1730,7 @@ Metrics config should match snapshot when using default values:
             - metricstransform/aggregate_pod_level
             - groupbyattrs/all
             - resource/metrics
-            - swk8sattributes
-            - transform/cleanup_attributes_for_nonexisting_entities
+            - k8sattributes
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
