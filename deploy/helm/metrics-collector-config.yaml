@@ -724,6 +724,13 @@ processors:
 
   {{- include "common-config.resource-metrics" . | nindent 2 }}
 
+  transform/cleanup_attributes_for_nonexisting_entities:
+    metric_statements:
+      - context: metric
+        statements:
+         # do not create/update node entities from metrics
+          - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"] != nil
+
   attributes/remove_prometheus_attributes_endpoint:
     exclude:
       match_type: regexp
@@ -1171,6 +1178,7 @@ service:
         - groupbyattrs/all
         - resource/metrics
         - k8sattributes
+        - transform/cleanup_attributes_for_nonexisting_entities
 {{- if .Values.otel.metrics.filter }}
         - filter
 {{- end }}
