@@ -23,7 +23,6 @@ type containerprocessor struct {
 func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
 	manifests := make(chan Manifest)
-	defer close(manifests)
 
 	logSlice := plog.NewLogRecordSlice()
 
@@ -44,9 +43,8 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 	return ld, nil
 }
 
-func (cp *containerprocessor) buildLogRecords(manifests chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
+func (cp *containerprocessor) buildLogRecords(manifests <-chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
 	defer wg.Done()
-
 	for m := range manifests {
 		containers := transformManifestToContainerLogs(m)
 		for i := range containers.Len() {
@@ -56,8 +54,10 @@ func (cp *containerprocessor) buildLogRecords(manifests chan Manifest, wg *sync.
 	}
 }
 
-func (cp *containerprocessor) extractPodManifests(c chan Manifest, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
-	wg.Done()
+func (cp *containerprocessor) extractPodManifests(c chan<- Manifest, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
+	defer wg.Done()
+	defer close(c)
+
 	for i := range resourceLogs.Len() {
 		rl := resourceLogs.At(i)
 		scopeLogs := rl.ScopeLogs()
@@ -80,8 +80,10 @@ func (cp *containerprocessor) extractPodManifests(c chan Manifest, wg *sync.Wait
 				err := json.Unmarshal([]byte(body), &m)
 				if err != nil {
 					cp.logger.Error("Error while unmarshalling manifest", zap.Error(err))
+					return
+				} else {
+					c <- m
 				}
-				c <- m
 			}
 		}
 	}
