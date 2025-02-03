@@ -18,9 +18,11 @@ type Metadata struct {
 type Status struct {
 	ContainerStatuses     []statusContainer
 	InitContainerStatuses []statusContainer
-	Conditions            []struct {
-		Timestamp string `json:"lastTransitionTime"`
-	}
+	Conditions            []Condition
+}
+
+type Condition struct {
+	Timestamp string `json:"lastTransitionTime"`
 }
 
 type Spec struct {
@@ -47,6 +49,8 @@ type Container struct {
 	IsSidecarContainer bool
 }
 
+// getContainers returns a map of containers from the manifest. Data of each container
+// are merged from "spec" and "status" parts of the manifest.
 func (m *Manifest) getContainers() map[string]Container {
 	containers := make(map[string]Container, 0)
 	for _, c := range m.Spec.Containers {
@@ -69,6 +73,7 @@ func (m *Manifest) getContainers() map[string]Container {
 	return containers
 }
 
+// fillStates fills the basic and init container states from the "status" part of the manifest.
 func (s *Status) fillStates(containers map[string]Container) {
 	for _, c := range s.ContainerStatuses {
 		c.fillContainer(containers)
@@ -79,6 +84,8 @@ func (s *Status) fillStates(containers map[string]Container) {
 	}
 }
 
+// fillContainer fills the container with additional information from "status" part of manifest and
+// updates the container in the containers map.
 func (sc *statusContainer) fillContainer(containers map[string]Container) {
 	c, ok := containers[sc.Name]
 	if !ok {
@@ -90,6 +97,9 @@ func (sc *statusContainer) fillContainer(containers map[string]Container) {
 	containers[sc.Name] = c
 }
 
+// getState parse the state of the container from the "state" part of the manifest.
+// The state is the processor is looking for is the key in the map. The value of status key
+// is ignored.
 func getState(state map[string]interface{}) string {
 	for key := range state {
 		return key

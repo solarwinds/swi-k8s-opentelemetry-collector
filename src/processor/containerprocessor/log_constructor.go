@@ -26,7 +26,9 @@ const (
 	k8sContainerSidecar  = "sw.k8s.container.sidecar"
 )
 
-func AddContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
+// addContainersResourceLog adds a new ResourceLogs to the provided Logs structure
+// and sets required attributes on "resource" and "scopeLogs"
+func addContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
 	rl := ld.ResourceLogs().AppendEmpty()
 	rl.Resource().Attributes().PutStr(k8sLogType, "manifest")
 	sl := rl.ScopeLogs().AppendEmpty()
@@ -34,6 +36,8 @@ func AddContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
 	return rl
 }
 
+// transformManifestToContainerLogs returns a new plog.LogRecordSlice and appends
+// all LogRecords containing container information from the provided Manifest.
 func transformManifestToContainerLogs(m Manifest) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
 	t := getTimestampOfLatestChange(m.Status.Conditions)
@@ -48,9 +52,10 @@ func transformManifestToContainerLogs(m Manifest) plog.LogRecordSlice {
 	return lrs
 }
 
-func getTimestampOfLatestChange(changes []struct {
-	Timestamp string `json:"lastTransitionTime"`
-}) time.Time {
+// getTimestampOfLatestChange determines the timestamp of incoming change from "conditions" part of the manifest,
+// by using the latest item from the slice. If the slice is empty, the current time is considered as the
+// timestamp of the change.
+func getTimestampOfLatestChange(changes []Condition) time.Time {
 	var t time.Time
 	var lastChange string
 	var err error
@@ -66,6 +71,7 @@ func getTimestampOfLatestChange(changes []struct {
 	return t
 }
 
+// addContainerAttributes sets attributes on the provided map for the given Metadata and Container.
 func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	// Ingestion attributes
 	attrs.PutStr(otelEntityEventType, "entity_state")

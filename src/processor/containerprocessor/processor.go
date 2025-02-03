@@ -20,6 +20,9 @@ type containerprocessor struct {
 	logger            *zap.Logger
 }
 
+// processLogs go through all log records and parse information about containers from them.
+// Containers are created based on all log records from all scope and resource logs.
+// Containers related logs are appended as a new ResourceLogs to the plog.Logs structure that is processed at the time.
 func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
 	manifests := make(chan Manifest)
@@ -29,13 +32,13 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 
-	go cp.buildLogRecords(manifests, wg, logSlice)
-	go cp.extractPodManifests(manifests, wg, resourceLogs)
+	go cp.generateLogRecords(manifests, wg, logSlice)
+	go cp.generateManifests(manifests, wg, resourceLogs)
 
 	wg.Wait()
 
 	if logSlice.Len() > 0 {
-		rl := AddContainersResourceLog(ld)
+		rl := addContainersResourceLog(ld)
 		lrs := rl.ScopeLogs().At(0).LogRecords()
 		logSlice.CopyTo(lrs)
 	}
@@ -43,7 +46,8 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 	return ld, nil
 }
 
-func (cp *containerprocessor) buildLogRecords(manifests <-chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
+// generateLogRecords appends all LogRecords containing container information to the provided LogRecordSlice.
+func (cp *containerprocessor) generateLogRecords(manifests <-chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
 	defer wg.Done()
 	for m := range manifests {
 		containers := transformManifestToContainerLogs(m)
@@ -54,7 +58,8 @@ func (cp *containerprocessor) buildLogRecords(manifests <-chan Manifest, wg *syn
 	}
 }
 
-func (cp *containerprocessor) extractPodManifests(c chan<- Manifest, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
+// generateManifests extracts and parses manifests from log records that have k8s.object.kind set to "Pod".
+func (cp *containerprocessor) generateManifests(c chan<- Manifest, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
 	defer wg.Done()
 	defer close(c)
 
@@ -70,6 +75,7 @@ func (cp *containerprocessor) extractPodManifests(c chan<- Manifest, wg *sync.Wa
 				lr := logRecords.At(k)
 				attrs := lr.Attributes()
 
+				// processor is interested in pods only, since containers are related to pods
 				if !isPodLog(attrs) {
 					continue
 				}
