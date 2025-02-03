@@ -25,15 +25,22 @@ type containerprocessor struct {
 // Containers related logs are appended as a new ResourceLogs to the plog.Logs structure that is processed at the time.
 func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
-	manifests := make(chan Manifest)
+	mCh := make(chan Manifest)
+	errCh := make(chan error)
 
 	logSlice := plog.NewLogRecordSlice()
 
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 
-	go cp.generateLogRecords(manifests, wg, logSlice)
-	go cp.generateManifests(manifests, wg, resourceLogs)
+	go cp.generateLogRecords(mCh, wg, logSlice)
+	go cp.generateManifests(mCh, errCh, wg, resourceLogs)
+
+	select {
+	case err := <-errCh:
+		return ld, err
+	default:
+	}
 
 	wg.Wait()
 
@@ -47,9 +54,9 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 }
 
 // generateLogRecords appends all LogRecords containing container information to the provided LogRecordSlice.
-func (cp *containerprocessor) generateLogRecords(manifests <-chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
+func (cp *containerprocessor) generateLogRecords(mCh <-chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
 	defer wg.Done()
-	for m := range manifests {
+	for m := range mCh {
 		containers := transformManifestToContainerLogs(m)
 		for i := range containers.Len() {
 			lr := containers.At(i)
@@ -59,9 +66,9 @@ func (cp *containerprocessor) generateLogRecords(manifests <-chan Manifest, wg *
 }
 
 // generateManifests extracts and parses manifests from log records that have k8s.object.kind set to "Pod".
-func (cp *containerprocessor) generateManifests(c chan<- Manifest, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
+func (cp *containerprocessor) generateManifests(mCh chan<- Manifest, errCh chan<- error, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
 	defer wg.Done()
-	defer close(c)
+	defer close(mCh)
 
 	for i := range resourceLogs.Len() {
 		rl := resourceLogs.At(i)
@@ -86,9 +93,10 @@ func (cp *containerprocessor) generateManifests(c chan<- Manifest, wg *sync.Wait
 				err := json.Unmarshal([]byte(body), &m)
 				if err != nil {
 					cp.logger.Error("Error while unmarshalling manifest", zap.Error(err))
+					errCh <- err
 					return
 				} else {
-					c <- m
+					mCh <- m
 				}
 			}
 		}
