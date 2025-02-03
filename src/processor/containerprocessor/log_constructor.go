@@ -4,6 +4,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
+	"os"
 	"time"
 )
 
@@ -82,7 +83,7 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	tm.PutStr(conventions.AttributeK8SPodName, md.PodName)
 	tm.PutStr(conventions.AttributeK8SNamespaceName, md.Namespace)
 	tm.PutStr(conventions.AttributeK8SContainerName, c.Name)
-	tm.PutStr(swK8sClusterUid, md.Annotations.ClusterUid)
+	tm.PutStr(swK8sClusterUid, os.Getenv("CLUSTER_UID"))
 
 	// Entity attributes
 	ea := attrs.PutEmptyMap(otelEntityAttributes)
