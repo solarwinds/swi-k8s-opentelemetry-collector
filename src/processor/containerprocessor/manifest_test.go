@@ -7,7 +7,6 @@ import (
 
 var (
 	manifest = Manifest{
-		Kind: "Pod",
 		Metadata: Metadata{
 			PodName:   "test-pod",
 			Namespace: "test-namespace",

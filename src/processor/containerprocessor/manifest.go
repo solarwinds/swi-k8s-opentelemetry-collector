@@ -1,7 +1,6 @@
 package containerprocessor
 
 type Manifest struct {
-	Kind     string   `json:"kind"`
 	Metadata Metadata `json:"metadata"`
 	Status   Status   `json:"status"`
 	Spec     Spec     `json:"spec"`
