@@ -30,7 +30,7 @@ extensions:
     observe_pods: true    
 
 processors:
-  swk8sattributes:
+  k8sattributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
   memory_limiter:
@@ -247,7 +247,7 @@ service:
       processors:
         - memory_limiter
         - filter/histograms
-        - swk8sattributes
+        - k8sattributes
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}

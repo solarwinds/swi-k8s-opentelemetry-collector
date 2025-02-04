@@ -243,6 +243,25 @@ Custom logs filter with new syntax:
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -891,25 +910,6 @@ Custom logs filter with new syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -1117,7 +1117,7 @@ Custom logs filter with new syntax:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             - filter/logs
             receivers:
             - filelog
@@ -1136,7 +1136,7 @@ Custom logs filter with new syntax:
             processors:
             - memory_limiter
             - filter/histograms
-            - swk8sattributes
+            - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -1433,6 +1433,25 @@ Custom logs filter with old syntax:
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2081,25 +2100,6 @@ Custom logs filter with old syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -2389,7 +2389,7 @@ Custom logs filter with old syntax:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             receivers:
             - filelog
           logs/journal:
@@ -2407,7 +2407,7 @@ Custom logs filter with old syntax:
             processors:
             - memory_limiter
             - filter/histograms
-            - swk8sattributes
+            - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -2697,6 +2697,25 @@ Node collector config should match snapshot when autodiscovery is disabled:
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -3345,25 +3364,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -3529,7 +3529,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             receivers:
             - filelog
           logs/journal:
@@ -3547,7 +3547,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             processors:
             - memory_limiter
             - filter/histograms
-            - swk8sattributes
+            - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -3834,6 +3834,25 @@ Node collector config should match snapshot when fargate is enabled:
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -4482,25 +4501,6 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -4671,7 +4671,7 @@ Node collector config should match snapshot when fargate is enabled:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             receivers:
             - filelog
           logs/journal:
@@ -4689,7 +4689,7 @@ Node collector config should match snapshot when fargate is enabled:
             processors:
             - memory_limiter
             - filter/histograms
-            - swk8sattributes
+            - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -4947,6 +4947,25 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -5595,25 +5614,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -5741,7 +5741,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             receivers:
             - filelog
           logs/journal:
@@ -6014,6 +6014,25 @@ Node collector config should match snapshot when using default values:
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -6662,25 +6681,6 @@ Node collector config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -6888,7 +6888,7 @@ Node collector config should match snapshot when using default values:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             receivers:
             - filelog
           logs/journal:
@@ -6906,7 +6906,7 @@ Node collector config should match snapshot when using default values:
             processors:
             - memory_limiter
             - filter/histograms
-            - swk8sattributes
+            - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics

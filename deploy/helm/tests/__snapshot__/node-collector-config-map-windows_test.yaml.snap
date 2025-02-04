@@ -239,6 +239,25 @@ Node collector config for windows nodes should match snapshot when using default
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -867,25 +886,6 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -1086,7 +1086,7 @@ Node collector config for windows nodes should match snapshot when using default
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             receivers:
             - filelog
           metrics:
@@ -1095,7 +1095,7 @@ Node collector config for windows nodes should match snapshot when using default
             processors:
             - memory_limiter
             - filter/histograms
-            - swk8sattributes
+            - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -1392,6 +1392,25 @@ Node collector config for windows nodes should match snapshot when using legacy 
           keys:
           - namespace
           - pod
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+          filter:
+            node_from_env_var: NODE_NAME
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2020,25 +2039,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        swk8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-          filter:
-            node_from_env_var: NODE_NAME
-          passthrough: false
-          pod_association:
-          - sources:
-            - from: resource_attribute
-              name: k8s.pod.name
-            - from: resource_attribute
-              name: k8s.namespace.name
         transform/istio-metrics:
           metric_statements:
           - context: metric
@@ -2321,7 +2321,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - swk8sattributes
+            - k8sattributes
             receivers:
             - filelog
           metrics:
@@ -2330,7 +2330,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             processors:
             - memory_limiter
             - filter/histograms
-            - swk8sattributes
+            - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
