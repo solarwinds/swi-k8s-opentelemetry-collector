@@ -89,6 +89,6 @@ func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	ea := attrs.PutEmptyMap(otelEntityAttributes)
 	ea.PutStr(conventions.AttributeContainerID, c.ContainerId)
 	ea.PutStr(k8sContainerStatus, c.State)
-	ea.PutBool(k8sContainerInit, false)
+	ea.PutBool(k8sContainerInit, c.IsInitContainer)
 	ea.PutBool(k8sContainerSidecar, c.IsSidecarContainer)
 }

@@ -37,9 +37,11 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 	go cp.generateManifests(mCh, errCh, wg, resourceLogs)
 
 	select {
-	case err := <-errCh:
+	case err, ok := <-errCh:
+		if !ok {
+			break
+		}
 		return ld, err
-	default:
 	}
 
 	wg.Wait()
@@ -69,6 +71,7 @@ func (cp *containerprocessor) generateLogRecords(mCh <-chan Manifest, wg *sync.W
 func (cp *containerprocessor) generateManifests(mCh chan<- Manifest, errCh chan<- error, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
 	defer wg.Done()
 	defer close(mCh)
+	defer close(errCh)
 
 	for i := range resourceLogs.Len() {
 		rl := resourceLogs.At(i)
