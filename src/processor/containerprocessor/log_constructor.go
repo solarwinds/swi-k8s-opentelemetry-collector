@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	k8sLogType = "sw.k8s.log.type"
+	k8sLogType             = "sw.k8s.log.type"
+	clusterUidEnv          = "CLUSTER_UID"
+	k8sContainerEntityType = "KubernetesContainer"
+	entityState            = "entity_state"
 
 	// Attributes for OTel entity events identification
 	otelEntityEventAsLog = "otel.entity.event_as_log"
@@ -75,15 +78,15 @@ func getTimestampOfLatestChange(changes []Condition) time.Time {
 // addContainerAttributes sets attributes on the provided map for the given Metadata and Container.
 func addContainerAttributes(attrs pcommon.Map, md Metadata, c Container) {
 	// Ingestion attributes
-	attrs.PutStr(otelEntityEventType, "entity_state")
-	attrs.PutStr(swEntityType, "KubernetesContainer")
+	attrs.PutStr(otelEntityEventType, entityState)
+	attrs.PutStr(swEntityType, k8sContainerEntityType)
 
 	// Telemetry mappings
 	tm := attrs.PutEmptyMap(otelEntityId)
 	tm.PutStr(conventions.AttributeK8SPodName, md.PodName)
 	tm.PutStr(conventions.AttributeK8SNamespaceName, md.Namespace)
 	tm.PutStr(conventions.AttributeK8SContainerName, c.Name)
-	tm.PutStr(swK8sClusterUid, os.Getenv("CLUSTER_UID"))
+	tm.PutStr(swK8sClusterUid, os.Getenv(clusterUidEnv))
 
 	// Entity attributes
 	ea := attrs.PutEmptyMap(otelEntityAttributes)
