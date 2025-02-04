@@ -8,11 +8,8 @@ type Manifest struct {
 }
 
 type Metadata struct {
-	PodName     string `json:"name"`
-	Namespace   string `json:"namespace"`
-	Annotations struct {
-		ClusterUid string `json:"swo.cloud.solarwinds.com/cluster-uid"`
-	}
+	PodName   string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type Status struct {
