@@ -1,0 +1,26 @@
+{{- if .Values.operator.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wait-for-operator
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - name: wait-for-operator
+          image: bitnami/kubectl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while [[ $(kubectl get pods -l app=opentelemetry-operator -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+                echo "Waiting for opentelemetry-operator to be ready..."
+                sleep 5
+              done
+      restartPolicy: Never
+  backoffLimit: 4
+{{- end }}

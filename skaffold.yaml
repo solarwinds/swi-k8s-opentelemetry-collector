@@ -36,7 +36,7 @@ deploy:
         createNamespace: true
         setValues:
           kube-state-metrics:
-            enabled: true
+            enabled: false
           cluster:
             name: "cluster name"
             uid: "cluster-uid-123456789"
@@ -53,6 +53,7 @@ deploy:
                 persistent_storage:
                   enabled: true
             metrics:
+              enabled: false
               prometheus_check: false
               sending_queue:
                 offload_to_disk: true
@@ -93,7 +94,7 @@ deploy:
                         endpoint_port: 8081
                 prefix: ""
             events:
-              enabled: true
+              enabled: false
               sending_queue:
                 offload_to_disk: true
             manifests:
@@ -101,13 +102,16 @@ deploy:
               pull_every: 1m
             logs:
               # journal on Docker Desktop is not supported
+              enabled: false
               journal: false
               filter:
                 log_record:
                   - resource.attributes["k8s.namespace.name"] == "test-namespace"
           certmanager:
-            enabled: false
+            enabled: true
           operator:
+            enabled: true
+          ebpfNetworkMonitoring:
             enabled: false
         upgradeOnChange: true
       
