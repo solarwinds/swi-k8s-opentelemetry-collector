@@ -551,6 +551,15 @@ receivers:
 {{- end }}
 
 {{- if .Values.otel.metrics.enabled }}
+{{- if and .Values.operator.enabled .Values.otel.node_collector.managedByOperator }}
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+          static_configs:
+          - targets: [ '0.0.0.0:8888' ]
+{{- else }}
   receiver_creator/discovery:
     watch_observers:
       - k8s_observer
@@ -679,6 +688,7 @@ receivers:
                       - '`endpoint`:{{ .Values.otel.metrics.control_plane.etcd.port }}'
       {{- end }}
 {{- end }}
+{{- end }}
 
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
   receiver_creator/node:
@@ -803,6 +813,9 @@ service:
         - groupbyattrs/common-all
         - resource/all
       receivers:
+{{- if and .Values.operator.enabled .Values.otel.node_collector.managedByOperator }}
+        - prometheus
+{{- else }}
         - receiver_creator/discovery
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}

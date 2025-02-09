@@ -49,6 +49,16 @@ otel:
       pullPolicy: IfNotPresent
 
   node_collector:
+    managedByOperator: false
+    targetAllocator:
+      nodeSelector: {}
+
+      # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+      tolerations: []
+
+      # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+      affinity: {}
+
     terminationGracePeriodSeconds: 600
 
     sending_queue:
@@ -869,12 +879,18 @@ ebpfNetworkMonitoring:
 openshift:
   enabled: false
 
+prometheusCRDs:
+  install: false
+
 operator:
   enabled: false
   manager:
     image:
       repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
       tag: "0.107.0"
+    targetAllocatorImage:
+      repository: ""
+      tag: ""
     collectorImage:
       # it is not yet supported to run collector instrumented by operator
       # filling this to satisfy subchart requirement
@@ -896,7 +912,6 @@ operator:
       go:
         repository: ""
         tag: ""
-        
   admissionWebhooks:
     certManager:
       enabled: true

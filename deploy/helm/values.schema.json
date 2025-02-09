@@ -320,6 +320,22 @@
         "schedule": {
             "description": "Schedule in Cron format. More info: https://en.wikipedia.org/wiki/Cron.",
             "type": "string"
+        },
+        "targetAllocator": {
+            "description": "Configuration properties for targetAllocator settings of OpenTelemetryCollector custom resources",
+            "type": "object",
+            "properties": {
+                "affinity": {
+                    "$ref": "#/definitions/k8sAffinity"
+                },
+                "nodeSelector": {
+                    "$ref": "#/definitions/k8sNodeSelector"
+                },
+                "tolerations": {
+                    "$ref": "#/definitions/k8sTolerations"
+                }
+            },
+            "additionalProperties": false
         }
     },
     "properties": {
@@ -1156,6 +1172,12 @@
                 "node_collector": {
                     "type": "object",
                     "properties": {
+                        "managedByOperator": {
+                            "type": "boolean"
+                        },
+                        "targetAllocator": {
+                            "$ref": "#/definitions/targetAllocator"
+                        },
                         "retry_on_failure": {
                             "$ref": "#/definitions/collectorRetryOnFailure"
                         },
@@ -1361,6 +1383,16 @@
             "description": "This field is included to support backward compatibility with older Helm versions or custom distributions. Prefer using 'certmanager' field.",
             "type": "object",
             "additionalProperties": true
+        },
+        "prometheusCRDs": {
+            "description": "Allows installation of Promethues CRDs to the cluster.",
+            "type": "object",
+            "properties": {
+                "install": {
+                    "type": "boolean"
+                },
+                "additionalProperties": false
+            }
         }
     },
     "required": [

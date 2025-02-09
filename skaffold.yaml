@@ -20,6 +20,18 @@ manifests:
       - tests/deploy/tests
     buildArgs:
       - --load-restrictor LoadRestrictionsNone
+resourceSelector:
+  allow:
+    # let skaffold to manager CRDs in local k8s
+    - groupKind: "OpenTelemetryCollector.opentelemetry.io"
+      image: [".*"]
+      labels: [".*"]
+    - groupKind: "PodMonitor.monitoring.coreos.com"
+      image: [".*"]
+      labels: [".*"]
+    - groupKind: "ServiceMonitor.monitoring.coreos.com"
+      image: [".*"]
+      labels: [".*"]
 deploy:
   kubectl: 
     defaultNamespace: test-namespace
@@ -48,7 +60,9 @@ deploy:
             image:
               repository: "swi-k8s-opentelemetry-collector"
               tag: ""
+              pullPolicy: "Never"
             node_collector:
+              managedByOperator: true
               sending_queue:
                 persistent_storage:
                   enabled: true
@@ -113,6 +127,8 @@ deploy:
             enabled: true
           ebpfNetworkMonitoring:
             enabled: false
+          prometheusCRDs:
+            install: true
         upgradeOnChange: true
       
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent

@@ -1,8 +1,8 @@
-{{- if .Values.operator.enabled }}
-apiVersion: opentelemetry.io/v1alpha1
+{{- if and .Values.operator.enabled .Values.otel.node_collector.managedByOperator }}
+apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  name: daemonset
+  name: {{ include "common.fullname" (tuple . "-node") }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}
@@ -11,9 +11,59 @@ metadata:
     "helm.sh/hook-weight": "2"
 spec:
   mode: daemonset
+  targetAllocator:
+    enabled: true
+    allocationStrategy: per-node
+    serviceAccount: {{ include "common.fullname" . }}
+    prometheusCR:
+      enabled: true
+      scrapeInterval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+      serviceMonitorSelector: {}
+      podMonitorSelector: {}
+    securityContext: 
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+        - ALL
+    {{- if .Values.otel.node_collector.targetAllocator.nodeSelector }}
+    nodeSelector:
+    {{ toYaml .Values.otel.node_collector.targetAllocator.nodeSelector | nindent 8 }}
+    {{- end }}
+    {{- if .Values.otel.node_collector.targetAllocator.tolerations }}
+    tolerations:
+      {{ toYaml .Values.otel.node_collector.targetAllocator.tolerations | nindent 8 }}
+    {{- end }}
+    affinity:
+    {{- if .Values.otel.node_collector.targetAllocator.affinity }}
+      {{- toYaml .Values.otel.node_collector.targetAllocator.affinity | nindent 8 }}
+    {{- else }}
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+              - amd64
+              - arm64
+            - key: kubernetes.io/os
+              operator: In
+              values:
+              - linux
+    {{- end }}
+  {{- if .Values.openshift.enabled }}
   hostNetwork: true
+  {{- end }}
   image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
   imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+  serviceAccount: {{ include "common.fullname" . }}
+  podSecurityContext:
+    fsGroup: 0
+    runAsUser: 0
+    runAsGroup: 0
   securityContext: 
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
@@ -22,6 +72,176 @@ spec:
     capabilities:
       drop:
       - ALL
-  config: |
+  tolerations:
+  {{- if .Values.openshift.enabled }}
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/infra
+    operator: Exists
+    effect: NoSchedule
+  {{- end }}
+  {{- if .Values.otel.logs.tolerations }}
+  {{ toYaml .Values.otel.logs.tolerations | nindent 4 }}
+  {{- else }}
+  - operator: Exists
+    effect: NoSchedule
+  {{- end }}
+  affinity:
+  {{- if .Values.otel.logs.affinity }}
+  {{- toYaml .Values.otel.logs.affinity | nindent 4 }}
+  {{- else }}
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: eks.amazonaws.com/compute-type
+            operator: NotIn
+            values:
+            - fargate
+          - key: kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
+            - arm64
+          - key: kubernetes.io/os
+            operator: In
+            values:
+            - linux
+  {{- end }}
+  {{- if .Values.otel.logs.nodeSelector }}
+  nodeSelector:
+  {{ toYaml .Values.otel.logs.nodeSelector | nindent 4 }}
+  {{- end }}
+  {{- if include "isSwiEndpointCheckEnabled" . }}
+  args:
+    - /swi-otelcol
+    - --config=/conf/relay.yaml
+    - --feature-gates=filelog.container.removeOriginalTimeField
+  initContainers:
+    - name: otel-endpoint-check
+      image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+      imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+      command:
+        - /swi-otelcol
+        - test-connection
+        - --endpoint=$(OTEL_ENVOY_ADDRESS)
+        - --apitoken=$(SOLARWINDS_API_TOKEN)
+        - --clusteruid=$(CLUSTER_UID)
+        - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+      env:
+        - name: SOLARWINDS_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "common.secret" . }}
+              key: SOLARWINDS_API_TOKEN
+              optional: true
+      envFrom:
+        - configMapRef:
+            name: {{ include "common.fullname" (tuple . "-common-env") }}
+  {{- end }}
+  env:
+    - name: CHECKPOINT_DIR
+      value: {{ .Values.otel.logs.filestorage.directory }}
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: SOLARWINDS_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: {{ template "common.secret" . }}
+          key: SOLARWINDS_API_TOKEN
+          optional: true
+    - name: GOMEMLIMIT
+      valueFrom:
+        resourceFieldRef:
+          resource: limits.memory
+  envFrom:
+    - configMapRef:
+        name: {{ include "common.fullname" (tuple . "-common-env") }}
+{{- if .Values.otel.logs.telemetry.metrics.enabled }}
+  ports:
+    - name: http
+      containerPort: {{ (split ":" .Values.otel.logs.telemetry.metrics.address)._1 }}
+      protocol: TCP
+{{- end}}
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 13133
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 13133
+  resources:
+{{ toYaml .Values.otel.logs.resources | indent 4 }}
+  volumeMounts:
+    - mountPath: /var/log/pods
+      name: varlogpods
+      readOnly: true
+    - mountPath: /var/log/containers
+      name: varlogcontainers
+      readOnly: true
+    - mountPath: /var/lib/docker/containers
+      name: varlibdockercontainers
+      readOnly: true
+    - mountPath: /conf
+      name: opentelemetry-collector-configmap
+      readOnly: true
+    - mountPath: /run/log/journal
+      name: runlogjournal
+      readOnly: true
+    - mountPath: /var/log/journal
+      name: varlogjournal
+      readOnly: true
+    - name: logcheckpoints
+      mountPath: {{ .Values.otel.logs.filestorage.directory }}
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+    - name: sending-queue
+      mountPath: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
+{{- end }}
+  volumes:
+    - name: varlogpods
+      hostPath:
+        path: /var/log/pods
+    - name: varlogcontainers
+      hostPath:
+        path: /var/log/containers
+    - name: varlibdockercontainers
+      hostPath:
+        path: /var/lib/docker/containers
+    - name: runlogjournal
+      hostPath:
+        path: /run/log/journal
+    - name: varlogjournal
+      hostPath:
+        path: /var/log/journal
+    - name: logcheckpoints
+      hostPath:
+        path: {{ printf "%s/%s" .Values.otel.logs.filestorage.directory ((regexReplaceAll "[^a-zA-Z0-9_\\-]" (include "common.cluster-uid" .) "") | default (sha256sum (include "common.cluster-uid" .))) }}
+        type: DirectoryOrCreate
+    - name: opentelemetry-collector-configmap
+      configMap:
+        name: {{ include "common.fullname" (tuple . "-node-collector-config") }}
+        items:
+          - key: logs.config
+            path: relay.yaml
+{{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
+    - name: sending-queue
+      hostPath:
+        path: {{ printf "%s/%s" .Values.otel.node_collector.sending_queue.persistent_storage.directory ((regexReplaceAll "[^a-zA-Z0-9_\\-]" (include "common.cluster-uid" .) "") | default (sha256sum (include "common.cluster-uid" .))) }}
+        type: DirectoryOrCreate
+{{- end }}
+  config: 
 {{ tpl (.Files.Get "node-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
 {{- end }}
+  
