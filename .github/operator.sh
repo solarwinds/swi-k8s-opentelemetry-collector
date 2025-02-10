@@ -13,7 +13,7 @@ if [ -z "$DOCKERHUB_IMAGE" ]; then
   DOCKERHUB_IMAGE="solarwinds/solarwinds-otel-operator"
 fi
 if [ -z "$VERSION" ]; then
-  VERSION="0.0.0"
+  VERSION="1.2.3"
 fi
 
 IMG=$DOCKERHUB_IMAGE:$VERSION
@@ -38,13 +38,11 @@ make docker-build IMG=$IMG
 mkdir ./config/manifests/bases
 cp ../swo-otel-operator.clusterserviceversion.yaml ./config/manifests/bases/
 
-# update metadat image version
-make kustomize
-cd ./config/manifests && ../../bin/kustomize edit add annotation containerImage:"$BUNDLE_IMG"
-cd -
-
 # Generate the operator bundle
 make bundle VERSION=$VERSION IMG=$IMG
+
+### adjust the bundle metadata
+yq eval -i ".metadata.annotations.containerImage = \"$IMG\"" bundle/manifests/swo-otel-operator.clusterserviceversion.yaml
 
 # Build the bundle image
 make bundle-build BUNDLE_IMG=$BUNDLE_IMG IMG=$IMG
