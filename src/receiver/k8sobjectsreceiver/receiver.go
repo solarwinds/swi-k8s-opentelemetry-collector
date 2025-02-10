@@ -15,6 +15,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/extension/experimental/storage"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receiverhelper"
@@ -28,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/watch"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/adapter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver/internal/metadata"
 )
 
@@ -40,17 +42,18 @@ type k8sobjectsreceiver struct {
 	obsrecv         *receiverhelper.ObsReport
 	mu              sync.Mutex
 	cancel          context.CancelFunc
+	storageClient   storage.Client
 	storage         objectstorage
 }
 
 type objecthashes struct {
-	metadata string
-	spec     string
-	status   string
+	Metadata string `json:"metadata"`
+	Spec     string `json:"spec"`
+	Status   string `json:"status"`
 }
 
 type objectstorage struct {
-	objects map[string]objecthashes
+	Objects map[string]objecthashes `json:"objects"`
 }
 
 func newReceiver(params receiver.Settings, config *Config, consumer consumer.Logs) (receiver.Logs, error) {
@@ -78,11 +81,11 @@ func newReceiver(params receiver.Settings, config *Config, consumer consumer.Log
 		config:   config,
 		obsrecv:  obsrecv,
 		mu:       sync.Mutex{},
-		storage:  storage{objects: map[string]objecthashes{}},
+		storage:  objectstorage{Objects: map[string]objecthashes{}},
 	}, nil
 }
 
-func (kr *k8sobjectsreceiver) Start(ctx context.Context, _ component.Host) error {
+func (kr *k8sobjectsreceiver) Start(ctx context.Context, host component.Host) error {
 	client, err := kr.config.getDynamicClient()
 	if err != nil {
 		return err
@@ -93,13 +96,35 @@ func (kr *k8sobjectsreceiver) Start(ctx context.Context, _ component.Host) error
 	cctx, cancel := context.WithCancel(ctx)
 	kr.cancel = cancel
 
+	if kr.config.StorageID != nil {
+		kr.storageClient, err = adapter.GetStorageClient(ctx, host, kr.config.StorageID, kr.setting.ID)
+		if err != nil {
+			return fmt.Errorf("error connecting to storage: %w", err)
+		}
+
+		// load existing data from storage
+		kr.mu.Lock()
+		dataBytes, err := kr.storageClient.Get(cctx, "k8sobjects")
+		if err != nil {
+			return err
+		}
+
+		if len(dataBytes) > 0 {
+			err = json.Unmarshal(dataBytes, &kr.storage)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal stored data: %w", err)
+			}
+		}
+		kr.mu.Unlock()
+	}
+
 	for _, object := range kr.config.Objects {
 		kr.start(cctx, object)
 	}
 	return nil
 }
 
-func (kr *k8sobjectsreceiver) Shutdown(context.Context) error {
+func (kr *k8sobjectsreceiver) Shutdown(ctx context.Context) error {
 	kr.setting.Logger.Info("Object Receiver stopped")
 	if kr.cancel != nil {
 		kr.cancel()
@@ -108,6 +133,9 @@ func (kr *k8sobjectsreceiver) Shutdown(context.Context) error {
 	kr.mu.Lock()
 	for _, stopperChan := range kr.stopperChanList {
 		close(stopperChan)
+	}
+	if kr.storageClient != nil {
+		kr.storageClient.Close(ctx)
 	}
 	kr.mu.Unlock()
 	return nil
@@ -245,20 +273,12 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 			specChanged := true
 
 			if data.Type == apiWatch.Modified || data.Type == apiWatch.Deleted {
-				err = kr.calculateChanges(&data, &metadataChanged, &statusChanged, &specChanged)
+				err = kr.calculateChanges(ctx, &data, &metadataChanged, &statusChanged, &specChanged)
 				if err != nil {
 					kr.setting.Logger.Error("error calculating changes", zap.Error(err))
 				}
 			}
-			/*
-				udata, ok := data.Object.(*unstructured.Unstructured)
-				key := ""
-				if ok {
-					key = getKey(udata)
-				}
 
-				kr.setting.Logger.Warn("doWatch", zap.Any("type", data.Type), zap.Any("key", key), zap.Any("metadataChanged", metadataChanged), zap.Any("statusChanged", statusChanged), zap.Any("specChanged", specChanged))
-			*/
 			logs, err := watchObjectsToLogData(&data, time.Now(), config, func(attrs pcommon.Map) {
 				attrs.PutBool("sw.metadata.changed", metadataChanged)
 				attrs.PutBool("sw.status.changed", statusChanged)
@@ -278,7 +298,7 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 	}
 }
 
-func (kr *k8sobjectsreceiver) calculateChanges(event *apiWatch.Event, metadataChanged *bool, statusChanged *bool, specChanged *bool) error {
+func (kr *k8sobjectsreceiver) calculateChanges(ctx context.Context, event *apiWatch.Event, metadataChanged *bool, statusChanged *bool, specChanged *bool) error {
 	udata, ok := event.Object.(*unstructured.Unstructured)
 	if !ok {
 		return fmt.Errorf("received data that was not unstructure")
@@ -294,15 +314,37 @@ func (kr *k8sobjectsreceiver) calculateChanges(event *apiWatch.Event, metadataCh
 	kr.mu.Lock()
 	defer kr.mu.Unlock()
 
-	oldHashes, exists := kr.storage.objects[key]
+	oldHashes, exists := kr.storage.Objects[key]
 	if exists {
-		*metadataChanged = oldHashes.metadata != hashes.metadata
-		*specChanged = oldHashes.spec != hashes.spec
-		*statusChanged = oldHashes.status != hashes.status
+		*metadataChanged = oldHashes.Metadata != hashes.Metadata
+		*specChanged = oldHashes.Spec != hashes.Spec
+		*statusChanged = oldHashes.Status != hashes.Status
 	}
 
-	kr.storage.objects[key] = *hashes
+	kr.storage.Objects[key] = *hashes
+
+	err = kr.updateStorage(ctx)
+	if err != nil {
+		kr.setting.Logger.Error("error updating storage", zap.Error(err))
+	}
+
 	return nil
+}
+
+func (kr *k8sobjectsreceiver) updateStorage(ctx context.Context) error {
+	if kr.storageClient == nil {
+		return nil
+	}
+
+	kr.mu.Lock()
+	defer kr.mu.Unlock()
+
+	dataBytes, err := json.Marshal(kr.storage)
+	if err != nil {
+		kr.setting.Logger.Error("error marshaling objects for storage", zap.Error(err))
+	}
+
+	return kr.storageClient.Set(ctx, "k8sobjects", dataBytes)
 }
 
 func getObjectHashes(udata *unstructured.Unstructured) (*objecthashes, error) {
@@ -320,9 +362,9 @@ func getObjectHashes(udata *unstructured.Unstructured) (*objecthashes, error) {
 	}
 
 	return &objecthashes{
-		metadata: metadataHash,
-		spec:     specHash,
-		status:   statusHash,
+		Metadata: metadataHash,
+		Spec:     specHash,
+		Status:   statusHash,
 	}, nil
 }
 
@@ -409,18 +451,23 @@ func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Conte
 			}
 
 			kr.mu.Lock()
-			if _, exists := kr.storage.objects[key]; !exists {
-				kr.storage.objects[key] = *hashes
+			if _, exists := kr.storage.Objects[key]; !exists {
+				kr.storage.Objects[key] = *hashes
 			}
 			kr.mu.Unlock()
 		}
 
 		//remove objects from storage that do no longer exist
 		kr.mu.Lock()
-		for key := range kr.storage.objects {
+		for key := range kr.storage.Objects {
 			if _, exists := existingObjects[key]; !exists {
-				delete(kr.storage.objects, key)
+				delete(kr.storage.Objects, key)
 			}
+		}
+
+		err = kr.updateStorage(ctx)
+		if err != nil {
+			kr.setting.Logger.Error("error updating storage", zap.Error(err))
 		}
 		kr.mu.Unlock()
 
