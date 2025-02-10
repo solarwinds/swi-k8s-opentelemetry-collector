@@ -250,9 +250,12 @@ processors:
         action: insert
 
   resourcedetection/providers:
-    detectors: ["ec2","azure","openshift"]
     timeout: 2s
     override: false
+{{- if not .Values.openshift.enabled }}
+    detectors: 
+      - ec2
+      - azure
     azure:
       # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region, azure.resourcegroup.name
       resource_attributes:
@@ -265,12 +268,7 @@ processors:
         host.id:
           enabled: false
         host.name:
-          enabled: false
-    openshift:
-      # keep: cloud.platform, cloud.provider, cloud.region
-      resource_attributes:
-        k8s.cluster.name:
-          enabled: false
+          enabled: false  
     ec2:
       # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region
       resource_attributes:
@@ -284,6 +282,15 @@ processors:
           enabled: false
         host.type:
           enabled: false
+{{- else }}
+    detectors:     
+      - openshift      
+    openshift:
+      # keep: cloud.platform, cloud.provider, cloud.region
+      resource_attributes:
+        k8s.cluster.name:
+          enabled: false    
+{{- end }}
 
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}

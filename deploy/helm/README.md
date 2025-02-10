@@ -123,6 +123,59 @@ otel:
         - attributes["k8s.object.kind"] == "ConfigMap" and resource.attributes["k8s.namespace.name"] != "kube-system"
 ```
 
+### How to limit instrumentation of collector
+
+There are 5 filters that can to be set to limit the instrumentation of the collector in `values.yaml`. To fully limit the collector to not create entities, you need to set all filters.
+
+- `otel.metrics.filter`
+- `otel.metrics.autodiscovery.prometheusEndpoints.filter`
+- `otel.events.filter`
+- `otel.logs.filter`
+- `otel.manifests.filter`
+
+The filter is applied after metric processing, it is the place where metrics could be filtered out. For configuration reference see [Filter Processor documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor).
+
+**Note:** Filtering by labels and annotations is not possible.
+
+Here is example of configuration with all filters. The following example excludes all data from namespaces other than 'foo' and 'bar', but we need to add a condition that allows data without namespace attribute to be collected. 
+
+```yaml
+otel:
+    metrics:
+        autodiscovery:  
+            prometheusEndpoints:
+                filter:
+                    metric:
+                        - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo|bar") or resource.attributes["k8s.namespace.name"] == nil)
+        filter:
+            metric:
+                - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo|bar") or resource.attributes["k8s.namespace.name"] == nil)
+    events:
+        filter:
+            log_record:
+                - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo|bar") or resource.attributes["k8s.namespace.name"] == nil)
+    logs:
+        filter:
+            log_record:
+                - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo|bar") or resource.attributes["k8s.namespace.name"] == nil)
+    manifests:
+        filter:
+            log_record:
+                - not(IsMatch(resource.attributes["k8s.namespace.name"], "foo|bar") or resource.attributes["k8s.namespace.name"] == nil)
+```
+
+Here is an example of a filter that allows all data except data from the namespaces 'foo' and 'bar' to be collected:
+
+```yaml
+- IsMatch(resource.attributes["k8s.namespace.name"], "foo|bar")
+```
+
+Another example of filter that allows all data except data related to deployment 'foo' and its related entities (pods, containers)
+
+```yaml
+- resource.attributes["k8s.deployment.name"] == "foo"
+```
+
 ## Receive 3rd party metrics
 
 SWO K8s Collector has an OTEL service endpoint which is able to forward metrics and logs into SolarWinds Observability. All incoming data is properly associated with current cluster. Additionally, metrics are decorated with prefix `k8s.`.
