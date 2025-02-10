@@ -48,7 +48,7 @@ const (
 // and sets required attributes on "resource" and "scopeLogs"
 func addContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
 	rl := ld.ResourceLogs().AppendEmpty()
-	rl.Resource().Attributes().PutStr(k8sLogType, "manifest")
+	rl.Resource().Attributes().PutStr(k8sLogType, "entitystateevent")
 	sl := rl.ScopeLogs().AppendEmpty()
 	sl.Scope().Attributes().PutBool(otelEntityEventAsLog, true)
 	return rl
