@@ -43,17 +43,18 @@ type k8sobjectsreceiver struct {
 	mu              sync.Mutex
 	cancel          context.CancelFunc
 	storageClient   storage.Client
-	storage         objectstorage
+}
+
+type objectstorage struct {
+	key     string
+	Objects map[string]objecthashes `json:"objects"`
+	mu      sync.Mutex
 }
 
 type objecthashes struct {
 	Metadata string `json:"metadata"`
 	Spec     string `json:"spec"`
 	Status   string `json:"status"`
-}
-
-type objectstorage struct {
-	Objects map[string]objecthashes `json:"objects"`
 }
 
 func newReceiver(params receiver.Settings, config *Config, consumer consumer.Logs) (receiver.Logs, error) {
@@ -81,7 +82,6 @@ func newReceiver(params receiver.Settings, config *Config, consumer consumer.Log
 		config:   config,
 		obsrecv:  obsrecv,
 		mu:       sync.Mutex{},
-		storage:  objectstorage{Objects: map[string]objecthashes{}},
 	}, nil
 }
 
@@ -101,23 +101,6 @@ func (kr *k8sobjectsreceiver) Start(ctx context.Context, host component.Host) er
 		if err != nil {
 			return fmt.Errorf("error connecting to storage: %w", err)
 		}
-
-		// load existing data from storage
-		kr.mu.Lock()
-		dataBytes, err := kr.storageClient.Get(cctx, "k8sobjects")
-		if err != nil {
-			return err
-		}
-
-		if len(dataBytes) > 0 {
-			err = json.Unmarshal(dataBytes, &kr.storage)
-			if err != nil {
-				return fmt.Errorf("failed to unmarshal stored data: %w", err)
-			}
-
-			kr.setting.Logger.Info("Data loaded from storage")
-		}
-		kr.mu.Unlock()
 	}
 
 	for _, object := range kr.config.Objects {
@@ -219,15 +202,17 @@ func (kr *k8sobjectsreceiver) startWatch(ctx context.Context, config *K8sObjects
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 	cfgCopy := *config
+	storage := &objectstorage{key: config.Name, Objects: map[string]objecthashes{}}
+
 	wait.UntilWithContext(cancelCtx, func(newCtx context.Context) {
-		resourceVersion, err := kr.getResourceVersionAndUpdateCache(newCtx, &cfgCopy, resource)
+		resourceVersion, err := kr.getResourceVersionAndUpdateCache(newCtx, &cfgCopy, resource, storage)
 		if err != nil {
 			kr.setting.Logger.Error("could not retrieve a resourceVersion", zap.String("resource", cfgCopy.gvr.String()), zap.Error(err))
 			cancel()
 			return
 		}
 
-		done := kr.doWatch(newCtx, &cfgCopy, resourceVersion, watchFunc, stopperChan)
+		done := kr.doWatch(newCtx, &cfgCopy, resourceVersion, watchFunc, stopperChan, storage)
 		if done {
 			cancel()
 			return
@@ -239,7 +224,7 @@ func (kr *k8sobjectsreceiver) startWatch(ctx context.Context, config *K8sObjects
 }
 
 // doWatch returns true when watching is done, false when watching should be restarted.
-func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsConfig, resourceVersion string, watchFunc func(options metav1.ListOptions) (apiWatch.Interface, error), stopperChan chan struct{}) bool {
+func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsConfig, resourceVersion string, watchFunc func(options metav1.ListOptions) (apiWatch.Interface, error), stopperChan chan struct{}, storage *objectstorage) bool {
 	watcher, err := watch.NewRetryWatcher(resourceVersion, &cache.ListWatch{WatchFunc: watchFunc})
 	if err != nil {
 		kr.setting.Logger.Error("error in watching object", zap.String("resource", config.gvr.String()), zap.Error(err))
@@ -271,17 +256,15 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 				continue
 			}
 
-			err = kr.watchEventToLogData(ctx, &data, time.Now(), config)
+			err = kr.watchEventToLogData(ctx, &data, time.Now(), config, storage)
 			if err != nil {
 				kr.setting.Logger.Error("error converting objects to log data", zap.Error(err))
 			}
 
-			kr.mu.Lock()
-			err = kr.updateStorage(ctx)
+			err = kr.updateStorage(ctx, storage)
 			if err != nil {
 				kr.setting.Logger.Error("error updating storage", zap.Error(err))
 			}
-			kr.mu.Unlock()
 
 		case <-stopperChan:
 			watcher.Stop()
@@ -290,7 +273,7 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 	}
 }
 
-func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *apiWatch.Event, observedAt time.Time, config *K8sObjectsConfig) error {
+func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *apiWatch.Event, observedAt time.Time, config *K8sObjectsConfig, storage *objectstorage) error {
 	udata, ok := event.Object.(*unstructured.Unstructured)
 	if !ok {
 		return fmt.Errorf("received data that wasnt unstructure, %v", event)
@@ -306,15 +289,15 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 	metadataChanged := true
 	specChanged := true
 
-	kr.mu.Lock()
-	oldHashes, exists := kr.storage.Objects[key]
+	storage.mu.Lock()
+	oldHashes, exists := storage.Objects[key]
 	if exists {
 		metadataChanged = oldHashes.Metadata != hashes.Metadata
 		specChanged = oldHashes.Spec != hashes.Spec
 		statusChanged = oldHashes.Status != hashes.Status
 	}
-	kr.storage.Objects[key] = *hashes
-	kr.mu.Unlock()
+	storage.Objects[key] = *hashes
+	storage.mu.Unlock()
 
 	if !metadataChanged && !statusChanged && !specChanged {
 		return nil
@@ -336,17 +319,42 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 	return nil
 }
 
-func (kr *k8sobjectsreceiver) updateStorage(ctx context.Context) error {
-	if kr.storageClient == nil {
+func (kr *k8sobjectsreceiver) updateStorage(ctx context.Context, storage *objectstorage) error {
+	if kr.storageClient == nil || storage == nil {
 		return nil
 	}
 
-	dataBytes, err := json.Marshal(kr.storage)
+	dataBytes, err := json.Marshal(storage.Objects)
 	if err != nil {
 		return err
 	}
 
-	return kr.storageClient.Set(ctx, "k8sobjects", dataBytes)
+	return kr.storageClient.Set(ctx, storage.key, dataBytes)
+}
+
+func (kr *k8sobjectsreceiver) loadStorage(ctx context.Context, storage *objectstorage) error {
+	if kr.storageClient == nil || storage == nil {
+		return nil
+	}
+	// load existing data from storage
+	dataBytes, err := kr.storageClient.Get(ctx, storage.key)
+	if err != nil {
+		return err
+	}
+
+	if len(dataBytes) > 0 {
+		storage.mu.Lock()
+		err = json.Unmarshal(dataBytes, storage.Objects)
+		storage.mu.Unlock()
+
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal stored data: %w", err)
+		}
+
+		kr.setting.Logger.Info("Data loaded from storage", zap.Any("key", storage.key))
+	}
+
+	return nil
 }
 
 func getObjectHashes(udata *unstructured.Unstructured) (*objecthashes, error) {
@@ -393,7 +401,7 @@ func getKey(udata *unstructured.Unstructured) string {
 	return fmt.Sprintf("%s:%s#%s", udata.GetKind(), udata.GetNamespace(), udata.GetName())
 }
 
-func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Context, config *K8sObjectsConfig, resource dynamic.ResourceInterface) (string, error) {
+func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Context, config *K8sObjectsConfig, resource dynamic.ResourceInterface, storage *objectstorage) (string, error) {
 	resourceVersion := config.ResourceVersion
 	if resourceVersion == "" || resourceVersion == "0" {
 		// Proper use of the Kubernetes API Watch capability when no resourceVersion is supplied is to do a list first
@@ -410,6 +418,11 @@ func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Conte
 			return "", errors.New("nil objects returned, this is an error in the k8sobjectsreceiver")
 		}
 
+		err = kr.loadStorage(ctx, storage)
+		if err != nil {
+			return "", fmt.Errorf("could not load data from storage, %w", err)
+		}
+
 		resourceVersion = objects.GetResourceVersion()
 		existingObjects := map[string]struct{}{}
 
@@ -419,34 +432,31 @@ func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Conte
 
 			event := &apiWatch.Event{Type: apiWatch.Added, Object: &item}
 
-			kr.mu.Lock()
-			if _, exists := kr.storage.Objects[key]; exists {
+			storage.mu.Lock()
+			if _, exists := storage.Objects[key]; exists {
 				event.Type = apiWatch.Modified
 			}
-			kr.mu.Unlock()
+			storage.mu.Unlock()
 
-			err = kr.watchEventToLogData(ctx, event, time.Now(), config)
+			err = kr.watchEventToLogData(ctx, event, time.Now(), config, storage)
 			if err != nil {
 				kr.setting.Logger.Error("error converting objects to log data", zap.Error(err))
 			}
 		}
 
-		//remove objects from storage that do no longer exist
-		//todo: fix to remove only objects of this type
-		/*
-			for key := range kr.storage.Objects {
-				if _, exists := existingObjects[key]; !exists {
-					delete(kr.storage.Objects, key)
-				}
+		//remove objects from storage that no longer exist
+		storage.mu.Lock()
+		for key := range storage.Objects {
+			if _, exists := existingObjects[key]; !exists {
+				delete(storage.Objects, key)
 			}
-		*/
+		}
+		storage.mu.Unlock()
 
-		kr.mu.Lock()
-		err = kr.updateStorage(ctx)
+		err = kr.updateStorage(ctx, storage)
 		if err != nil {
 			kr.setting.Logger.Error("error updating storage", zap.Error(err))
 		}
-		kr.mu.Unlock()
 
 		// If we still don't have a resourceVersion we can try 1 as a last ditch effort.
 		// This also helps our unit tests since the fake client can't handle returning resource versions
