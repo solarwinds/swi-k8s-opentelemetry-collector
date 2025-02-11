@@ -271,29 +271,18 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 				continue
 			}
 
-			statusChanged := true
-			metadataChanged := true
-			specChanged := true
-
-			if data.Type == apiWatch.Modified || data.Type == apiWatch.Deleted {
-				err = kr.calculateChanges(ctx, &data, &metadataChanged, &statusChanged, &specChanged)
-				if err != nil {
-					kr.setting.Logger.Error("error calculating changes", zap.Error(err))
-				}
-			}
-
-			logs, err := watchObjectsToLogData(&data, time.Now(), config, func(attrs pcommon.Map) {
-				attrs.PutBool("sw.metadata.changed", metadataChanged)
-				attrs.PutBool("sw.status.changed", statusChanged)
-				attrs.PutBool("sw.spec.changed", specChanged)
-			})
+			err = kr.watchEventToLogData(ctx, &data, time.Now(), config)
 			if err != nil {
 				kr.setting.Logger.Error("error converting objects to log data", zap.Error(err))
-			} else {
-				obsCtx := kr.obsrecv.StartLogsOp(ctx)
-				err := kr.consumer.ConsumeLogs(obsCtx, logs)
-				kr.obsrecv.EndLogsOp(obsCtx, metadata.Type.String(), 1, err)
 			}
+
+			kr.mu.Lock()
+			err = kr.updateStorage(ctx)
+			if err != nil {
+				kr.setting.Logger.Error("error updating storage", zap.Error(err))
+			}
+			kr.mu.Unlock()
+
 		case <-stopperChan:
 			watcher.Stop()
 			return true
@@ -301,34 +290,47 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 	}
 }
 
-func (kr *k8sobjectsreceiver) calculateChanges(ctx context.Context, event *apiWatch.Event, metadataChanged *bool, statusChanged *bool, specChanged *bool) error {
+func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *apiWatch.Event, observedAt time.Time, config *K8sObjectsConfig) error {
 	udata, ok := event.Object.(*unstructured.Unstructured)
 	if !ok {
-		return fmt.Errorf("received data that was not unstructure")
+		return fmt.Errorf("received data that wasnt unstructure, %v", event)
 	}
 
 	key := getKey(udata)
 	hashes, err := getObjectHashes(udata)
 	if err != nil {
-		kr.setting.Logger.Warn("error getting object hashes", zap.Any("key", key))
+		return fmt.Errorf("not able to get hashes from object %s error: %w", key, err)
+	}
+
+	statusChanged := true
+	metadataChanged := true
+	specChanged := true
+
+	kr.mu.Lock()
+	oldHashes, exists := kr.storage.Objects[key]
+	if exists {
+		metadataChanged = oldHashes.Metadata != hashes.Metadata
+		specChanged = oldHashes.Spec != hashes.Spec
+		statusChanged = oldHashes.Status != hashes.Status
+	}
+	kr.storage.Objects[key] = *hashes
+	kr.mu.Unlock()
+
+	if !metadataChanged && !statusChanged && !specChanged {
 		return nil
 	}
 
-	kr.mu.Lock()
-	defer kr.mu.Unlock()
-
-	oldHashes, exists := kr.storage.Objects[key]
-	if exists {
-		*metadataChanged = oldHashes.Metadata != hashes.Metadata
-		*specChanged = oldHashes.Spec != hashes.Spec
-		*statusChanged = oldHashes.Status != hashes.Status
-	}
-
-	kr.storage.Objects[key] = *hashes
-
-	err = kr.updateStorage(ctx)
+	logs, err := watchObjectsToLogData(event, observedAt, config, func(attrs pcommon.Map) {
+		attrs.PutBool("sw.metadata.changed", metadataChanged)
+		attrs.PutBool("sw.status.changed", statusChanged)
+		attrs.PutBool("sw.spec.changed", specChanged)
+	})
 	if err != nil {
-		kr.setting.Logger.Error("error updating storage", zap.Error(err))
+		return fmt.Errorf("error converting watch objects to log data %w", err)
+	} else {
+		obsCtx := kr.obsrecv.StartLogsOp(ctx)
+		err := kr.consumer.ConsumeLogs(obsCtx, logs)
+		kr.obsrecv.EndLogsOp(obsCtx, metadata.Type.String(), 1, err)
 	}
 
 	return nil
@@ -391,35 +393,6 @@ func getKey(udata *unstructured.Unstructured) string {
 	return fmt.Sprintf("%s:%s#%s", udata.GetKind(), udata.GetNamespace(), udata.GetName())
 }
 
-func getResourceVersion(ctx context.Context, config *K8sObjectsConfig, resource dynamic.ResourceInterface) (string, error) {
-	resourceVersion := config.ResourceVersion
-	if resourceVersion == "" || resourceVersion == "0" {
-		// Proper use of the Kubernetes API Watch capability when no resourceVersion is supplied is to do a list first
-		// to get the initial state and a useable resourceVersion.
-		// See https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes for details.
-		objects, err := resource.List(ctx, metav1.ListOptions{
-			FieldSelector: config.FieldSelector,
-			LabelSelector: config.LabelSelector,
-		})
-		if err != nil {
-			return "", fmt.Errorf("could not perform initial list for watch on %v, %w", config.gvr.String(), err)
-		}
-		if objects == nil {
-			return "", errors.New("nil objects returned, this is an error in the k8sobjectsreceiver")
-		}
-
-		resourceVersion = objects.GetResourceVersion()
-
-		// If we still don't have a resourceVersion we can try 1 as a last ditch effort.
-		// This also helps our unit tests since the fake client can't handle returning resource versions
-		// as part of a list of objects.
-		if resourceVersion == "" || resourceVersion == "0" {
-			resourceVersion = defaultResourceVersion
-		}
-	}
-	return resourceVersion, nil
-}
-
 func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Context, config *K8sObjectsConfig, resource dynamic.ResourceInterface) (string, error) {
 	resourceVersion := config.ResourceVersion
 	if resourceVersion == "" || resourceVersion == "0" {
@@ -444,27 +417,31 @@ func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Conte
 			key := getKey(&item)
 			existingObjects[key] = struct{}{}
 
-			hashes, err := getObjectHashes(&item)
-			if err != nil {
-				kr.setting.Logger.Warn("error getting object hashes", zap.Any("key", key))
-				continue
-			}
+			event := &apiWatch.Event{Type: apiWatch.Added, Object: &item}
 
 			kr.mu.Lock()
-			if _, exists := kr.storage.Objects[key]; !exists {
-				kr.storage.Objects[key] = *hashes
+			if _, exists := kr.storage.Objects[key]; exists {
+				event.Type = apiWatch.Modified
 			}
 			kr.mu.Unlock()
+
+			err = kr.watchEventToLogData(ctx, event, time.Now(), config)
+			if err != nil {
+				kr.setting.Logger.Error("error converting objects to log data", zap.Error(err))
+			}
 		}
 
 		//remove objects from storage that do no longer exist
-		kr.mu.Lock()
-		for key := range kr.storage.Objects {
-			if _, exists := existingObjects[key]; !exists {
-				delete(kr.storage.Objects, key)
+		//todo: fix to remove only objects of this type
+		/*
+			for key := range kr.storage.Objects {
+				if _, exists := existingObjects[key]; !exists {
+					delete(kr.storage.Objects, key)
+				}
 			}
-		}
+		*/
 
+		kr.mu.Lock()
 		err = kr.updateStorage(ctx)
 		if err != nil {
 			kr.setting.Logger.Error("error updating storage", zap.Error(err))
