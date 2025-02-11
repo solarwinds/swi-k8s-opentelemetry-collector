@@ -40,6 +40,10 @@ extensions:
   file_storage/sending_queue:
     directory: /var/lib/swo/sending_queue
 {{- end }}
+{{- if .Values.otel.events.persistent_storage.enabled }}
+  file_storage/manifests:
+    directory: /var/lib/swo/manifests
+{{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
 
@@ -302,6 +306,9 @@ receivers:
   k8s_events:
   k8sobjects:
     auth_type: serviceAccount
+{{- if .Values.otel.events.persistent_storage.enabled }}
+    storage: file_storage/manifests
+{{- end}}
     objects:
 {{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
@@ -327,6 +334,9 @@ service:
   extensions:
 {{- if .Values.otel.events.sending_queue.offload_to_disk }}
     - file_storage/sending_queue
+{{- end}}
+{{- if .Values.otel.events.persistent_storage.enabled }}
+    - file_storage/manifests
 {{- end}}
     - health_check
   pipelines:
