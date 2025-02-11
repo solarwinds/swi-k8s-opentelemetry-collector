@@ -114,6 +114,8 @@ func (kr *k8sobjectsreceiver) Start(ctx context.Context, host component.Host) er
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal stored data: %w", err)
 			}
+
+			kr.setting.Logger.Info("Data loaded from storage")
 		}
 		kr.mu.Unlock()
 	}
@@ -136,6 +138,7 @@ func (kr *k8sobjectsreceiver) Shutdown(ctx context.Context) error {
 	}
 	if kr.storageClient != nil {
 		kr.storageClient.Close(ctx)
+		kr.storageClient = nil
 	}
 	kr.mu.Unlock()
 	return nil
@@ -336,12 +339,9 @@ func (kr *k8sobjectsreceiver) updateStorage(ctx context.Context) error {
 		return nil
 	}
 
-	kr.mu.Lock()
-	defer kr.mu.Unlock()
-
 	dataBytes, err := json.Marshal(kr.storage)
 	if err != nil {
-		kr.setting.Logger.Error("error marshaling objects for storage", zap.Error(err))
+		return err
 	}
 
 	return kr.storageClient.Set(ctx, "k8sobjects", dataBytes)
