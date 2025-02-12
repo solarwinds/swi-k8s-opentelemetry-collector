@@ -4,23 +4,24 @@ metadata:
   annotations:
     alm-examples: "[]"
     capabilities: Seamless Upgrades
-    categories: Monitoring,Logging & Tracing,OpenShift Optional
+    categories: Monitoring,Logging & Tracing
     repository: https://github.com/solarwinds/swi-k8s-opentelemetry-collector/
-    support: SolarWinds
-    description: An operator to run solarwinds otel collector
+    support: https://customerportal.solarwinds.com/support/submit-a-ticket
+    description: SolarWinds Observability operator.
   name: swo-otel-operator.v0.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-      - name: swok8scollector.solarwinds.com
-        displayName: Swo Collector
-        description: Swo Collector is the schema for the otel collector instance
+      - name: swok8scollectors.solarwinds.com
+        displayName: SwoK8sCollector
+        description: Deployment of Swo k8s Collector
         kind: SwoK8SCollector
         version: v1alpha1
-  description: SolarWinds Observability provides cababilities to monitor, log and trace your kubernetes cluster and applications 
-  displayName: SolarWinds Observability Operator
+  displayName: SolarWinds Observability
+  description: >+
+    With SolarWinds Observability, you can monitor the resource usage, responsiveness, and error rate of your cluster and its nodes. After you add the SWO K8s Collector to your cluster, the collector gathers Prometheus-compatible metrics, events, and logs and sends them to SolarWinds Observability Saas. 
   icon:
     - base64data: "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MDAgNjAwIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiAjZmY2MjAwOwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zOTYuNzgsNTE5LjA5aC00LjA0djYuOTVoLTIuMjh2LTE3LjE5aDUuNjljMS45NCwwLDMuNDMuNDQsNC40NywxLjMyLDEuMDQuODgsMS41NywyLjE2LDEuNTcsMy44NSwwLDEuMDctLjI5LDItLjg3LDIuOC0uNTguOC0xLjM4LDEuMzktMi40MSwxLjc4bDQuMDQsNy4zdi4xNGgtMi40M2wtMy43My02Ljk1Wk0zOTIuNzUsNTE3LjIzaDMuNDhjMS4xMiwwLDIuMDItLjI5LDIuNjktLjg4LjY2LS41OCwxLTEuMzYsMS0yLjM0LDAtMS4wNy0uMzItMS44OC0uOTUtMi40NS0uNjMtLjU3LTEuNTUtLjg2LTIuNzUtLjg2aC0zLjQ3djYuNTNaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzk1LjcsNTMyLjZjLTguMTUsMC0xNC43OC02LjYzLTE0Ljc4LTE0Ljc5czYuNjMtMTQuNzgsMTQuNzgtMTQuNzgsMTQuNzgsNi42MywxNC43OCwxNC43OC02LjYzLDE0Ljc5LTE0Ljc4LDE0Ljc5Wk0zOTUuNyw1MDUuMTNjLTYuOTksMC0xMi42OCw1LjY5LTEyLjY4LDEyLjY4czUuNjksMTIuNjgsMTIuNjgsMTIuNjgsMTIuNjgtNS42OSwxMi42OC0xMi42OC01LjY5LTEyLjY4LTEyLjY4LTEyLjY4WiIvPgogIDxnPgogICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjg2LjExLDI4NS41M2MxLjctLjQ1LDMuMzQtLjkxLDUuMDQtMS40LDM3LjE5LTEwLjQ4LDczLjM2LTI1LjAxLDEwOS4zLTQwLjA1LDM1LjE5LTE0LjcyLDY5Ljk5LTMyLjQxLDEwMC41Ny01Ny4yOSwzMS4zOC0yNS41Myw1Ni42Mi01OC41OSw3MC41NS05OS42LDEuOTYtNS43MSw1Ljk3LTEzLjk0LDYuMzYtMjAuMi00OC44Niw2Ni44MS0yNDIuNjgsNzMuNzEtMjQyLjY4LDczLjcxbDQ1Ljc0LTQxLjk2Yy0xODMuODguMzUtMzEyLjE5LDc4LjQtMzcwLjk4LDEyMC4xNCw3NS4yMyw4LjA3LDE0My4zNCwzOS45NCwxOTYuNjYsODcuOTIsMjYuMjQtOC4xMyw1My4wMS0xMy45OSw3OS40NS0yMS4yNloiLz4KICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTU5MC4wOSwyNzguOTdzLTE3OC44NC0xMy42OC0zNjQuNjIsNDYuMTRjMjQuNjUsMjUuNzUsNDUuNDIsNTUuMiw2MS4zNCw4Ny41LDk3LjY4LTU0LjM3LDIzMy4xMi0xMjMuODMsMzAzLjI4LTEzMy42NFoiLz4KICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTI5OS4wNSw0NDAuNTJjMTEuMzQsMjkuMTcsMTguOTUsNjAuMTksMjIuMTEsOTIuNTFsMTcwLjI1LTE3NS4xLTE5Mi4zNiw4Mi41OFoiLz4KICA8L2c+Cjwvc3ZnPg=="
       mediatype: image/svg+xml
