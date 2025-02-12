@@ -23,13 +23,17 @@ const (
 func main() {
 	checkpointDir := os.Getenv("CHECKPOINT_DIR")
 
-	if len(os.Args) < 2 {
+	if len(os.Args) < 1 {
 		fmt.Fprintln(os.Stderr, "Error: Missing command arguments")
 		os.Exit(1)
 	}
 
-	cmd := exec.Command(os.Args[1], os.Args[2:]...)
-	cmd.Stdout = os.Stdout  // Redirect stdout of cmd to stdout of wrapper
+	binaryName := "swi-otelcol"
+	if os.PathSeparator == '\\' {
+		binaryName = "swi-otelcol.exe"
+	}
+
+	cmd := exec.Command(binaryName, os.Args[1:]...)
 
 	r, w := io.Pipe()
 	cmd.Stderr = w  // Redirect stderr of cmd to the writer end of the pipe

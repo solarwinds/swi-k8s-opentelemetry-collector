@@ -31,5 +31,5 @@ COPY --from=wrapper /bin/wrapper /wrapper
 COPY --from=journal /journalctl-deps/ /
 
 ENTRYPOINT ["/wrapper"]
-CMD ["/swi-otelcol", "--config=/opt/default-config.yaml"]
+CMD ["--config=/opt/default-config.yaml"]
 
