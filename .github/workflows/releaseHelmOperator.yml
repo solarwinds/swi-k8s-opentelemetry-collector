@@ -1,10 +1,12 @@
 name: Release Helm Operator
 
 on:
-  pull_request:
-    branches: 
+  push:
+    paths:
+      - deploy/helm/Chart.yaml
+    branches:
       - master
-      - release/** 
+      - release/**
 env:
   DOCKERHUB_IMAGE: solarwinds/solarwinds-otel-operator
 jobs:
