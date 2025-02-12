@@ -44,6 +44,7 @@ extensions:
     endpoint: 0.0.0.0:13133
 
 processors:
+  containerprocessor:
   memory_limiter:
 {{ toYaml .Values.otel.events.memory_limiter | indent 4 }}
 
@@ -364,6 +365,7 @@ service:
         - resource/manifest
         - resourcedetection/providers
         - k8sattributes
+        - containerprocessor
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
         - filter/k8s_collector_config_include
 {{- end }}
