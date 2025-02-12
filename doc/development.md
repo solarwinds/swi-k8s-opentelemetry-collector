@@ -168,13 +168,13 @@ helm plugin install https://github.com/helm-unittest/helm-unittest.git
 ### Run tests locally
 
 ```shell
-helm unittest deploy/helm
+helm unittest -f 'unit-tests/**/*.yaml' deploy/helm
 ```
 
 ### Refresh snapshot tests
 
 ```shell
-helm unittest -u deploy/helm
+helm unittest -u -f 'unit-tests/**/*.yaml' deploy/helm
 ```
 
 ### Integration with VS Code
