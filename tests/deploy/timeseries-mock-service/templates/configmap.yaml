@@ -21,6 +21,10 @@ data:
         path: /data/manifests.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
         rotation:
+      file/entitystateevents:
+        path: /data/entitystateevents.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
       prometheus:
         endpoint: "0.0.0.0:8080"
         namespace: output
@@ -46,6 +50,11 @@ data:
           log_record:
             - IsMatch(resource.attributes["sw.k8s.log.type"], "event")
             - IsMatch(resource.attributes["sw.k8s.log.type"], "manifest")
+            - IsMatch(resource.attributes["sw.k8s.log.type"], "entitystateevent")
+      filter/entitystateevents:
+        logs:
+          log_record:
+            - not(IsMatch(resource.attributes["sw.k8s.log.type"], "entitystateevent"))
     receivers:
       otlp:
         protocols:
@@ -81,5 +90,12 @@ data:
           - file/manifests
           processors:
           - filter/manifests
+          receivers:
+          - otlp
+        logs/entitystateevents:
+          exporters:
+          - file/entitystateevents
+          processors:
+          - filter/entitystateevents
           receivers:
           - otlp

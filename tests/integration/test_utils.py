@@ -109,10 +109,41 @@ def has_attribute_with_key_and_value(resource, target_key, expected_value):
     attributes = resource.get("attributes", [])
     for attribute in attributes:
         key = attribute.get("key", "")
-        value = attribute.get("value", {}).get("stringValue", "")
+        value = parse_value(attribute.get("value", {}))
         if key == target_key and value == expected_value:
             print(f"Resource has attribute with key '{target_key}' and value '{expected_value}'.")
             return True
 
     print(f"Resource does not have attribute with key '{target_key}' and value '{expected_value}'.")
     return False
+
+
+def get_attribute_key_and_value(resource, target_key):
+    attributes = resource.get("attributes", [])
+    for attribute in attributes:
+        key = attribute.get("key", "")
+        if (key == target_key):
+            return parse_value(attribute.get("value", {}))
+    return None
+
+
+def get_attributes_of_kvmap(resource, target_key):
+    kvmap = get_attribute_key_and_value(resource, target_key)['values']
+    result = dict()
+    for pair in kvmap:
+        key = pair['key']
+        value = parse_value(pair['value'])
+        result[key] = value
+    return result
+
+
+def parse_value(value):
+    val_str = value.get('stringValue', None)
+    if (val_str != None):
+        return val_str
+    val_bool = value.get('boolValue', None)
+    if (val_bool != None):
+        return val_bool
+    val_kvmap = value.get('kvlistValue', None)
+    return val_kvmap
+
