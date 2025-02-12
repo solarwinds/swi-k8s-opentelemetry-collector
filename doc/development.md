@@ -112,6 +112,10 @@ You can look at `http://localhost:8088/events.json` (each line is JSON as bulk s
 
 You can look at `http://localhost:8088/manifests.json` (each line is JSON as bulk sent by OTEL collector)
 
+#### Entity State events
+
+You can look at `http://localhost:8088/entitystateevents.json` (each line is JSON as bulk sent by OTEL collector).
+
 ## Develop against remote cluster
 * Make sure that you have working kubeContext, set this to `test-cluster` profile section in `skaffold.yaml`:
 ```

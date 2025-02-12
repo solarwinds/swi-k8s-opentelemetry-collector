@@ -38,13 +38,11 @@ make docker-build IMG=$IMG
 mkdir ./config/manifests/bases
 cp ../swo-otel-operator.clusterserviceversion.yaml ./config/manifests/bases/
 
-# update metadat image version
-make kustomize
-cd ./config/manifests && ../../bin/kustomize edit add annotation containerImage:"$BUNDLE_IMG"
-cd -
-
 # Generate the operator bundle
 make bundle VERSION=$VERSION IMG=$IMG
+
+### adjust the bundle metadata
+yq eval -i ".metadata.annotations.containerImage = \"$IMG\"" bundle/manifests/swo-otel-operator.clusterserviceversion.yaml
 
 # Build the bundle image
 make bundle-build BUNDLE_IMG=$BUNDLE_IMG IMG=$IMG
@@ -53,5 +51,3 @@ make bundle-build BUNDLE_IMG=$BUNDLE_IMG IMG=$IMG
 operator-sdk bundle validate ./bundle
 
 cd -
-
-
