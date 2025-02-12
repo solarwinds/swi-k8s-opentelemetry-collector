@@ -13,7 +13,7 @@ if [ -z "$DOCKERHUB_IMAGE" ]; then
   DOCKERHUB_IMAGE="solarwinds/solarwinds-otel-operator"
 fi
 if [ -z "$VERSION" ]; then
-  VERSION="0.0.0"
+  VERSION="1.2.3"
 fi
 
 IMG=$DOCKERHUB_IMAGE:$VERSION
