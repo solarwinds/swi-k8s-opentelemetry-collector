@@ -51,5 +51,3 @@ make bundle-build BUNDLE_IMG=$BUNDLE_IMG IMG=$IMG
 operator-sdk bundle validate ./bundle
 
 cd -
-
-

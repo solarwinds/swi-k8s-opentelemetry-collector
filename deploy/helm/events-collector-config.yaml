@@ -12,6 +12,7 @@
     "persistentvolumeclaims" "PersistentVolumeClaim"
     "ingresses" "Ingress"
     "configmaps" "ConfigMap"
+    "namespaces" "Namespace"
 }}
 {{- $arrayOfWatchedResources := keys $resourceMap | sortAlpha }}
 exporters:
@@ -43,6 +44,7 @@ extensions:
     endpoint: 0.0.0.0:13133
 
 processors:
+  containerprocessor:
   memory_limiter:
 {{ toYaml .Values.otel.events.memory_limiter | indent 4 }}
 
@@ -249,9 +251,12 @@ processors:
         action: insert
 
   resourcedetection/providers:
-    detectors: ["ec2","azure","openshift"]
     timeout: 2s
     override: false
+{{- if not .Values.openshift.enabled }}
+    detectors: 
+      - ec2
+      - azure
     azure:
       # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region, azure.resourcegroup.name
       resource_attributes:
@@ -264,12 +269,7 @@ processors:
         host.id:
           enabled: false
         host.name:
-          enabled: false
-    openshift:
-      # keep: cloud.platform, cloud.provider, cloud.region
-      resource_attributes:
-        k8s.cluster.name:
-          enabled: false
+          enabled: false  
     ec2:
       # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region
       resource_attributes:
@@ -283,6 +283,15 @@ processors:
           enabled: false
         host.type:
           enabled: false
+{{- else }}
+    detectors:     
+      - openshift      
+    openshift:
+      # keep: cloud.platform, cloud.provider, cloud.region
+      resource_attributes:
+        k8s.cluster.name:
+          enabled: false    
+{{- end }}
 
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
@@ -356,6 +365,7 @@ service:
         - resource/manifest
         - resourcedetection/providers
         - k8sattributes
+        - containerprocessor
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
         - filter/k8s_collector_config_include
 {{- end }}
