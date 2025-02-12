@@ -1493,8 +1493,6 @@ Events config should not contain manifest collection pipeline when disabled:
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
-        file_storage/manifests:
-          directory: /var/lib/swo/manifests
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
@@ -1851,10 +1849,8 @@ Events config should not contain manifest collection pipeline when disabled:
             name: configmaps
           - mode: watch
             name: configmaps
-          storage: file_storage/manifests
       service:
         extensions:
-        - file_storage/manifests
         - health_check
         pipelines:
           logs:
