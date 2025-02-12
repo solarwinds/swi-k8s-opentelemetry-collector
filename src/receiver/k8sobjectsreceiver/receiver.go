@@ -261,10 +261,12 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 				kr.setting.Logger.Error("error converting objects to log data", zap.Error(err))
 			}
 
-			err = kr.updateStorage(ctx, storage)
+			storage.mu.Lock()
+			err = kr.saveStorage(ctx, storage)
 			if err != nil {
-				kr.setting.Logger.Error("error updating storage", zap.Error(err))
+				kr.setting.Logger.Error("error saving storage", zap.Error(err))
 			}
+			storage.mu.Unlock()
 
 		case <-stopperChan:
 			watcher.Stop()
@@ -297,6 +299,10 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 		statusChanged = oldHashes.Status != hashes.Status
 	}
 	storage.Objects[key] = *hashes
+
+	if event.Type == apiWatch.Deleted {
+		delete(storage.Objects, key)
+	}
 	storage.mu.Unlock()
 
 	if !metadataChanged && !statusChanged && !specChanged {
@@ -319,7 +325,7 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 	return nil
 }
 
-func (kr *k8sobjectsreceiver) updateStorage(ctx context.Context, storage *objectstorage) error {
+func (kr *k8sobjectsreceiver) saveStorage(ctx context.Context, storage *objectstorage) error {
 	if kr.storageClient == nil || storage == nil {
 		return nil
 	}
@@ -451,12 +457,12 @@ func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Conte
 				delete(storage.Objects, key)
 			}
 		}
-		storage.mu.Unlock()
 
-		err = kr.updateStorage(ctx, storage)
+		err = kr.saveStorage(ctx, storage)
 		if err != nil {
-			kr.setting.Logger.Error("error updating storage", zap.Error(err))
+			kr.setting.Logger.Error("error saving storage", zap.Error(err))
 		}
+		storage.mu.Unlock()
 
 		// If we still don't have a resourceVersion we can try 1 as a last ditch effort.
 		// This also helps our unit tests since the fake client can't handle returning resource versions
