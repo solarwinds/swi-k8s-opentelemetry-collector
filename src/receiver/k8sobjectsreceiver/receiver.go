@@ -342,6 +342,10 @@ func (kr *k8sobjectsreceiver) loadStorage(ctx context.Context, storage *objectst
 	if kr.storageClient == nil || storage == nil {
 		return nil
 	}
+
+	storage.mu.Lock()
+	defer storage.mu.Unlock()
+
 	// load existing data from storage
 	dataBytes, err := kr.storageClient.Get(ctx, storage.key)
 	if err != nil {
@@ -349,12 +353,13 @@ func (kr *k8sobjectsreceiver) loadStorage(ctx context.Context, storage *objectst
 	}
 
 	if len(dataBytes) > 0 {
-		storage.mu.Lock()
-		err = json.Unmarshal(dataBytes, storage.Objects)
-		storage.mu.Unlock()
-
+		err = json.Unmarshal(dataBytes, &storage.Objects)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal stored data: %w", err)
+			kr.setting.Logger.Error("failed to unmarshal stored data", zap.Error(err), zap.Any("key", storage.key))
+
+			// clear the storage if we can't unmarshal the data
+			storage.Objects = map[string]objecthashes{}
+			return nil
 		}
 
 		kr.setting.Logger.Info("Data loaded from storage", zap.Any("key", storage.key))
