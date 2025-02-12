@@ -143,7 +143,7 @@ spec:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
-{{- if .Values.otel.events.persistent_storage.enabled }}
+{{- if and .Values.otel.manifests.enabled .Values.otel.manifests.persistent_storage.enabled }}
             - name: manifests
               mountPath: /var/lib/swo/manifests
 {{- end }}
@@ -158,7 +158,7 @@ spec:
             items:
               - key: events.config
                 path: relay.yaml
-{{- if .Values.otel.events.persistent_storage.enabled }}
+{{- if and .Values.otel.manifests.enabled .Values.otel.manifests.persistent_storage.enabled }}
         - name: manifests
           persistentVolumeClaim:
             claimName: {{ include "common.fullname" (tuple . "-events") }}

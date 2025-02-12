@@ -342,12 +342,6 @@ otel:
     # If false none of the events will be collected
     enabled: true
 
-    # Persistend storage for k8sobjects receiver
-    persistent_storage: 
-      enabled: true
-      # Storage class for the PVC
-      storageClassName: ""
-
     # This filter is applied after events processing, it is the place where events could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     # With filter conditions we build a global blacklist. So if we exclude data, let's say by specific namespace,
@@ -627,6 +621,12 @@ otel:
   # Configuration that allows to watch for changes in k8s resources and send full manifests to SWO upon change
   manifests:
     enabled: true
+
+    # Persistend storage for k8sobjects receiver
+    persistent_storage: 
+      enabled: true
+      # Storage class for the PVC
+      storageClassName: ""
 
     # Apart of watching for changes in k8s resources, all resources are periodically pulled
     # this is mainly to catch resources that were created before the collector was deployed and also to catch
