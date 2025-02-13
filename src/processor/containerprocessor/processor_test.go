@@ -22,6 +22,11 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor/processortest"
 	"testing"
+	"time"
+)
+
+var (
+	timestamp = pcommon.NewTimestampFromTime(time.Now())
 )
 
 func generateLogs() plog.Logs {
@@ -39,6 +44,7 @@ func generatePodLogs(manifest string) plog.Logs {
 	lr := sl.LogRecords().AppendEmpty()
 	lr.Attributes().PutStr("k8s.object.kind", "Pod")
 	lr.Body().SetStr(manifest)
+	lr.SetObservedTimestamp(timestamp)
 
 	return l
 }
@@ -169,7 +175,7 @@ func verifyOriginalLog(t *testing.T, origLog plog.ResourceLogs, expectedBody str
 func verifyNewLog(t *testing.T, newLog plog.ResourceLogs, expectedContainers map[string]Container) {
 	// resource
 	assert.Equal(t, newLog.Resource().Attributes().Len(), 1)
-	assert.Equal(t, "manifest", getStringValue(newLog.Resource().Attributes(), "sw.k8s.log.type"))
+	assert.Equal(t, "entitystateevent", getStringValue(newLog.Resource().Attributes(), "sw.k8s.log.type"))
 
 	// scope logs
 	sl := newLog.ScopeLogs().At(0)
@@ -181,6 +187,9 @@ func verifyNewLog(t *testing.T, newLog plog.ResourceLogs, expectedContainers map
 	assert.Equal(t, sl.LogRecords().Len(), len(expectedContainers))
 	for i := range sl.LogRecords().Len() {
 		lr := sl.LogRecords().At(i)
+
+		assert.Equal(t, timestamp, lr.ObservedTimestamp())
+
 		attrs := lr.Attributes()
 		assert.Equal(t, attrs.Len(), 4)
 		assert.Equal(t, "", lr.Body().Str())

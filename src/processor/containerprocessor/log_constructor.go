@@ -19,7 +19,6 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	conventions "go.opentelemetry.io/collector/semconv/v1.6.1"
 	"os"
-	"time"
 )
 
 const (
@@ -56,37 +55,17 @@ func addContainersResourceLog(ld plog.Logs) plog.ResourceLogs {
 
 // transformManifestToContainerLogs returns a new plog.LogRecordSlice and appends
 // all LogRecords containing container information from the provided Manifest.
-func transformManifestToContainerLogs(m Manifest) plog.LogRecordSlice {
+func transformManifestToContainerLogs(m Manifest, t pcommon.Timestamp) plog.LogRecordSlice {
 	lrs := plog.NewLogRecordSlice()
-	t := getTimestampOfLatestChange(m.Status.Conditions)
 
 	containers := m.getContainers()
 	for _, c := range containers {
 		lr := lrs.AppendEmpty()
-		lr.SetTimestamp(pcommon.NewTimestampFromTime(t))
+		lr.SetObservedTimestamp(t)
 		addContainerAttributes(lr.Attributes(), m.Metadata, c)
 	}
 
 	return lrs
-}
-
-// getTimestampOfLatestChange determines the timestamp of incoming change from "conditions" part of the manifest,
-// by using the latest item from the slice. If the slice is empty, the current time is considered as the
-// timestamp of the change.
-func getTimestampOfLatestChange(changes []Condition) time.Time {
-	var t time.Time
-	var lastChange string
-	var err error
-	if len(changes) > 0 {
-		lastChange = changes[len(changes)-1].Timestamp
-		t, err = time.Parse(time.RFC3339, lastChange)
-		if err != nil {
-			t = time.Now()
-		}
-	} else {
-		t = time.Now()
-	}
-	return t
 }
 
 // addContainerAttributes sets attributes on the provided map for the given Metadata and Container.
