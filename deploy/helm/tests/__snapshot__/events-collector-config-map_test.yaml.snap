@@ -19,6 +19,8 @@ Custom events filter with new syntax:
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
+        file_storage/manifests:
+          directory: /var/lib/swo/manifests
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
@@ -444,8 +446,10 @@ Custom events filter with new syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
+          storage: file_storage/manifests
       service:
         extensions:
+        - file_storage/manifests
         - health_check
         pipelines:
           logs:
@@ -507,6 +511,8 @@ Custom events filter with old syntax:
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
+        file_storage/manifests:
+          directory: /var/lib/swo/manifests
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
@@ -935,8 +941,10 @@ Custom events filter with old syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
+          storage: file_storage/manifests
       service:
         extensions:
+        - file_storage/manifests
         - health_check
         pipelines:
           logs:
@@ -998,6 +1006,8 @@ Events config should match snapshot when using default values:
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       extensions:
+        file_storage/manifests:
+          directory: /var/lib/swo/manifests
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
@@ -1419,8 +1429,10 @@ Events config should match snapshot when using default values:
             name: statefulsets
           - mode: watch
             name: statefulsets
+          storage: file_storage/manifests
       service:
         extensions:
+        - file_storage/manifests
         - health_check
         pipelines:
           logs:

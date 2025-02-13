@@ -333,3 +333,4 @@ require (
 )
 
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/containerprocessor v0.116.0 => ./../processor/containerprocessor
+replace github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver v0.116.0 => ../receiver/k8sobjectsreceiver

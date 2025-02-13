@@ -16,7 +16,7 @@ import (
 
 type attrUpdaterFunc func(pcommon.Map)
 
-func watchObjectsToLogData(event *watch.Event, observedAt time.Time, config *K8sObjectsConfig) (plog.Logs, error) {
+func watchObjectsToLogData(event *watch.Event, observedAt time.Time, config *K8sObjectsConfig, attrUpdater func(pcommon.Map)) (plog.Logs, error) {
 	udata, ok := event.Object.(*unstructured.Unstructured)
 	if !ok {
 		return plog.Logs{}, fmt.Errorf("received data that wasnt unstructure, %v", event)
@@ -38,7 +38,7 @@ func watchObjectsToLogData(event *watch.Event, observedAt time.Time, config *K8s
 			attrs.PutStr("event.domain", "k8s")
 			attrs.PutStr("event.name", name)
 		}
-	}), nil
+	}, attrUpdater), nil
 }
 
 func pullObjectsToLogData(event *unstructured.UnstructuredList, observedAt time.Time, config *K8sObjectsConfig) plog.Logs {
