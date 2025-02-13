@@ -136,7 +136,7 @@ func getTimestamp(lr plog.LogRecord) pcommon.Timestamp {
 		return lr.ObservedTimestamp()
 	}
 
-	if lr.Timestamp().AsTime().IsZero() {
+	if !lr.Timestamp().AsTime().IsZero() {
 		return lr.Timestamp()
 	}
 
