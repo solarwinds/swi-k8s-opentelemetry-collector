@@ -1,0 +1,21 @@
+{{- if and .Values.otel.manifests.enabled .Values.otel.manifests.persistent_storage.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "common.fullname" (tuple . "-events") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: swo-k8s-collector
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+{{- if .Values.otel.manifests.persistent_storage.storageClassName }}
+  storageClassName: {{ .Values.otel.manifests.persistent_storage.storageClassName }}
+{{- end }}
+{{- end}}
