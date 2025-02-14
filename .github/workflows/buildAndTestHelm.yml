@@ -235,6 +235,10 @@ jobs:
             exit 1
           fi
 
+      - name: Show all resources
+        run: |
+          kubectl get all -n test-namespace
+
       - name: Trigger helm-autoupdate CronJob logs
         if: ${{ always() }}
         run: |
