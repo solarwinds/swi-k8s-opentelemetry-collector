@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.uber.org/zap"
 	"sync"
+	"time"
 )
 
 const (
@@ -34,12 +35,17 @@ type containerprocessor struct {
 	logger            *zap.Logger
 }
 
+type result struct {
+	Manifest  Manifest
+	Timestamp pcommon.Timestamp
+}
+
 // processLogs go through all log records and parse information about containers from them.
 // Containers are created based on all log records from all scope and resource logs.
 // Containers related logs are appended as a new ResourceLogs to the plog.Logs structure that is processed at the time.
 func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog.Logs, error) {
 	resourceLogs := ld.ResourceLogs()
-	mCh := make(chan Manifest)
+	mCh := make(chan result)
 	errCh := make(chan error)
 
 	logSlice := plog.NewLogRecordSlice()
@@ -70,10 +76,10 @@ func (cp *containerprocessor) processLogs(_ context.Context, ld plog.Logs) (plog
 }
 
 // generateLogRecords appends all LogRecords containing container information to the provided LogRecordSlice.
-func (cp *containerprocessor) generateLogRecords(mCh <-chan Manifest, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
+func (cp *containerprocessor) generateLogRecords(resCh <-chan result, wg *sync.WaitGroup, lrs plog.LogRecordSlice) {
 	defer wg.Done()
-	for m := range mCh {
-		containers := transformManifestToContainerLogs(m)
+	for res := range resCh {
+		containers := transformManifestToContainerLogs(res.Manifest, res.Timestamp)
 		for i := range containers.Len() {
 			lr := containers.At(i)
 			lr.CopyTo(lrs.AppendEmpty())
@@ -82,9 +88,9 @@ func (cp *containerprocessor) generateLogRecords(mCh <-chan Manifest, wg *sync.W
 }
 
 // generateManifests extracts and parses manifests from log records that have k8s.object.kind set to "Pod".
-func (cp *containerprocessor) generateManifests(mCh chan<- Manifest, errCh chan<- error, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
+func (cp *containerprocessor) generateManifests(resCh chan<- result, errCh chan<- error, wg *sync.WaitGroup, resourceLogs plog.ResourceLogsSlice) {
 	defer wg.Done()
-	defer close(mCh)
+	defer close(resCh)
 	defer close(errCh)
 
 	for i := range resourceLogs.Len() {
@@ -103,7 +109,6 @@ func (cp *containerprocessor) generateManifests(mCh chan<- Manifest, errCh chan<
 				if !isPodLog(attrs) {
 					continue
 				}
-
 				body := lr.Body().AsString()
 				var m Manifest
 
@@ -113,11 +118,29 @@ func (cp *containerprocessor) generateManifests(mCh chan<- Manifest, errCh chan<
 					errCh <- err
 					return
 				} else {
-					mCh <- m
+					timestamp := getTimestamp(lr)
+					resCh <- result{
+						Manifest:  m,
+						Timestamp: timestamp,
+					}
 				}
 			}
 		}
 	}
+}
+
+// getTimestamp returns the timestamp of the log record.
+// If observed timestamp is set, it is returned, otherwise the timestamp or current time is returned.
+func getTimestamp(lr plog.LogRecord) pcommon.Timestamp {
+	if !lr.ObservedTimestamp().AsTime().IsZero() {
+		return lr.ObservedTimestamp()
+	}
+
+	if !lr.Timestamp().AsTime().IsZero() {
+		return lr.Timestamp()
+	}
+
+	return pcommon.NewTimestampFromTime(time.Now())
 }
 
 func isPodLog(attributes pcommon.Map) bool {
