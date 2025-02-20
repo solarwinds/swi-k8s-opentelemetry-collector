@@ -34,6 +34,8 @@ spec:
       securityContext: {}
 {{- if .Values.swoagent.serviceAccountName }}
       serviceAccountName: {{ .Values.swoagent.serviceAccountName }}
+{{- else }}
+      serviceAccountName: {{ include "common.fullname" . }}
 {{- end }}
       nodeSelector:
       {{- if .Values.swoagent.nodeSelector }}
