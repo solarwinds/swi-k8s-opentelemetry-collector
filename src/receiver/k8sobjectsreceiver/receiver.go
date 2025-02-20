@@ -256,7 +256,7 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 				continue
 			}
 
-			err = kr.watchEventToLogData(ctx, &data, time.Now(), config, storage)
+			err = kr.watchEventToLogData(ctx, &data, time.Now(), config, storage, false)
 			if err != nil {
 				kr.setting.Logger.Error("error converting objects to log data", zap.Error(err))
 			}
@@ -275,7 +275,7 @@ func (kr *k8sobjectsreceiver) doWatch(ctx context.Context, config *K8sObjectsCon
 	}
 }
 
-func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *apiWatch.Event, observedAt time.Time, config *K8sObjectsConfig, storage *objectstorage) error {
+func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *apiWatch.Event, observedAt time.Time, config *K8sObjectsConfig, storage *objectstorage, initialPoll bool) error {
 	udata, ok := event.Object.(*unstructured.Unstructured)
 	if !ok {
 		return fmt.Errorf("received data that wasnt unstructure, %v", event)
@@ -310,6 +310,7 @@ func (kr *k8sobjectsreceiver) watchEventToLogData(ctx context.Context, event *ap
 	}
 
 	logs, err := watchObjectsToLogData(event, observedAt, config, func(attrs pcommon.Map) {
+		attrs.PutBool("sw.initial.poll", initialPoll)
 		attrs.PutBool("sw.metadata.changed", metadataChanged)
 		attrs.PutBool("sw.status.changed", statusChanged)
 		attrs.PutBool("sw.spec.changed", specChanged)
@@ -449,7 +450,7 @@ func (kr *k8sobjectsreceiver) getResourceVersionAndUpdateCache(ctx context.Conte
 			}
 			storage.mu.Unlock()
 
-			err = kr.watchEventToLogData(ctx, event, time.Now(), config, storage)
+			err = kr.watchEventToLogData(ctx, event, time.Now(), config, storage, true)
 			if err != nil {
 				kr.setting.Logger.Error("error converting objects to log data", zap.Error(err))
 			}
