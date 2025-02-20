@@ -32,6 +32,9 @@ spec:
 {{ include "common.pod-labels" . | indent 8 }}
     spec:
       securityContext: {}
+{{- if .Values.swoagent.serviceAccountName }}
+      serviceAccountName: {{ .Values.swoagent.serviceAccountName }}
+{{- end }}
       nodeSelector:
       {{- if .Values.swoagent.nodeSelector }}
         {{ toYaml .Values.swoagent.nodeSelector | nindent 8 }}
