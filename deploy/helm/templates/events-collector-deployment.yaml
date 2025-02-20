@@ -67,6 +67,12 @@ spec:
       {{- end }}
       {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
+#        - name: fix-permissions
+#          image: busybox
+#          command: ["sh", "-c", "chown -R 10001:10001 /var/lib/swo/manifests && chmod -R 775 /var/lib/swo/manifests"]
+#          volumeMounts:
+#            - mountPath: /var/lib/swo/manifests 
+#              name: manifests
         - name: otel-endpoint-check
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
@@ -94,6 +100,10 @@ spec:
             - /swi-otelcol
             - --config=/conf/relay.yaml
           securityContext: 
+            fsGroup: 10001
+#            runAsUser: 10001
+#            runAsGroup: 10001
+            fsGroupChangePolicy: "OnRootMismatch"
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             runAsNonRoot: true
