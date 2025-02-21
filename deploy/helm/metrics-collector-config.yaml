@@ -708,6 +708,13 @@ processors:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
 {{- end }}
 
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces:
+    metrics:
+      metric:
+{{- include "namespacesFilter" . | nindent 8 }}      
+{{- end }}
+
 {{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
 
 {{- include "common-config.filter-reciever" . | nindent 2 }}
@@ -1179,6 +1186,9 @@ service:
         - resource/metrics
         - k8sattributes
         - transform/cleanup_attributes_for_nonexisting_entities
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}        
 {{- if .Values.otel.metrics.filter }}
         - filter
 {{- end }}

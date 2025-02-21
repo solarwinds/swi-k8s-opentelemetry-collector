@@ -34,7 +34,8 @@ spec:
     spec:
       terminationGracePeriodSeconds: {{ .Values.otel.events.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
-      securityContext: {}
+      securityContext: 
+        fsGroup: 10001
       {{- if .Values.otel.events.nodeSelector }}
       nodeSelector:
       {{ toYaml .Values.otel.events.nodeSelector | nindent 8 }}
@@ -97,6 +98,7 @@ spec:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             runAsNonRoot: true
+            runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
             capabilities:
