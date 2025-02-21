@@ -17,6 +17,7 @@ module github.com/solarwinds/swi-k8s-opentelemetry-collector
 go 1.23.0
 
 require (
+	github.com/open-telemetry/opentelemetry-collector-contrib/connector/routingconnector v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/k8sobserver v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.116.0

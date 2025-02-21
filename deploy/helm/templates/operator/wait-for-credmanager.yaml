@@ -13,7 +13,7 @@ spec:
       serviceAccountName: {{ include "common.fullname" . }}
       containers:
         - name: wait-for-certmanager
-          image: bitnami/kubectl:latest
+          image: "{{ include "common.image" (tuple . .Values.autoupdate (tuple "image" "autoupdate")) }}"
           command:
             - /bin/sh
             - -c

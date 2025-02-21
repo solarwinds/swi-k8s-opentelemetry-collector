@@ -397,6 +397,16 @@ processors:
         metric2: k8s.istio_request_duration_milliseconds_count_temp
         operation: divide
 
+  attributes/mark_system:
+    include:
+      match_type: regexp
+      metric_names:
+        - container_.*
+    actions:
+      - key: sw.metric.type
+        value: system
+        action: insert
+
 
 connectors:
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
@@ -405,6 +415,13 @@ connectors:
 {{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
   forward/logs-exporter:
 {{- end }}
+  routing/prometheus:
+    match_once: true
+    default_pipelines: [metrics/discovery]
+    table:
+      - context: datapoint
+        statement: route() where attributes["sw.metric.type"] == "system"
+        pipelines: [metrics/node]
 
 receivers:
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
@@ -551,7 +568,7 @@ receivers:
 {{- end }}
 
 {{- if .Values.otel.metrics.enabled }}
-{{- if and .Values.operator.enabled .Values.otel.node_collector.managedByOperator }}
+{{- if .Values.otel.node_collector.managedByOperator }}
   prometheus:
     config:
       scrape_configs:
@@ -691,6 +708,8 @@ receivers:
 {{- end }}
 
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+{{- if .Values.otel.node_collector.managedByOperator }}
+{{- else }}
   receiver_creator/node:
     watch_observers:
       - k8s_observer
@@ -728,6 +747,7 @@ receivers:
                 static_configs:
                   - targets:
                       - '`endpoint`:`kubelet_endpoint_port`'
+{{- end }}
 {{- end }}
 
 service:
@@ -813,8 +833,8 @@ service:
         - groupbyattrs/common-all
         - resource/all
       receivers:
-{{- if and .Values.operator.enabled .Values.otel.node_collector.managedByOperator }}
-        - prometheus
+{{- if .Values.otel.node_collector.managedByOperator }}
+        - routing/prometheus
 {{- else }}
         - receiver_creator/discovery
 {{- end }}
@@ -842,8 +862,27 @@ service:
         - resource/metrics
         - resource/all
       receivers:
+{{- if .Values.otel.node_collector.managedByOperator }}
+        - routing/prometheus
+{{- else }}
         - receiver_creator/node
 {{- end }}
+{{- end }}
+
+{{- if .Values.otel.node_collector.managedByOperator }}
+    # when metrics are managed by the operator all the metrics enter the same pipeline
+    # so routing connector split metrics into system metrics (that require standard transformation)
+    # and application metrics
+    metrics/prometheus:
+      exporters:
+        - routing/prometheus
+      processors:
+        - memory_limiter
+        - attributes/mark_system
+      receivers:
+        - prometheus
+{{- end }}
+
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     metrics:
       exporters:

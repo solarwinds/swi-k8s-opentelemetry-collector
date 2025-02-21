@@ -30,6 +30,6 @@ COPY --from=builder /src/swi-k8s-opentelemetry-collector /swi-otelcol
 COPY --from=wrapper /bin/wrapper /wrapper
 COPY --from=journal /journalctl-deps/ /
 
-ENTRYPOINT ["/wrapper"]
+ENTRYPOINT ["/swi-otelcol"]
 CMD ["--config=/opt/default-config.yaml"]
 

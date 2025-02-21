@@ -1,4 +1,4 @@
-{{- if and .Values.operator.enabled .Values.otel.node_collector.managedByOperator }}
+{{- if .Values.otel.node_collector.managedByOperator }}
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
@@ -14,12 +14,22 @@ spec:
   targetAllocator:
     enabled: true
     allocationStrategy: per-node
-    # serviceAccount: {{ include "common.fullname" . }}
+    serviceAccount: {{ include "common.fullname" . }}
     prometheusCR:
       enabled: true
       scrapeInterval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-      serviceMonitorSelector: {}
-      podMonitorSelector: {}
+      serviceMonitorSelector: 
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+      podMonitorSelector: 
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
     securityContext: 
       readOnlyRootFilesystem: true
       allowPrivilegeEscalation: false
@@ -114,10 +124,8 @@ spec:
   {{ toYaml .Values.otel.logs.nodeSelector | nindent 4 }}
   {{- end }}
   {{- if include "isSwiEndpointCheckEnabled" . }}
-  args:
-    - /swi-otelcol
-    - --config=/conf/relay.yaml
-    - --feature-gates=filelog.container.removeOriginalTimeField
+  # args:
+  #   feature-gates: filelog.container.removeOriginalTimeField
   initContainers:
     - name: otel-endpoint-check
       image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
@@ -168,20 +176,6 @@ spec:
   envFrom:
     - configMapRef:
         name: {{ include "common.fullname" (tuple . "-common-env") }}
-{{- if .Values.otel.logs.telemetry.metrics.enabled }}
-  ports:
-    - name: http
-      containerPort: {{ (split ":" .Values.otel.logs.telemetry.metrics.address)._1 }}
-      protocol: TCP
-{{- end}}
-  livenessProbe:
-    httpGet:
-      path: /
-      port: 13133
-  readinessProbe:
-    httpGet:
-      path: /
-      port: 13133
   resources:
 {{ toYaml .Values.otel.logs.resources | indent 4 }}
   volumeMounts:
@@ -193,9 +187,6 @@ spec:
       readOnly: true
     - mountPath: /var/lib/docker/containers
       name: varlibdockercontainers
-      readOnly: true
-    - mountPath: /conf
-      name: opentelemetry-collector-configmap
       readOnly: true
     - mountPath: /run/log/journal
       name: runlogjournal
@@ -229,12 +220,6 @@ spec:
       hostPath:
         path: {{ printf "%s/%s" .Values.otel.logs.filestorage.directory ((regexReplaceAll "[^a-zA-Z0-9_\\-]" (include "common.cluster-uid" .) "") | default (sha256sum (include "common.cluster-uid" .))) }}
         type: DirectoryOrCreate
-    - name: opentelemetry-collector-configmap
-      configMap:
-        name: {{ include "common.fullname" (tuple . "-node-collector-config") }}
-        items:
-          - key: logs.config
-            path: relay.yaml
 {{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
     - name: sending-queue
       hostPath:

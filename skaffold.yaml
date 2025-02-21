@@ -37,115 +37,114 @@ deploy:
     defaultNamespace: test-namespace
   helm:
     releases:
+      # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
+      - name: monitoring
+        remoteChart: kube-prometheus-stack
+        namespace: test-namespace
+        createNamespace: true
+        repo: https://prometheus-community.github.io/helm-charts
+        version: 69.3.2
+        setValues:
+          alertmanager.enabled: false
+          grafana.enabled: false
+          nodeExporter.enabled: false
+          kubeStateMetrics.enabled: false
+          server:
+            nodeSelector:
+              "kubernetes\\.io\\/os": linux
       - name: timeseries-mock-service
         chartPath: tests/deploy/timeseries-mock-service
         namespace: test-namespace
         createNamespace: true
         upgradeOnChange: true
-      - name: swi-k8s-opentelemetry-collector
-        chartPath: deploy/helm
-        namespace: test-namespace
-        createNamespace: true
-        setValues:
-          kube-state-metrics:
-            enabled: false
-          cluster:
-            name: "cluster name"
-            uid: "cluster-uid-123456789"
-          otel:
-            endpoint: timeseries-mock-service:9082
-            tls_insecure: true
-            # OTEL collector requires the SOLARWINDS_API_TOKEN env variable to be set to some not empty string
-            api_token: "not_set"
-            image:
-              repository: "swi-k8s-opentelemetry-collector"
-              tag: ""
-              pullPolicy: "Never"
-            node_collector:
-              managedByOperator: true
-              sending_queue:
-                persistent_storage:
-                  enabled: true
-            metrics:
-              enabled: false
-              prometheus_check: false
-              sending_queue:
-                offload_to_disk: true
-              prometheus:
-                scrape_interval: "15s"
-              kube-state-metrics:
-                scrape_interval: "15s"
-              control_plane:
-                controller_manager:
-                  enabled: false
-                etcd:
-                  enabled: false
-              k8s_instrumentation:
-                annotations:
-                  # excluded annotations:
-                  # * kubectl.kubernetes.io/last-applied-configuration - deployed by kubectl, contains full config for each resource
-                  # * cni.projectcalico.org/ - deployed in CI system (k3s)
-                  excludePattern: "(kubectl\\.kubernetes\\.io/last-applied-configuration)|(cni\\.projectcalico\\.org/.*)|(deployment\\.kubernetes\\.io/revision)|(deprecated\\.daemonset\\.template\\.generation)"
-                labels:
-                  # excluded labels:
-                  # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
-                  excludePattern: "skaffold\\.dev/.*"
-              autodiscovery:
-                prometheusEndpoints: 
-                  customTransformations:
-                    counterToRate:
-                      - k8s.otelcol_exporter_sent_metric_points
-                      - k8s.otelcol_exporter_sent_log_records
-                  filter:
-                    exclude:
-                      match_type: regexp
-                      metric_names:
-                        - k8s.otelcol_processor.*
-                  podMonitors:
-                    rules:
-                      - rule: labels["app"] == "test-deployment"
-                        metrics_path: "/custom_metrics"
-                        endpoint_port: 8081
-                prefix: ""
-            events:
-              enabled: false
-              sending_queue:
-                offload_to_disk: true
-            manifests:
-              enabled: true
-              pull_every: 1m
-            logs:
-              # journal on Docker Desktop is not supported
-              enabled: false
-              journal: false
-              filter:
-                log_record:
-                  - resource.attributes["k8s.namespace.name"] == "test-namespace"
-          certmanager:
-            enabled: true
-          operator:
-            enabled: true
-          ebpfNetworkMonitoring:
-            enabled: false
-          prometheusCRDs:
-            install: true
-        upgradeOnChange: true
-      
-      # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
-      - name: monitoring
-        remoteChart: prometheus
-        namespace: test-namespace
-        createNamespace: true
-        repo: https://prometheus-community.github.io/helm-charts
-        version: 19.7.2
-        setValues:
-          alertmanager.enabled: false
-          prometheus-node-exporter.enabled: false
-          prometheus-pushgateway.enabled: false
-          kube-state-metrics.enabled: false
-          server:
-            nodeSelector:
-              "kubernetes\\.io\\/os": linux
+      # - name: swi-k8s-opentelemetry-collector
+      #   chartPath: deploy/helm
+      #   namespace: test-namespace
+      #   createNamespace: true
+      #   setValueTemplates:
+      #     kube-state-metrics:
+      #       enabled: false
+      #     cluster:
+      #       name: "cluster name"
+      #       uid: "cluster-uid-123456789"
+      #     otel:
+      #       endpoint: timeseries-mock-service:9082
+      #       tls_insecure: true
+      #       # OTEL collector requires the SOLARWINDS_API_TOKEN env variable to be set to some not empty string
+      #       api_token: "not_set"
+      #       image:
+      #         repository: "swi-k8s-opentelemetry-collector"
+      #         tag: "{{.IMAGE_TAG}}"
+      #         pullPolicy: "Never"
+      #       node_collector:
+      #         managedByOperator: true
+      #         sending_queue:
+      #           persistent_storage:
+      #             enabled: true
+      #       metrics:
+      #         enabled: true
+      #         prometheus_check: false
+      #         sending_queue:
+      #           offload_to_disk: true
+      #         prometheus:
+      #           scrape_interval: "15s"
+      #         kube-state-metrics:
+      #           scrape_interval: "15s"
+      #         control_plane:
+      #           controller_manager:
+      #             enabled: false
+      #           etcd:
+      #             enabled: false
+      #         k8s_instrumentation:
+      #           annotations:
+      #             # excluded annotations:
+      #             # * kubectl.kubernetes.io/last-applied-configuration - deployed by kubectl, contains full config for each resource
+      #             # * cni.projectcalico.org/ - deployed in CI system (k3s)
+      #             excludePattern: "(kubectl\\.kubernetes\\.io/last-applied-configuration)|(cni\\.projectcalico\\.org/.*)|(deployment\\.kubernetes\\.io/revision)|(deprecated\\.daemonset\\.template\\.generation)"
+      #           labels:
+      #             # excluded labels:
+      #             # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
+      #             excludePattern: "skaffold\\.dev/.*"
+      #         autodiscovery:
+      #           prometheusEndpoints: 
+      #             customTransformations:
+      #               counterToRate:
+      #                 - k8s.otelcol_exporter_sent_metric_points
+      #                 - k8s.otelcol_exporter_sent_log_records
+      #             filter:
+      #               exclude:
+      #                 match_type: regexp
+      #                 metric_names:
+      #                   - k8s.otelcol_processor.*
+      #             podMonitors:
+      #               rules:
+      #                 - rule: labels["app"] == "test-deployment"
+      #                   metrics_path: "/custom_metrics"
+      #                   endpoint_port: 8081
+      #           prefix: ""
+      #       events:
+      #         enabled: false
+      #         sending_queue:
+      #           offload_to_disk: true
+      #       manifests:
+      #         enabled: true
+      #         pull_every: 1m
+      #       logs:
+      #         # journal on Docker Desktop is not supported
+      #         enabled: false
+      #         journal: false
+      #         filter:
+      #           log_record:
+      #             - resource.attributes["k8s.namespace.name"] == "test-namespace"
+      #     certmanager:
+      #       enabled: false
+      #     operator:
+      #       enabled: false
+      #     ebpfNetworkMonitoring:
+      #       enabled: false
+      #     prometheusCRDs:
+      #       install: true
+      #   upgradeOnChange: true
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -153,9 +152,9 @@ portForward:
   namespace: test-namespace
   port: 8088
 - resourceType: service
-  resourceName: monitoring-prometheus-server
+  resourceName: prometheus-operated
   namespace: test-namespace
-  port: 80
+  port: 9090
   localPort: 8080
 profiles:
   - name: test-cluster

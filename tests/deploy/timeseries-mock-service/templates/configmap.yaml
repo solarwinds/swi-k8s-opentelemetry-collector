@@ -33,6 +33,10 @@ data:
         enable_open_metrics: true
         resource_to_telemetry_conversion:
           enabled: true
+      otlp:
+        endpoint: otel.collector.na-01.dev-ssp.solarwinds.com:443
+        headers:
+          Authorization: Bearer 8sa5IUliJKvt9vet6JDK47OHYPcK6WuUgI9aLGLoq10nvth89-Wni9UHg8aE23Gv0T807vU
     extensions:
       health_check:
         endpoint: 0.0.0.0:13133
@@ -68,6 +72,7 @@ data:
           exporters:
           - file/metrics
           - prometheus
+          - otlp
           processors:
           receivers:
           - otlp

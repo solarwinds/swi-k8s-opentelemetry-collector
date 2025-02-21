@@ -5,17 +5,42 @@ metadata:
   labels:
     app: test-pod
   annotations:
-    test-annotation: "test-value"
     prometheus.io/scrape: "true"
     prometheus.io/path: "/metrics"
     prometheus.io/port: "8080"
 spec:
   containers:
   - name: test-container
-    image: busybox
-    command: ["sh", "-c", "echo 'test_metric_from_pod 1' > /metrics; httpd -f -p 8080 -h /; sleep infinity"]
+    image: python:3.9-alpine
+    command: ["python3", "-c"]
+    args:
+      - |
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+        class H(BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain; version=0.0.4')
+                self.end_headers()
+                self.wfile.write(b'test_metric_from_pod 1')
+        HTTPServer(('', 8080), H).serve_forever()
     ports:
     - containerPort: 8080
+      name: metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: test-pod-podmonitor
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: test-pod
+  podMetricsEndpoints:
+  - port: metrics
+    path: /metrics
+    interval: 60s
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,6 +68,21 @@ spec:
         command: ["sh", "-c", "echo 'test_metric_from_deployment 1' > /custom_metrics; httpd -f -p 8081 -h /; sleep infinity"]
         ports:
         - containerPort: 8081
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: test-deployment-podmonitor
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: test-deployment
+  podMetricsEndpoints:
+  - port: "8081"
+    path: /custom_metrics
+    interval: 60s
 ---
 apiVersion: apps/v1
 kind: StatefulSet
