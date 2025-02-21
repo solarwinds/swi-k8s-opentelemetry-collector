@@ -319,3 +319,39 @@ Usage:
 {{- define "isSwiEndpointCheckEnabled" -}}
 {{- ternary "true" "" (and .Values.otel.swi_endpoint_check.enabled (ternary true .Values.otel.metrics.swi_endpoint_check (eq .Values.otel.metrics.swi_endpoint_check nil))) -}}
 {{- end -}}
+
+
+{{- define "isNamespacesFilterEnabled" -}}
+{{- if or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+
+{{- define "namespacesFilter" -}}
+{{- range .Values.cluster.filter.exclude_namespaces }}
+- resource.attributes["k8s.namespace.name"] == "{{ . }}"
+{{- end }}
+{{- range .Values.cluster.filter.exclude_namespaces_regex }}
+- IsMatch(resource.attributes["k8s.namespace.name"], "{{ . }}")
+{{- end }}
+# include namespaces have to be merged to one condition with ORs
+{{- if or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
+{{- $conditions := list }}
+{{- range .Values.cluster.filter.include_namespaces }}
+  {{- $value := . }}
+  {{- $condition := printf `resource.attributes["k8s.namespace.name"] == "%s"` $value }}
+  {{- $conditions = append $conditions $condition }}
+{{- end }}
+{{- range .Values.cluster.filter.include_namespaces_regex }}
+  {{- $value := . }}
+  {{- $condition := printf `IsMatch(resource.attributes["k8s.namespace.name"], "%s")` $value }}
+  {{- $conditions = append $conditions $condition }}
+{{- end }}
+{{- $conditions = append $conditions (printf `resource.attributes["k8s.namespace.name"] == nil`) }}
+{{- $joinedConditions := join " or " $conditions }}
+- not({{ $joinedConditions }}) 
+{{- end -}}
+{{- end -}}

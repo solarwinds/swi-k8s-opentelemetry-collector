@@ -62,6 +62,15 @@ processors:
     logs:
 {{ toYaml .Values.otel.manifests.filter | indent 6 }}
 {{- end }}
+
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces:
+    logs:
+      log_record:
+{{- include "namespacesFilter" . | nindent 8 }}      
+{{- end }}
+
+
   transform/severity:
     log_statements:
       - context: log
@@ -354,6 +363,9 @@ service:
         - transform/entity_attributes
         - resource/events
         - k8sattributes
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}          
 {{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "false") }}
         - filter
 {{- end }}
@@ -379,6 +391,9 @@ service:
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
         - filter/k8s_collector_config_include
 {{- end }}
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}  
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
