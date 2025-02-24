@@ -48,7 +48,7 @@ Starting with version 4.1.0 setting `cluster.uid` is optional. If not provided i
 
 #### Version 4.4.0 and newer
 
-Starting from version 4.4.0 it is possible to specify global namespace filter. You can use `include_namespaces` and `include_namespaces_regex` or `exclude_namespaces` and `exclude_namespaces_regex` conditions, but not `include_` and `exclude_` at the same time. Filter is aplied to metrics, events and logs.
+Starting from version 4.4.0, it is possible to specify global namespace filter. You can use `include_namespaces` and `include_namespaces_regex` or `exclude_namespaces` and `exclude_namespaces_regex` conditions, but not `include_` and `exclude_` at the same time. Filter is applied to metrics, events and logs.
 
   ```yaml
   otel:
