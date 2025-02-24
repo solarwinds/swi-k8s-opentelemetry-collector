@@ -90,6 +90,13 @@ processors:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
 {{- end }}
 
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces:
+    metrics:
+      metric:
+{{- include "namespacesFilter" . | nindent 8 }}      
+{{- end }}
+
   batch/metrics:
 {{ toYaml .Values.aws_fargate.metrics.autodiscovery.batch | indent 4 }}
   
@@ -249,6 +256,9 @@ service:
         - memory_limiter
         - filter/histograms
         - k8sattributes
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}             
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}
