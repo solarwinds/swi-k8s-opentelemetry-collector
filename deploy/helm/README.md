@@ -46,6 +46,24 @@ In order to deploy the Helm chart, you need to prepare:
 
 Starting with version 4.1.0 setting `cluster.uid` is optional. If not provided it defaults to value of `cluster.name`.
 
+#### Version 4.4.0 and newer
+
+Starting from version 4.4.0 it is possible to specify global namespace filter. You can use `include_namespaces` and `include_namespaces_regex` or `exclude_namespaces` and `exclude_namespaces_regex` conditions, but not `include_` and `exclude_` at the same time. Filter is aplied to metrics, events and logs.
+
+  ```yaml
+  otel:
+      endpoint: <solarwinds-observability-otel-endpoint>
+  cluster:
+      name: <cluster-display-name>
+      uid: <unique-cluster-identifier>
+      filter:
+          exclude_namespaces:
+              - some-namespace
+          exclude_namespaces_regex:
+              - "^(dev|stage)-.*"
+  ```
+
+
 ### Metrics
 
 By default, the `swo-k8s-collector` collects a subset of `kube-state-metrics` metrics and metrics exposed by workloads that are annotated with `prometheus.io/scrape: true`.

@@ -321,6 +321,12 @@ Usage:
 {{- end -}}
 
 
+{{/*
+Check whether namespace filter is enabled
+
+Usage:
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+*/}}
 {{- define "isNamespacesFilterEnabled" -}}
 {{- if or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
 true
@@ -329,7 +335,12 @@ false
 {{- end -}}
 {{- end -}}
 
+{{/*
+Returns namespace filters in filter processor's format
 
+Usage:
+{{- include "namespacesFilter" . | nindent 8 }}
+*/}}
 {{- define "namespacesFilter" -}}
 {{- range .Values.cluster.filter.exclude_namespaces }}
 - resource.attributes["k8s.namespace.name"] == "{{ . }}"
