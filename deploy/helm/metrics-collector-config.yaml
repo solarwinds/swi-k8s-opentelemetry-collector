@@ -22,6 +22,7 @@ extensions:
 {{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
   file_storage/sending_queue:
     directory: /var/lib/swo/sending_queue
+    fsync: true
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
