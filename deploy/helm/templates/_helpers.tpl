@@ -13,15 +13,21 @@ If release name contains chart name it will be used as a full name.
 Usages: 
   no suffix: {{ include "common.fullname" . }}
   with suffix: {{ include "common.fullname" (tuple . "-node-collector") }}
+  with custom max length: {{ include "common.fullname" (tuple . "-node-collector" 50) }}
 */}}
 {{- define "common.fullname" -}}
 {{- $context := . -}}
 {{- $suffix := "" -}}
-{{- $maxLength := 63 -}}
+{{- $defaultMaxLength := 63 -}}
+{{- $maxLength := $defaultMaxLength -}}
 {{- if eq (kindOf .) "slice" -}}
 {{- $context = index . 0 -}}
 {{- $suffix = index . 1 | default "" -}}
-{{- $maxLength = sub 63 (len $suffix) -}}
+{{- if gt (len .) 2 -}}
+{{- $maxLength = index . 2 | default $defaultMaxLength -}}
+{{- else -}}
+{{- $maxLength = sub $defaultMaxLength (len $suffix) -}}
+{{- end -}}
 {{- end -}}
 
 {{- $maxLengthStr := printf "%d" $maxLength -}}

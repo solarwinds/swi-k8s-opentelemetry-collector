@@ -1,0 +1,30 @@
+{{- if .Values.operator.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wait-for-operator
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ include "common.fullname" . }}
+      containers:
+        - name: wait-for-operator
+          image: "{{ include "common.image" (tuple . .Values.autoupdate (tuple "image" "autoupdate")) }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while [ "$(kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name=operator \
+                -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}')" != "True" ]; do
+                kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name=operator
+                kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name=operator -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'
+                echo "Waiting for opentelemetry-operator to be ready..."
+                sleep 5
+              done
+      restartPolicy: Never
+  backoffLimit: 4
+{{- end }}
