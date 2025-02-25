@@ -54,7 +54,6 @@ Starting from version 4.4.0, it is possible to specify global namespace filter. 
       endpoint: <solarwinds-observability-otel-endpoint>
   cluster:
       name: <cluster-display-name>
-      uid: <unique-cluster-identifier>
       filter:
           exclude_namespaces:
               - some-namespace
