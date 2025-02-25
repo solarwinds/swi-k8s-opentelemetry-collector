@@ -49,16 +49,6 @@ otel:
       pullPolicy: IfNotPresent
 
   node_collector:
-    managedByOperator: false
-    targetAllocator:
-      nodeSelector: {}
-
-      # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-      tolerations: []
-
-      # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
-      affinity: {}
-
     terminationGracePeriodSeconds: 600
 
     sending_queue:
@@ -1042,3 +1032,24 @@ operator:
 certmanager:
   enabled: false
   installCRDs: true
+
+# Wait jobs ensure that subcharts are fully deployed before any resources deployed by post-install hooks
+# which avoids unnecessary installation failues (e.g. OpenTelemetryCollector custom resources should be deployed after operator is fully functional)
+waitJobs:
+  # is valid only if `operator.enable=true`, otherwise is ignored
+  operator:
+    enabled: true
+
+    image:
+      repository: "alpine/k8s"
+      tag: "1.27.16"
+      pullPolicy: IfNotPresent
+
+  # is valid only if `certmanager.enable=true`, otherwise is ignored
+  certmanager:
+    enabled: true
+
+    image:
+      repository: "alpine/k8s"
+      tag: "1.27.16"
+      pullPolicy: IfNotPresent

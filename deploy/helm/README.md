@@ -291,3 +291,42 @@ The possible values for the annotation can be:
 - `"false"` - do not inject.
 
 Alternatively, the annotation can be added to a namespace, which will result in all services in that namespace opting into automatic instrumentation. See the [Operator's auto-instrumentation documentation](https://github.com/open-telemetry/opentelemetry-operator/blob/main/README.md#opentelemetry-auto-instrumentation-injection) for more details.
+
+## Scrape Prometheus endpoints based on Prometheus Operator CRDs
+SWO K8s Collector is able to discover Prometheus Operator CRDs (`ServiceMonitors`, `PodMonitors`, `ScrapeConfigs` and `Probes`) and scrape prometheus endpoints based on that. 
+
+Internally it leverages [TargetAllocator](https://opentelemetry.io/docs/platforms/kubernetes/operator/target-allocator/) feature of OpenTelemetry Operator
+
+Keep in mind that there can be duplicate scrapes of same targets if `otel.metrics.autodiscovery.prometheusEndpoints.enabled` is set to `true` (which is default). To avoid duplicate scrapes it is recommended to disable default discovery and also set `sw.ignore=true` label to all CRDs that are already monitored by default by SWO K8s Collector (kubelet metrics, kube-state-metrics, apiserver)
+
+### Setting up
+
+#### 1. Enable deployment of the operator
+The same as ["Enable deployment of the operator" in Auto Instrumentation (experimental feature)](#1-enable-deployment-of-the-operator)
+
+#### 2. Ensure proper TLS Certificate management
+The same as ["Ensure proper TLS Certificate management" in Auto Instrumentation (experimental feature)](#2-ensure-proper-tls-certificate-management)
+
+#### 3. Deploy Prometheus Operator CRDs
+Set `prometheusCRDs.install=true` in `values.yaml`
+
+#### 4. Enable Discovery Collector
+Set `otel.metrics.autodiscovery.discovery_collector.enabled=true` in `values.yaml`
+
+#### 5. Configure right selectors for Prometheus CRDS
+By default all CRDs that do not have `sw.ignore=true` label are discovered. This can be override by following configuration in `values.yaml`:
+```
+otel:
+  metrics:
+    autodiscovery:
+      discovery_collector:
+        targetAllocator:
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrservicemonitorselector
+          serviceMonitorSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrpodmonitorselector
+          podMonitorSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrprobeselector
+          probeSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrscrapeconfigselector
+          scrapeConfigSelector: {}
+```
