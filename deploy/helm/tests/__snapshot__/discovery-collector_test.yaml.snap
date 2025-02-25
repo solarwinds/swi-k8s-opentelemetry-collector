@@ -1,0 +1,350 @@
+Discovery collector spec should match snapshot when using default values:
+  1: |
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: eks.amazonaws.com/compute-type
+                  operator: NotIn
+                  values:
+                    - fargate
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+    autoscaler:
+      maxReplicas: 5
+      minReplicas: 1
+      targetCPUUtilization: 80
+      targetMemoryUtilization: 80
+    config:
+      connectors:
+        forward/metric-exporter: null
+      exporters:
+        otlp:
+          endpoint: ${OTEL_ENVOY_ADDRESS}
+          headers:
+            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+          retry_on_failure:
+            enabled: true
+            initial_interval: 10s
+            max_elapsed_time: 300s
+            max_interval: 30s
+          sending_queue:
+            enabled: true
+            num_consumers: 20
+            queue_size: 1000
+          timeout: 15s
+          tls:
+            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      extensions:
+        health_check:
+          endpoint: 0.0.0.0:13133
+      processors:
+        batch/metrics:
+          send_batch_max_size: 512
+          send_batch_size: 512
+          timeout: 1s
+        cumulativetodelta/istio-metrics:
+          include:
+            match_type: strict
+            metrics:
+              - k8s.istio_request_bytes.rate
+              - k8s.istio_response_bytes.rate
+              - k8s.istio_request_duration_milliseconds_sum_temp
+              - k8s.istio_request_duration_milliseconds_count_temp
+              - k8s.istio_requests.rate
+              - k8s.istio_tcp_sent_bytes.rate
+              - k8s.istio_tcp_received_bytes.rate
+              - k8s.istio_request_bytes.delta
+              - k8s.istio_response_bytes.delta
+              - k8s.istio_requests.delta
+              - k8s.istio_tcp_sent_bytes.delta
+              - k8s.istio_tcp_received_bytes.delta
+        deltatorate/istio-metrics:
+          metrics:
+            - k8s.istio_request_bytes.rate
+            - k8s.istio_response_bytes.rate
+            - k8s.istio_request_duration_milliseconds_sum_temp
+            - k8s.istio_request_duration_milliseconds_count_temp
+            - k8s.istio_requests.rate
+            - k8s.istio_tcp_sent_bytes.rate
+            - k8s.istio_tcp_received_bytes.rate
+        filter/histograms:
+          metrics:
+            metric:
+              - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/remove_temporary_metrics:
+          metrics:
+            metric:
+              - IsMatch(name , ".*_temp")
+        groupbyattrs/common-all:
+          keys:
+            - k8s.container.name
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - host.name
+            - service.name
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+              - k8s.deployment.name
+              - k8s.replicaset.name
+              - k8s.daemonset.name
+              - k8s.job.name
+              - k8s.cronjob.name
+              - k8s.statefulset.name
+          passthrough: false
+          pod_association:
+            - sources:
+                - from: resource_attribute
+                  name: k8s.pod.name
+                - from: resource_attribute
+                  name: k8s.namespace.name
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 800
+          spike_limit_mib: 300
+        metricsgeneration/istio-metrics:
+          rules:
+            - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+              metric2: k8s.istio_request_duration_milliseconds_count_temp
+              name: k8s.istio_request_duration_milliseconds.rate
+              operation: divide
+              type: calculate
+        metricstransform/istio-metrics:
+          transforms:
+            - action: insert
+              include: k8s.istio_request_bytes_sum
+              new_name: k8s.istio_request_bytes.rate
+            - action: insert
+              include: k8s.istio_response_bytes_sum
+              new_name: k8s.istio_response_bytes.rate
+            - action: insert
+              include: k8s.istio_requests_total
+              new_name: k8s.istio_requests.rate
+            - action: insert
+              include: k8s.istio_tcp_sent_bytes_total
+              new_name: k8s.istio_tcp_sent_bytes.rate
+            - action: insert
+              include: k8s.istio_tcp_received_bytes_total
+              new_name: k8s.istio_tcp_received_bytes.rate
+            - action: insert
+              include: k8s.istio_request_bytes.rate
+              new_name: k8s.istio_request_bytes.delta
+            - action: insert
+              include: k8s.istio_response_bytes.rate
+              new_name: k8s.istio_response_bytes.delta
+            - action: insert
+              include: k8s.istio_requests.rate
+              new_name: k8s.istio_requests.delta
+            - action: insert
+              include: k8s.istio_tcp_sent_bytes.rate
+              new_name: k8s.istio_tcp_sent_bytes.delta
+            - action: insert
+              include: k8s.istio_tcp_received_bytes.rate
+              new_name: k8s.istio_tcp_received_bytes.delta
+        metricstransform/rename/discovery:
+          transforms:
+            - action: update
+              include: ^(.*)$$
+              match_type: regexp
+              new_name: k8s.$${1}
+        resource/all:
+          attributes:
+            - action: insert
+              key: sw.k8s.agent.manifest.version
+              value: ${MANIFEST_VERSION}
+            - action: insert
+              key: sw.k8s.agent.app.version
+              value: ${APP_VERSION}
+            - action: insert
+              key: sw.k8s.cluster.uid
+              value: ${CLUSTER_UID}
+            - action: insert
+              key: k8s.cluster.name
+              value: ${CLUSTER_NAME}
+        transform/istio-metrics:
+          metric_statements:
+            - context: metric
+              statements:
+                - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
+                - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
+                - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name == "k8s.istio_request_duration_milliseconds_sum"
+                - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name == "k8s.istio_request_duration_milliseconds_count"
+        transform/scope:
+          log_statements:
+            - context: scope
+              statements:
+                - set(name, "")
+                - set(version, "")
+          metric_statements:
+            - context: scope
+              statements:
+                - set(name, "")
+                - set(version, "")
+      receivers:
+        prometheus:
+          config:
+            scrape_configs:
+              - job_name: otel-collector
+                scrape_interval: 60s
+                static_configs:
+                  - targets:
+                      - 0.0.0.0:8888
+      service:
+        extensions:
+          - health_check
+        pipelines:
+          metrics:
+            exporters:
+              - otlp
+            processors:
+              - memory_limiter
+              - filter/histograms
+              - k8sattributes
+              - filter/remove_temporary_metrics
+              - transform/scope
+              - batch/metrics
+            receivers:
+              - forward/metric-exporter
+          metrics/discovery:
+            exporters:
+              - forward/metric-exporter
+            processors:
+              - memory_limiter
+              - metricstransform/rename/discovery
+              - transform/istio-metrics
+              - metricstransform/istio-metrics
+              - cumulativetodelta/istio-metrics
+              - deltatorate/istio-metrics
+              - metricsgeneration/istio-metrics
+              - groupbyattrs/common-all
+              - resource/all
+            receivers:
+              - prometheus
+        telemetry:
+          logs:
+            level: info
+          metrics:
+            address: 0.0.0.0:8888
+    env:
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      - name: POD_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+      - name: SOLARWINDS_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            key: SOLARWINDS_API_TOKEN
+            name: solarwinds-api-token
+            optional: true
+      - name: GOMEMLIMIT
+        valueFrom:
+          resourceFieldRef:
+            resource: limits.memory
+    envFrom:
+      - configMapRef:
+          name: RELEASE-NAME-swo-k8s-collector-common-env
+    image: solarwinds/swi-opentelemetry-collector:1.0.0
+    imagePullPolicy: IfNotPresent
+    initContainers:
+      - command:
+          - /swi-otelcol
+          - test-connection
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: RELEASE-NAME-swo-k8s-collector-common-env
+        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
+    mode: statefulset
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        memory: 50Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: RELEASE-NAME-swo-k8s-collector
+    targetAllocator:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/arch
+                    operator: In
+                    values:
+                      - amd64
+                      - arm64
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      enabled: true
+      prometheusCR:
+        enabled: true
+        podMonitorSelector:
+          matchExpressions:
+            - key: sw.ignore
+              operator: NotIn
+              values:
+                - "true"
+        probeSelector:
+          matchExpressions:
+            - key: sw.ignore
+              operator: NotIn
+              values:
+                - "true"
+        scrapeConfigSelector:
+          matchExpressions:
+            - key: sw.ignore
+              operator: NotIn
+              values:
+                - "true"
+        scrapeInterval: 60s
+        serviceMonitorSelector:
+          matchExpressions:
+            - key: sw.ignore
+              operator: NotIn
+              values:
+                - "true"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: RELEASE-NAME-swo-k8s-collector

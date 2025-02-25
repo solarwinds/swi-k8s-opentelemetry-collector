@@ -327,6 +327,22 @@
         "schedule": {
             "description": "Schedule in Cron format. More info: https://en.wikipedia.org/wiki/Cron.",
             "type": "string"
+        },
+        "targetAllocator": {
+            "description": "Configuration properties for targetAllocator settings of OpenTelemetryCollector custom resources",
+            "type": "object",
+            "properties": {
+                "affinity": {
+                    "$ref": "#/definitions/k8sAffinity"
+                },
+                "nodeSelector": {
+                    "$ref": "#/definitions/k8sNodeSelector"
+                },
+                "tolerations": {
+                    "$ref": "#/definitions/k8sTolerations"
+                }
+            },
+            "additionalProperties": false
         }
     },
     "properties": {
@@ -958,6 +974,80 @@
                                 },
                                 "prefix": {
                                     "type": "string"
+                                },
+                                "discovery_collector": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "targetAllocator": {
+                                            "type": "object",
+                                            "properties": {
+                                                "affinity": {
+                                                    "$ref": "#/definitions/k8sAffinity"
+                                                },
+                                                "nodeSelector": {
+                                                    "$ref": "#/definitions/k8sNodeSelector"
+                                                },
+                                                "tolerations": {
+                                                    "$ref": "#/definitions/k8sTolerations"
+                                                },
+                                                "serviceMonitorSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                },
+                                                "podMonitorSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                },
+                                                "probeSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                },
+                                                "scrapeConfigSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        },
+                                        "affinity": {
+                                            "$ref": "#/definitions/k8sAffinity"
+                                        },
+                                        "batch": {
+                                            "$ref": "#/definitions/collectorBatch"
+                                        },
+                                        "memory_limiter": {
+                                            "$ref": "#/definitions/collectorMemoryLimiter"
+                                        },
+                                        "nodeSelector": {
+                                            "$ref": "#/definitions/k8sNodeSelector"
+                                        },
+                                        "resources": {
+                                            "$ref": "#/definitions/k8sResourceRequirements"
+                                        },
+                                        "retry_on_failure": {
+                                            "$ref": "#/definitions/collectorRetryOnFailure"
+                                        },
+                                        "sending_queue": {
+                                            "$ref": "#/definitions/collectorSendingQueue"
+                                        },
+                                        "telemetry": {
+                                            "$ref": "#/definitions/collectorTelemetry"
+                                        },
+                                        "timeout": {
+                                            "$ref": "#/definitions/collectorTimeout"
+                                        },
+                                        "tolerations": {
+                                            "$ref": "#/definitions/k8sTolerations"
+                                        },
+                                        "autoscaler": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    },
+                                    "additionalProperties": false
                                 }
                             },
                             "additionalProperties": false
@@ -1204,6 +1294,12 @@
                 "node_collector": {
                     "type": "object",
                     "properties": {
+                        "managedByOperator": {
+                            "type": "boolean"
+                        },
+                        "targetAllocator": {
+                            "$ref": "#/definitions/targetAllocator"
+                        },
                         "retry_on_failure": {
                             "$ref": "#/definitions/collectorRetryOnFailure"
                         },
@@ -1412,6 +1508,16 @@
             "description": "This field is included to support backward compatibility with older Helm versions or custom distributions. Prefer using 'certmanager' field.",
             "type": "object",
             "additionalProperties": true
+        },
+        "prometheusCRDs": {
+            "description": "Allows installation of Promethues CRDs to the cluster.",
+            "type": "object",
+            "properties": {
+                "install": {
+                    "type": "boolean"
+                },
+                "additionalProperties": false
+            }
         }
     },
     "required": [

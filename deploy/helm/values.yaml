@@ -49,6 +49,16 @@ otel:
       pullPolicy: IfNotPresent
 
   node_collector:
+    managedByOperator: false
+    targetAllocator:
+      nodeSelector: {}
+
+      # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+      tolerations: []
+
+      # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+      affinity: {}
+
     terminationGracePeriodSeconds: 600
 
     sending_queue:
@@ -91,6 +101,108 @@ otel:
 
     # configuration for metric discovery
     autodiscovery:
+      # Discovery collector is responsible for discovering and scraping based on Prometheus CRDs - ServiceMonitors, PodMonitors and ScrapeConfigs
+      discovery_collector:
+        enabled: false
+
+        targetAllocator:
+          nodeSelector: {}
+
+          # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+          tolerations: []
+
+          # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+          affinity: {}
+
+          # Selectors for Prometheus CRDs, default is:
+          # matchExpressions: 
+          #   - key: sw.ignore
+          #     operator: NotIn
+          #     values:
+          #     - "true"
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrservicemonitorselector
+          serviceMonitorSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrpodmonitorselector
+          podMonitorSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrprobeselector
+          probeSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrscrapeconfigselector
+          scrapeConfigSelector: {}
+
+        sending_queue:
+          enabled: true
+
+          # Number of consumers that dequeue batches; ignored if enabled is false
+          num_consumers: 20
+
+          # Maximum number of batches kept in memory before dropping; ignored if enabled is false User should calculate this as num_seconds * requests_per_second / requests_per_batch where:
+          # * num_seconds is the number of seconds to buffer in case of a backend outage
+          # * requests_per_second is the average number of requests per seconds
+          # * requests_per_batch is the average number of requests per batch (if the batch processor is used, the metric send_batch_size can be used for estimation)
+          queue_size: 1000
+
+        retry_on_failure:
+          enabled: true
+
+          # Time to wait after the first failure before retrying; ignored if enabled is false
+          initial_interval: 10s
+
+          # Is the upper bound on backoff; ignored if enabled is false
+          max_interval: 30s
+
+          # Is the maximum amount of time spent trying to send a batch; ignored if enabled is false
+          max_elapsed_time: 300s
+
+        # Time to wait per individual attempt to send data to SWO
+        timeout: 15s
+
+        # Batching configuration for logs
+        # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor for configuration reference
+        batch:
+          send_batch_size: 512
+          send_batch_max_size: 512
+          timeout: 1s
+
+        # Telemetry information of the collector
+        # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference
+        telemetry:
+          logs:
+            enabled: true
+            level: "info"
+          metrics:
+            enabled: true
+            address: 0.0.0.0:8888
+            
+        # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
+        # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 800
+          spike_limit_mib: 300
+
+        # Resource configuration for Log collector
+        resources:
+          requests:
+            memory: 50Mi
+          limits:
+            memory: 1Gi
+
+        # Scheduling configurations
+        nodeSelector: {}
+        # By default: tolerations allow the DaemonSet to be deployed on tainted nodes so that we can also collect logs from those nodes.
+        tolerations: []
+        # By default: affinity is set to run the DaemonSet on linux amd64.
+        affinity: {}
+
+        # HPA configuration for the discovery collector
+        # For more options see: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspecautoscaler-1
+        # default:
+        #   minReplicas: 1
+        #   maxReplicas: 5
+        #   targetCPUUtilization: 80
+        #   targetMemoryUtilization: 80
+        autoscaler: {}
+
       prometheusEndpoints:
         # Define whether metrics will be discovered and scraped by prometheus annotations
         enabled: true
@@ -617,6 +729,7 @@ otel:
     filestorage:
       directory: /var/lib/swo/checkpoints
       timeout: 5s
+      fsync: true
 
   # Configuration that allows to watch for changes in k8s resources and send full manifests to SWO upon change
   manifests:
@@ -882,12 +995,18 @@ ebpfNetworkMonitoring:
 openshift:
   enabled: false
 
+prometheusCRDs:
+  install: false
+
 operator:
   enabled: false
   manager:
     image:
       repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
-      tag: "0.107.0"
+      tag: "0.116.0"
+    targetAllocatorImage:
+      repository: ""
+      tag: ""
     collectorImage:
       # it is not yet supported to run collector instrumented by operator
       # filling this to satisfy subchart requirement
@@ -909,7 +1028,6 @@ operator:
       go:
         repository: ""
         tag: ""
-        
   admissionWebhooks:
     certManager:
       enabled: true

@@ -20,6 +20,18 @@ manifests:
       - tests/deploy/tests
     buildArgs:
       - --load-restrictor LoadRestrictionsNone
+resourceSelector:
+  allow:
+    # let skaffold to manager CRDs in local k8s
+    - groupKind: "OpenTelemetryCollector.opentelemetry.io"
+      image: [".*"]
+      labels: [".*"]
+    - groupKind: "PodMonitor.monitoring.coreos.com"
+      image: [".*"]
+      labels: [".*"]
+    - groupKind: "ServiceMonitor.monitoring.coreos.com"
+      image: [".*"]
+      labels: [".*"]
 deploy:
   kubectl: 
     defaultNamespace: test-namespace
@@ -34,7 +46,7 @@ deploy:
         chartPath: deploy/helm
         namespace: test-namespace
         createNamespace: true
-        setValues:
+        setValueTemplates:
           kube-state-metrics:
             enabled: true
           cluster:
@@ -47,12 +59,14 @@ deploy:
             api_token: "not_set"
             image:
               repository: "swi-k8s-opentelemetry-collector"
-              tag: ""
+              tag: "{{.IMAGE_TAG}}"
+              pullPolicy: "Never"
             node_collector:
               sending_queue:
                 persistent_storage:
                   enabled: true
             metrics:
+              enabled: true
               prometheus_check: false
               sending_queue:
                 offload_to_disk: true
@@ -76,7 +90,10 @@ deploy:
                   # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
                   excludePattern: "skaffold\\.dev/.*"
               autodiscovery:
+                discovery_collector:
+                  enabled: false
                 prometheusEndpoints: 
+                  enabled: true
                   customTransformations:
                     counterToRate:
                       - k8s.otelcol_exporter_sent_metric_points
@@ -98,11 +115,12 @@ deploy:
                 offload_to_disk: true
             manifests:
               enabled: true
-              pull_every: 60m
+              pull_every: 1m
               persistent_storage:
                 enabled: false
             logs:
               # journal on Docker Desktop is not supported
+              enabled: true
               journal: false
               filter:
                 log_record:
@@ -111,20 +129,23 @@ deploy:
             enabled: false
           operator:
             enabled: false
+          ebpfNetworkMonitoring:
+            enabled: true
+          prometheusCRDs:
+            install: false
         upgradeOnChange: true
-      
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
       - name: monitoring
-        remoteChart: prometheus
+        remoteChart: kube-prometheus-stack
         namespace: test-namespace
         createNamespace: true
         repo: https://prometheus-community.github.io/helm-charts
-        version: 19.7.2
+        version: 69.3.2
         setValues:
           alertmanager.enabled: false
-          prometheus-node-exporter.enabled: false
-          prometheus-pushgateway.enabled: false
-          kube-state-metrics.enabled: false
+          grafana.enabled: false
+          nodeExporter.enabled: false
+          kubeStateMetrics.enabled: false
           server:
             nodeSelector:
               "kubernetes\\.io\\/os": linux
@@ -135,9 +156,9 @@ portForward:
   namespace: test-namespace
   port: 8088
 - resourceType: service
-  resourceName: monitoring-prometheus-server
+  resourceName: prometheus-operated
   namespace: test-namespace
-  port: 80
+  port: 9090
   localPort: 8080
 profiles:
   - name: test-cluster
@@ -218,9 +239,11 @@ profiles:
       - op: remove
         path: /build/artifacts/0
       - op: remove
-        path: /deploy/helm/releases/1/setValues/otel.image.repository
+        path: /deploy/helm/releases/1/setValueTemplates/otel.image.repository
       - op: remove
-        path: /deploy/helm/releases/1/setValues/otel.image.tag
+        path: /deploy/helm/releases/1/setValueTemplates/otel.image.tag
+      - op: remove
+        path: /deploy/helm/releases/1/setValueTemplates/otel.image.pullPolicy
     build:
       local:
         push: false
