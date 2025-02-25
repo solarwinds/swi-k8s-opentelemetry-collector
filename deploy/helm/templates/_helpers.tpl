@@ -21,29 +21,31 @@ Usages:
 {{- $defaultMaxLength := 63 -}}
 {{- $maxLength := $defaultMaxLength -}}
 {{- if eq (kindOf .) "slice" -}}
-{{- $context = index . 0 -}}
-{{- $suffix = index . 1 | default "" -}}
-{{- if gt (len .) 2 -}}
-{{- $maxLength = index . 2 | default $defaultMaxLength -}}
-{{- else -}}
-{{- $maxLength = sub $defaultMaxLength (len $suffix) -}}
-{{- end -}}
+  {{- $context = index . 0 -}}
+  {{- $suffix = index . 1 | default "" -}}
+  {{- if gt (len .) 2 -}}
+    {{- $paramMax := index . 2 | default $defaultMaxLength -}}
+    {{- $maxLength = sub $paramMax (len $suffix) -}}
+  {{- else -}}
+    {{- $maxLength = sub $defaultMaxLength (len $suffix) -}}
+  {{- end -}}
 {{- end -}}
 
 {{- $maxLengthStr := printf "%d" $maxLength -}}
 {{- $maxLengthInt := $maxLengthStr | atoi -}}
-{{- $releaseName := $context.Release.Name | trunc 30 | trimSuffix "-" -}}
+{{- $releaseNameMax := int (div $maxLengthInt 2) -}}
+{{- $releaseName := $context.Release.Name | trunc $releaseNameMax | trimSuffix "-" -}}
 {{- $result := "" -}}
 
 {{- if $context.Values.fullnameOverride -}}
-{{- $result = $context.Values.fullnameOverride | trunc $maxLengthInt | trimSuffix "-" -}}
+  {{- $result = $context.Values.fullnameOverride | trunc $maxLengthInt | trimSuffix "-" -}}
 {{- else -}}
-{{- $name := default $context.Chart.Name $context.Values.nameOverride -}}
-{{- if contains $name $releaseName -}}
-{{- $result = $releaseName | trunc $maxLengthInt | trimSuffix "-" -}}
-{{- else -}}
-{{- $result = printf "%s-%s" $releaseName $name | trunc $maxLengthInt | trimSuffix "-" -}}
-{{- end -}}
+  {{- $name := default $context.Chart.Name $context.Values.nameOverride -}}
+  {{- if contains $name $releaseName -}}
+    {{- $result = $releaseName | trunc $maxLengthInt | trimSuffix "-" -}}
+  {{- else -}}
+    {{- $result = printf "%s-%s" $releaseName $name | trunc $maxLengthInt | trimSuffix "-" -}}
+  {{- end -}}
 {{- end -}}
 {{- printf "%s%s" $result $suffix -}}
 {{- end -}}

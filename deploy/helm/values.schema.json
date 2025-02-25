@@ -328,21 +328,17 @@
             "description": "Schedule in Cron format. More info: https://en.wikipedia.org/wiki/Cron.",
             "type": "string"
         },
-        "targetAllocator": {
-            "description": "Configuration properties for targetAllocator settings of OpenTelemetryCollector custom resources",
+        "waitJobConfig": {
+            "description": "Configuration for Wait Jobs.",
             "type": "object",
             "properties": {
-                "affinity": {
-                    "$ref": "#/definitions/k8sAffinity"
+                "enabled": {
+                    "type": "boolean"
                 },
-                "nodeSelector": {
-                    "$ref": "#/definitions/k8sNodeSelector"
-                },
-                "tolerations": {
-                    "$ref": "#/definitions/k8sTolerations"
+                "image": {
+                    "$ref": "#/definitions/imageDefinition"
                 }
-            },
-            "additionalProperties": false
+            }
         }
     },
     "properties": {
@@ -1294,12 +1290,6 @@
                 "node_collector": {
                     "type": "object",
                     "properties": {
-                        "managedByOperator": {
-                            "type": "boolean"
-                        },
-                        "targetAllocator": {
-                            "$ref": "#/definitions/targetAllocator"
-                        },
                         "retry_on_failure": {
                             "$ref": "#/definitions/collectorRetryOnFailure"
                         },
@@ -1515,6 +1505,19 @@
             "properties": {
                 "install": {
                     "type": "boolean"
+                },
+                "additionalProperties": false
+            }
+        },
+        "waitJobs": {
+            "description": "Configuration for available wait jobs.",
+            "type": "object",
+            "properties": {
+                "operator": {
+                    "$ref": "#/definitions/waitJobConfig"
+                },
+                "certmanager": {
+                    "$ref": "#/definitions/waitJobConfig"
                 },
                 "additionalProperties": false
             }
