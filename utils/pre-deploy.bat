@@ -25,3 +25,15 @@ kubectl delete serviceaccounts --all -n test-namespace
 kubectl delete roles --all -n test-namespace
 kubectl delete rolebindings --all -n test-namespace
 kubectl delete networkpolicies --all -n test-namespace
+
+:: Delete all CRDs from monitoring.coreos.com group
+echo Deleting all CRDs from monitoring.coreos.com group
+for /f "tokens=*" %%i in ('kubectl get crd -o jsonpath="{range .items[?(@.spec.group=='monitoring.coreos.com')]}{.metadata.name}{'\n'}{end}"') do kubectl delete crd %%i
+
+:: Delete all CRDs from cert-manager.io group
+echo Deleting all CRDs from cert-manager.io group
+for /f "tokens=*" %%i in ('kubectl get crd -o jsonpath="{range .items[?(@.spec.group=='cert-manager.io')]}{.metadata.name}{'\n'}{end}"') do kubectl delete crd %%i
+
+:: Delete all CRDs from acme.cert-manager.io group
+echo Deleting all CRDs from acme.cert-manager.io group
+for /f "tokens=*" %%i in ('kubectl get crd -o jsonpath="{range .items[?(@.spec.group=='acme.cert-manager.io')]}{.metadata.name}{'\n'}{end}"') do kubectl delete crd %%i
