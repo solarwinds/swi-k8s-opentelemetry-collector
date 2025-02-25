@@ -1,19 +1,34 @@
-{{- if .Values.operator.enabled }}
+{{- if and .Values.operator.enabled .Values.waitJobs.operator.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: wait-for-operator
   annotations:
     "helm.sh/hook": post-install
-    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-weight": "2"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   template:
     spec:
       serviceAccountName: {{ include "common.fullname" . }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
       containers:
         - name: wait-for-operator
-          image: "{{ include "common.image" (tuple . .Values.autoupdate (tuple "image" "autoupdate")) }}"
+          image: "{{ include "common.image" (tuple . .Values.waitJobs.operator (tuple "image" "waitjob_operator")) }}"
+          imagePullPolicy: {{ .Values.waitJobs.operator.image.pullPolicy }}
           command:
             - /bin/sh
             - -c

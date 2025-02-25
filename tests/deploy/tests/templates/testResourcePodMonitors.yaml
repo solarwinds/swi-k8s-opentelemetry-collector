@@ -1,0 +1,31 @@
+{{- if .Values.podMonitors.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: test-pod-podmonitor
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: test-pod
+  podMetricsEndpoints:
+  - port: metrics
+    path: /metrics
+    interval: 60s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: test-deployment-podmonitor
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: test-deployment
+  podMetricsEndpoints:
+  - port: "8081"
+    path: /custom_metrics
+    interval: 60s
+{{- end }}

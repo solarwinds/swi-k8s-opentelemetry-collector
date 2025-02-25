@@ -1,4 +1,4 @@
-{{- if .Values.certmanager.enabled }}
+{{- if and .Values.certmanager.enabled .Values.waitJobs.certmanager.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -11,9 +11,24 @@ spec:
   template:
     spec:
       serviceAccountName: {{ include "common.fullname" . }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
       containers:
         - name: wait-for-certmanager
-          image: "{{ include "common.image" (tuple . .Values.autoupdate (tuple "image" "autoupdate")) }}"
+          image: "{{ include "common.image" (tuple . .Values.waitJobs.certmanager (tuple "image" "waitjob_certmanager")) }}"
+          imagePullPolicy: {{ .Values.waitJobs.certmanager.image.pullPolicy }}
           command:
             - /bin/sh
             - -c

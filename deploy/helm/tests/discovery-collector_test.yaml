@@ -3,6 +3,9 @@ suite: Test for discovery_collector
 templates:
   - operator/discovery-collector.yaml
   - common-env-config-map.yaml
+release:
+  name: swi-k8s-opentelemetry-collector
+  namespace: test-namespace
 chart:
   appVersion: 1.0.0
 tests:
@@ -14,3 +17,12 @@ tests:
     asserts:
       - matchSnapshot:
           path: spec
+  - it: Discovery collector name should match
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: swi-k8s-opentel-swo-k8s-collect-discovery
