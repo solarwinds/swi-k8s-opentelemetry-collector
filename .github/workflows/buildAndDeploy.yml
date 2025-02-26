@@ -110,7 +110,7 @@ jobs:
           docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2022.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2022
           docker save --output swi-k8s-opentelemetry-collector-windows-ltsc2019.tar swi-k8s-opentelemetry-collector:${{ steps.generate-tag.outputs.value }}-nanoserver-ltsc2019
       
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'swo-k8s-collector')
         with:
           name: image
@@ -141,8 +141,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ vars.DOCKER_SOLARWINDS_ORG_LOGIN }}
+          password: ${{ secrets.ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT }}
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -163,7 +163,7 @@ jobs:
       name: production
       url: https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: image
 
@@ -183,9 +183,9 @@ jobs:
 
       - name: Docker login
         env:
-          OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
-          OPENTELEMETRY_DOCKER_HUB_CI_USER: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
-        run: echo "$env:OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD" | docker login -u "$env:OPENTELEMETRY_DOCKER_HUB_CI_USER" --password-stdin
+          ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT: ${{ secrets.ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT }}
+          DOCKER_SOLARWINDS_ORG_LOGIN: ${{ vars.DOCKER_SOLARWINDS_ORG_LOGIN }}
+        run: echo "$env:ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT" | docker login -u "$env:DOCKER_SOLARWINDS_ORG_LOGIN" --password-stdin
 
       - name: Push as specific
         run: | 
@@ -209,8 +209,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ vars.DOCKER_SOLARWINDS_ORG_LOGIN }}
+          password: ${{ secrets.ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT }}
         
       - name: Get linux manifest
         run: | 
