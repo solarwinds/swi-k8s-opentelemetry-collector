@@ -28,13 +28,28 @@ kubectl delete networkpolicies --all -n test-namespace
 
 # Delete all CRDs from monitoring.coreos.com group
 echo "Deleting all CRDs from monitoring.coreos.com group"
-kubectl delete crd $(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="monitoring.coreos.com")]}{.metadata.name}{"\n"}{end}')
+crds=$(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="monitoring.coreos.com")]}{.metadata.name}{"\n"}{end}')
+if [ -n "$crds" ]; then
+    kubectl delete crd $crds
+else
+    echo "No CRDs found in monitoring.coreos.com group"
+fi
 
 # Delete all CRDs from cert-manager.io group
 echo "Deleting all CRDs from cert-manager.io group"
-kubectl delete crd $(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="cert-manager.io")]}{.metadata.name}{"\n"}{end}')
+crds=$(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="cert-manager.io")]}{.metadata.name}{"\n"}{end}')
+if [ -n "$crds" ]; then
+    kubectl delete crd $crds
+else
+    echo "No CRDs found in cert-manager.io group"
+fi
 
-# Delete all CRDs from cert-manager.io group
+# Delete all CRDs from acme.cert-manager.io group
 echo "Deleting all CRDs from acme.cert-manager.io group"
-kubectl delete crd $(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="acme.cert-manager.io")]}{.metadata.name}{"\n"}{end}')
+crds=$(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="acme.cert-manager.io")]}{.metadata.name}{"\n"}{end}')
+if [ -n "$crds" ]; then
+    kubectl delete crd $crds
+else
+    echo "No CRDs found in acme.cert-manager.io group"
+fi
 
