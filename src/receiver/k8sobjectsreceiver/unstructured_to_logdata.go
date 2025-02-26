@@ -31,6 +31,10 @@ func watchObjectsToLogData(event *watch.Event, observedAt time.Time, config *K8s
 		}},
 	}
 
+	if attrUpdater == nil {
+		attrUpdater = func(attrs pcommon.Map) {}
+	}
+
 	return unstructuredListToLogData(&ul, observedAt, config, func(attrs pcommon.Map) {
 		objectMeta := udata.Object["metadata"].(map[string]any)
 		name := objectMeta["name"].(string)
