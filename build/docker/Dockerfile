@@ -8,8 +8,13 @@ RUN cd src/cmd && CGO_ENABLED=0 GOEXPERIMENT=boringcrypto go build -trimpath -o 
 
 FROM builder AS tests
 # run all tests for all go modules in `src` folder
-CMD cd src && find . -name go.mod -execdir go test ./... \;
-
+CMD cd src && \
+    ret=0 && \
+    for d in $(find . -name go.mod -exec dirname {} \;); do \
+      (cd "$d" && go test ./...) || ret=1; \
+    done && \
+    exit $ret
+    
 FROM debian:12.9 AS journal
 RUN apt update
 RUN apt install -y systemd
