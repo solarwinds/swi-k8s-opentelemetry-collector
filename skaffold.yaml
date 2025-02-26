@@ -14,12 +14,6 @@ build:
           CI: "{{ .CI }}"
   local:
     push: false
-manifests:
-  kustomize:
-    paths:
-      - tests/deploy/tests
-    buildArgs:
-      - --load-restrictor LoadRestrictionsNone
 resourceSelector:
   allow:
     # let skaffold to manager CRDs in local k8s
@@ -33,16 +27,22 @@ resourceSelector:
       image: [".*"]
       labels: [".*"]
 deploy:
-  kubectl: 
-    defaultNamespace: test-namespace
   helm:
+    hooks:
+      before:
+        - host:
+            command: ["sh", "-c", "./utils/pre-deploy.sh"]
+            os: [darwin, linux]
+        - host:
+            command: ["cmd", "/c", ".\\utils\\pre-deploy.bat"]
+            os: [windows]
     releases:
       - name: timeseries-mock-service
         chartPath: tests/deploy/timeseries-mock-service
         namespace: test-namespace
         createNamespace: true
         upgradeOnChange: true
-      - name: swi-k8s-opentelemetry-collector
+      - name: sut
         chartPath: deploy/helm
         namespace: test-namespace
         createNamespace: true
@@ -91,7 +91,7 @@ deploy:
                   excludePattern: "skaffold\\.dev/.*"
               autodiscovery:
                 discovery_collector:
-                  enabled: false
+                  enabled: true
                 prometheusEndpoints: 
                   enabled: true
                   customTransformations:
@@ -126,15 +126,20 @@ deploy:
                 log_record:
                   - resource.attributes["k8s.namespace.name"] == "test-namespace"
           certmanager:
-            enabled: false
+            enabled: true
           operator:
-            enabled: false
+            enabled: true
           ebpfNetworkMonitoring:
             enabled: true
           prometheusCRDs:
-            install: false
+            install: true
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
+      - name: timeseries-mock-service-custom-resources
+        chartPath: tests/deploy/timeseries-mock-service-custom-resources
+        namespace: test-namespace
+        createNamespace: true
+        upgradeOnChange: true
       - name: monitoring
         remoteChart: kube-prometheus-stack
         namespace: test-namespace
@@ -149,6 +154,14 @@ deploy:
           server:
             nodeSelector:
               "kubernetes\\.io\\/os": linux
+      - name: tests
+        chartPath: tests/deploy/tests
+        namespace: test-namespace
+        createNamespace: true
+        upgradeOnChange: true
+        setValueTemplates:
+          podMonitors:
+            enabled: true
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -170,8 +183,12 @@ profiles:
       local:
         push: true
     patches:
+    # remove timeseries-mock-service
     - op: remove
       path: /deploy/helm/releases/0
+    # remove timeseries-mock-service-custom-resources
+    - op: remove
+      path: /deploy/helm/releases/1
     - op: replace
       path: /deploy/helm/releases/0/namespace
       value: "{{.TEST_CLUSTER_NAMESPACE}}"
@@ -221,8 +238,9 @@ profiles:
               paths:
                 - ./src/**
     patches:
+    # remove `monitoring` (Prometheus Operator)
     - op: remove
-      path: /deploy/helm/releases/2
+      path: /deploy/helm/releases/3
     - op: remove
       path: /portForward/1
     - op: add
