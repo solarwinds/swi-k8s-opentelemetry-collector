@@ -257,6 +257,13 @@
                 "null"
             ]
         },
+        "k8sServiceAccountName": {
+            "description": "The name of the ServiceAccount. More info: https://kubernetes.io/docs/concepts/security/service-accounts",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
         "k8sNodeSelector": {
             "description": "NodeSelector definition. More info: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector",
             "$ref": "#/definitions/k8sLabels"
@@ -320,6 +327,18 @@
         "schedule": {
             "description": "Schedule in Cron format. More info: https://en.wikipedia.org/wiki/Cron.",
             "type": "string"
+        },
+        "waitJobConfig": {
+            "description": "Configuration for Wait Jobs.",
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "image": {
+                    "$ref": "#/definitions/imageDefinition"
+                }
+            }
         }
     },
     "properties": {
@@ -462,6 +481,35 @@
                 "uid": {
                     "description": "An optional unique identifier for a cluster provided by user during deployment of the Helm chart. Useful for example if multiple clusters have to have the same name. Or when the name contains problematic characters.",
                     "type": "string"
+                },
+                "filter": {
+                    "type": "object",
+                    "properties": {
+                        "exclude_namespaces": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "exclude_namespace_regex": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "include_namespaces": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "include_namespace_regex": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }                        
                 }
             },
             "required": [
@@ -922,6 +970,80 @@
                                 },
                                 "prefix": {
                                     "type": "string"
+                                },
+                                "discovery_collector": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "targetAllocator": {
+                                            "type": "object",
+                                            "properties": {
+                                                "affinity": {
+                                                    "$ref": "#/definitions/k8sAffinity"
+                                                },
+                                                "nodeSelector": {
+                                                    "$ref": "#/definitions/k8sNodeSelector"
+                                                },
+                                                "tolerations": {
+                                                    "$ref": "#/definitions/k8sTolerations"
+                                                },
+                                                "serviceMonitorSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                },
+                                                "podMonitorSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                },
+                                                "probeSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                },
+                                                "scrapeConfigSelector": {
+                                                    "type": "object",
+                                                    "additionalProperties": true
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        },
+                                        "affinity": {
+                                            "$ref": "#/definitions/k8sAffinity"
+                                        },
+                                        "batch": {
+                                            "$ref": "#/definitions/collectorBatch"
+                                        },
+                                        "memory_limiter": {
+                                            "$ref": "#/definitions/collectorMemoryLimiter"
+                                        },
+                                        "nodeSelector": {
+                                            "$ref": "#/definitions/k8sNodeSelector"
+                                        },
+                                        "resources": {
+                                            "$ref": "#/definitions/k8sResourceRequirements"
+                                        },
+                                        "retry_on_failure": {
+                                            "$ref": "#/definitions/collectorRetryOnFailure"
+                                        },
+                                        "sending_queue": {
+                                            "$ref": "#/definitions/collectorSendingQueue"
+                                        },
+                                        "telemetry": {
+                                            "$ref": "#/definitions/collectorTelemetry"
+                                        },
+                                        "timeout": {
+                                            "$ref": "#/definitions/collectorTimeout"
+                                        },
+                                        "tolerations": {
+                                            "$ref": "#/definitions/k8sTolerations"
+                                        },
+                                        "autoscaler": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    },
+                                    "additionalProperties": false
                                 }
                             },
                             "additionalProperties": false
@@ -1334,6 +1456,9 @@
                 },
                 "storageClassName": {
                     "$ref": "#/definitions/k8sStorageClassName"
+                },
+                "serviceAccountName": {
+                    "$ref": "#/definitions/k8sServiceAccountName"
                 }
             },
             "additionalProperties": false
@@ -1373,6 +1498,29 @@
             "description": "This field is included to support backward compatibility with older Helm versions or custom distributions. Prefer using 'certmanager' field.",
             "type": "object",
             "additionalProperties": true
+        },
+        "prometheusCRDs": {
+            "description": "Allows installation of Promethues CRDs to the cluster.",
+            "type": "object",
+            "properties": {
+                "install": {
+                    "type": "boolean"
+                },
+                "additionalProperties": false
+            }
+        },
+        "waitJobs": {
+            "description": "Configuration for available wait jobs.",
+            "type": "object",
+            "properties": {
+                "operator": {
+                    "$ref": "#/definitions/waitJobConfig"
+                },
+                "certmanager": {
+                    "$ref": "#/definitions/waitJobConfig"
+                },
+                "additionalProperties": false
+            }
         }
     },
     "required": [

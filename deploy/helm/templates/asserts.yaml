@@ -17,3 +17,7 @@
 {{- if eq ((semver "3.9.0").Compare (semver .Capabilities.HelmVersion.Version)) 1 -}}
 {{ fail "This version of Helm is not supported. Please use 3.9.0 or newer." }}
 {{- end -}}
+
+{{- if and (or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex))) (or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex))) -}}
+{{ fail "Only one namespace filter can be used at time, either include or exclude." }}
+{{- end -}}

@@ -24,6 +24,7 @@ extensions:
 {{- if .Values.otel.node_collector.sending_queue.persistent_storage.enabled }}
   file_storage/sending_queue:
     directory: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
+    fsync: true
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
@@ -93,6 +94,18 @@ processors:
   filter/metrics:
     metrics:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
+{{- end }}
+
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces:
+    metrics:
+      metric:
+{{- include "namespacesFilter" . | nindent 8 }}    
+
+  filter/namespaces_logs:
+    logs:
+      log_record:
+{{- include "namespacesFilter" . | nindent 8 }}      
 {{- end }}
 
 {{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
@@ -745,6 +758,9 @@ service:
         - groupbyattrs/common-all
         - resource/container
         - k8sattributes
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces_logs
+{{- end }}           
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "false" }}
 {{- if (include "logsFilter" .) }}
         - filter/logs
@@ -838,6 +854,9 @@ service:
         - memory_limiter
         - filter/histograms
         - k8sattributes
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}             
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}

@@ -39,91 +39,31 @@ In order to deploy the Helm chart, you need to prepare:
       endpoint: <solarwinds-observability-otel-endpoint>
   cluster:
       name: <cluster-display-name>
-      uid: <unique-cluster-identifier>
   ```
 
-#### Version 4.1.0 and newer
+#### Version prior to 4.1.0
 
-Starting with version 4.1.0 setting `cluster.uid` is optional. If not provided it defaults to value of `cluster.name`.
-
-### Metrics
-
-By default, the `swo-k8s-collector` collects a subset of `kube-state-metrics` metrics and metrics exposed by workloads that are annotated with `prometheus.io/scrape: true`.
-
-To configure the autodiscovery, see settings in the `otel.metrics.autodiscovery.prometheusEndpoints` section of the [values.yaml](values.yaml).
-
-Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
-
-Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
-
-### Logs
-
-Once deployed to a Kubernetes cluster, the logs collection and processing configuration is stored as a ConfigMap under the `logs.config` key.
-
-#### Version v3.x
-
-The `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
-
-```yaml
-otel:
-  logs:
-    filter:
-      include:
-        match_type: regexp
-        record_attributes:
-          - key: k8s.namespace.name
-            value: ^.*$
-```
-
-#### Version v4.x
-
-The `swo-k8s-collector` collects all logs by default which might be intensive. To avoid processing an excessive amount of data, the `swo-k8s-collector` can define filter which will drop all unwanted logs. This behavior can be modified by setting `otel.logs.filter` value.
-
-An example for scraping container logs only from `kube-*` namespace:
-
-```yaml
-otel:
-  logs:
-    filter:
-      log_record:
-        - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
-```
-
-An example for scraping container logs only from namespaces `my-custom-namespace` or `my-other-namespace` while excluding istio logs related to some of the successful HTTP requests:
-
-```yaml
-otel:
-  logs:
-    filter:
-      log_record:
-        - not(IsMatch(resource.attributes["k8s.namespace.name"], "(^my-custom-namespace$)|(^my-other-namespace$)"))
-        - |
-          resource.attributes["k8s.container.name"] == "istio-proxy" and
-          IsMatch(body, "\\[[^\\]]*\\] \"\\S+ \\S+ HTTP/\\d(\\.\\d)*\" 200.*")
-```
-
-### Manifests
-
-Starting with version 4.0.0, `swo-k8s-collector` observes changes in supported resources and collects their manifests.
-
-By default, manifest collection is enabled, but it can be disabled by setting `otel.manifests.enabled` to `false`.  Manifest collection runs in the event collector, so `otel.events.enabled` must be set to `true` (default). 
-
-Currently, the following resources are watched for changes: `pods`, `deployments`, `statefulsets`, `replicasets`, `daemonsets`, `jobs`, `cronjobs`, `nodes`, `services`, `persistentvolumes`, `persistentvolumeclaims`, `configmaps`, `ingresses` and Istio's `virtualservices`.
-
-By default, `swo-k8s-collector` collects all manifests. You can use the `otel.manifests.filter` setting to filter out manifests that should not be collected.
-
-An example of filter for collecting all manifests, but `configmaps` just for `kube-system` namespace.
-
-```yaml
-otel:
-  manifests:
-    enabled: true
-    filter:
-      log_record:  
-        - attributes["k8s.object.kind"] == "ConfigMap" and resource.attributes["k8s.namespace.name"] != "kube-system"
-```
+Before version 4.1.0 setting `cluster.uid` was requried. Starting with version 4.1.0, it became optional. If not provided, it defaults to the value of `cluster.name`.
 
 ### How to limit instrumentation of collector
+
+Starting from version 4.4.0, it is possible to specify global namespace filter. You can use `include_namespaces` and `include_namespaces_regex` or `exclude_namespaces` and `exclude_namespaces_regex` conditions, but not `include_` and `exclude_` at the same time. Filter is applied to metrics, events and logs.
+
+  ```yaml
+  otel:
+      endpoint: <solarwinds-observability-otel-endpoint>
+  cluster:
+      name: <cluster-display-name>
+      filter:
+          exclude_namespaces:
+              - some-namespace
+          exclude_namespaces_regex:
+              - "^(dev|stage)-.*"
+  ```
+
+  **Note:** Global namespace filter is applied before individual filters mentioned below.
+
+#### Version prior to 4.4.0 
 
 There are 5 filters that can to be set to limit the instrumentation of the collector in `values.yaml`. To fully limit the collector to not create entities, you need to set all filters.
 
@@ -175,6 +115,87 @@ Another example of filter that allows all data except data related to deployment
 ```yaml
 - resource.attributes["k8s.deployment.name"] == "foo"
 ```
+
+### Metrics
+
+By default, the `swo-k8s-collector` collects a subset of `kube-state-metrics` metrics and metrics exposed by workloads that are annotated with `prometheus.io/scrape: true`.
+
+To configure the autodiscovery, see settings in the `otel.metrics.autodiscovery.prometheusEndpoints` section of the [values.yaml](values.yaml).
+
+Once deployed to a Kubernetes cluster, the metrics collection and processing configuration is stored as a ConfigMap under the `metrics.config` key.
+
+Native Kubernetes metrics are in a format that requires additional processing on the collector side to produce meaningful time series data that can later be consumed and displayed by the Solarwinds Observability platform.
+
+### Logs
+
+Once deployed to a Kubernetes cluster, the logs collection and processing configuration is stored as a ConfigMap under the `logs.config` key.
+
+#### Version v4.x
+
+The `swo-k8s-collector` collects all logs by default which might be intensive. To avoid processing an excessive amount of data, the `swo-k8s-collector` can define filter which will drop all unwanted logs. This behavior can be modified by setting `otel.logs.filter` value.
+
+An example for scraping container logs only from `kube-*` namespace:
+
+```yaml
+otel:
+  logs:
+    filter:
+      log_record:
+        - not(IsMatch(resource.attributes["k8s.namespace.name"], "^kube-.*$"))
+```
+
+An example for scraping container logs only from namespaces `my-custom-namespace` or `my-other-namespace` while excluding istio logs related to some of the successful HTTP requests:
+
+```yaml
+otel:
+  logs:
+    filter:
+      log_record:
+        - not(IsMatch(resource.attributes["k8s.namespace.name"], "(^my-custom-namespace$)|(^my-other-namespace$)"))
+        - |
+          resource.attributes["k8s.container.name"] == "istio-proxy" and
+          IsMatch(body, "\\[[^\\]]*\\] \"\\S+ \\S+ HTTP/\\d(\\.\\d)*\" 200.*")
+```
+
+#### Version v3.x
+
+The `swo-k8s-collector` collects container logs only in `kube-*` namespaces, which means it only collects logs from the internal Kubernetes container. This behavior can be modified by setting `otel.logs.filter` value. An example for scraping logs from all namespaces:
+
+```yaml
+otel:
+  logs:
+    filter:
+      include:
+        match_type: regexp
+        record_attributes:
+          - key: k8s.namespace.name
+            value: ^.*$
+```
+
+
+
+### Manifests
+
+Starting with version 4.0.0, `swo-k8s-collector` observes changes in supported resources and collects their manifests.
+
+By default, manifest collection is enabled, but it can be disabled by setting `otel.manifests.enabled` to `false`.  Manifest collection runs in the event collector, so `otel.events.enabled` must be set to `true` (default). 
+
+Currently, the following resources are watched for changes: `pods`, `deployments`, `statefulsets`, `replicasets`, `daemonsets`, `jobs`, `cronjobs`, `nodes`, `services`, `persistentvolumes`, `persistentvolumeclaims`, `configmaps`, `ingresses` and Istio's `virtualservices`.
+
+By default, `swo-k8s-collector` collects all manifests. You can use the `otel.manifests.filter` setting to filter out manifests that should not be collected.
+
+An example of filter for collecting all manifests, but `configmaps` just for `kube-system` namespace.
+
+```yaml
+otel:
+  manifests:
+    enabled: true
+    filter:
+      log_record:  
+        - attributes["k8s.object.kind"] == "ConfigMap" and resource.attributes["k8s.namespace.name"] != "kube-system"
+```
+
+
 
 ## Receive 3rd party metrics
 
@@ -272,3 +293,49 @@ The possible values for the annotation can be:
 - `"false"` - do not inject.
 
 Alternatively, the annotation can be added to a namespace, which will result in all services in that namespace opting into automatic instrumentation. See the [Operator's auto-instrumentation documentation](https://github.com/open-telemetry/opentelemetry-operator/blob/main/README.md#opentelemetry-auto-instrumentation-injection) for more details.
+
+## Scrape Prometheus endpoints based on Prometheus Operator CRDs
+
+SWO K8s Collector can discover Prometheus Operator CRDs (`ServiceMonitors`, `PodMonitors`, `ScrapeConfigs`, and `Probes`) and scrape Prometheus endpoints based on them.
+
+Internally, it leverages the [TargetAllocator](https://opentelemetry.io/docs/platforms/kubernetes/operator/target-allocator/) feature of the OpenTelemetry Operator.
+
+Keep in mind that there can be duplicate scrapes of the same targets if `otel.metrics.autodiscovery.prometheusEndpoints.enabled` is set to `true` (which is the default). To avoid duplicate scrapes, it is recommended to disable the default discovery and also set the `sw.ignore=true` label on all CRDs that are already monitored by default by the SWO K8s Collector (kubelet metrics, kube-state-metrics, apiserver).
+
+### Setting up
+
+#### 1. Enable deployment of the operator
+
+The same as ["Enable deployment of the operator" in Auto Instrumentation (experimental feature)](#1-enable-deployment-of-the-operator).
+
+#### 2. Ensure proper TLS Certificate management
+
+The same as ["Ensure proper TLS Certificate management" in Auto Instrumentation (experimental feature)](#2-ensure-proper-tls-certificate-management).
+
+#### 3. Deploy Prometheus Operator CRDs
+
+Set `prometheusCRDs.install=true` in `values.yaml`.
+
+#### 4. Enable Discovery Collector
+
+Set `otel.metrics.autodiscovery.discovery_collector.enabled=true` in `values.yaml`.
+
+#### 5. Configure the right selectors for Prometheus CRDs
+
+By default, all CRDs that do not have the `sw.ignore=true` label are discovered. This can be overridden by the following configuration in `values.yaml`:
+
+```yaml
+otel:
+  metrics:
+    autodiscovery:
+      discovery_collector:
+        targetAllocator:
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrservicemonitorselector
+          serviceMonitorSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrpodmonitorselector
+          podMonitorSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrprobeselector
+          probeSelector: {}
+          # see https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspectargetallocatorprometheuscrscrapeconfigselector
+          scrapeConfigSelector: {}
+```

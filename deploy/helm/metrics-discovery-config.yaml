@@ -22,6 +22,7 @@ extensions:
 {{- if .Values.aws_fargate.metrics.autodiscovery.sending_queue.offload_to_disk }}
   file_storage/sending_queue:
     directory: /var/lib/swo/sending_queue
+    fsync: true
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
@@ -87,6 +88,13 @@ processors:
   filter/metrics:
     metrics:
 {{ toYaml .Values.otel.metrics.filter | indent 6 }}
+{{- end }}
+
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces:
+    metrics:
+      metric:
+{{- include "namespacesFilter" . | nindent 8 }}      
 {{- end }}
 
   batch/metrics:
@@ -248,6 +256,9 @@ service:
         - memory_limiter
         - filter/histograms
         - k8sattributes
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}             
 {{- if .Values.otel.metrics.filter }}
         - filter/metrics
 {{- end }}

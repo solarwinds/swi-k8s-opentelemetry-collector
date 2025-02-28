@@ -1,0 +1,487 @@
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  # name is limitted to 41, as `-collector` is autoadded by the operator and statefulset can have maximum 52 characters
+  name: {{ include "common.fullname" (tuple . "-discovery" 41) }} 
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "4"
+spec:
+  mode: statefulset
+  autoscaler:
+    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.autoscaler }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.autoscaler | nindent 4 }}
+    {{- else }}
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilization: 80
+    targetMemoryUtilization: 80
+    {{- end }}
+  targetAllocator:
+    enabled: true
+    serviceAccount: {{ include "common.fullname" . }}
+    prometheusCR:
+      enabled: true
+      scrapeInterval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+      serviceMonitorSelector: 
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+      podMonitorSelector: 
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+      probeSelector: 
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+      scrapeConfigSelector: 
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+    securityContext: 
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop:
+        - ALL
+    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.nodeSelector }}
+    nodeSelector:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.nodeSelector | nindent 8 }}
+    {{- end }}
+    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.tolerations }}
+    tolerations:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.tolerations | nindent 8 }}
+    {{- end }}
+    affinity:
+    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.affinity }}
+{{- toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.affinity | nindent 8 }}
+    {{- else }}
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+              - amd64
+              - arm64
+            - key: kubernetes.io/os
+              operator: In
+              values:
+              - linux
+    {{- end }}
+  image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+  imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+  serviceAccount: {{ include "common.fullname" . }}
+  securityContext: 
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop:
+      - ALL
+  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.tolerations }}
+  tolerations:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.tolerations | nindent 4 }}
+  {{- end }}
+  affinity:
+  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.affinity }}
+{{- toYaml .Values.otel.metrics.autodiscovery.discovery_collector.affinity | nindent 4 }}
+  {{- else }}
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: eks.amazonaws.com/compute-type
+            operator: NotIn
+            values:
+            - fargate
+          - key: kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
+            - arm64
+          - key: kubernetes.io/os
+            operator: In
+            values:
+            - linux
+  {{- end }}
+  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.nodeSelector }}
+  nodeSelector:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.nodeSelector | nindent 4 }}
+  {{- end }}
+  {{- if include "isSwiEndpointCheckEnabled" . }}
+  initContainers:
+    - name: otel-endpoint-check
+      image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+      imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+      command:
+        - /swi-otelcol
+        - test-connection
+        - --endpoint=$(OTEL_ENVOY_ADDRESS)
+        - --apitoken=$(SOLARWINDS_API_TOKEN)
+        - --clusteruid=$(CLUSTER_UID)
+        - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+      env:
+        - name: SOLARWINDS_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "common.secret" . }}
+              key: SOLARWINDS_API_TOKEN
+              optional: true
+      envFrom:
+        - configMapRef:
+            name: {{ include "common.fullname" (tuple . "-common-env") }}
+  {{- end }}
+  env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: SOLARWINDS_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: {{ template "common.secret" . }}
+          key: SOLARWINDS_API_TOKEN
+          optional: true
+    - name: GOMEMLIMIT
+      valueFrom:
+        resourceFieldRef:
+          resource: limits.memory
+  envFrom:
+    - configMapRef:
+        name: {{ include "common.fullname" (tuple . "-common-env") }}
+  resources:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.resources | indent 4 }}
+  config: 
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'otel-collector'
+              scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+              static_configs:
+              - targets: [ '0.0.0.0:8888' ]
+    
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    connectors:
+      forward/metric-exporter: {}
+
+    processors:
+      memory_limiter:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.memory_limiter | indent 8 }}
+      
+      filter/histograms:
+        metrics:
+          metric:
+            - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")'
+      
+      k8sattributes:
+        auth_type: "serviceAccount"
+        passthrough: false
+        extract:
+          metadata:
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+      
+      {{- if .Values.otel.metrics.filter }}
+      filter/metrics:
+        metrics:
+{{ toYaml .Values.otel.metrics.filter | indent 10 }}
+      {{- end }}
+
+{{- include "common-config.filter-remove-temporary-metrics" . | nindent 6 }}
+
+      transform/scope:
+        metric_statements:
+          - context: scope
+            statements:
+              - set(name, "")
+              - set(version, "")
+        log_statements:
+          - context: scope
+            statements:
+              - set(name, "")
+              - set(version, "")
+      
+      batch/metrics:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.batch | indent 8 }}
+
+{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+      filter/metrics-discovery:
+        metrics:
+{{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 10 }}
+{{- end }}
+
+      metricstransform/rename/discovery:
+        transforms:
+          # add `k8s.` prefix to all metrics
+          - include: ^(.*)$$
+            match_type: regexp
+            action: update
+            new_name: {{ .Values.otel.metrics.autodiscovery.prefix }}$${1}
+
+{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+  # in case the prefix differs from "k8s." we need to copy the required metrics
+  # so that SWO built-in dashboards works correctly
+{{- $arrayOfRequiredMetrics := list 
+  "etcd_disk_backend_commit_duration_seconds"
+  "etcd_disk_wal_fsync_duration_seconds" 
+  "etcd_network_client_grpc_received_bytes_total" 
+  "etcd_network_client_grpc_sent_bytes_total" 
+  "etcd_network_peer_received_bytes_total" 
+  "etcd_network_peer_sent_bytes_total" 
+  "etcd_server_leader_changes_seen_total" 
+  "etcd_server_proposals_applied_total" 
+  "etcd_server_proposals_committed_total"
+  "etcd_server_proposals_failed_total"
+  "etcd_server_proposals_pending"
+  "etcd_server_has_leader"
+  "etcd_mvcc_db_total_size_in_bytes"
+  "process_resident_memory_bytes"
+  "grpc_server_started_total"
+  "grpc_server_handled_total"
+  "rest_client_request_duration_seconds"
+  "rest_client_requests_total"
+  "workqueue_adds_total"
+  "workqueue_depth"
+  "workqueue_queue_duration_seconds"
+}}
+      metricstransform/copy-required-metrics:
+        transforms:
+        {{- $root := . }}
+        {{- range $index, $metric := $arrayOfRequiredMetrics }}
+          - include: {{ $root.Values.otel.metrics.autodiscovery.prefix }}{{ $metric }}
+            action: insert
+            new_name: k8s.{{ $metric }}
+        {{- end }}
+{{- end }}
+
+      transform/istio-metrics:
+        metric_statements:
+          - context: metric
+            statements:
+              - extract_sum_metric(true) where (name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes" or name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes" or name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
+              - extract_count_metric(true) where (name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
+              - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
+              - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
+
+      metricstransform/istio-metrics:
+        transforms:
+          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum
+            action: insert
+            new_name: k8s.istio_request_bytes.rate
+          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes_sum
+            action: insert
+            new_name: k8s.istio_response_bytes.rate
+          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_requests_total
+            action: insert
+            new_name: k8s.istio_requests.rate
+          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_sent_bytes_total
+            action: insert
+            new_name: k8s.istio_tcp_sent_bytes.rate
+          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_received_bytes_total
+            action: insert
+            new_name: k8s.istio_tcp_received_bytes.rate
+          - include: k8s.istio_request_bytes.rate
+            action: insert
+            new_name: k8s.istio_request_bytes.delta
+          - include: k8s.istio_response_bytes.rate
+            action: insert
+            new_name: k8s.istio_response_bytes.delta
+          - include: k8s.istio_requests.rate
+            action: insert
+            new_name: k8s.istio_requests.delta
+          - include: k8s.istio_tcp_sent_bytes.rate
+            action: insert
+            new_name: k8s.istio_tcp_sent_bytes.delta
+          - include: k8s.istio_tcp_received_bytes.rate
+            action: insert
+            new_name: k8s.istio_tcp_received_bytes.delta
+
+      cumulativetodelta/istio-metrics:
+        include:
+          metrics:
+            - k8s.istio_request_bytes.rate
+            - k8s.istio_response_bytes.rate
+            - k8s.istio_request_duration_milliseconds_sum_temp
+            - k8s.istio_request_duration_milliseconds_count_temp
+            - k8s.istio_requests.rate
+            - k8s.istio_tcp_sent_bytes.rate
+            - k8s.istio_tcp_received_bytes.rate
+            - k8s.istio_request_bytes.delta
+            - k8s.istio_response_bytes.delta
+            - k8s.istio_requests.delta
+            - k8s.istio_tcp_sent_bytes.delta
+            - k8s.istio_tcp_received_bytes.delta
+          match_type: strict
+
+      deltatorate/istio-metrics:
+        metrics:
+          - k8s.istio_request_bytes.rate
+          - k8s.istio_response_bytes.rate
+          - k8s.istio_request_duration_milliseconds_sum_temp
+          - k8s.istio_request_duration_milliseconds_count_temp
+          - k8s.istio_requests.rate
+          - k8s.istio_tcp_sent_bytes.rate
+          - k8s.istio_tcp_received_bytes.rate
+
+      metricsgeneration/istio-metrics:
+        rules:
+          - name: k8s.istio_request_duration_milliseconds.rate
+            type: calculate
+            metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            operation: divide
+
+      groupbyattrs/common-all:
+        keys:
+          - k8s.container.name
+          - k8s.namespace.name
+          - k8s.pod.name
+          - k8s.pod.uid
+          - host.name
+          - service.name
+
+      resource/all:
+        attributes:
+
+          # Collector and Manifest version
+          - key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+            action: insert
+
+          - key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+            action: insert
+
+          # Cluster
+          - key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+            action: insert
+
+          - key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+            action: insert
+
+    exporters:
+      otlp:
+        endpoint: ${OTEL_ENVOY_ADDRESS}
+        tls:
+          insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+        headers:
+          "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+        retry_on_failure:
+          enabled: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.enabled }}
+          initial_interval: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.initial_interval }}
+          max_interval: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.max_interval }}
+          max_elapsed_time: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.max_elapsed_time }}
+        sending_queue:
+          enabled: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.enabled }}
+          num_consumers: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.num_consumers }}
+          queue_size: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.queue_size }}
+        timeout: {{ .Values.otel.metrics.autodiscovery.discovery_collector.timeout }}
+
+    service:
+      extensions:
+        - health_check
+      pipelines:
+        metrics:
+          exporters:
+            - otlp
+          processors:
+            - memory_limiter
+            - filter/histograms
+            - k8sattributes
+    {{- if .Values.otel.metrics.filter }}
+            - filter/metrics
+    {{- end }}
+            - filter/remove_temporary_metrics
+            - transform/scope
+            - batch/metrics
+          receivers:
+            - forward/metric-exporter
+
+        metrics/discovery:
+          exporters:
+            - forward/metric-exporter
+          processors:
+            - memory_limiter
+    {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
+            - filter/metrics-discovery
+    {{- end }}
+    {{- if .Values.otel.metrics.autodiscovery.prefix }}
+            - metricstransform/rename/discovery
+    {{- end }}
+    {{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
+            - metricstransform/copy-required-metrics
+    {{- end }}
+            - transform/istio-metrics
+            - metricstransform/istio-metrics
+            - cumulativetodelta/istio-metrics
+            - deltatorate/istio-metrics
+            - metricsgeneration/istio-metrics
+            - groupbyattrs/common-all
+            - resource/all
+          receivers:
+            - prometheus
+      telemetry:
+    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.enabled }}
+        logs:
+          level: {{ .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.level }}
+    {{- end }}
+    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.enabled }}
+        metrics:
+          address: {{ .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address }}
+    {{- end }}
+{{- end }}
+  

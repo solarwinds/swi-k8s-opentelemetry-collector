@@ -17,6 +17,7 @@ module github.com/solarwinds/swi-k8s-opentelemetry-collector
 go 1.23.0
 
 require (
+	github.com/open-telemetry/opentelemetry-collector-contrib/connector/routingconnector v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/observer/k8sobserver v0.116.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.116.0
@@ -66,7 +67,7 @@ require (
 	go.opentelemetry.io/otel/log v0.8.0
 	go.opentelemetry.io/otel/sdk v1.32.0
 	go.opentelemetry.io/otel/sdk/log v0.8.0
-	golang.org/x/sys v0.28.0
+	golang.org/x/sys v0.30.0
 	google.golang.org/grpc v1.68.1
 )
 
@@ -307,9 +308,9 @@ require (
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.32.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
@@ -332,5 +333,12 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+replace golang.org/x/net => golang.org/x/net v0.33.0
+
+replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.27.0
+
+replace golang.org/x/crypto => golang.org/x/crypto v0.35.0
+
 replace github.com/solarwinds/swi-k8s-opentelemetry-collector/processor/containerprocessor v0.116.0 => ./../processor/containerprocessor
+
 replace github.com/open-telemetry/opentelemetry-collector-contrib/receiver/k8sobjectsreceiver v0.116.0 => ../receiver/k8sobjectsreceiver

@@ -13,31 +13,39 @@ If release name contains chart name it will be used as a full name.
 Usages: 
   no suffix: {{ include "common.fullname" . }}
   with suffix: {{ include "common.fullname" (tuple . "-node-collector") }}
+  with custom max length: {{ include "common.fullname" (tuple . "-node-collector" 50) }}
 */}}
 {{- define "common.fullname" -}}
 {{- $context := . -}}
 {{- $suffix := "" -}}
-{{- $maxLength := 63 -}}
+{{- $defaultMaxLength := 63 -}}
+{{- $maxLength := $defaultMaxLength -}}
 {{- if eq (kindOf .) "slice" -}}
-{{- $context = index . 0 -}}
-{{- $suffix = index . 1 | default "" -}}
-{{- $maxLength = sub 63 (len $suffix) -}}
+  {{- $context = index . 0 -}}
+  {{- $suffix = index . 1 | default "" -}}
+  {{- if gt (len .) 2 -}}
+    {{- $paramMax := index . 2 | default $defaultMaxLength -}}
+    {{- $maxLength = sub $paramMax (len $suffix) -}}
+  {{- else -}}
+    {{- $maxLength = sub $defaultMaxLength (len $suffix) -}}
+  {{- end -}}
 {{- end -}}
 
 {{- $maxLengthStr := printf "%d" $maxLength -}}
 {{- $maxLengthInt := $maxLengthStr | atoi -}}
-{{- $releaseName := $context.Release.Name | trunc 30 | trimSuffix "-" -}}
+{{- $releaseNameMax := int (div $maxLengthInt 2) -}}
+{{- $releaseName := $context.Release.Name | trunc $releaseNameMax | trimSuffix "-" -}}
 {{- $result := "" -}}
 
 {{- if $context.Values.fullnameOverride -}}
-{{- $result = $context.Values.fullnameOverride | trunc $maxLengthInt | trimSuffix "-" -}}
+  {{- $result = $context.Values.fullnameOverride | trunc $maxLengthInt | trimSuffix "-" -}}
 {{- else -}}
-{{- $name := default $context.Chart.Name $context.Values.nameOverride -}}
-{{- if contains $name $releaseName -}}
-{{- $result = $releaseName | trunc $maxLengthInt | trimSuffix "-" -}}
-{{- else -}}
-{{- $result = printf "%s-%s" $releaseName $name | trunc $maxLengthInt | trimSuffix "-" -}}
-{{- end -}}
+  {{- $name := default $context.Chart.Name $context.Values.nameOverride -}}
+  {{- if contains $name $releaseName -}}
+    {{- $result = $releaseName | trunc $maxLengthInt | trimSuffix "-" -}}
+  {{- else -}}
+    {{- $result = printf "%s-%s" $releaseName $name | trunc $maxLengthInt | trimSuffix "-" -}}
+  {{- end -}}
 {{- end -}}
 {{- printf "%s%s" $result $suffix -}}
 {{- end -}}
@@ -318,4 +326,51 @@ Usage:
 */}}
 {{- define "isSwiEndpointCheckEnabled" -}}
 {{- ternary "true" "" (and .Values.otel.swi_endpoint_check.enabled (ternary true .Values.otel.metrics.swi_endpoint_check (eq .Values.otel.metrics.swi_endpoint_check nil))) -}}
+{{- end -}}
+
+
+{{/*
+Check whether namespace filter is enabled
+
+Usage:
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+*/}}
+{{- define "isNamespacesFilterEnabled" -}}
+{{- if or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns namespace filters in filter processor's format
+
+Usage:
+{{- include "namespacesFilter" . | nindent 8 }}
+*/}}
+{{- define "namespacesFilter" -}}
+{{- range .Values.cluster.filter.exclude_namespaces }}
+- resource.attributes["k8s.namespace.name"] == "{{ . }}"
+{{- end }}
+{{- range .Values.cluster.filter.exclude_namespaces_regex }}
+- IsMatch(resource.attributes["k8s.namespace.name"], "{{ . }}")
+{{- end }}
+# include namespaces have to be merged to one condition with ORs
+{{- if or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
+{{- $conditions := list }}
+{{- range .Values.cluster.filter.include_namespaces }}
+  {{- $value := . }}
+  {{- $condition := printf `resource.attributes["k8s.namespace.name"] == "%s"` $value }}
+  {{- $conditions = append $conditions $condition }}
+{{- end }}
+{{- range .Values.cluster.filter.include_namespaces_regex }}
+  {{- $value := . }}
+  {{- $condition := printf `IsMatch(resource.attributes["k8s.namespace.name"], "%s")` $value }}
+  {{- $conditions = append $conditions $condition }}
+{{- end }}
+{{- $conditions = append $conditions (printf `resource.attributes["k8s.namespace.name"] == nil`) }}
+{{- $joinedConditions := join " or " $conditions }}
+- not({{ $joinedConditions }}) 
+{{- end -}}
 {{- end -}}
