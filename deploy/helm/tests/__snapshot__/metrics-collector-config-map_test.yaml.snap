@@ -294,7 +294,6 @@ Metrics config should match snapshot when fargate is enabled:
             - metric.name == "k8s.kube_job_created" and value_double == 0
             - metric.name == "k8s.kube_job_status_completion_time" and value_double == 0
             - metric.name == "k8s.kube_job_status_start_time" and value_double == 0
-            - metric.name == "k8s.container.status" and value_double != 1
         filter/prometheus-node-metrics:
           metrics:
             metric:
@@ -386,7 +385,6 @@ Metrics config should match snapshot when fargate is enabled:
           - k8s.node.name
           - sw.k8s.namespace.status
           - sw.k8s.node.status
-          - sw.k8s.container.status
           - sw.k8s.container.init
           - daemonset
           - statefulset
@@ -1001,47 +999,6 @@ Metrics config should match snapshot when fargate is enabled:
             include: k8s.kube_pod_init_container_resource_limits
             match_type: regexp
             new_name: k8s.initcontainer.spec.memory.limit_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_waiting
-            new_name: k8s.kube_pod_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_running
-            new_name: k8s.kube_pod_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_terminated
-            new_name: k8s.kube_pod_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.container.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: insert
-            include: k8s.kube_pod_init_container_status_waiting
-            new_name: k8s.kube_pod_init_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_running
-            new_name: k8s.kube_pod_init_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_terminated
-            new_name: k8s.kube_pod_init_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.initcontainer.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: combine
-            include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
-            match_type: regexp
-            new_name: k8s.container.status
-            submatch_case: lower
           - action: insert
             include: k8s.container.spec.cpu.limit_temp
             new_name: k8s.pod.spec.cpu.limit
@@ -2053,7 +2010,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - metric.name == "k8s.kube_job_created" and value_double == 0
             - metric.name == "k8s.kube_job_status_completion_time" and value_double == 0
             - metric.name == "k8s.kube_job_status_start_time" and value_double == 0
-            - metric.name == "k8s.container.status" and value_double != 1
         filter/prometheus-node-metrics:
           metrics:
             metric:
@@ -2145,7 +2101,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - k8s.node.name
           - sw.k8s.namespace.status
           - sw.k8s.node.status
-          - sw.k8s.container.status
           - sw.k8s.container.init
           - daemonset
           - statefulset
@@ -2760,47 +2715,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: k8s.kube_pod_init_container_resource_limits
             match_type: regexp
             new_name: k8s.initcontainer.spec.memory.limit_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_waiting
-            new_name: k8s.kube_pod_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_running
-            new_name: k8s.kube_pod_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_terminated
-            new_name: k8s.kube_pod_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.container.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: insert
-            include: k8s.kube_pod_init_container_status_waiting
-            new_name: k8s.kube_pod_init_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_running
-            new_name: k8s.kube_pod_init_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_terminated
-            new_name: k8s.kube_pod_init_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.initcontainer.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: combine
-            include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
-            match_type: regexp
-            new_name: k8s.container.status
-            submatch_case: lower
           - action: insert
             include: k8s.container.spec.cpu.limit_temp
             new_name: k8s.pod.spec.cpu.limit
@@ -3754,7 +3668,6 @@ Metrics config should match snapshot when using default values:
             - metric.name == "k8s.kube_job_created" and value_double == 0
             - metric.name == "k8s.kube_job_status_completion_time" and value_double == 0
             - metric.name == "k8s.kube_job_status_start_time" and value_double == 0
-            - metric.name == "k8s.container.status" and value_double != 1
         filter/prometheus-node-metrics:
           metrics:
             metric:
@@ -3846,7 +3759,6 @@ Metrics config should match snapshot when using default values:
           - k8s.node.name
           - sw.k8s.namespace.status
           - sw.k8s.node.status
-          - sw.k8s.container.status
           - sw.k8s.container.init
           - daemonset
           - statefulset
@@ -4461,47 +4373,6 @@ Metrics config should match snapshot when using default values:
             include: k8s.kube_pod_init_container_resource_limits
             match_type: regexp
             new_name: k8s.initcontainer.spec.memory.limit_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_waiting
-            new_name: k8s.kube_pod_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_running
-            new_name: k8s.kube_pod_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_container_status_terminated
-            new_name: k8s.kube_pod_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.container.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: insert
-            include: k8s.kube_pod_init_container_status_waiting
-            new_name: k8s.kube_pod_init_container_status_waiting_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_running
-            new_name: k8s.kube_pod_init_container_status_running_only_temp
-          - action: insert
-            include: k8s.kube_pod_init_container_status_terminated
-            new_name: k8s.kube_pod_init_container_status_terminated_only_temp
-          - action: combine
-            include: ^k8s.kube_pod_init_container_status_(?P<status>[^_]*)_only_temp$
-            match_type: regexp
-            new_name: k8s.initcontainer.status_temp
-            operations:
-            - action: update_label
-              label: status
-              new_label: sw.k8s.container.status
-            submatch_case: lower
-          - action: combine
-            include: (k8s.initcontainer.status_temp|k8s.container.status_temp)
-            match_type: regexp
-            new_name: k8s.container.status
-            submatch_case: lower
           - action: insert
             include: k8s.container.spec.cpu.limit_temp
             new_name: k8s.pod.spec.cpu.limit
