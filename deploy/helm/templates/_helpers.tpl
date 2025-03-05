@@ -234,6 +234,9 @@ Example:
 {{- else -}}
   {{- $valuesPath := index $path $name -}}
   {{- $valuesRepository := index $valuesPath "repository" -}}
+  {{- if eq $valuesRepository "solarwinds/swi-opentelemetry-collector" -}}
+    {{- $valuesRepository = "solarwinds/solarwinds-otel-collector" -}}
+  {{- end -}}
   {{- $valuesTag := index $valuesPath "tag" -}}
   {{- $repo := $valuesRepository | default $defaultImage -}}
   {{- $tag := $valuesTag | default $defaultTag -}}

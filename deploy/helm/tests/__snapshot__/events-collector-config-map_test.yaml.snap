@@ -26,7 +26,6 @@ Custom events filter with new syntax:
           send_batch_max_size: 64
           send_batch_size: 64
           timeout: 1s
-        containerprocessor: null
         filter:
           logs:
             log_record:
@@ -72,6 +71,7 @@ Custom events filter with new syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8seventgeneration: null
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -371,7 +371,7 @@ Custom events filter with new syntax:
             - set(body, body.string)
       receivers:
         k8s_events: null
-        k8sobjects:
+        swok8sobjects:
           auth_type: serviceAccount
           objects:
           - interval: 60m
@@ -476,11 +476,11 @@ Custom events filter with new syntax:
             - resource/manifest
             - resourcedetection/providers
             - k8sattributes
-            - containerprocessor
+            - k8seventgeneration
             - transform/scope
             - batch
             receivers:
-            - k8sobjects
+            - swok8sobjects
         telemetry:
           logs:
             level: info
@@ -514,7 +514,6 @@ Custom events filter with old syntax:
           send_batch_max_size: 64
           send_batch_size: 64
           timeout: 1s
-        containerprocessor: null
         filter:
           logs:
             include:
@@ -563,6 +562,7 @@ Custom events filter with old syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8seventgeneration: null
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -862,7 +862,7 @@ Custom events filter with old syntax:
             - set(body, body.string)
       receivers:
         k8s_events: null
-        k8sobjects:
+        swok8sobjects:
           auth_type: serviceAccount
           objects:
           - interval: 60m
@@ -967,11 +967,11 @@ Custom events filter with old syntax:
             - resource/manifest
             - resourcedetection/providers
             - k8sattributes
-            - containerprocessor
+            - k8seventgeneration
             - transform/scope
             - batch
             receivers:
-            - k8sobjects
+            - swok8sobjects
         telemetry:
           logs:
             level: info
@@ -1005,7 +1005,6 @@ Events config should match snapshot when using default values:
           send_batch_max_size: 64
           send_batch_size: 64
           timeout: 1s
-        containerprocessor: null
         filter/k8s_collector_config_include:
           error_mode: ignore
           logs:
@@ -1047,6 +1046,7 @@ Events config should match snapshot when using default values:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8seventgeneration: null
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1346,7 +1346,7 @@ Events config should match snapshot when using default values:
             - set(body, body.string)
       receivers:
         k8s_events: null
-        k8sobjects:
+        swok8sobjects:
           auth_type: serviceAccount
           objects:
           - interval: 60m
@@ -1450,11 +1450,11 @@ Events config should match snapshot when using default values:
             - resource/manifest
             - resourcedetection/providers
             - k8sattributes
-            - containerprocessor
+            - k8seventgeneration
             - transform/scope
             - batch
             receivers:
-            - k8sobjects
+            - swok8sobjects
         telemetry:
           logs:
             level: info
@@ -1488,7 +1488,6 @@ Events config should not contain manifest collection pipeline when disabled:
           send_batch_max_size: 64
           send_batch_size: 64
           timeout: 1s
-        containerprocessor: null
         filter/k8s_collector_config_include:
           error_mode: ignore
           logs:
@@ -1530,6 +1529,7 @@ Events config should not contain manifest collection pipeline when disabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8seventgeneration: null
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1829,7 +1829,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(body, body.string)
       receivers:
         k8s_events: null
-        k8sobjects:
+        swok8sobjects:
           auth_type: serviceAccount
           objects:
           - interval: 60m
@@ -1868,12 +1868,12 @@ Events config should not contain manifest collection pipeline when disabled:
             - resource/manifest
             - resourcedetection/providers
             - k8sattributes
-            - containerprocessor
+            - k8seventgeneration
             - filter/k8s_collector_config_include
             - transform/scope
             - batch
             receivers:
-            - k8sobjects
+            - swok8sobjects
         telemetry:
           logs:
             level: info

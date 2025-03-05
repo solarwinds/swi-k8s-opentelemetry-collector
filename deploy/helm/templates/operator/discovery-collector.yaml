@@ -101,7 +101,7 @@ spec:
               values:
               - linux
     {{- end }}
-  image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+  image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
   imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
   serviceAccount: {{ include "common.fullname" . }}
   securityContext: 
@@ -145,10 +145,10 @@ spec:
   {{- if include "isSwiEndpointCheckEnabled" . }}
   initContainers:
     - name: otel-endpoint-check
-      image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+      image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
       imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
       command:
-        - /swi-otelcol
+        - /solarwinds-otel-collector
         - test-connection
         - --endpoint=$(OTEL_ENVOY_ADDRESS)
         - --apitoken=$(SOLARWINDS_API_TOKEN)

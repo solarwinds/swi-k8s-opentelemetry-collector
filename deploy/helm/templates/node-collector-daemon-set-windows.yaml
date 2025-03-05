@@ -67,10 +67,10 @@ spec:
       {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil .Chart.AppVersion ) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil (printf "%s-k8s" .Chart.AppVersion) ) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
-            - c:\swi-otelcol.exe
+            - c:\solarwinds-otel-collector.exe
             - test-connection
             - --endpoint=$(OTEL_ENVOY_ADDRESS)
             - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -89,13 +89,13 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil .Chart.AppVersion ) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil (printf "%s-k8s" .Chart.AppVersion) ) }}"
           imagePullPolicy: {{ .Values.otel.windows.image.pullPolicy }}
           securityContext:
             windowsOptions:
               runAsUserName: ContainerAdministrator
           command:
-            - c:\swi-otelcol.exe
+            - c:\solarwinds-otel-collector.exe
             - --config=c:\conf\relay.yaml
             - --feature-gates=filelog.container.removeOriginalTimeField
           env:
