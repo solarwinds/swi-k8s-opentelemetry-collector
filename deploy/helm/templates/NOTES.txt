@@ -101,3 +101,33 @@ WARNING: Value `otel.metrics.swi_endpoint_check` was deprecated and will be remo
 WARNING: Autoupdate is enabled. Avoid modifying the default images in values.yaml to ensure scheduled upgrades remain functional.
 {{- println -}}
 {{- end -}}
+
+{{- if or .Values.otel.metrics.k8s_instrumentation.labels.enabled (ne .Values.otel.metrics.k8s_instrumentation.labels.excludePattern "") -}}
+WARNING: Configuration `otel.metrics.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.metrics.k8s_instrumentation.annotations.enabled (ne .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern "") -}}
+WARNING: Configuration `otel.metrics.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.logs.k8s_instrumentation.labels.enabled (ne .Values.otel.logs.k8s_instrumentation.labels.excludePattern "") -}}
+WARNING: Configuration `otel.logs.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.logs.k8s_instrumentation.annotations.enabled (ne .Values.otel.logs.k8s_instrumentation.annotations.excludePattern "") -}}
+WARNING: Configuration `otel.logs.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.events.k8s_instrumentation.labels.enabled (ne .Values.otel.events.k8s_instrumentation.labels.excludePattern "") -}}
+WARNING: Configuration `otel.events.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.events.k8s_instrumentation.annotations.enabled (ne .Values.otel.events.k8s_instrumentation.annotations.excludePattern "") -}}
+WARNING: Configuration `otel.events.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
