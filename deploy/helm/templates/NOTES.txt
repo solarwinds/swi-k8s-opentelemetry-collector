@@ -102,6 +102,36 @@ WARNING: Autoupdate is enabled. Avoid modifying the default images in values.yam
 {{- println -}}
 {{- end -}}
 
+{{- if or .Values.otel.metrics.k8s_instrumentation.labels.enabled (ne .Values.otel.metrics.k8s_instrumentation.labels.excludePattern "") -}}
+WARNING: Configuration `otel.metrics.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.metrics.k8s_instrumentation.annotations.enabled (ne .Values.otel.metrics.k8s_instrumentation.annotations.excludePattern "") -}}
+WARNING: Configuration `otel.metrics.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.logs.k8s_instrumentation.labels.enabled (ne .Values.otel.logs.k8s_instrumentation.labels.excludePattern "") -}}
+WARNING: Configuration `otel.logs.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.logs.k8s_instrumentation.annotations.enabled (ne .Values.otel.logs.k8s_instrumentation.annotations.excludePattern "") -}}
+WARNING: Configuration `otel.logs.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.events.k8s_instrumentation.labels.enabled (ne .Values.otel.events.k8s_instrumentation.labels.excludePattern "") -}}
+WARNING: Configuration `otel.events.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
+{{- if or .Values.otel.events.k8s_instrumentation.annotations.enabled (ne .Values.otel.events.k8s_instrumentation.annotations.excludePattern "") -}}
+WARNING: Configuration `otel.events.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+{{- println -}}
+{{- end -}}
+
 {{- if eq .Values.otel.image.repository "solarwinds/swi-opentelemetry-collector" -}}
 WARNING: You are using a deprecated image 'solarwinds/swi-opentelemetry-collector' in `otel.image.repository` in your values.yaml. It has been replaced with 'solarwinds/solarwinds-otel-collector' please update your values.yaml.
 {{- println -}}
