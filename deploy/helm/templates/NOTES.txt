@@ -131,3 +131,13 @@ WARNING: Configuration `otel.events.k8s_instrumentation.labels` is deprecated an
 WARNING: Configuration `otel.events.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
 {{- println -}}
 {{- end -}}
+
+{{- if eq .Values.otel.image.repository "solarwinds/swi-opentelemetry-collector" -}}
+WARNING: You are using a deprecated image 'solarwinds/swi-opentelemetry-collector' in `otel.image.repository` in your values.yaml. It has been replaced with 'solarwinds/solarwinds-otel-collector' please update your values.yaml.
+{{- println -}}
+{{- end -}}
+
+{{- if eq .Values.otel.windows.image.repository "solarwinds/swi-opentelemetry-collector" -}}
+WARNING: You are using a deprecated image 'solarwinds/swi-opentelemetry-collector' in `otel.windows.image.repository` in your values.yaml. It has been replaced with 'solarwinds/solarwinds-otel-collector' please update your values.yaml.
+{{- println -}}
+{{- end -}}

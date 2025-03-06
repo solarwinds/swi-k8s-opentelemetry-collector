@@ -20,7 +20,7 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
                     - linux
     containers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - --config=/conf/relay.yaml
           - --feature-gates=filelog.container.removeOriginalTimeField
         env:
@@ -51,7 +51,7 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -102,7 +102,7 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
             name: logcheckpoints
     initContainers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - test-connection
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -118,7 +118,7 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
     securityContext:
@@ -178,7 +178,7 @@ DaemonSet spec should match snapshot when openshift is enabled:
                     - linux
     containers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - --config=/conf/relay.yaml
           - --feature-gates=filelog.container.removeOriginalTimeField
         env:
@@ -209,7 +209,7 @@ DaemonSet spec should match snapshot when openshift is enabled:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -261,7 +261,7 @@ DaemonSet spec should match snapshot when openshift is enabled:
     hostNetwork: true
     initContainers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - test-connection
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -277,7 +277,7 @@ DaemonSet spec should match snapshot when openshift is enabled:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
     securityContext:
@@ -343,7 +343,7 @@ DaemonSet spec should match snapshot when overriding cluster ID:
                     - linux
     containers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - --config=/conf/relay.yaml
           - --feature-gates=filelog.container.removeOriginalTimeField
         env:
@@ -374,7 +374,7 @@ DaemonSet spec should match snapshot when overriding cluster ID:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -425,7 +425,7 @@ DaemonSet spec should match snapshot when overriding cluster ID:
             name: logcheckpoints
     initContainers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - test-connection
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -441,7 +441,7 @@ DaemonSet spec should match snapshot when overriding cluster ID:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
     securityContext:
@@ -501,7 +501,7 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
                     - linux
     containers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - --config=/conf/relay.yaml
           - --feature-gates=filelog.container.removeOriginalTimeField
         env:
@@ -532,7 +532,7 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -583,7 +583,7 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
             name: logcheckpoints
     initContainers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - test-connection
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -599,7 +599,7 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
     securityContext:
@@ -659,7 +659,7 @@ DaemonSet spec should match snapshot when using default values:
                     - linux
     containers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - --config=/conf/relay.yaml
           - --feature-gates=filelog.container.removeOriginalTimeField
         env:
@@ -690,7 +690,7 @@ DaemonSet spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -741,7 +741,7 @@ DaemonSet spec should match snapshot when using default values:
             name: logcheckpoints
     initContainers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - test-connection
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -757,7 +757,7 @@ DaemonSet spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
     securityContext:
