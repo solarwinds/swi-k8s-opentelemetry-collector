@@ -229,18 +229,6 @@ The Helm chart is bundled also in AKS/EKS addons. Make sure that any changes are
 
 ## Release
 
-### Docker image
-
-1. Create tag you want to release and push it to origin
-
-    ```shell
-    git tag 0.11.5
-    git push origin 0.11.5
-    ```
-
-1. GitHub Action will be triggered, building the release and awaiting manual approval for publishing.
-1. Once approved, it will be published to Docker Hub repository: [solarwinds/swi-opentelemetry-collector](https://hub.docker.com/repository/docker/solarwinds/swi-opentelemetry-collector).
-
 ### Helm Chart
 
 1. Create PR with version change into [Chart.yaml](../deploy/helm/Chart.yaml)

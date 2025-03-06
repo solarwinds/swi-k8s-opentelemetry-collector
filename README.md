@@ -8,9 +8,7 @@ Assets to monitor Kubernetes infrastructure using [SolarWinds Observability](htt
 This repository contains:
 
 - Source files for [Helm chart](deploy/helm/README.md) `swo-k8s-collector`, used for collecting metrics, events and logs and exporting them to SolarWinds Observability platform.
-- Dockerfile for an image published to Docker hub, that is deployed as part of Kubernetes monitoring
 - All related sources that are built into that:
-  - Custom OpenTelemetry Collector processors
   - OpenTelemetry Collector configuration
 
 
