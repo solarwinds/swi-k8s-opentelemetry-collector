@@ -45,10 +45,107 @@ tests:
           value: |
             WARNING: Value `otel.metrics.swi_endpoint_check` was deprecated and will be removed in a future release. Please use `otel.swi_endpoint_check.enabled` instead.
 
-  - it: should show warning when otel.metrics.swi_endpoint_check is set to false
+  - it: should show warning when autoupdate.enabled is set to true
     set:
       autoupdate.enabled: true
     asserts:
       - equalRaw:
           value: |
             WARNING: Autoupdate is enabled. Avoid modifying the default images in values.yaml to ensure scheduled upgrades remain functional.
+
+  - it: should show warning when otel.metrics.k8s_instrumentation.labels are enabled
+    set:
+      otel.metrics.k8s_instrumentation.labels.enabled: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.metrics.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.metrics.k8s_instrumentation.labels have non-empty excludePattern
+    set:
+      otel.metrics.k8s_instrumentation.labels.excludePattern: ".*"
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.metrics.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.metrics.k8s_instrumentation.annotations are enabled
+    set:
+      otel.metrics.k8s_instrumentation.annotations.enabled: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.metrics.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.metrics.k8s_instrumentation.annotations have non-empty excludePattern
+    set:
+      otel.metrics.k8s_instrumentation.annotations.excludePattern: ".*"
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.metrics.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.logs.k8s_instrumentation.labels are enabled
+    set:
+      otel.logs.k8s_instrumentation.labels.enabled: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.logs.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.logs.k8s_instrumentation.labels have non-empty excludePattern
+    set:
+      otel.logs.k8s_instrumentation.labels.excludePattern: ".*"
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.logs.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.logs.k8s_instrumentation.annotations are enabled
+    set:
+      otel.logs.k8s_instrumentation.annotations.enabled: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.logs.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.logs.k8s_instrumentation.annotations have non-empty excludePattern
+    set:
+      otel.logs.k8s_instrumentation.annotations.excludePattern: ".*"
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.logs.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.events.k8s_instrumentation.labels are enabled
+    set:
+      otel.events.k8s_instrumentation.labels.enabled: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.events.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.events.k8s_instrumentation.labels have non-empty excludePattern
+    set:
+      otel.events.k8s_instrumentation.labels.excludePattern: ".*"
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.events.k8s_instrumentation.labels` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.events.k8s_instrumentation.annotations are enabled
+    set:
+      otel.events.k8s_instrumentation.annotations.enabled: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.events.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+
+  - it: should show warning when otel.events.k8s_instrumentation.annotations have non-empty excludePattern
+    set:
+      otel.events.k8s_instrumentation.annotations.excludePattern: ".*"
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Configuration `otel.events.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
+            

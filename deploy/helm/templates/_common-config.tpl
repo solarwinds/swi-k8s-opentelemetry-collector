@@ -433,7 +433,6 @@ groupbyattrs/all:
     - k8s.node.name
     - sw.k8s.namespace.status
     - sw.k8s.node.status
-    - sw.k8s.container.status
     - sw.k8s.container.init
     - daemonset
     - statefulset

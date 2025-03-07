@@ -258,11 +258,11 @@ Discovery collector spec should match snapshot when using default values:
     envFrom:
       - configMapRef:
           name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
-    image: solarwinds/swi-opentelemetry-collector:1.0.0
+    image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
     imagePullPolicy: IfNotPresent
     initContainers:
       - command:
-          - /swi-otelcol
+          - /solarwinds-otel-collector
           - test-connection
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -278,7 +278,7 @@ Discovery collector spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
-        image: solarwinds/swi-opentelemetry-collector:1.0.0
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
     mode: statefulset

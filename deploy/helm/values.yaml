@@ -23,7 +23,7 @@ otel:
   https_proxy_url: ""
 
   image:
-    repository: solarwinds/swi-opentelemetry-collector
+    repository: solarwinds/solarwinds-otel-collector
     # if not set appVersion field from Chart.yaml is used
     tag: ""
     pullPolicy: IfNotPresent
@@ -31,7 +31,7 @@ otel:
   windows:
     enabled: true
     image:
-      repository: solarwinds/swi-opentelemetry-collector
+      repository: solarwinds/solarwinds-otel-collector
       # if not set appVersion field from Chart.yaml is used
       tag: ""
       pullPolicy: IfNotPresent
@@ -380,7 +380,7 @@ otel:
     k8s_instrumentation:
       labels:
         # Set 'enabled' to true to instrument Kubernetes labels.
-        enabled: true
+        enabled: false
 
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
@@ -389,7 +389,7 @@ otel:
 
       annotations:
         # Set 'enabled' to true to instrument Kubernetes annotations.
-        enabled: true
+        enabled: false
 
         # Provide a regular expression pattern to exclude specific annotations from instrumentation.
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
@@ -542,7 +542,7 @@ otel:
     k8s_instrumentation:
       labels:
         # Set 'enabled' to true to instrument Kubernetes labels.
-        enabled: true
+        enabled: false
 
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
@@ -634,23 +634,23 @@ otel:
     k8s_instrumentation:
       labels:
         # Set 'enabled' to true to instrument Kubernetes labels.
-        enabled: true
+        enabled: false
 
         # Provide a regular expression pattern to exclude specific labels from instrumentation.
         # Example: To exclude labels with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
         # by default all labels are excluded
-        excludePattern: "k8s\\.\\w+\\.labels\\..*"
+        excludePattern: ""
 
       annotations:
         # Set 'enabled' to true to instrument Kubernetes annotations.
-        enabled: true
+        enabled: false
 
         # Provide a regular expression pattern to exclude specific annotations from instrumentation.
         # Example: To exclude annotations with 'internal' or 'private' in their names, use the following pattern:
         # excludePattern: ".*internal.*|.*private.*"
         # by default all annotations are excluded
-        excludePattern: "k8s\\.\\w+\\.annotations\\..*"
+        excludePattern: ""
 
     # Telemetry information of the collector
     # see https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md#observability for configuration reference

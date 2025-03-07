@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "common.fullname" (tuple . "-events") }}
   namespace: {{ .Release.Namespace }}
@@ -9,6 +9,7 @@ metadata:
   annotations:
 {{ include "common.annotations" . | indent 4 }}
 spec:
+  serviceName: {{ include "common.fullname" (tuple . "-events") }}
   replicas: 1
   selector:
     matchLabels:
@@ -69,10 +70,10 @@ spec:
       {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
-            - /swi-otelcol
+            - /solarwinds-otel-collector
             - test-connection
             - --endpoint=$(OTEL_ENVOY_ADDRESS)
             - --apitoken=$(SOLARWINDS_API_TOKEN)
@@ -92,7 +93,7 @@ spec:
       containers:
         - name: swi-opentelemetry-collector
           command:
-            - /swi-otelcol
+            - /solarwinds-otel-collector
             - --config=/conf/relay.yaml
           securityContext: 
             readOnlyRootFilesystem: true
@@ -104,7 +105,7 @@ spec:
             capabilities:
               drop:
               - ALL
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil .Chart.AppVersion) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
             - name: MY_POD_IP

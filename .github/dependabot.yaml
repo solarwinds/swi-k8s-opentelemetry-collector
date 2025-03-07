@@ -17,26 +17,9 @@ updates:
     schedule:
       interval: weekly
       day: sunday
-  - package-ecosystem: gomod
-    directory: /src/cmd
-    labels:
-      - dependencies
-      - go
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    allow:
+      - dependency-name: "solarwinds-otel-collector"
     schedule:
       interval: "daily"
-    allow:
-      # Allow both direct and indirect updates for all packages
-      - dependency-type: "all"
-    ignore:
-      - dependency-name: "github.com/open-telemetry/opentelemetry-collector-contrib*"
-      - dependency-name: "go.opentelemetry.io/collector*"
-    # Disable version updates
-    open-pull-requests-limit: 0
-    groups:
-      minor-and-patch:
-        applies-to: security-updates
-        patterns:
-        - "*"
-        update-types:
-        - "patch"
-        - "minor"

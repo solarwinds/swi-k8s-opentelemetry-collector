@@ -27,7 +27,7 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.containers[0].image
-          value: solarwinds/swi-opentelemetry-collector:1.0.0
+          value: solarwinds/solarwinds-otel-collector:1.0.0-k8s
   - it: Image should be correct when overridden repository
     template: metrics-discovery-deployment.yaml
     set:
@@ -35,7 +35,7 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.containers[0].image
-          value: swi-opentelemetry-collector:1.0.0
+          value: swi-opentelemetry-collector:1.0.0-k8s
   - it: Image should be correct when overridden tag
     template: metrics-discovery-deployment.yaml
     set:
@@ -43,7 +43,7 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.containers[0].image
-          value: solarwinds/swi-opentelemetry-collector:beta1
+          value: solarwinds/solarwinds-otel-collector:beta1
   - it: SWI endpoint check should not be included when disabled
     template: metrics-discovery-deployment.yaml
     set:
@@ -71,7 +71,7 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: solarwinds/swi-opentelemetry-collector:1.0.0
+          value: solarwinds/solarwinds-otel-collector:1.0.0-k8s
   - it: Image otel-endpoint-check should be correct when overridden repository
     template: metrics-discovery-deployment.yaml
     set:
@@ -80,7 +80,7 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: swi-opentelemetry-collector:1.0.0
+          value: swi-opentelemetry-collector:1.0.0-k8s
   - it: Image otel-endpoint-check should be correct when overridden tag
     template: metrics-discovery-deployment.yaml
     set:
@@ -89,4 +89,4 @@ tests:
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: solarwinds/swi-opentelemetry-collector:beta1
+          value: solarwinds/solarwinds-otel-collector:beta1

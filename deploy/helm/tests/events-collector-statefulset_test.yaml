@@ -1,65 +1,65 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
-suite: Test for events-collector-deployment
+suite: Test for events-collector-statefulset
 templates:
-  - events-collector-deployment.yaml
+  - events-collector-statefulset.yaml
   - events-collector-config-map.yaml
   - common-env-config-map.yaml
 chart:
   appVersion: 1.0.0
 tests:
   - it: Events collector spec should match snapshot when using default values
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     asserts:
       - matchSnapshot:
           path: spec.template.spec
   - it: SWI endpoint check should not be included when disabled
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     set:
       otel.swi_endpoint_check.enabled: false
     asserts:
     - notExists:
         path: spec.template.spec.initContainers
   - it: SWI endpoint check should be included in default state
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].name
           value: otel-endpoint-check
   - it: SWI endpoint check should not be included when disabled by deprecated setting
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     set:
       otel.metrics.swi_endpoint_check: false
     asserts:
     - notExists:
         path: spec.template.spec.initContainers
   - it: Image otel-endpoint-check should be correct in default state
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     set:
       otel.swi_endpoint_check.enabled: true
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: solarwinds/swi-opentelemetry-collector:1.0.0
+          value: solarwinds/solarwinds-otel-collector:1.0.0-k8s
   - it: Image otel-endpoint-check should be correct when overridden repository
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     set:
       otel.swi_endpoint_check.enabled: true
       otel.image.repository: "swi-opentelemetry-collector"
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: swi-opentelemetry-collector:1.0.0
+          value: swi-opentelemetry-collector:1.0.0-k8s
   - it: Image otel-endpoint-check should be correct when overridden tag
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     set:
       otel.swi_endpoint_check.enabled: true
       otel.image.tag: "beta1"
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: solarwinds/swi-opentelemetry-collector:beta1
+          value: solarwinds/solarwinds-otel-collector:beta1
   - it: Image otel-endpoint-check should be correct when overridden by azure
-    template: events-collector-deployment.yaml
+    template: events-collector-statefulset.yaml
     set:
       otel.swi_endpoint_check.enabled: true
       aks: true
