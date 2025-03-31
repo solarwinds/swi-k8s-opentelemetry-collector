@@ -1143,7 +1143,12 @@ Node collector config for windows nodes should match snapshot when using default
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
 Node collector config for windows nodes should match snapshot when using legacy filter:
   1: |
     logs.config: |
@@ -2378,4 +2383,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888

@@ -24,7 +24,7 @@ spec:
 {{ include "common.annotations" . | indent 8 }}
 {{- if .Values.otel.metrics.telemetry.metrics.enabled }}
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/port: {{ .Values.otel.metrics.telemetry.metrics.port | quote }}
         prometheus.io/path: "/metrics"
         prometheus.io/scheme: "http"
 {{- end}}
@@ -140,7 +140,7 @@ spec:
               protocol: TCP
 {{- if .Values.otel.metrics.telemetry.metrics.enabled }}
             - name: http
-              containerPort: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
+              containerPort: {{ .Values.otel.metrics.telemetry.metrics.port }}
               protocol: TCP
 {{- end}}
           envFrom:

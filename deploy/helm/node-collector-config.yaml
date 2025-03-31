@@ -873,5 +873,10 @@ service:
 {{- end }}
 {{- if .Values.otel.logs.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.otel.logs.telemetry.metrics.address }}
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ .Values.otel.logs.telemetry.metrics.host }}
+                port: {{ .Values.otel.logs.telemetry.metrics.port }}
 {{- end }}

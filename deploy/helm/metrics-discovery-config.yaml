@@ -275,5 +275,10 @@ service:
 {{- end }}
 {{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address }}
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.host }}
+                port: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.port }}
 {{- end }}

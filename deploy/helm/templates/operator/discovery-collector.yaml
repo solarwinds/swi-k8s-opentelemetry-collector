@@ -481,7 +481,12 @@ spec:
     {{- end }}
     {{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.enabled }}
         metrics:
-          address: {{ .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address }}
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: {{ .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.host }}
+                    port: {{ .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.port }}
     {{- end }}
 {{- end }}
   
