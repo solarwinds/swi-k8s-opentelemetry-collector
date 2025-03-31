@@ -485,7 +485,12 @@ Custom events filter with new syntax:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - exporter:
+                prometheus:
+                  host: 0.0.0.0
+                  port: 8888
+              pull: null
 Custom events filter with old syntax:
   1: |
     events.config: |-
@@ -976,7 +981,12 @@ Custom events filter with old syntax:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - exporter:
+                prometheus:
+                  host: 0.0.0.0
+                  port: 8888
+              pull: null
 Events config should match snapshot when using default values:
   1: |
     events.config: |-
@@ -1459,7 +1469,12 @@ Events config should match snapshot when using default values:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - exporter:
+                prometheus:
+                  host: 0.0.0.0
+                  port: 8888
+              pull: null
 Events config should not contain manifest collection pipeline when disabled:
   1: |
     events.config: |-
@@ -1878,4 +1893,9 @@ Events config should not contain manifest collection pipeline when disabled:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - exporter:
+                prometheus:
+                  host: 0.0.0.0
+                  port: 8888
+              pull: null

@@ -1170,5 +1170,10 @@ service:
 {{- end }}
 {{- if .Values.otel.metrics.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.otel.metrics.telemetry.metrics.address }}
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._0 | quote }}
+                port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
 {{- end }}
