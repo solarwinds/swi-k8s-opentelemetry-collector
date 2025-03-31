@@ -410,10 +410,5 @@ service:
 {{- end }}
 {{- if .Values.otel.events.telemetry.metrics.enabled }}
     metrics:
-      readers:
-        - pull:
-          exporter:
-            prometheus:
-              host: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._0 | quote }}
-              port: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._1 }}
+      address: {{ .Values.otel.events.telemetry.metrics.address }}
 {{- end }}
