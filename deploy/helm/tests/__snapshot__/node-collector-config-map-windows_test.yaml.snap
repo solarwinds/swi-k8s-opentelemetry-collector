@@ -890,12 +890,12 @@ Node collector config for windows nodes should match snapshot when using default
           metric_statements:
           - context: metric
             statements:
-            - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
-              == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
-            - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
-            - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name ==
+            - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or metric.name
+              == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
+            - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name ==
               "k8s.istio_request_duration_milliseconds_sum"
-            - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name
               == "k8s.istio_request_duration_milliseconds_count"
         transform/scope:
           log_statements:
@@ -2043,12 +2043,12 @@ Node collector config for windows nodes should match snapshot when using legacy 
           metric_statements:
           - context: metric
             statements:
-            - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
-              == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
-            - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
-            - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name ==
+            - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or metric.name
+              == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
+            - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name ==
               "k8s.istio_request_duration_milliseconds_sum"
-            - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name
               == "k8s.istio_request_duration_milliseconds_count"
         transform/scope:
           log_statements:
