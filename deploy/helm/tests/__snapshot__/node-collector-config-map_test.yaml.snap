@@ -925,26 +925,26 @@ Custom logs filter with new syntax:
           log_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
+            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:
@@ -2115,13 +2115,13 @@ Custom logs filter with old syntax:
           log_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
@@ -2133,8 +2133,8 @@ Custom logs filter with old syntax:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:
@@ -3379,26 +3379,26 @@ Node collector config should match snapshot when autodiscovery is disabled:
           log_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
+            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:
@@ -4516,26 +4516,26 @@ Node collector config should match snapshot when fargate is enabled:
           log_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
+            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:
@@ -5629,26 +5629,26 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           log_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
+            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:
@@ -6696,26 +6696,26 @@ Node collector config should match snapshot when using default values:
           log_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
           - context: log
             statements:
-            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
+            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:

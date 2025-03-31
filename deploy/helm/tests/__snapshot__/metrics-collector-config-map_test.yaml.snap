@@ -1454,14 +1454,14 @@ Metrics config should match snapshot when fargate is enabled:
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         otlp:
@@ -3170,14 +3170,14 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         otlp:
@@ -4828,14 +4828,14 @@ Metrics config should match snapshot when using default values:
           metric_statements:
           - context: scope
             statements:
-            - set(name, "")
-            - set(version, "")
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
             statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         otlp:

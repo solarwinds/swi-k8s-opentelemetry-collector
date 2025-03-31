@@ -34,7 +34,7 @@ transform/unify_node_attribute:
     - context: datapoint
       statements:
         # use "service.instance.id" for Node name when the attributes/unify_node_attribute processor failed to provide it
-        - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"]) where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"] == nil
+        - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"]) where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"] == nil
 {{- end }}
 
 {{- define "common-config.metricstransform-preprocessing-cadvisor" -}}
