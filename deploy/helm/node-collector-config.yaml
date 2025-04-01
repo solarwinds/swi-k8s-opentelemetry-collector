@@ -289,10 +289,12 @@ processors:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")'
   transform/scope:
     metric_statements:
+      - context: scope
         statements:
           - set(scope.name, "")
           - set(scope.version, "")
     log_statements:
+      - context: scope
         statements:
           - set(scope.name, "")
           - set(scope.version, "")
