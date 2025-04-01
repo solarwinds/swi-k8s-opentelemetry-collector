@@ -174,6 +174,10 @@ Custom events filter with new syntax:
             - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
               != nil
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
+              body["kind"] == "ClusterRoleBinding"
+            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
+              == "ClusterRole"
             - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
               == "ConfigMap"
             - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
@@ -198,6 +202,12 @@ Custom events filter with new syntax:
               == "Pod"
             - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
               == "ReplicaSet"
+            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
+              == "RoleBinding"
+            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+              == "Role"
+            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
+              body["kind"] == "ServiceAccount"
             - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
               == "Service"
             - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
@@ -228,12 +238,18 @@ Custom events filter with new syntax:
           - context: log
             statements:
             - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
+              == "ClusterRole" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
               == "ConfigMap" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
@@ -258,23 +274,38 @@ Custom events filter with new syntax:
               "Pod" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
               == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
+              == "RoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
+              "Role" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
+              == "ServiceAccount" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
               == "Service" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
               == "StatefulSet" and cache["annotations"] != nil
             - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["annotations"] != nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
-              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
-              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
-              == "Namespace" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
-              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
-              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
+              nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
+              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
+              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
+              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
+              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
+              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
+              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
+              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
+              == "ClusterRoleBinding" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
+              and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
@@ -299,17 +330,25 @@ Custom events filter with new syntax:
               cache["labels"] != nil
             - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
               and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
+              "ServiceAccount" and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
               and cache["labels"] != nil
             - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["labels"] != nil
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
@@ -376,6 +415,16 @@ Custom events filter with new syntax:
           objects:
           - interval: 60m
             mode: pull
+            name: clusterrolebindings
+          - mode: watch
+            name: clusterrolebindings
+          - interval: 60m
+            mode: pull
+            name: clusterroles
+          - mode: watch
+            name: clusterroles
+          - interval: 60m
+            mode: pull
             name: configmaps
           - mode: watch
             name: configmaps
@@ -434,6 +483,21 @@ Custom events filter with new syntax:
             name: replicasets
           - mode: watch
             name: replicasets
+          - interval: 60m
+            mode: pull
+            name: rolebindings
+          - mode: watch
+            name: rolebindings
+          - interval: 60m
+            mode: pull
+            name: roles
+          - mode: watch
+            name: roles
+          - interval: 60m
+            mode: pull
+            name: serviceaccounts
+          - mode: watch
+            name: serviceaccounts
           - interval: 60m
             mode: pull
             name: services
@@ -665,6 +729,10 @@ Custom events filter with old syntax:
             - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
               != nil
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
+              body["kind"] == "ClusterRoleBinding"
+            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
+              == "ClusterRole"
             - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
               == "ConfigMap"
             - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
@@ -689,6 +757,12 @@ Custom events filter with old syntax:
               == "Pod"
             - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
               == "ReplicaSet"
+            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
+              == "RoleBinding"
+            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+              == "Role"
+            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
+              body["kind"] == "ServiceAccount"
             - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
               == "Service"
             - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
@@ -719,12 +793,18 @@ Custom events filter with old syntax:
           - context: log
             statements:
             - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
+              == "ClusterRole" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
               == "ConfigMap" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
@@ -749,23 +829,38 @@ Custom events filter with old syntax:
               "Pod" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
               == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
+              == "RoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
+              "Role" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
+              == "ServiceAccount" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
               == "Service" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
               == "StatefulSet" and cache["annotations"] != nil
             - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["annotations"] != nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
-              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
-              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
-              == "Namespace" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
-              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
-              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
+              nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
+              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
+              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
+              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
+              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
+              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
+              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
+              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
+              == "ClusterRoleBinding" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
+              and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
@@ -790,17 +885,25 @@ Custom events filter with old syntax:
               cache["labels"] != nil
             - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
               and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
+              "ServiceAccount" and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
               and cache["labels"] != nil
             - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["labels"] != nil
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
@@ -867,6 +970,16 @@ Custom events filter with old syntax:
           objects:
           - interval: 60m
             mode: pull
+            name: clusterrolebindings
+          - mode: watch
+            name: clusterrolebindings
+          - interval: 60m
+            mode: pull
+            name: clusterroles
+          - mode: watch
+            name: clusterroles
+          - interval: 60m
+            mode: pull
             name: configmaps
           - mode: watch
             name: configmaps
@@ -925,6 +1038,21 @@ Custom events filter with old syntax:
             name: replicasets
           - mode: watch
             name: replicasets
+          - interval: 60m
+            mode: pull
+            name: rolebindings
+          - mode: watch
+            name: rolebindings
+          - interval: 60m
+            mode: pull
+            name: roles
+          - mode: watch
+            name: roles
+          - interval: 60m
+            mode: pull
+            name: serviceaccounts
+          - mode: watch
+            name: serviceaccounts
           - interval: 60m
             mode: pull
             name: services
@@ -1149,6 +1277,10 @@ Events config should match snapshot when using default values:
             - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
               != nil
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
+              body["kind"] == "ClusterRoleBinding"
+            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
+              == "ClusterRole"
             - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
               == "ConfigMap"
             - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
@@ -1173,6 +1305,12 @@ Events config should match snapshot when using default values:
               == "Pod"
             - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
               == "ReplicaSet"
+            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
+              == "RoleBinding"
+            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+              == "Role"
+            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
+              body["kind"] == "ServiceAccount"
             - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
               == "Service"
             - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
@@ -1203,12 +1341,18 @@ Events config should match snapshot when using default values:
           - context: log
             statements:
             - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
+              == "ClusterRole" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
               == "ConfigMap" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
@@ -1233,23 +1377,38 @@ Events config should match snapshot when using default values:
               "Pod" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
               == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
+              == "RoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
+              "Role" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
+              == "ServiceAccount" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
               == "Service" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
               == "StatefulSet" and cache["annotations"] != nil
             - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["annotations"] != nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
-              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
-              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
-              == "Namespace" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
-              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
-              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
+              nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
+              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
+              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
+              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
+              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
+              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
+              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
+              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
+              == "ClusterRoleBinding" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
+              and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
@@ -1274,17 +1433,25 @@ Events config should match snapshot when using default values:
               cache["labels"] != nil
             - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
               and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
+              "ServiceAccount" and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
               and cache["labels"] != nil
             - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["labels"] != nil
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
@@ -1351,6 +1518,16 @@ Events config should match snapshot when using default values:
           objects:
           - interval: 60m
             mode: pull
+            name: clusterrolebindings
+          - mode: watch
+            name: clusterrolebindings
+          - interval: 60m
+            mode: pull
+            name: clusterroles
+          - mode: watch
+            name: clusterroles
+          - interval: 60m
+            mode: pull
             name: configmaps
           - mode: watch
             name: configmaps
@@ -1409,6 +1586,21 @@ Events config should match snapshot when using default values:
             name: replicasets
           - mode: watch
             name: replicasets
+          - interval: 60m
+            mode: pull
+            name: rolebindings
+          - mode: watch
+            name: rolebindings
+          - interval: 60m
+            mode: pull
+            name: roles
+          - mode: watch
+            name: roles
+          - interval: 60m
+            mode: pull
+            name: serviceaccounts
+          - mode: watch
+            name: serviceaccounts
           - interval: 60m
             mode: pull
             name: services
@@ -1632,6 +1824,10 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
               != nil
             - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
+              body["kind"] == "ClusterRoleBinding"
+            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
+              == "ClusterRole"
             - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
               == "ConfigMap"
             - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
@@ -1656,6 +1852,12 @@ Events config should not contain manifest collection pipeline when disabled:
               == "Pod"
             - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
               == "ReplicaSet"
+            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
+              == "RoleBinding"
+            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+              == "Role"
+            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
+              body["kind"] == "ServiceAccount"
             - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
               == "Service"
             - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
@@ -1686,12 +1888,18 @@ Events config should not contain manifest collection pipeline when disabled:
           - context: log
             statements:
             - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
+              == "ClusterRole" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
               == "ConfigMap" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
@@ -1716,23 +1924,38 @@ Events config should not contain manifest collection pipeline when disabled:
               "Pod" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
               == "ReplicaSet" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
+              == "RoleBinding" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
+              "Role" and cache["annotations"] != nil
+            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
+              == "ServiceAccount" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
               == "Service" and cache["annotations"] != nil
             - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
               == "StatefulSet" and cache["annotations"] != nil
             - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["annotations"] != nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ConfigMap"
-              or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or body["kind"]
-              == "Deployment" or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"]
-              == "Namespace" or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim"
-              or body["kind"] == "PersistentVolume" or body["kind"] == "Pod" or body["kind"]
-              == "ReplicaSet" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
+              nil
+            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
+              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
+              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
+              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
+              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
+              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
+              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
+              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
+            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
+              == "ClusterRoleBinding" and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
+              and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
@@ -1757,17 +1980,25 @@ Events config should not contain manifest collection pipeline when disabled:
               cache["labels"] != nil
             - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
               and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
+              and cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
+              cache["labels"] != nil
+            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
+              "ServiceAccount" and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
               and cache["labels"] != nil
             - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
               and cache["labels"] != nil
             - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet"
-              or body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
+              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
+              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
+              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
               == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
               == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "Service" or body["kind"]
-              == "StatefulSet") and cache["labels"] != nil
+              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
+              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
+              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
