@@ -27,6 +27,7 @@ rules:
       - persistentvolumes
       - persistentvolumeclaims
       - configmaps
+      - serviceaccounts
     verbs:
       - get
       - list
@@ -46,6 +47,17 @@ rules:
       - "networking.k8s.io"
     resources:
       - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "rbac.authorization.k8s.io"
+    resources:
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
     verbs:
       - get
       - list
