@@ -1053,3 +1053,33 @@ waitJobs:
       repository: "alpine/k8s"
       tag: "1.27.16"
       pullPolicy: IfNotPresent
+  
+beyla:
+  enabled: false
+
+  image:
+    repository: "grafana/beyla"
+    tag: "2.0.3"
+    pullPolicy: IfNotPresent
+
+  telemetry:
+    logs:
+      level: "info"
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Scheduling configurations
+  nodeSelector: {}
+
+  # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
+
+  # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+  affinity: {}
+
