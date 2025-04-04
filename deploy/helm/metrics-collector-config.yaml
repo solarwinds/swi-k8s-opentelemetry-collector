@@ -45,10 +45,9 @@ processors:
 
   transform/scope:
     metric_statements:
-      - context: scope
-        statements:
-          - set(name, "")
-          - set(version, "")
+      - statements:
+        - set(scope.name, "")
+        - set(scope.version, "")
   # unify attributes
   attributes/unify_node_attribute:
     include:
@@ -1170,5 +1169,10 @@ service:
 {{- end }}
 {{- if .Values.otel.metrics.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.otel.metrics.telemetry.metrics.address }}
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._0 | quote }}
+                port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
 {{- end }}

@@ -93,10 +93,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             value: ${CLUSTER_NAME}
         transform/scope:
           metric_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
       receivers:
         receiver_creator/discovery:
           receivers:
@@ -175,4 +174,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888

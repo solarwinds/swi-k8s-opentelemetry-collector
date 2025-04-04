@@ -200,10 +200,9 @@ processors:
             - delete_key(attributes, "event.domain")
   transform/scope:
     log_statements:
-      - context: scope
-        statements:
-          - set(name, "")
-          - set(version, "")
+      - statements:
+        - set(scope.name, "")
+        - set(scope.version, "")
 
   groupbyattrs/manifest:
     keys:
@@ -416,5 +415,10 @@ service:
 {{- end }}
 {{- if .Values.otel.events.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.otel.events.telemetry.metrics.address }}
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._0 | quote }}
+                port: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._1 }}
 {{- end }}

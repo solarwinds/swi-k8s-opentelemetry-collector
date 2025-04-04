@@ -228,10 +228,9 @@ Custom events filter with new syntax:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -549,7 +548,12 @@ Custom events filter with new syntax:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
 Custom events filter with old syntax:
   1: |
     events.config: |-
@@ -783,10 +787,9 @@ Custom events filter with old syntax:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -1104,7 +1107,12 @@ Custom events filter with old syntax:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
 Events config should match snapshot when using default values:
   1: |
     events.config: |-
@@ -1331,10 +1339,9 @@ Events config should match snapshot when using default values:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -1651,7 +1658,12 @@ Events config should match snapshot when using default values:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
 Events config should not contain manifest collection pipeline when disabled:
   1: |
     events.config: |-
@@ -1878,10 +1890,9 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -2109,4 +2120,9 @@ Events config should not contain manifest collection pipeline when disabled:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
