@@ -142,8 +142,7 @@ Custom events filter with new syntax:
           timeout: 2s
         transform/entity_attributes:
           log_statements:
-          - context: log
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true")
             - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Pod"
@@ -161,71 +160,71 @@ Custom events filter with new syntax:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
-            - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"])
-              where attributes["k8s.namespace.name"] != nil
-            - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
+            - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
+              where log.attributes["k8s.namespace.name"] != nil
+            - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
               != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(log.attributes["watch.type"], log.body["type"]) where IsMap(log.body)
+              and log.body["type"] != nil
+            - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
-              body["kind"] == "ClusterRoleBinding"
-            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
-              == "ClusterRole"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
-            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
-              == "DaemonSet"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
-              == "Deployment"
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRoleBinding"
+            - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRole"
+            - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ConfigMap"
+            - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "CronJob"
+            - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "DaemonSet"
+            - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Job"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["name"]) where body["kind"]
-              == "Namespace"
-            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Node"
-            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
-              body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolumeClaim"
+            - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Pod"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
-              == "ReplicaSet"
-            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
-              == "RoleBinding"
-            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ReplicaSet"
+            - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Role"
-            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
-              body["kind"] == "ServiceAccount"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
-              == "StatefulSet"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
-              "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
-            - delete_key(attributes, "k8s.resource.name")
-            - delete_key(attributes, "event.name")
-            - delete_key(attributes, "event.domain")
+            - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ServiceAccount"
+            - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Service"
+            - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["sw.k8s.ingress.type"], log.body["kind"]) where log.body["kind"]
+              == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
+              != nil
+            - delete_key(log.attributes, "k8s.resource.name")
+            - delete_key(log.attributes, "event.name")
+            - delete_key(log.attributes, "event.domain")
         transform/namespace:
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
           - statements:
@@ -234,179 +233,178 @@ Custom events filter with new syntax:
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
-              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
-              == "ClusterRole" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
-              == "ConfigMap" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
-              == "CronJob" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
-              == "DaemonSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
-              == "Deployment" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
-              == "Ingress" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
-              "Job" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.namespace.annotations") where body["kind"]
-              == "Namespace" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
-              "Node" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
-              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
-              == "PersistentVolume" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
-              "Pod" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
-              == "ReplicaSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
-              == "RoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
-              "Role" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
-              == "ServiceAccount" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
-              == "Service" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
-              == "StatefulSet" and cache["annotations"] != nil
-            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
-              nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
-              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
-              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
-              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
-              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
-              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
-              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
-              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
-              == "ClusterRoleBinding" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.namespace.labels") where body["kind"] == "Namespace"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
-              == "PersistentVolumeClaim" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
-              == "PersistentVolume" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
-              "ServiceAccount" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
-              and cache["labels"] != nil
-            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
+          - statements:
+            - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              log.body["kind"] == "ClusterRoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.clusterrole.annotations") where log.body["kind"]
+              == "ClusterRole" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.configmap.annotations") where log.body["kind"]
+              == "ConfigMap" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.cronjob.annotations") where log.body["kind"]
+              == "CronJob" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.daemonset.annotations") where log.body["kind"]
+              == "DaemonSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
+              == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
+              == "Ingress" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
+              == "Job" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.namespace.annotations") where log.body["kind"]
+              == "Namespace" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.node.annotations") where log.body["kind"]
+              == "Node" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolumeclaim.annotations")
+              where log.body["kind"] == "PersistentVolumeClaim" and log.cache["annotations"]
+              != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolume.annotations") where
+              log.body["kind"] == "PersistentVolume" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.pod.annotations") where log.body["kind"]
+              == "Pod" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.replicaset.annotations") where log.body["kind"]
+              == "ReplicaSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.rolebinding.annotations") where log.body["kind"]
+              == "RoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.role.annotations") where log.body["kind"]
+              == "Role" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.serviceaccount.annotations") where
+              log.body["kind"] == "ServiceAccount" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.service.annotations") where log.body["kind"]
+              == "Service" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.statefulset.annotations") where log.body["kind"]
+              == "StatefulSet" and log.cache["annotations"] != nil
+            - merge_maps(resource.attributes, log.cache["annotations"], "upsert") where
+              (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
+              or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
+              == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
+              or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
+              or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
+              log.body["kind"] == "ReplicaSet" or log.body["kind"] == "RoleBinding" or log.body["kind"]
+              == "Role" or log.body["kind"] == "ServiceAccount" or log.body["kind"] == "Service"
+              or log.body["kind"] == "StatefulSet") and log.cache["annotations"] != nil
+            - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["labels"], "k8s.clusterrolebinding.labels") where log.body["kind"]
+              == "ClusterRoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.clusterrole.labels") where log.body["kind"]
+              == "ClusterRole" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.configmap.labels") where log.body["kind"]
+              == "ConfigMap" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.cronjob.labels") where log.body["kind"]
+              == "CronJob" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.daemonset.labels") where log.body["kind"]
+              == "DaemonSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
+              == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
+              == "Ingress" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.namespace.labels") where log.body["kind"]
+              == "Namespace" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.node.labels") where log.body["kind"] ==
+              "Node" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolumeclaim.labels") where log.body["kind"]
+              == "PersistentVolumeClaim" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolume.labels") where log.body["kind"]
+              == "PersistentVolume" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.pod.labels") where log.body["kind"] == "Pod"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.replicaset.labels") where log.body["kind"]
+              == "ReplicaSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.rolebinding.labels") where log.body["kind"]
+              == "RoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.role.labels") where log.body["kind"] ==
+              "Role" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.serviceaccount.labels") where log.body["kind"]
+              == "ServiceAccount" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.service.labels") where log.body["kind"]
+              == "Service" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.statefulset.labels") where log.body["kind"]
+              == "StatefulSet" and log.cache["labels"] != nil
+            - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet") and
+              log.cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
-              body["kind"] == "Pod" and body["status"]["phase"] != nil
+          - statements:
+            - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
+              where log.body["kind"] == "Pod" and log.body["status"]["phase"] != nil
         transform/severity:
           log_statements:
-          - context: log
-            statements:
-            - set(severity_text, "Error") where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_number, 17) where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_text, "Warning") where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
-            - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
+          - statements:
+            - set(log.severity_text, "Error") where log.attributes["k8s.event.reason"] ==
+              "Failed" or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_number, 17) where log.attributes["k8s.event.reason"] == "Failed"
+              or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_text, "Warning") where log.attributes["k8s.event.reason"]
+              == "ProbeWarning" or log.attributes["k8s.event.reason"] == "Unhealthy"
+            - set(log.severity_number, 13) where log.attributes["k8s.event.reason"] == "ProbeWarning"
+              or log.attributes["k8s.event.reason"] == "Unhealthy"
         transform/stringify_body:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(body, body.string)
+          - statements:
+            - set(log.body, log.body.string)
       receivers:
         k8s_events: null
         swok8sobjects:
@@ -701,8 +699,7 @@ Custom events filter with old syntax:
           timeout: 2s
         transform/entity_attributes:
           log_statements:
-          - context: log
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true")
             - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Pod"
@@ -720,71 +717,71 @@ Custom events filter with old syntax:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
-            - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"])
-              where attributes["k8s.namespace.name"] != nil
-            - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
+            - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
+              where log.attributes["k8s.namespace.name"] != nil
+            - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
               != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(log.attributes["watch.type"], log.body["type"]) where IsMap(log.body)
+              and log.body["type"] != nil
+            - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
-              body["kind"] == "ClusterRoleBinding"
-            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
-              == "ClusterRole"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
-            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
-              == "DaemonSet"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
-              == "Deployment"
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRoleBinding"
+            - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRole"
+            - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ConfigMap"
+            - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "CronJob"
+            - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "DaemonSet"
+            - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Job"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["name"]) where body["kind"]
-              == "Namespace"
-            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Node"
-            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
-              body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolumeClaim"
+            - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Pod"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
-              == "ReplicaSet"
-            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
-              == "RoleBinding"
-            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ReplicaSet"
+            - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Role"
-            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
-              body["kind"] == "ServiceAccount"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
-              == "StatefulSet"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
-              "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
-            - delete_key(attributes, "k8s.resource.name")
-            - delete_key(attributes, "event.name")
-            - delete_key(attributes, "event.domain")
+            - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ServiceAccount"
+            - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Service"
+            - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["sw.k8s.ingress.type"], log.body["kind"]) where log.body["kind"]
+              == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
+              != nil
+            - delete_key(log.attributes, "k8s.resource.name")
+            - delete_key(log.attributes, "event.name")
+            - delete_key(log.attributes, "event.domain")
         transform/namespace:
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
           - statements:
@@ -793,179 +790,178 @@ Custom events filter with old syntax:
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
-              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
-              == "ClusterRole" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
-              == "ConfigMap" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
-              == "CronJob" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
-              == "DaemonSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
-              == "Deployment" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
-              == "Ingress" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
-              "Job" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.namespace.annotations") where body["kind"]
-              == "Namespace" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
-              "Node" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
-              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
-              == "PersistentVolume" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
-              "Pod" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
-              == "ReplicaSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
-              == "RoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
-              "Role" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
-              == "ServiceAccount" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
-              == "Service" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
-              == "StatefulSet" and cache["annotations"] != nil
-            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
-              nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
-              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
-              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
-              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
-              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
-              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
-              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
-              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
-              == "ClusterRoleBinding" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.namespace.labels") where body["kind"] == "Namespace"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
-              == "PersistentVolumeClaim" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
-              == "PersistentVolume" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
-              "ServiceAccount" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
-              and cache["labels"] != nil
-            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
+          - statements:
+            - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              log.body["kind"] == "ClusterRoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.clusterrole.annotations") where log.body["kind"]
+              == "ClusterRole" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.configmap.annotations") where log.body["kind"]
+              == "ConfigMap" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.cronjob.annotations") where log.body["kind"]
+              == "CronJob" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.daemonset.annotations") where log.body["kind"]
+              == "DaemonSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
+              == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
+              == "Ingress" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
+              == "Job" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.namespace.annotations") where log.body["kind"]
+              == "Namespace" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.node.annotations") where log.body["kind"]
+              == "Node" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolumeclaim.annotations")
+              where log.body["kind"] == "PersistentVolumeClaim" and log.cache["annotations"]
+              != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolume.annotations") where
+              log.body["kind"] == "PersistentVolume" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.pod.annotations") where log.body["kind"]
+              == "Pod" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.replicaset.annotations") where log.body["kind"]
+              == "ReplicaSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.rolebinding.annotations") where log.body["kind"]
+              == "RoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.role.annotations") where log.body["kind"]
+              == "Role" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.serviceaccount.annotations") where
+              log.body["kind"] == "ServiceAccount" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.service.annotations") where log.body["kind"]
+              == "Service" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.statefulset.annotations") where log.body["kind"]
+              == "StatefulSet" and log.cache["annotations"] != nil
+            - merge_maps(resource.attributes, log.cache["annotations"], "upsert") where
+              (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
+              or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
+              == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
+              or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
+              or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
+              log.body["kind"] == "ReplicaSet" or log.body["kind"] == "RoleBinding" or log.body["kind"]
+              == "Role" or log.body["kind"] == "ServiceAccount" or log.body["kind"] == "Service"
+              or log.body["kind"] == "StatefulSet") and log.cache["annotations"] != nil
+            - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["labels"], "k8s.clusterrolebinding.labels") where log.body["kind"]
+              == "ClusterRoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.clusterrole.labels") where log.body["kind"]
+              == "ClusterRole" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.configmap.labels") where log.body["kind"]
+              == "ConfigMap" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.cronjob.labels") where log.body["kind"]
+              == "CronJob" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.daemonset.labels") where log.body["kind"]
+              == "DaemonSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
+              == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
+              == "Ingress" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.namespace.labels") where log.body["kind"]
+              == "Namespace" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.node.labels") where log.body["kind"] ==
+              "Node" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolumeclaim.labels") where log.body["kind"]
+              == "PersistentVolumeClaim" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolume.labels") where log.body["kind"]
+              == "PersistentVolume" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.pod.labels") where log.body["kind"] == "Pod"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.replicaset.labels") where log.body["kind"]
+              == "ReplicaSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.rolebinding.labels") where log.body["kind"]
+              == "RoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.role.labels") where log.body["kind"] ==
+              "Role" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.serviceaccount.labels") where log.body["kind"]
+              == "ServiceAccount" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.service.labels") where log.body["kind"]
+              == "Service" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.statefulset.labels") where log.body["kind"]
+              == "StatefulSet" and log.cache["labels"] != nil
+            - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet") and
+              log.cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
-              body["kind"] == "Pod" and body["status"]["phase"] != nil
+          - statements:
+            - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
+              where log.body["kind"] == "Pod" and log.body["status"]["phase"] != nil
         transform/severity:
           log_statements:
-          - context: log
-            statements:
-            - set(severity_text, "Error") where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_number, 17) where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_text, "Warning") where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
-            - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
+          - statements:
+            - set(log.severity_text, "Error") where log.attributes["k8s.event.reason"] ==
+              "Failed" or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_number, 17) where log.attributes["k8s.event.reason"] == "Failed"
+              or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_text, "Warning") where log.attributes["k8s.event.reason"]
+              == "ProbeWarning" or log.attributes["k8s.event.reason"] == "Unhealthy"
+            - set(log.severity_number, 13) where log.attributes["k8s.event.reason"] == "ProbeWarning"
+              or log.attributes["k8s.event.reason"] == "Unhealthy"
         transform/stringify_body:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(body, body.string)
+          - statements:
+            - set(log.body, log.body.string)
       receivers:
         k8s_events: null
         swok8sobjects:
@@ -1253,8 +1249,7 @@ Events config should match snapshot when using default values:
           timeout: 2s
         transform/entity_attributes:
           log_statements:
-          - context: log
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true")
             - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Pod"
@@ -1272,71 +1267,71 @@ Events config should match snapshot when using default values:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
-            - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"])
-              where attributes["k8s.namespace.name"] != nil
-            - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
+            - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
+              where log.attributes["k8s.namespace.name"] != nil
+            - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
               != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(log.attributes["watch.type"], log.body["type"]) where IsMap(log.body)
+              and log.body["type"] != nil
+            - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
-              body["kind"] == "ClusterRoleBinding"
-            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
-              == "ClusterRole"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
-            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
-              == "DaemonSet"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
-              == "Deployment"
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRoleBinding"
+            - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRole"
+            - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ConfigMap"
+            - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "CronJob"
+            - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "DaemonSet"
+            - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Job"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["name"]) where body["kind"]
-              == "Namespace"
-            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Node"
-            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
-              body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolumeClaim"
+            - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Pod"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
-              == "ReplicaSet"
-            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
-              == "RoleBinding"
-            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ReplicaSet"
+            - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Role"
-            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
-              body["kind"] == "ServiceAccount"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
-              == "StatefulSet"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
-              "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
-            - delete_key(attributes, "k8s.resource.name")
-            - delete_key(attributes, "event.name")
-            - delete_key(attributes, "event.domain")
+            - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ServiceAccount"
+            - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Service"
+            - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["sw.k8s.ingress.type"], log.body["kind"]) where log.body["kind"]
+              == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
+              != nil
+            - delete_key(log.attributes, "k8s.resource.name")
+            - delete_key(log.attributes, "event.name")
+            - delete_key(log.attributes, "event.domain")
         transform/namespace:
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
           - statements:
@@ -1345,179 +1340,178 @@ Events config should match snapshot when using default values:
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
-              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
-              == "ClusterRole" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
-              == "ConfigMap" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
-              == "CronJob" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
-              == "DaemonSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
-              == "Deployment" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
-              == "Ingress" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
-              "Job" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.namespace.annotations") where body["kind"]
-              == "Namespace" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
-              "Node" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
-              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
-              == "PersistentVolume" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
-              "Pod" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
-              == "ReplicaSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
-              == "RoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
-              "Role" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
-              == "ServiceAccount" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
-              == "Service" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
-              == "StatefulSet" and cache["annotations"] != nil
-            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
-              nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
-              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
-              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
-              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
-              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
-              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
-              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
-              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
-              == "ClusterRoleBinding" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.namespace.labels") where body["kind"] == "Namespace"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
-              == "PersistentVolumeClaim" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
-              == "PersistentVolume" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
-              "ServiceAccount" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
-              and cache["labels"] != nil
-            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
+          - statements:
+            - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              log.body["kind"] == "ClusterRoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.clusterrole.annotations") where log.body["kind"]
+              == "ClusterRole" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.configmap.annotations") where log.body["kind"]
+              == "ConfigMap" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.cronjob.annotations") where log.body["kind"]
+              == "CronJob" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.daemonset.annotations") where log.body["kind"]
+              == "DaemonSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
+              == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
+              == "Ingress" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
+              == "Job" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.namespace.annotations") where log.body["kind"]
+              == "Namespace" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.node.annotations") where log.body["kind"]
+              == "Node" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolumeclaim.annotations")
+              where log.body["kind"] == "PersistentVolumeClaim" and log.cache["annotations"]
+              != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolume.annotations") where
+              log.body["kind"] == "PersistentVolume" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.pod.annotations") where log.body["kind"]
+              == "Pod" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.replicaset.annotations") where log.body["kind"]
+              == "ReplicaSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.rolebinding.annotations") where log.body["kind"]
+              == "RoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.role.annotations") where log.body["kind"]
+              == "Role" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.serviceaccount.annotations") where
+              log.body["kind"] == "ServiceAccount" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.service.annotations") where log.body["kind"]
+              == "Service" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.statefulset.annotations") where log.body["kind"]
+              == "StatefulSet" and log.cache["annotations"] != nil
+            - merge_maps(resource.attributes, log.cache["annotations"], "upsert") where
+              (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
+              or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
+              == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
+              or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
+              or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
+              log.body["kind"] == "ReplicaSet" or log.body["kind"] == "RoleBinding" or log.body["kind"]
+              == "Role" or log.body["kind"] == "ServiceAccount" or log.body["kind"] == "Service"
+              or log.body["kind"] == "StatefulSet") and log.cache["annotations"] != nil
+            - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["labels"], "k8s.clusterrolebinding.labels") where log.body["kind"]
+              == "ClusterRoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.clusterrole.labels") where log.body["kind"]
+              == "ClusterRole" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.configmap.labels") where log.body["kind"]
+              == "ConfigMap" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.cronjob.labels") where log.body["kind"]
+              == "CronJob" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.daemonset.labels") where log.body["kind"]
+              == "DaemonSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
+              == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
+              == "Ingress" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.namespace.labels") where log.body["kind"]
+              == "Namespace" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.node.labels") where log.body["kind"] ==
+              "Node" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolumeclaim.labels") where log.body["kind"]
+              == "PersistentVolumeClaim" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolume.labels") where log.body["kind"]
+              == "PersistentVolume" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.pod.labels") where log.body["kind"] == "Pod"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.replicaset.labels") where log.body["kind"]
+              == "ReplicaSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.rolebinding.labels") where log.body["kind"]
+              == "RoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.role.labels") where log.body["kind"] ==
+              "Role" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.serviceaccount.labels") where log.body["kind"]
+              == "ServiceAccount" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.service.labels") where log.body["kind"]
+              == "Service" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.statefulset.labels") where log.body["kind"]
+              == "StatefulSet" and log.cache["labels"] != nil
+            - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet") and
+              log.cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
-              body["kind"] == "Pod" and body["status"]["phase"] != nil
+          - statements:
+            - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
+              where log.body["kind"] == "Pod" and log.body["status"]["phase"] != nil
         transform/severity:
           log_statements:
-          - context: log
-            statements:
-            - set(severity_text, "Error") where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_number, 17) where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_text, "Warning") where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
-            - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
+          - statements:
+            - set(log.severity_text, "Error") where log.attributes["k8s.event.reason"] ==
+              "Failed" or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_number, 17) where log.attributes["k8s.event.reason"] == "Failed"
+              or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_text, "Warning") where log.attributes["k8s.event.reason"]
+              == "ProbeWarning" or log.attributes["k8s.event.reason"] == "Unhealthy"
+            - set(log.severity_number, 13) where log.attributes["k8s.event.reason"] == "ProbeWarning"
+              or log.attributes["k8s.event.reason"] == "Unhealthy"
         transform/stringify_body:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(body, body.string)
+          - statements:
+            - set(log.body, log.body.string)
       receivers:
         k8s_events: null
         swok8sobjects:
@@ -1804,8 +1798,7 @@ Events config should not contain manifest collection pipeline when disabled:
           timeout: 2s
         transform/entity_attributes:
           log_statements:
-          - context: log
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true")
             - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Pod"
@@ -1823,71 +1816,71 @@ Events config should not contain manifest collection pipeline when disabled:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
-            - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"])
-              where attributes["k8s.namespace.name"] != nil
-            - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"]
+            - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
+              where log.attributes["k8s.namespace.name"] != nil
+            - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
               != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"]
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(log.attributes["watch.type"], log.body["type"]) where IsMap(log.body)
+              and log.body["type"] != nil
+            - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
-            - set(attributes["k8s.clusterrolebinding.name"], body["metadata"]["name"]) where
-              body["kind"] == "ClusterRoleBinding"
-            - set(attributes["k8s.clusterrole.name"], body["metadata"]["name"]) where body["kind"]
-              == "ClusterRole"
-            - set(attributes["k8s.configmap.name"], body["metadata"]["name"]) where body["kind"]
-              == "ConfigMap"
-            - set(attributes["k8s.cronjob.name"], body["metadata"]["name"]) where body["kind"]
-              == "CronJob"
-            - set(attributes["k8s.daemonset.name"], body["metadata"]["name"]) where body["kind"]
-              == "DaemonSet"
-            - set(attributes["k8s.deployment.name"], body["metadata"]["name"]) where body["kind"]
-              == "Deployment"
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress"
-            - set(attributes["k8s.job.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRoleBinding"
+            - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ClusterRole"
+            - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ConfigMap"
+            - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "CronJob"
+            - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "DaemonSet"
+            - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Job"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["name"]) where body["kind"]
-              == "Namespace"
-            - set(attributes["k8s.node.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Node"
-            - set(attributes["k8s.persistentvolumeclaim.name"], body["metadata"]["name"])
-              where body["kind"] == "PersistentVolumeClaim"
-            - set(attributes["k8s.persistentvolume.name"], body["metadata"]["name"]) where
-              body["kind"] == "PersistentVolume"
-            - set(attributes["k8s.pod.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolumeClaim"
+            - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Pod"
-            - set(attributes["k8s.replicaset.name"], body["metadata"]["name"]) where body["kind"]
-              == "ReplicaSet"
-            - set(attributes["k8s.rolebinding.name"], body["metadata"]["name"]) where body["kind"]
-              == "RoleBinding"
-            - set(attributes["k8s.role.name"], body["metadata"]["name"]) where body["kind"]
+            - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "ReplicaSet"
+            - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
               == "Role"
-            - set(attributes["k8s.serviceaccount.name"], body["metadata"]["name"]) where
-              body["kind"] == "ServiceAccount"
-            - set(attributes["k8s.service.name"], body["metadata"]["name"]) where body["kind"]
-              == "Service"
-            - set(attributes["k8s.statefulset.name"], body["metadata"]["name"]) where body["kind"]
-              == "StatefulSet"
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"]
-              == "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] ==
-              "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
-            - delete_key(attributes, "k8s.resource.name")
-            - delete_key(attributes, "event.name")
-            - delete_key(attributes, "event.domain")
+            - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "ServiceAccount"
+            - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Service"
+            - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
+              where log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
+              log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["sw.k8s.ingress.type"], log.body["kind"]) where log.body["kind"]
+              == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
+              != nil
+            - delete_key(log.attributes, "k8s.resource.name")
+            - delete_key(log.attributes, "event.name")
+            - delete_key(log.attributes, "event.domain")
         transform/namespace:
           log_statements:
-          - context: log
-            statements:
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+          - statements:
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
         transform/scope:
           log_statements:
           - statements:
@@ -1896,179 +1889,178 @@ Events config should not contain manifest collection pipeline when disabled:
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(cache["annotations"], body["metadata"]["annotations"]) where body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["annotations"], "k8s.clusterrolebinding.annotations") where
-              body["kind"] == "ClusterRoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.clusterrole.annotations") where body["kind"]
-              == "ClusterRole" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.configmap.annotations") where body["kind"]
-              == "ConfigMap" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.cronjob.annotations") where body["kind"]
-              == "CronJob" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.daemonset.annotations") where body["kind"]
-              == "DaemonSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.deployment.annotations") where body["kind"]
-              == "Deployment" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.ingress.annotations") where body["kind"]
-              == "Ingress" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.job.annotations") where body["kind"] ==
-              "Job" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.namespace.annotations") where body["kind"]
-              == "Namespace" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.node.annotations") where body["kind"] ==
-              "Node" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolumeclaim.annotations") where
-              body["kind"] == "PersistentVolumeClaim" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.persistentvolume.annotations") where body["kind"]
-              == "PersistentVolume" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.pod.annotations") where body["kind"] ==
-              "Pod" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.replicaset.annotations") where body["kind"]
-              == "ReplicaSet" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.rolebinding.annotations") where body["kind"]
-              == "RoleBinding" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.role.annotations") where body["kind"] ==
-              "Role" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.serviceaccount.annotations") where body["kind"]
-              == "ServiceAccount" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.service.annotations") where body["kind"]
-              == "Service" and cache["annotations"] != nil
-            - flatten(cache["annotations"], "k8s.statefulset.annotations") where body["kind"]
-              == "StatefulSet" and cache["annotations"] != nil
-            - merge_maps(resource.attributes, cache["annotations"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["annotations"] !=
-              nil
-            - set(cache["labels"], body["metadata"]["labels"]) where body["kind"] == "ClusterRoleBinding"
-              or body["kind"] == "ClusterRole" or body["kind"] == "ConfigMap" or body["kind"]
-              == "CronJob" or body["kind"] == "DaemonSet" or body["kind"] == "Deployment"
-              or body["kind"] == "Ingress" or body["kind"] == "Job" or body["kind"] == "Namespace"
-              or body["kind"] == "Node" or body["kind"] == "PersistentVolumeClaim" or body["kind"]
-              == "PersistentVolume" or body["kind"] == "Pod" or body["kind"] == "ReplicaSet"
-              or body["kind"] == "RoleBinding" or body["kind"] == "Role" or body["kind"]
-              == "ServiceAccount" or body["kind"] == "Service" or body["kind"] == "StatefulSet"
-            - flatten(cache["labels"], "k8s.clusterrolebinding.labels") where body["kind"]
-              == "ClusterRoleBinding" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.clusterrole.labels") where body["kind"] == "ClusterRole"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.configmap.labels") where body["kind"] == "ConfigMap"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.cronjob.labels") where body["kind"] == "CronJob"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.daemonset.labels") where body["kind"] == "DaemonSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.deployment.labels") where body["kind"] == "Deployment"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.ingress.labels") where body["kind"] == "Ingress"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.job.labels") where body["kind"] == "Job" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.namespace.labels") where body["kind"] == "Namespace"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.node.labels") where body["kind"] == "Node" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolumeclaim.labels") where body["kind"]
-              == "PersistentVolumeClaim" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.persistentvolume.labels") where body["kind"]
-              == "PersistentVolume" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.pod.labels") where body["kind"] == "Pod" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.replicaset.labels") where body["kind"] == "ReplicaSet"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.rolebinding.labels") where body["kind"] == "RoleBinding"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.role.labels") where body["kind"] == "Role" and
-              cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.serviceaccount.labels") where body["kind"] ==
-              "ServiceAccount" and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.service.labels") where body["kind"] == "Service"
-              and cache["labels"] != nil
-            - flatten(cache["labels"], "k8s.statefulset.labels") where body["kind"] == "StatefulSet"
-              and cache["labels"] != nil
-            - merge_maps(resource.attributes, cache["labels"], "upsert") where (body["kind"]
-              == "ClusterRoleBinding" or body["kind"] == "ClusterRole" or body["kind"] ==
-              "ConfigMap" or body["kind"] == "CronJob" or body["kind"] == "DaemonSet" or
-              body["kind"] == "Deployment" or body["kind"] == "Ingress" or body["kind"]
-              == "Job" or body["kind"] == "Namespace" or body["kind"] == "Node" or body["kind"]
-              == "PersistentVolumeClaim" or body["kind"] == "PersistentVolume" or body["kind"]
-              == "Pod" or body["kind"] == "ReplicaSet" or body["kind"] == "RoleBinding"
-              or body["kind"] == "Role" or body["kind"] == "ServiceAccount" or body["kind"]
-              == "Service" or body["kind"] == "StatefulSet") and cache["labels"] != nil
+          - statements:
+            - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["annotations"], "k8s.clusterrolebinding.annotations") where
+              log.body["kind"] == "ClusterRoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.clusterrole.annotations") where log.body["kind"]
+              == "ClusterRole" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.configmap.annotations") where log.body["kind"]
+              == "ConfigMap" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.cronjob.annotations") where log.body["kind"]
+              == "CronJob" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.daemonset.annotations") where log.body["kind"]
+              == "DaemonSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
+              == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
+              == "Ingress" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
+              == "Job" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.namespace.annotations") where log.body["kind"]
+              == "Namespace" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.node.annotations") where log.body["kind"]
+              == "Node" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolumeclaim.annotations")
+              where log.body["kind"] == "PersistentVolumeClaim" and log.cache["annotations"]
+              != nil
+            - flatten(log.cache["annotations"], "k8s.persistentvolume.annotations") where
+              log.body["kind"] == "PersistentVolume" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.pod.annotations") where log.body["kind"]
+              == "Pod" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.replicaset.annotations") where log.body["kind"]
+              == "ReplicaSet" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.rolebinding.annotations") where log.body["kind"]
+              == "RoleBinding" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.role.annotations") where log.body["kind"]
+              == "Role" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.serviceaccount.annotations") where
+              log.body["kind"] == "ServiceAccount" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.service.annotations") where log.body["kind"]
+              == "Service" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.statefulset.annotations") where log.body["kind"]
+              == "StatefulSet" and log.cache["annotations"] != nil
+            - merge_maps(resource.attributes, log.cache["annotations"], "upsert") where
+              (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
+              or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
+              == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
+              or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
+              or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
+              log.body["kind"] == "ReplicaSet" or log.body["kind"] == "RoleBinding" or log.body["kind"]
+              == "Role" or log.body["kind"] == "ServiceAccount" or log.body["kind"] == "Service"
+              or log.body["kind"] == "StatefulSet") and log.cache["annotations"] != nil
+            - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet"
+            - flatten(log.cache["labels"], "k8s.clusterrolebinding.labels") where log.body["kind"]
+              == "ClusterRoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.clusterrole.labels") where log.body["kind"]
+              == "ClusterRole" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.configmap.labels") where log.body["kind"]
+              == "ConfigMap" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.cronjob.labels") where log.body["kind"]
+              == "CronJob" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.daemonset.labels") where log.body["kind"]
+              == "DaemonSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
+              == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
+              == "Ingress" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.namespace.labels") where log.body["kind"]
+              == "Namespace" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.node.labels") where log.body["kind"] ==
+              "Node" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolumeclaim.labels") where log.body["kind"]
+              == "PersistentVolumeClaim" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.persistentvolume.labels") where log.body["kind"]
+              == "PersistentVolume" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.pod.labels") where log.body["kind"] == "Pod"
+              and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.replicaset.labels") where log.body["kind"]
+              == "ReplicaSet" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.rolebinding.labels") where log.body["kind"]
+              == "RoleBinding" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.role.labels") where log.body["kind"] ==
+              "Role" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.serviceaccount.labels") where log.body["kind"]
+              == "ServiceAccount" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.service.labels") where log.body["kind"]
+              == "Service" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.statefulset.labels") where log.body["kind"]
+              == "StatefulSet" and log.cache["labels"] != nil
+            - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
+              == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
+              == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
+              or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
+              or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
+              == "RoleBinding" or log.body["kind"] == "Role" or log.body["kind"] == "ServiceAccount"
+              or log.body["kind"] == "Service" or log.body["kind"] == "StatefulSet") and
+              log.cache["labels"] != nil
         transform/set_status_for_pods:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where
-              body["kind"] == "Pod" and body["status"]["phase"] != nil
+          - statements:
+            - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
+              where log.body["kind"] == "Pod" and log.body["status"]["phase"] != nil
         transform/severity:
           log_statements:
-          - context: log
-            statements:
-            - set(severity_text, "Error") where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_number, 17) where attributes["k8s.event.reason"] == "Failed"
-              or attributes["k8s.event.reason"] == "BackOff" or attributes["k8s.event.reason"]
-              == "FailedKillPod" or attributes["k8s.event.reason"] == "FailedCreatePodContainer"
-              or attributes["k8s.event.reason"] == "NetworkNotReady" or attributes["k8s.event.reason"]
-              == "InspectFailed" or attributes["k8s.event.reason"] == "ErrImageNeverPull"
-              or attributes["k8s.event.reason"] == "NodeNotReady" or attributes["k8s.event.reason"]
-              == "NodeNotSchedulable" or attributes["k8s.event.reason"] == "KubeletSetupFailed"
-              or attributes["k8s.event.reason"] == "FailedAttachVolume" or attributes["k8s.event.reason"]
-              == "FailedMount" or attributes["k8s.event.reason"] == "VolumeResizeFailed"
-              or attributes["k8s.event.reason"] == "FileSystemResizeFailed" or attributes["k8s.event.reason"]
-              == "FailedMapVolume" or attributes["k8s.event.reason"] == "ContainerGCFailed"
-              or attributes["k8s.event.reason"] == "ImageGCFailed" or attributes["k8s.event.reason"]
-              == "FailedNodeAllocatableEnforcement" or attributes["k8s.event.reason"] ==
-              "FailedCreatePodSandBox" or attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
-              or attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch" or
-              attributes["k8s.event.reason"] == "InvalidDiskCapacity" or attributes["k8s.event.reason"]
-              == "FreeDiskSpaceFailed" or attributes["k8s.event.reason"] == "FailedSync"
-              or attributes["k8s.event.reason"] == "FailedValidation" or attributes["k8s.event.reason"]
-              == "FailedPostStartHook" or attributes["k8s.event.reason"] == "FailedPreStopHook"
-            - set(severity_text, "Warning") where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
-            - set(severity_number, 13) where attributes["k8s.event.reason"] == "ProbeWarning"
-              or attributes["k8s.event.reason"] == "Unhealthy"
+          - statements:
+            - set(log.severity_text, "Error") where log.attributes["k8s.event.reason"] ==
+              "Failed" or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_number, 17) where log.attributes["k8s.event.reason"] == "Failed"
+              or log.attributes["k8s.event.reason"] == "BackOff" or log.attributes["k8s.event.reason"]
+              == "FailedKillPod" or log.attributes["k8s.event.reason"] == "FailedCreatePodContainer"
+              or log.attributes["k8s.event.reason"] == "NetworkNotReady" or log.attributes["k8s.event.reason"]
+              == "InspectFailed" or log.attributes["k8s.event.reason"] == "ErrImageNeverPull"
+              or log.attributes["k8s.event.reason"] == "NodeNotReady" or log.attributes["k8s.event.reason"]
+              == "NodeNotSchedulable" or log.attributes["k8s.event.reason"] == "KubeletSetupFailed"
+              or log.attributes["k8s.event.reason"] == "FailedAttachVolume" or log.attributes["k8s.event.reason"]
+              == "FailedMount" or log.attributes["k8s.event.reason"] == "VolumeResizeFailed"
+              or log.attributes["k8s.event.reason"] == "FileSystemResizeFailed" or log.attributes["k8s.event.reason"]
+              == "FailedMapVolume" or log.attributes["k8s.event.reason"] == "ContainerGCFailed"
+              or log.attributes["k8s.event.reason"] == "ImageGCFailed" or log.attributes["k8s.event.reason"]
+              == "FailedNodeAllocatableEnforcement" or log.attributes["k8s.event.reason"]
+              == "FailedCreatePodSandBox" or log.attributes["k8s.event.reason"] == "FailedPodSandBoxStatus"
+              or log.attributes["k8s.event.reason"] == "FailedMountOnFilesystemMismatch"
+              or log.attributes["k8s.event.reason"] == "InvalidDiskCapacity" or log.attributes["k8s.event.reason"]
+              == "FreeDiskSpaceFailed" or log.attributes["k8s.event.reason"] == "FailedSync"
+              or log.attributes["k8s.event.reason"] == "FailedValidation" or log.attributes["k8s.event.reason"]
+              == "FailedPostStartHook" or log.attributes["k8s.event.reason"] == "FailedPreStopHook"
+            - set(log.severity_text, "Warning") where log.attributes["k8s.event.reason"]
+              == "ProbeWarning" or log.attributes["k8s.event.reason"] == "Unhealthy"
+            - set(log.severity_number, 13) where log.attributes["k8s.event.reason"] == "ProbeWarning"
+              or log.attributes["k8s.event.reason"] == "Unhealthy"
         transform/stringify_body:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set(body, body.string)
+          - statements:
+            - set(log.body, log.body.string)
       receivers:
         k8s_events: null
         swok8sobjects:

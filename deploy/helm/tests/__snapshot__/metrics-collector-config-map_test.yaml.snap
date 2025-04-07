@@ -1434,20 +1434,18 @@ Metrics config should match snapshot when fargate is enabled:
             value: ${CLUSTER_NAME}
         transform:
           metric_statements:
-          - context: datapoint
-            statements:
-            - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$")
-              == true and value_double > 0
-            - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
-            - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
+          - statements:
+            - set(datapoint.attributes["job_condition"], "Active") where IsMatch(metric.name,
+              "^.*kube_job_status_active$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Failed") where IsMatch(metric.name,
+              "^.*kube_job_failed$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
+              "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
         transform/cleanup_attributes_for_nonexisting_entities:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
               != nil
         transform/scope:
@@ -3154,20 +3152,18 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             value: ${CLUSTER_NAME}
         transform:
           metric_statements:
-          - context: datapoint
-            statements:
-            - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$")
-              == true and value_double > 0
-            - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
-            - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
+          - statements:
+            - set(datapoint.attributes["job_condition"], "Active") where IsMatch(metric.name,
+              "^.*kube_job_status_active$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Failed") where IsMatch(metric.name,
+              "^.*kube_job_failed$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
+              "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
         transform/cleanup_attributes_for_nonexisting_entities:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
               != nil
         transform/scope:
@@ -4816,20 +4812,18 @@ Metrics config should match snapshot when using default values:
             value: ${CLUSTER_NAME}
         transform:
           metric_statements:
-          - context: datapoint
-            statements:
-            - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$")
-              == true and value_double > 0
-            - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
-            - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
+          - statements:
+            - set(datapoint.attributes["job_condition"], "Active") where IsMatch(metric.name,
+              "^.*kube_job_status_active$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Failed") where IsMatch(metric.name,
+              "^.*kube_job_failed$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
+              "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
         transform/cleanup_attributes_for_nonexisting_entities:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
               != nil
         transform/scope:

@@ -912,8 +912,7 @@ Custom logs filter with new syntax:
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
@@ -933,10 +932,9 @@ Custom logs filter with new syntax:
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -2105,8 +2103,7 @@ Custom logs filter with old syntax:
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
@@ -2126,10 +2123,9 @@ Custom logs filter with old syntax:
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( attributes["host.name"], attributes["k8s.pod.name"])
-            - set( attributes["service.name"], attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], log.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], log.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -3372,8 +3368,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
@@ -3393,10 +3388,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -4512,8 +4506,7 @@ Node collector config should match snapshot when fargate is enabled:
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
@@ -4533,10 +4526,9 @@ Node collector config should match snapshot when fargate is enabled:
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -5628,8 +5620,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
@@ -5649,10 +5640,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
@@ -6698,8 +6688,7 @@ Node collector config should match snapshot when using default values:
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
@@ -6719,10 +6708,9 @@ Node collector config should match snapshot when using default values:
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( log.attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( log.attributes["service.name"], resource.attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
           - context: datapoint
