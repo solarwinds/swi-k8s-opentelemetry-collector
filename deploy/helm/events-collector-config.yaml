@@ -81,26 +81,23 @@ processors:
 
   transform/severity:
     log_statements:
-      - context: log
-        statements:
-          - set(severity_text, "Error") where
+      - statements:
+          - set(log.severity_text, "Error") where
 {{ include "common.events-error-conditions" . | indent 16}}
-          - set(severity_number, 17) where
+          - set(log.severity_number, 17) where
 {{ include "common.events-error-conditions" . | indent 16}}
 
-          - set(severity_text, "Warning") where
+          - set(log.severity_text, "Warning") where
 {{ include "common.events-warning-conditions" . | indent 16}}
-          - set(severity_number, 13) where
+          - set(log.severity_number, 13) where
 {{ include "common.events-warning-conditions" . | indent 16}}
   transform/namespace:
     log_statements:
-      - context: log
-        statements:
-          - set(attributes["sw.namespace"], "sw.events.inframon.k8s")
+      - statements:
+          - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
   transform/entity_attributes:
     log_statements:
-      - context: log
-        statements:
+      - statements:
           # do not create/update endities from events
           - set(resource.attributes["sw.entity.noupdate"], "true")
 
@@ -112,56 +109,53 @@ processors:
           - set(resource.attributes["k8s.job.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Job"
           - set(resource.attributes["k8s.cronjob.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "CronJob"
           - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Node"
-          - set(resource.attributes["k8s.namespace.name"], attributes["k8s.namespace.name"]) where attributes["k8s.namespace.name"] != nil
-          - delete_key(attributes, "k8s.namespace.name") where attributes["k8s.namespace.name"] != nil
+          - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"]) where log.attributes["k8s.namespace.name"] != nil
+          - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"] != nil
 
   transform/stringify_body:
     error_mode: ignore
     log_statements:
-      - context: log
-        statements:
+      - statements:
           # convert body to string
-          - set(body, body.string)
+          - set(log.body, log.body.string)
   transform/set_status_for_pods:
     error_mode: ignore
     log_statements:
-      - context: log
-        statements:
-          - set(resource.attributes["sw.k8s.pod.status"], body["status"]["phase"]) where body["kind"] == "Pod" and body["status"]["phase"] != nil
+      - statements:
+          - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"]) where log.body["kind"] == "Pod" and log.body["status"]["phase"] != nil
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
     log_statements:
-      - context: log
-        statements:
+      - statements:
           # assign entity prefix k8s.entity.annotations.*
 {{- $conditions := list }}
 {{- range $index, $resourceName := $arrayOfWatchedResources }}
       {{- $resourceKind := get $resourceMap $resourceName }}
-      {{- $condition := printf `body["kind"] == "%s"` $resourceKind }}
+      {{- $condition := printf `log.body["kind"] == "%s"` $resourceKind }}
       {{- $conditions = append $conditions $condition }}
 {{- end }}
 {{- $joinedConditions := join " or " $conditions }}
-          - set(cache["annotations"], body["metadata"]["annotations"]) where {{ $joinedConditions }}
+          - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where {{ $joinedConditions }}
 {{- range $index, $resourceName := $arrayOfWatchedResources }}
       {{- $resourceKind := get $resourceMap $resourceName }}
       {{- $prefix := lower $resourceKind }}
-          - flatten(cache["annotations"], "k8s.{{ $prefix }}.annotations") where body["kind"] == "{{ $resourceKind }}" and cache["annotations"] != nil
+          - flatten(log.cache["annotations"], "k8s.{{ $prefix }}.annotations") where log.body["kind"] == "{{ $resourceKind }}" and log.cache["annotations"] != nil
 {{- end }}
           # Set annotations to resource attributes
-          - merge_maps(resource.attributes, cache["annotations"], "upsert") where ({{ $joinedConditions }}) and cache["annotations"] != nil
+          - merge_maps(resource.attributes, log.cache["annotations"], "upsert") where ({{ $joinedConditions }}) and log.cache["annotations"] != nil
 
           # assign entity prefix k8s.entity.labels.*
-          - set(cache["labels"], body["metadata"]["labels"]) where {{ $joinedConditions }}
+          - set(log.cache["labels"], log.body["metadata"]["labels"]) where {{ $joinedConditions }}
 
 {{- range $index, $resourceName := $arrayOfWatchedResources }}
       {{- $resourceKind := get $resourceMap $resourceName }}
       {{- $prefix := lower $resourceKind }}
-          - flatten(cache["labels"], "k8s.{{ $prefix }}.labels") where body["kind"] == "{{ $resourceKind }}" and cache["labels"] != nil
+          - flatten(log.cache["labels"], "k8s.{{ $prefix }}.labels") where log.body["kind"] == "{{ $resourceKind }}" and log.cache["labels"] != nil
 {{- end }}
           
           # Set labels to resource attributes
-          - merge_maps(resource.attributes, cache["labels"], "upsert") where ({{ $joinedConditions }}) and cache["labels"] != nil
+          - merge_maps(resource.attributes, log.cache["labels"], "upsert") where ({{ $joinedConditions }}) and log.cache["labels"] != nil
   filter/k8s_collector_config_include:
     error_mode: ignore
     logs:
@@ -171,33 +165,32 @@ processors:
   transform/manifest:
       error_mode: ignore
       log_statements:
-        - context: log
-          statements:
+        - statements:
             # set event namespace where it will be stored in SWO.
-            - set(attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
+            - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s.manifests")
             
             # Add new attribute `watch-type` with type of the change - "ADDED", "MODIFIED", "DELETED"
-            - set(attributes["watch.type"], body["type"]) where IsMap(body) and body["type"] != nil
+            - set(log.attributes["watch.type"], log.body["type"]) where IsMap(log.body) and log.body["type"] != nil
 
             # in watch mode body has `object` attribute with the manifest, in pull mode body is the manifest
             # flaten body structure to have only raw manifest in body in all the cases
-            - set(body, body["object"]) where IsMap(body) and body["object"] != nil
+            - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"] != nil
 
             # set attributes for the resource
 {{- range $index, $resourceName := $arrayOfWatchedResources }}
       {{- $resourceKind := get $resourceMap $resourceName }}
       {{- $prefix := lower $resourceKind }}
-            - set(attributes["k8s.{{$prefix}}.name"], body["metadata"]["name"]) where body["kind"] == "{{$resourceKind}}"
+            - set(log.attributes["k8s.{{$prefix}}.name"], log.body["metadata"]["name"]) where log.body["kind"] == "{{$resourceKind}}"
 {{- end }}
-            - set(attributes["k8s.namespace.name"], body["metadata"]["namespace"])
-            - set(attributes["k8s.ingress.name"], body["metadata"]["name"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["sw.k8s.ingress.type"], body["kind"]) where body["kind"] == "Ingress" or body["kind"] == "VirtualService"
-            - set(attributes["k8s.object.kind"], body["kind"]) where body["kind"] != nil
+            - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
+            - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["sw.k8s.ingress.type"], log.body["kind"]) where log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
+            - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"] != nil
 
             # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
-            - delete_key(attributes, "k8s.resource.name")
-            - delete_key(attributes, "event.name")
-            - delete_key(attributes, "event.domain")
+            - delete_key(log.attributes, "k8s.resource.name")
+            - delete_key(log.attributes, "event.name")
+            - delete_key(log.attributes, "event.domain")
   transform/scope:
     log_statements:
       - statements:
