@@ -888,39 +888,34 @@ Node collector config for windows nodes should match snapshot when using default
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
-            - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
-              == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
-            - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
-            - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name ==
-              "k8s.istio_request_duration_milliseconds_sum"
-            - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name
-              == "k8s.istio_request_duration_milliseconds_count"
+          - statements:
+            - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
+              metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
+            - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where
+              metric.name == "k8s.istio_request_duration_milliseconds_sum"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
+              metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/scope:
           log_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( attributes["host.name"], resource.attributes["k8s.pod.name"])
-            - set( attributes["service.name"], resource.attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+          - statements:
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:
@@ -1143,7 +1138,12 @@ Node collector config for windows nodes should match snapshot when using default
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
 Node collector config for windows nodes should match snapshot when using legacy filter:
   1: |
     logs.config: |
@@ -2041,39 +2041,34 @@ Node collector config for windows nodes should match snapshot when using legacy 
             key: k8s.persistentvolumeclaim.name
         transform/istio-metrics:
           metric_statements:
-          - context: metric
-            statements:
-            - extract_sum_metric(true) where (name == "k8s.istio_request_bytes" or name
-              == "k8s.istio_response_bytes" or name == "k8s.istio_request_duration_milliseconds")
-            - extract_count_metric(true) where (name == "k8s.istio_request_duration_milliseconds")
-            - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name ==
-              "k8s.istio_request_duration_milliseconds_sum"
-            - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name
-              == "k8s.istio_request_duration_milliseconds_count"
+          - statements:
+            - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
+              metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
+            - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where
+              metric.name == "k8s.istio_request_duration_milliseconds_sum"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
+              metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/scope:
           log_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
           metric_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/syslogify:
           error_mode: ignore
           log_statements:
-          - context: log
-            statements:
-            - set( attributes["host.name"], attributes["k8s.pod.name"])
-            - set( attributes["service.name"], attributes["k8s.container.name"])
+          - statements:
+            - set(log.attributes["host.name"], log.attributes["k8s.pod.name"])
+            - set(log.attributes["service.name"], log.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+          - statements:
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         filelog:
@@ -2378,4 +2373,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888

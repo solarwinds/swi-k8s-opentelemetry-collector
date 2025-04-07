@@ -1434,34 +1434,30 @@ Metrics config should match snapshot when using default values:
             value: ${CLUSTER_NAME}
         transform:
           metric_statements:
-          - context: datapoint
-            statements:
-            - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$")
-              == true and value_double > 0
-            - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
-            - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$")
-              == true and IsMatch(attributes["condition"], "^true$") == true and value_double
-              > 0
+          - statements:
+            - set(datapoint.attributes["job_condition"], "Active") where IsMatch(metric.name,
+              "^.*kube_job_status_active$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Failed") where IsMatch(metric.name,
+              "^.*kube_job_failed$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
+            - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
+              "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
+              "^true$") == true and datapoint.value_double > 0
         transform/cleanup_attributes_for_nonexisting_entities:
           metric_statements:
-          - context: metric
-            statements:
+          - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
               != nil
         transform/scope:
           metric_statements:
-          - context: scope
-            statements:
-            - set(name, "")
-            - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
-            - set(attributes["k8s.node.name"], resource.attributes["service.instance.id"])
-              where IsMatch(metric.name, "^(container_.*)$") == true and attributes["k8s.node.name"]
+          - statements:
+            - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
+              where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
         otlp:
@@ -1710,4 +1706,9 @@ Metrics config should match snapshot when using default values:
           logs:
             level: info
           metrics:
-            address: 0.0.0.0:8888
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888

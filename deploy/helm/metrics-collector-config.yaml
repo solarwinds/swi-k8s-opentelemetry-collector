@@ -34,21 +34,19 @@ processors:
 {{ toYaml .Values.otel.metrics.memory_limiter | indent 4 }}
   transform:
     metric_statements:
-      - context: datapoint
-        statements:
-          - set(attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and value_double > 0
-          - set(attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
-          - set(attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(attributes["condition"], "^true$") == true and value_double > 0
+      - statements:
+          - set(datapoint.attributes["job_condition"], "Active") where IsMatch(metric.name, "^.*kube_job_status_active$") == true and datapoint.value_double > 0
+          - set(datapoint.attributes["job_condition"], "Failed") where IsMatch(metric.name, "^.*kube_job_failed$") == true and IsMatch(datapoint.attributes["condition"], "^true$") == true and datapoint.value_double > 0
+          - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name, "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"], "^true$") == true and datapoint.value_double > 0
 
   {{- include "common-config.filter-remove-internal" . | nindent 2 }}
   {{- include "common-config.filter-remove-internal-post-processing" . | nindent 2 }}
 
   transform/scope:
     metric_statements:
-      - context: scope
-        statements:
-          - set(name, "")
-          - set(version, "")
+      - statements:
+        - set(scope.name, "")
+        - set(scope.version, "")
   # unify attributes
   attributes/unify_node_attribute:
     include:
@@ -690,8 +688,7 @@ processors:
 
   transform/cleanup_attributes_for_nonexisting_entities:
     metric_statements:
-      - context: metric
-        statements:
+      - statements:
          # do not create/update node entities from metrics
           - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"] != nil
 
@@ -1170,5 +1167,10 @@ service:
 {{- end }}
 {{- if .Values.otel.metrics.telemetry.metrics.enabled }}
     metrics:
-      address: {{ .Values.otel.metrics.telemetry.metrics.address }}
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._0 | quote }}
+                port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
 {{- end }}

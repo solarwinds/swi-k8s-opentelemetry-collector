@@ -243,15 +243,13 @@ spec:
 
       transform/scope:
         metric_statements:
-          - context: scope
-            statements:
-              - set(name, "")
-              - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
         log_statements:
-          - context: scope
-            statements:
-              - set(name, "")
-              - set(version, "")
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
       
       batch/metrics:
 {{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.batch | indent 8 }}
@@ -308,12 +306,11 @@ spec:
 
       transform/istio-metrics:
         metric_statements:
-          - context: metric
-            statements:
-              - extract_sum_metric(true) where (name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes" or name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes" or name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
-              - extract_count_metric(true) where (name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
-              - set(name, "k8s.istio_request_duration_milliseconds_sum_temp") where name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
-              - set(name, "k8s.istio_request_duration_milliseconds_count_temp") where name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
+          - statements:
+              - extract_sum_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
+              - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
+              - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
+              - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
 
       metricstransform/istio-metrics:
         transforms:
