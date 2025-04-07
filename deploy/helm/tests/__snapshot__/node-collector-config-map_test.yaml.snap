@@ -937,8 +937,7 @@ Custom logs filter with new syntax:
             - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
+          - statements:
             - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
@@ -2128,8 +2127,7 @@ Custom logs filter with old syntax:
             - set(log.attributes["service.name"], log.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
+          - statements:
             - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
@@ -3393,8 +3391,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
+          - statements:
             - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
@@ -4531,8 +4528,7 @@ Node collector config should match snapshot when fargate is enabled:
             - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
+          - statements:
             - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
@@ -5645,8 +5641,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
+          - statements:
             - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
@@ -6713,8 +6708,7 @@ Node collector config should match snapshot when using default values:
             - set(log.attributes["service.name"], resource.attributes["k8s.container.name"])
         transform/unify_node_attribute:
           metric_statements:
-          - context: datapoint
-            statements:
+          - statements:
             - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"])
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
