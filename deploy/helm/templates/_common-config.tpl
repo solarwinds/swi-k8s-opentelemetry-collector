@@ -336,8 +336,10 @@ transform/unify_node_attribute:
       label_set:  [k8s.node.name]
       aggregation_type: sum
   new_name: k8s.node.fs.throughput
-- include: k8s.pod.fs.usage.bytes
+- include: k8s.container_fs_usage_bytes
   action: insert
+  match_type: regexp
+  experimental_match_labels: { "id":"/", "k8s.node.name": "\\S+", "pod": "", "namespace": "" }
   operations:
     - action: aggregate_labels
       label_set: [k8s.node.name]

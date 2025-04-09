@@ -722,7 +722,13 @@ Node collector config for windows nodes should match snapshot when using default
               - k8s.node.name
             submatch_case: lower
           - action: insert
-            include: k8s.pod.fs.usage.bytes
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+              namespace: ""
+              pod: ""
+            include: k8s.container_fs_usage_bytes
+            match_type: regexp
             new_name: k8s.node.fs.usage
             operations:
             - action: aggregate_labels
@@ -1875,7 +1881,13 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - k8s.node.name
             submatch_case: lower
           - action: insert
-            include: k8s.pod.fs.usage.bytes
+            experimental_match_labels:
+              id: /
+              k8s.node.name: \S+
+              namespace: ""
+              pod: ""
+            include: k8s.container_fs_usage_bytes
+            match_type: regexp
             new_name: k8s.node.fs.usage
             operations:
             - action: aggregate_labels
