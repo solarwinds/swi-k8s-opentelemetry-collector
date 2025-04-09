@@ -689,6 +689,105 @@ receivers:
       {{- end }}
 {{- end }}
 
+  kubeletstats:
+    collection_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+    auth_type: "serviceAccount"
+    endpoint: "https://${NODE_NAME}:10250"
+    insecure_skip_verify: true
+    metric_groups:
+      - node
+      - pod
+      - container
+      - volume
+    extra_metadata_labels:
+      - container.id
+      - k8s.volume.type
+    metrics:
+      container.cpu.time:
+        enabled: false
+      container.cpu.utilization:
+        enabled: false
+      container.filesystem.available:
+        enabled: false
+      container.filesystem.capacity:
+        enabled: false
+      container.filesystem.usage:
+        enabled: true
+      container.memory.available:
+        enabled: false
+      container.memory.major_page_faults:
+        enabled: false
+      container.memory.page_faults:
+        enabled: false
+      container.memory.rss:
+        enabled: false
+      container.memory.usage:
+        enabled: false
+      container.memory.working_set:
+        enabled: false
+      k8s.node.cpu.time:
+        enabled: false
+      k8s.node.cpu.utilization:
+        enabled: false
+      k8s.node.filesystem.available:
+        enabled: false
+      k8s.node.filesystem.capacity:
+        enabled: false
+      k8s.node.filesystem.usage:
+        enabled: true
+      k8s.node.memory.available:
+        enabled: false
+      k8s.node.memory.major_page_faults:
+        enabled: false
+      k8s.node.memory.page_faults:
+        enabled: false
+      k8s.node.memory.rss:
+        enabled: false
+      k8s.node.memory.usage:
+        enabled: false
+      k8s.node.memory.working_set:
+        enabled: false
+      k8s.node.network.errors:
+        enabled: false
+      k8s.node.network.io:
+        enabled: false
+      k8s.pod.cpu.time:
+        enabled: false
+      k8s.pod.cpu.utilization:
+        enabled: false
+      k8s.pod.filesystem.available:
+        enabled: false
+      k8s.pod.filesystem.capacity:
+        enabled: false
+      k8s.pod.filesystem.usage:
+        enabled: true
+      k8s.pod.memory.available:
+        enabled: false
+      k8s.pod.memory.major_page_faults:
+        enabled: false
+      k8s.pod.memory.page_faults:
+        enabled: false
+      k8s.pod.memory.rss:
+        enabled: false
+      k8s.pod.memory.usage:
+        enabled: false
+      k8s.pod.memory.working_set:
+        enabled: false
+      k8s.pod.network.errors:
+        enabled: false
+      k8s.pod.network.io:
+        enabled: false
+      k8s.volume.available:
+        enabled: true
+      k8s.volume.capacity:
+        enabled: true
+      k8s.volume.inodes:
+        enabled: true
+      k8s.volume.inodes.free:
+        enabled: true
+      k8s.volume.inodes.used:
+        enabled: true
+
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
   receiver_creator/node:
     watch_observers:
@@ -841,6 +940,7 @@ service:
         - resource/all
       receivers:
         - receiver_creator/node
+        - kubeletstats
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     metrics:
