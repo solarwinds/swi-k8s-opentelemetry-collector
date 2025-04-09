@@ -42,17 +42,23 @@ spec:
                 - CHECKPOINT_RESTORE
                 - DAC_READ_SEARCH
                 - PERFMON
-                - SYS_ADMIN
                 - NET_ADMIN
+              {{- with .Values.beyla.extraCapabilities }}
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
               drop:
                 - ALL
           ports:
+          {{- if .Values.beyla.config.prometheus_export }}
           - name: metrics
-            containerPort: 9090
+            containerPort: {{ .Values.beyla.config.prometheus_export.port }}
             protocol: TCP
+          {{- end }}
+          {{- if .Values.beyla.config.internal_metrics }}
           - name: int-metrics
-            containerPort: 6060
+            containerPort: {{ .Values.beyla.config.internal_metrics.prometheus.port }}
             protocol: TCP
+          {{- end }}
           {{- with .Values.beyla.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

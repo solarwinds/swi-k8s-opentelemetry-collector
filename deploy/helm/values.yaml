@@ -1062,17 +1062,13 @@ beyla:
     tag: "2.0.3"
     pullPolicy: IfNotPresent
 
-  telemetry:
-    logs:
-      level: "info"
-
   resources:
     requests:
       cpu: 100m
       memory: 128Mi
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 768Mi
 
   # Scheduling configurations
   nodeSelector: {}
@@ -1082,4 +1078,15 @@ beyla:
 
   # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
   affinity: {}
+
+  # Overrides in beyla configuration
+  # see https://grafana.com/docs/beyla/latest/configure/ for all the options
+  config: {}
+
+  # -- Extra capabilities for unprivileged / less privileged setup.
+  extraCapabilities: []
+  # - SYS_RESOURCE       # <-- pre 5.11 only. Allows Beyla to increase the amount of locked memory.
+  # - SYS_ADMIN          # <-- Required for Go application trace context propagation, or if kernel.perf_event_paranoid >= 3 on Debian distributions.
+
+
 
