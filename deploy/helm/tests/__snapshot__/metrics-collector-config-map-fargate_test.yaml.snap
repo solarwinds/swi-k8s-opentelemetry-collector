@@ -34,6 +34,10 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
+        attributes/clean-attributes-otlp-metrics:
+          actions:
+          - action: delete
+            key: k8s.cluster.name
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -1659,6 +1663,7 @@ Metrics config should match snapshot when using default values:
             - memory_limiter
             - filter/ebpf
             - metricstransform/rename-otel
+            - attributes/clean-attributes-otlp-metrics
             - resource/otlp-metrics
             receivers:
             - otlp
