@@ -11,32 +11,55 @@ metadata:
 {{ include "common.annotations" . | indent 4 }}
 data:
   beyla-config.yml: |
+    {{- if not .Values.beyla.config.otel_metrics_export }}
     otel_metrics_export:
       endpoint: http://{{ include "common.fullname" (tuple . "-metrics-collector") }}:{{ .Values.otel.metrics.otlp_endpoint.port }}
       protocol: grpc
       interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
       features: ["application", "application_process", "application_service_graph", "network"]
+    {{- end }}
+    {{- if not .Values.beyla.config.ebpf }}
     ebpf:
       enable_context_propagation: true
+    {{- end }}
+    {{- if not .Values.beyla.config.process }}
     process:
       enabled: true
+    {{- end }}
+    {{- if not .Values.beyla.config.network }}
     network:
       enable: true
+    {{- end }}
+    {{- if not .Values.beyla.config.discovery }}
     discovery:
       services:
         - k8s_namespace: .*
       exclude_services:
         - exe_path: ".*otelcol.*|.*beyla.*"
-    log_level: {{ .Values.beyla.telemetry.logs.level }}
+    {{- end }}
+    {{- if not .Values.beyla.config.log_level }}
+    log_level: info
+    {{- end }}
+    {{- if not .Values.beyla.config.open_port }}
     open_port: 80,443,8000-8999
+    {{- end }}
+    {{- if not .Values.beyla.config.attributes }}
     attributes:
       kubernetes:
         enable: true
+    {{- end }}
+    {{- if not .Values.beyla.config.prometheus_export }}
     prometheus_export:
       port: 9090
       path: /metrics
+    {{- end }}
+    {{- if not .Values.beyla.config.internal_metrics }}
     internal_metrics:
       prometheus:
         port: 6060
         path: /metrics
+    {{- end }}
+    {{- if .Values.beyla.config }}
+  {{- toYaml .Values.beyla.config | nindent 4}}
+    {{- end }}
 {{- end }}

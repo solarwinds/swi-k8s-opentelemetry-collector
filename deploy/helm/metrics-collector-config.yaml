@@ -703,6 +703,12 @@ processors:
 
   {{- include "common-config.attributes-remove-prometheus-attributes" . | nindent 2 }}
 
+  # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
+  attributes/clean-attributes-otlp-metrics:
+    actions:
+      - key: k8s.cluster.name
+        action: delete
+
   resource/otlp-metrics:
     attributes:
       # Collector and Manifest version
@@ -865,7 +871,27 @@ processors:
   filter/histograms:
     metrics:
       metric:
-        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds" or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")'
+        # Exclude all histograms except the ones listed below
+        # excluded histograms are:
+        # - all histograms required for system dashboards (apiserver, coredns, controller_manager)
+        # - all histograms from beyla
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(
+            name == "k8s.apiserver_request_duration_seconds" or 
+            name == "k8s.workqueue_queue_duration_seconds" or 
+            name == "k8s.coredns_dns_request_duration_seconds" or 
+            name == "k8s.coredns_dns_request_size_bytes" or 
+            name == "k8s.coredns_dns_response_size_bytes" or 
+            name == "k8s.http.client.request.duration" or
+            name == "k8s.http.client.request.body.size" or
+            name == "k8s.http.server.request.duration" or 
+            name == "k8s.http.server.request.body.size" or
+            name == "k8s.rpc.client.duration" or
+            name == "k8s.rpc.server.duration" or
+            name == "k8s.sql.client.duration" or
+            name == "k8s.redis.client.duration" or
+            name == "k8s.messaging.publish.duration" or
+            name == "k8s.messaging.process.duration"
+          )'
 
 connectors:
   forward/prometheus:
@@ -1077,6 +1103,7 @@ service:
         - filter/ebpf
 {{- end }}
         - metricstransform/rename-otel
+        - attributes/clean-attributes-otlp-metrics
         - resource/otlp-metrics
       receivers:
         - otlp

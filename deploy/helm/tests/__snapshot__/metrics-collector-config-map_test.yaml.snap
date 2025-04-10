@@ -34,6 +34,10 @@ Metrics config should match snapshot when fargate is enabled:
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
+        attributes/clean-attributes-otlp-metrics:
+          actions:
+          - action: delete
+            key: k8s.cluster.name
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -221,9 +225,15 @@ Metrics config should match snapshot when fargate is enabled:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not( name == "k8s.apiserver_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
-              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")
+              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
+              or name == "k8s.http.client.request.duration" or name == "k8s.http.client.request.body.size"
+              or name == "k8s.http.server.request.duration" or name == "k8s.http.server.request.body.size"
+              or name == "k8s.rpc.client.duration" or name == "k8s.rpc.server.duration"
+              or name == "k8s.sql.client.duration" or name == "k8s.redis.client.duration"
+              or name == "k8s.messaging.publish.duration" or name == "k8s.messaging.process.duration"
+              )
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -1659,6 +1669,7 @@ Metrics config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/ebpf
             - metricstransform/rename-otel
+            - attributes/clean-attributes-otlp-metrics
             - resource/otlp-metrics
             receivers:
             - otlp
@@ -1754,6 +1765,10 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
+        attributes/clean-attributes-otlp-metrics:
+          actions:
+          - action: delete
+            key: k8s.cluster.name
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -1944,9 +1959,15 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not( name == "k8s.apiserver_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
-              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")
+              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
+              or name == "k8s.http.client.request.duration" or name == "k8s.http.client.request.body.size"
+              or name == "k8s.http.server.request.duration" or name == "k8s.http.server.request.body.size"
+              or name == "k8s.rpc.client.duration" or name == "k8s.rpc.server.duration"
+              or name == "k8s.sql.client.duration" or name == "k8s.redis.client.duration"
+              or name == "k8s.messaging.publish.duration" or name == "k8s.messaging.process.duration"
+              )
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -3317,6 +3338,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - memory_limiter
             - filter/ebpf
             - metricstransform/rename-otel
+            - attributes/clean-attributes-otlp-metrics
             - resource/otlp-metrics
             receivers:
             - otlp
@@ -3419,6 +3441,10 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
+        attributes/clean-attributes-otlp-metrics:
+          actions:
+          - action: delete
+            key: k8s.cluster.name
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -3609,9 +3635,15 @@ Metrics config should match snapshot when using default values:
         filter/histograms:
           metrics:
             metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.apiserver_request_duration_seconds"
+            - type == METRIC_DATA_TYPE_HISTOGRAM and not( name == "k8s.apiserver_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
-              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes")
+              or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
+              or name == "k8s.http.client.request.duration" or name == "k8s.http.client.request.body.size"
+              or name == "k8s.http.server.request.duration" or name == "k8s.http.server.request.body.size"
+              or name == "k8s.rpc.client.duration" or name == "k8s.rpc.server.duration"
+              or name == "k8s.sql.client.duration" or name == "k8s.redis.client.duration"
+              or name == "k8s.messaging.publish.duration" or name == "k8s.messaging.process.duration"
+              )
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -4967,6 +4999,7 @@ Metrics config should match snapshot when using default values:
             - memory_limiter
             - filter/ebpf
             - metricstransform/rename-otel
+            - attributes/clean-attributes-otlp-metrics
             - resource/otlp-metrics
             receivers:
             - otlp
