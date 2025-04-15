@@ -48,17 +48,6 @@ data:
       kubernetes:
         enable: true
     {{- end }}
-    {{- if not .Values.beyla.config.prometheus_export }}
-    prometheus_export:
-      port: 9090
-      path: /metrics
-    {{- end }}
-    {{- if not .Values.beyla.config.internal_metrics }}
-    internal_metrics:
-      prometheus:
-        port: 6060
-        path: /metrics
-    {{- end }}
     {{- if .Values.beyla.config }}
   {{- toYaml .Values.beyla.config | nindent 4}}
     {{- end }}
