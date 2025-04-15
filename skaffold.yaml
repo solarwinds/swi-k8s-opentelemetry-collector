@@ -4,10 +4,6 @@ metadata:
   name: swi-k8s-opentelemetry-collector
 build:
   artifacts:
-    - image: swi-k8s-opentelemetry-collector
-      context: solarwinds-otel-collector
-      docker:
-        dockerfile: build/docker/Dockerfile.k8s
     - image: integration-test
       docker:
         dockerfile: build/docker/IntegrationTest.Dockerfile
@@ -58,10 +54,6 @@ deploy:
             tls_insecure: true
             # OTEL collector requires the SOLARWINDS_API_TOKEN env variable to be set to some not empty string
             api_token: "not_set"
-            image:
-              repository: "swi-k8s-opentelemetry-collector"
-              tag: "{{.IMAGE_TAG}}"
-              pullPolicy: "Never"
             node_collector:
               sending_queue:
                 persistent_storage:
@@ -177,15 +169,25 @@ portForward:
   port: 9090
   localPort: 8080
 profiles:
-  - name: test-cluster
+  - name: build-collector
     build:
       artifacts:
         - image: swi-k8s-opentelemetry-collector
-          context: solarwinds-otel-collector
+          # Path to cloned https://github.com/solarwinds/solarwinds-otel-collector.git repo
+          context: ../solarwinds-otel-collector
           docker:
             dockerfile: build/docker/Dockerfile.k8s
-      local:
-        push: true
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.image.repository
+        value: "swi-k8s-opentelemetry-collector"
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.image.tag
+        value: "{{.IMAGE_TAG}}"
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.image.pullPolicy
+        value: "Never"
+  - name: test-cluster
     patches:
     # remove timeseries-mock-service
     - op: remove
@@ -239,15 +241,6 @@ profiles:
     deploy:
       kubeContext: default
   - name: ci-helm-e2e
-    patches:
-      - op: remove
-        path: /build/artifacts/0
-      - op: remove
-        path: /deploy/helm/releases/1/setValueTemplates/otel.image.repository
-      - op: remove
-        path: /deploy/helm/releases/1/setValueTemplates/otel.image.tag
-      - op: remove
-        path: /deploy/helm/releases/1/setValueTemplates/otel.image.pullPolicy
     build:
       local:
         push: false
