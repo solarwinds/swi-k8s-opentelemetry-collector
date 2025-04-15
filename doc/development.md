@@ -55,10 +55,10 @@ skaffold dev
 
 That will:
 
-- build customized Otel Collector image
+- deploy `swi k8s otel collector` helm chart
 - deploy Prometheus
 - deploy OtelEndpoint mock (to see that customized Otel Collector is sending metrics correctly)
-- deploy customized Otel Collector
+
 
 Possible issues:
 
@@ -115,6 +115,21 @@ You can look at `http://localhost:8088/manifests.json` (each line is JSON as bul
 #### Entity State events
 
 You can look at `http://localhost:8088/entitystateevents.json` (each line is JSON as bulk sent by OTEL collector).
+
+## Rebuild `solarwinds otel collector` from sources
+To run the collector in a local environment with `solarwinds otel collector` image build from sources, execute:
+
+```shell
+skaffold dev -p=build-collector
+```
+
+You may need to update relative path to `solarwinds otel collector` sources in `skaffold.yaml`:
+
+```
+    # Path to cloned https://github.com/solarwinds/solarwinds-otel-collector.git repo
+    context: ../solarwinds-otel-collector
+```
+
 
 ## Develop against remote cluster
 * Make sure that you have working kubeContext, set this to `test-cluster` profile section in `skaffold.yaml`:
