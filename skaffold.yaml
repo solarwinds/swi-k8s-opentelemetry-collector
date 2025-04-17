@@ -249,3 +249,22 @@ profiles:
     deploy:
       # `default` is k3s default context name
       kubeContext: default
+  - name: simple
+    patches:
+      # remove integration-test
+      - op: remove
+        path: /build/artifacts/0
+      # use values.yaml with default values
+      - op: replace
+        path: /deploy/helm/releases/1/setValueTemplates
+        value: 
+          cluster:
+            name: "cluster name"
+            uid: "cluster-uid-123456789"
+          otel:
+            endpoint: timeseries-mock-service:9082
+            tls_insecure: true
+            api_token: "not_set"
+      # do not deploy tests
+      - op: remove
+        path: /deploy/helm/releases/4
