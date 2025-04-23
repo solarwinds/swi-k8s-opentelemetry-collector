@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Ensure the .tmp directory exists
+mkdir -p .tmp
+
+# File to store the last Skaffold run ID
+LAST_RUN_ID_FILE=".tmp/last_run_id"
+
+# Check if the current Skaffold run ID matches the last run ID
+if [ -f "$LAST_RUN_ID_FILE" ] && [ "$(cat $LAST_RUN_ID_FILE)" == "$SKAFFOLD_RUN_ID" ]; then
+    echo "Skaffold run ID matches the last run ID. Skipping cleanup."
+    exit 0
+fi
+
+# Save the current Skaffold run ID
+echo "$SKAFFOLD_RUN_ID" > "$LAST_RUN_ID_FILE"
+
 # Get the current Kubernetes context
 current_context=$(kubectl config current-context)
 
