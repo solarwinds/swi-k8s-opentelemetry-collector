@@ -66,6 +66,11 @@ jobs:
       - name: Deploy services using Skaffold
         run: skaffold deploy --build-artifacts=/tmp/tags.json --kube-context kind-kind
 
+      - name: Skaffold diagnose
+        if: ${{ failure() }}
+        run: |
+          skaffold diagnose
+
       - name: Show all resources
         if: ${{ failure() }}
         run: |
