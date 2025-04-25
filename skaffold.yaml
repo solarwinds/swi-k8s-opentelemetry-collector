@@ -11,28 +11,8 @@ build:
           CI: "{{ .CI }}"
   local:
     push: false
-resourceSelector:
-  allow:
-    # let skaffold to manager CRDs in local k8s
-    - groupKind: "OpenTelemetryCollector.opentelemetry.io"
-      image: [".*"]
-      labels: [".*"]
-    - groupKind: "PodMonitor.monitoring.coreos.com"
-      image: [".*"]
-      labels: [".*"]
-    - groupKind: "ServiceMonitor.monitoring.coreos.com"
-      image: [".*"]
-      labels: [".*"]
 deploy:
   helm:
-    hooks:
-      before:
-        - host:
-            command: ["sh", "-c", "./utils/pre-deploy.sh"]
-            os: [darwin, linux]
-        - host:
-            command: ["cmd", "/c", ".\\utils\\pre-deploy.bat || exit 0"]
-            os: [windows]
     releases:
       - name: timeseries-mock-service
         chartPath: tests/deploy/timeseries-mock-service
@@ -44,8 +24,6 @@ deploy:
         namespace: test-namespace
         createNamespace: true
         setValueTemplates:
-          kube-state-metrics:
-            enabled: true
           cluster:
             name: "cluster name"
             uid: "cluster-uid-123456789"
@@ -59,7 +37,6 @@ deploy:
                 persistent_storage:
                   enabled: true
             metrics:
-              enabled: true
               prometheus_check: false
               sending_queue:
                 offload_to_disk: true
@@ -72,25 +49,8 @@ deploy:
                   enabled: false
                 etcd:
                   enabled: false
-              k8s_instrumentation:
-                annotations:
-                  # excluded annotations:
-                  # * kubectl.kubernetes.io/last-applied-configuration - deployed by kubectl, contains full config for each resource
-                  # * cni.projectcalico.org/ - deployed in CI system (k3s)
-                  excludePattern: "(kubectl\\.kubernetes\\.io/last-applied-configuration)|(cni\\.projectcalico\\.org/.*)|(deployment\\.kubernetes\\.io/revision)|(deprecated\\.daemonset\\.template\\.generation)"
-                labels:
-                  # excluded labels:
-                  # * skaffold.dev/ - deployed by skaffold, contains unique ids so it must be excluded
-                  excludePattern: "skaffold\\.dev/.*"
               autodiscovery:
-                discovery_collector:
-                  enabled: true
                 prometheusEndpoints: 
-                  enabled: true
-                  customTransformations:
-                    counterToRate:
-                      - k8s.otelcol_exporter_sent_metric_points
-                      - k8s.otelcol_exporter_sent_log_records
                   filter:
                     exclude:
                       match_type: regexp
@@ -103,31 +63,18 @@ deploy:
                         endpoint_port: 8081
                 prefix: ""
             events:
-              enabled: true
               sending_queue:
                 offload_to_disk: true
             manifests:
-              enabled: true
               pull_every: 1m
               persistent_storage:
                 enabled: false
             logs:
               # journal on Docker Desktop is not supported
-              enabled: true
               journal: false
               filter:
                 log_record:
                   - resource.attributes["k8s.namespace.name"] == "test-namespace"
-          certmanager:
-            enabled: true
-          operator:
-            enabled: true
-          ebpfNetworkMonitoring:
-            enabled: true
-          prometheusCRDs:
-            install: true
-          beyla:
-            enabled: true
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
       - name: timeseries-mock-service-custom-resources
@@ -154,9 +101,6 @@ deploy:
         namespace: test-namespace
         createNamespace: true
         upgradeOnChange: true
-        setValueTemplates:
-          podMonitors:
-            enabled: true
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -224,6 +168,90 @@ profiles:
     - op: replace
       path: /deploy/kubeContext
       value: "<your kube context here>"
+  - name: operator
+    activation:
+      - env: CI=true
+    resourceSelector:
+      allow:
+        # let skaffold to manager CRDs in local k8s
+        - groupKind: "OpenTelemetryCollector.opentelemetry.io"
+          image: [".*"]
+          labels: [".*"]
+        - groupKind: "PodMonitor.monitoring.coreos.com"
+          image: [".*"]
+          labels: [".*"]
+        - groupKind: "ServiceMonitor.monitoring.coreos.com"
+          image: [".*"]
+          labels: [".*"]
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/operator.enabled
+        value: true
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/certmanager.enabled
+        value: true
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.metrics.autodiscovery.discovery_collector.enabled
+        value: true
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/prometheusCRDs.install
+        value: true
+      - op: add
+        path: /deploy/helm/releases/4/setValueTemplates
+        value: 
+          podMonitors:
+            enabled: true
+      - op: add
+        path: /deploy/helm/releases/2/setValueTemplates
+        value: 
+          podMonitors:
+            enabled: true
+      - op: add
+        path: /deploy/helm/hooks
+        value:
+          before:
+            - host:
+                command: ["sh", "-c", "./utils/pre-deploy.sh"]
+                os: [darwin, linux]
+            - host:
+                command: ["cmd", "/c", ".\\utils\\pre-deploy.bat || exit 0"]
+                os: [windows]
+  - name: beyla
+    activation:
+      - env: CI=true
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/beyla.enabled
+        value: true
+  - name: no-logs
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.logs.enabled
+        value: false
+  - name: no-ebpf
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/ebpfNetworkMonitoring.enabled
+        value: false
+  - name: no-metrics
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.metrics.enabled
+        value: false
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/kube-state-metrics.enabled
+        value: false
+  - name: no-events
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.events.enabled
+        value: false
+  - name: no-tests
+    patches:
+      - op: remove
+        path: /deploy/helm/releases/4
+      - op: remove
+        path: /build/artifacts/0
   - name: ci
     activation:
       - env: CI=true
@@ -249,22 +277,3 @@ profiles:
     deploy:
       # `default` is k3s default context name
       kubeContext: default
-  - name: simple
-    patches:
-      # remove integration-test
-      - op: remove
-        path: /build/artifacts/0
-      # use values.yaml with default values
-      - op: replace
-        path: /deploy/helm/releases/1/setValueTemplates
-        value: 
-          cluster:
-            name: "cluster name"
-            uid: "cluster-uid-123456789"
-          otel:
-            endpoint: timeseries-mock-service:9082
-            tls_insecure: true
-            api_token: "not_set"
-      # do not deploy tests
-      - op: remove
-        path: /deploy/helm/releases/4
