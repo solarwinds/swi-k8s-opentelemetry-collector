@@ -55,9 +55,26 @@ skaffold dev
 
 That will:
 
-- deploy `swi k8s otel collector` helm chart
+- deploy `SWO K8s Collector` helm chart
 - deploy Prometheus
 - deploy OtelEndpoint mock (to see that customized Otel Collector is sending metrics correctly)
+
+By default it will deploy `SWO K8s Collector` with features that are enabled by default. It is possible to opt-in/opt-out some features using skaffold profiles:
+
+- `operator` - include certmanager, operator and all the features that are related to it (discovery_collector, CRDs)
+- `beyla` - include beyla 
+- `no-logs` - exclude log collection
+- `no-ebpf` - exclude opentelemetry-network
+- `no-metrics` - exclude metrics collection
+- `no-events` - exclude events collection
+- `no-tests` - exclude integration tests
+
+Example:
+```
+skaffold dev -p operator,beyla
+```
+
+Read more about profiles [here](https://skaffold.dev/docs/environment/profiles/)
 
 
 Possible issues:
