@@ -1,4 +1,4 @@
-apiVersion: skaffold/v3
+apiVersion: skaffold/v4beta13
 kind: Config
 metadata:
   name: swi-k8s-opentelemetry-collector
@@ -16,22 +16,22 @@ deploy:
     releases:
       - name: timeseries-mock-service
         chartPath: tests/deploy/timeseries-mock-service
-        namespace: '{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}'
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
-      - name: '{{ .TEST_CLUSTER_RELEASE_NAME | default "sut" }}'
+      - name: '{{ env "TEST_CLUSTER_RELEASE_NAME" | default "sut" }}'
         chartPath: deploy/helm
-        namespace: '{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}'
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         setValueTemplates:
           cluster:
-            name: '{{ .CLUSTER_NAME | default "cluster name" }}'
-            uid: '{{ .CLUSTER_NAME | default "cluster-uid-123456789" }}'
+            name: '{{ env "CLUSTER_NAME" | default "cluster name" }}'
+            uid: '{{ env "CLUSTER_NAME" | default "cluster-uid-123456789" }}'
           otel:
             endpoint: timeseries-mock-service:9082
             tls_insecure: true
             # OTEL collector requires the SOLARWINDS_API_TOKEN env variable to be set to some not empty string
-            api_token: '{{ .SOLARWINDS_API_TOKEN | default "not_set" }}' 
+            api_token: '{{ env "SOLARWINDS_API_TOKEN" | default "not_set" }}' 
             node_collector:
               sending_queue:
                 persistent_storage:
@@ -53,7 +53,7 @@ deploy:
                 prometheusEndpoints: 
                   podMonitors:
                     rules:
-                      - rule: labels["app"] == "{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}"
+                      - rule: labels["app"] == "{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}"
                         metrics_path: "/custom_metrics"
                         endpoint_port: 8081
                 prefix: ""
@@ -69,17 +69,17 @@ deploy:
               journal: false
               filter:
                 log_record:
-                  - resource.attributes["k8s.namespace.name"] == "{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}"
+                  - resource.attributes["k8s.namespace.name"] == "{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}"
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
       - name: timeseries-mock-service-custom-resources
         chartPath: tests/deploy/timeseries-mock-service-custom-resources
-        namespace: '{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}'
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
       - name: monitoring
         remoteChart: kube-prometheus-stack
-        namespace: '{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}'
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         repo: https://prometheus-community.github.io/helm-charts
         version: 69.3.2
@@ -93,18 +93,18 @@ deploy:
               "kubernetes\\.io\\/os": linux
       - name: tests
         chartPath: tests/deploy/tests
-        namespace: '{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}'
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
   resourceName: timeseries-mock-service
-  namespace: '{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}'
+  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
   port: 8088
 - resourceType: service
   resourceName: prometheus-operated
-  namespace: '{{ .TEST_CLUSTER_NAMESPACE | default "test-namespace" }}'
+  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
   port: 9090
   localPort: 8080
 profiles:

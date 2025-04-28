@@ -23,7 +23,7 @@
 
 ## Prerequisites
 
-- [Skaffold](https://skaffold.dev) at least [v2.0.3](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.0.3)
+- [Skaffold](https://skaffold.dev) at least [v2.15.0](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.15.0)
   - On windows, do not install it using choco due to [this issue](https://github.com/GoogleContainerTools/skaffold/issues/4058)
 - [Kustomize](https://kustomize.io):
 
