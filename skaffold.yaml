@@ -1,4 +1,4 @@
-apiVersion: skaffold/v3
+apiVersion: skaffold/v4beta13
 kind: Config
 metadata:
   name: swi-k8s-opentelemetry-collector
@@ -16,22 +16,22 @@ deploy:
     releases:
       - name: timeseries-mock-service
         chartPath: tests/deploy/timeseries-mock-service
-        namespace: test-namespace
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
-      - name: sut
+      - name: '{{ env "TEST_CLUSTER_RELEASE_NAME" | default "sut" }}'
         chartPath: deploy/helm
-        namespace: test-namespace
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         setValueTemplates:
           cluster:
-            name: "cluster name"
-            uid: "cluster-uid-123456789"
+            name: '{{ env "CLUSTER_NAME" | default "cluster name" }}'
+            uid: '{{ env "CLUSTER_NAME" | default "cluster-uid-123456789" }}'
           otel:
             endpoint: timeseries-mock-service:9082
             tls_insecure: true
             # OTEL collector requires the SOLARWINDS_API_TOKEN env variable to be set to some not empty string
-            api_token: "not_set"
+            api_token: '{{ env "SOLARWINDS_API_TOKEN" | default "not_set" }}' 
             node_collector:
               sending_queue:
                 persistent_storage:
@@ -51,11 +51,6 @@ deploy:
                   enabled: false
               autodiscovery:
                 prometheusEndpoints: 
-                  filter:
-                    exclude:
-                      match_type: regexp
-                      metric_names:
-                        - k8s.otelcol_processor.*
                   podMonitors:
                     rules:
                       - rule: labels["app"] == "test-deployment"
@@ -74,17 +69,17 @@ deploy:
               journal: false
               filter:
                 log_record:
-                  - resource.attributes["k8s.namespace.name"] == "test-namespace"
+                  - resource.attributes["k8s.namespace.name"] == "{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}"
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
       - name: timeseries-mock-service-custom-resources
         chartPath: tests/deploy/timeseries-mock-service-custom-resources
-        namespace: test-namespace
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
       - name: monitoring
         remoteChart: kube-prometheus-stack
-        namespace: test-namespace
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         repo: https://prometheus-community.github.io/helm-charts
         version: 69.3.2
@@ -98,18 +93,18 @@ deploy:
               "kubernetes\\.io\\/os": linux
       - name: tests
         chartPath: tests/deploy/tests
-        namespace: test-namespace
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
   resourceName: timeseries-mock-service
-  namespace: test-namespace
+  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
   port: 8088
 - resourceType: service
   resourceName: prometheus-operated
-  namespace: test-namespace
+  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
   port: 9090
   localPort: 8080
 profiles:
@@ -131,43 +126,16 @@ profiles:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/otel.image.pullPolicy
         value: "Never"
-  - name: test-cluster
+  - name: push
+    build:
+      local:
+        push: true
+        useBuildkit: true
+        concurrency: 0
     patches:
-    # remove timeseries-mock-service
-    - op: remove
-      path: /deploy/helm/releases/0
-    # remove timeseries-mock-service-custom-resources
-    - op: remove
-      path: /deploy/helm/releases/1
-    - op: replace
-      path: /deploy/helm/releases/0/namespace
-      value: "{{.TEST_CLUSTER_NAMESPACE}}"
-    - op: replace
-      path: /deploy/helm/releases/0/name
-      value: "{{.TEST_CLUSTER_RELEASE_NAME}}"
-    - op: replace
-      path: /portForward/0/namespace
-      value: "{{.TEST_CLUSTER_NAMESPACE}}"
-    - op: replace
-      path: /portForward/1/namespace
-      value: "{{.TEST_CLUSTER_NAMESPACE}}"
-    - op: replace
-      path: /portForward/1/resourceName
-      value: "{{.TEST_CLUSTER_RELEASE_NAME}}-prometheus-server"
-    - op: replace
-      path: /deploy/kubectl/defaultNamespace
-      value: "{{.TEST_CLUSTER_NAMESPACE}}"
-    - op: remove
-      path: /manifests/kustomize/paths/0
-    - op: replace
-      path: /deploy/helm/releases/1/namespace
-      value: "{{.TEST_CLUSTER_NAMESPACE}}"
-    - op: replace
-      path: /deploy/helm/releases/1/name
-      value: "{{.TEST_CLUSTER_RELEASE_NAME}}-prometheus"
-    - op: replace
-      path: /deploy/kubeContext
-      value: "<your kube context here>"
+      - op: replace
+        path: /deploy/helm/releases/1/setValueTemplates/otel.image.pullPolicy
+        value: "IfNotPresent"
   - name: operator
     activation:
       - env: CI=true
@@ -252,6 +220,22 @@ profiles:
         path: /deploy/helm/releases/4
       - op: remove
         path: /build/artifacts/0
+  - name: no-prometheus
+    activation:
+      - env: CI=true
+    patches:
+      # remove `monitoring` (Prometheus Operator)
+      - op: remove
+        path: /deploy/helm/releases/3
+      - op: remove
+        path: /portForward/1
+  - name: swo
+    patches:
+      - op: remove
+        path: /deploy/helm/releases/1/setValueTemplates/otel.tls_insecure
+      - op: replace
+        path: /deploy/helm/releases/1/setValueTemplates/otel.endpoint
+        value: "{{.SOLARWINDS_OTEL_ENDPOINT}}"
   - name: ci
     activation:
       - env: CI=true
@@ -260,12 +244,6 @@ profiles:
         push: false
         useBuildkit: true
         concurrency: 0
-    patches:
-    # remove `monitoring` (Prometheus Operator)
-    - op: remove
-      path: /deploy/helm/releases/3
-    - op: remove
-      path: /portForward/1
     deploy:
       kubeContext: default
   - name: ci-helm-e2e

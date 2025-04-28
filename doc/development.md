@@ -23,7 +23,7 @@
 
 ## Prerequisites
 
-- [Skaffold](https://skaffold.dev) at least [v2.0.3](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.0.3)
+- [Skaffold](https://skaffold.dev) at least [v2.15.0](https://github.com/GoogleContainerTools/skaffold/releases/tag/v2.15.0)
   - On windows, do not install it using choco due to [this issue](https://github.com/GoogleContainerTools/skaffold/issues/4058)
 - [Kustomize](https://kustomize.io):
 
@@ -68,6 +68,12 @@ By default it will deploy `SWO K8s Collector` with features that are enabled by 
 - `no-metrics` - exclude metrics collection
 - `no-events` - exclude events collection
 - `no-tests` - exclude integration tests
+- `no-prometheus` - exclude prometheus
+- `swo` - send metrics to SWO. This requires following envrionment variables to be set (e.g. using [skaffold.env file](https://skaffold.dev/docs/environment/env-file/)):
+  - `SOLARWINDS_OTEL_ENDPOINT` - SWO ingestion endpoint
+  - `SOLARWINDS_API_TOKEN` - SWO ingestion API token
+- `build-collector` - see [Rebuild `solarwinds otel collector` from sources](#rebuild-solarwinds-otel-collector-from-sources)
+- `push` - push built images to remote docker registry (see [Image Repository Handling](https://skaffold.dev/docs/environment/image-registries/))
 
 Example:
 ```
