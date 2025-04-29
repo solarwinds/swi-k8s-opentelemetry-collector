@@ -16,7 +16,7 @@ data:
   beyla-config.yml: |
     {{- if not .Values.beyla.config.otel_metrics_export }}
     otel_metrics_export:
-      endpoint: http://{{ include "common.fullname" (tuple . "-gateway") }}:{{ .Values.otel.gateway.otlp_endpoint.port }}
+      endpoint: http://swo-gateway:{{ .Values.otel.gateway.otlp_endpoint.port }}
       protocol: grpc
       interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
       features: ["application", "application_process", "application_service_graph", "network"]

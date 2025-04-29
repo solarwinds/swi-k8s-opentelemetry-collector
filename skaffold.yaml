@@ -165,6 +165,9 @@ profiles:
         path: /deploy/helm/releases/1/setValueTemplates/prometheusCRDs.install
         value: true
       - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/autoinstrumentation.installDefaultCR
+        value: true
+      - op: add
         path: /deploy/helm/releases/4/setValueTemplates
         value: 
           podMonitors:
@@ -174,6 +177,29 @@ profiles:
         value: 
           podMonitors:
             enabled: true
+      - op: add
+        path: /deploy/helm/releases/-
+        value: 
+          name: otel-demo
+          remoteChart: opentelemetry-demo
+          namespace: otel-demo
+          createNamespace: true
+          repo: https://open-telemetry.github.io/opentelemetry-helm-charts
+          version: 0.37.0
+          valuesFiles:
+            - tests/deploy/otel-demo/values.yaml
+          setValueTemplates:
+            default:
+              env:
+                - name: OTEL_SERVICE_NAME
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: "metadata.annotations['resource.opentelemetry.io/service.name']"
+                - name: OTEL_COLLECTOR_NAME
+                  value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
+                - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+                  value: cumulative
       - op: add
         path: /deploy/helm/hooks
         value:

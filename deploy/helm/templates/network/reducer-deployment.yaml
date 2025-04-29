@@ -40,7 +40,7 @@ spec:
           command: ['sh', '-c', 'until nc -zv $GATEWAY_HOST $GATEWAY_PORT; do echo "Waiting for gateway endpoint..."; sleep 5; done;']
           env:
             - name: "GATEWAY_HOST"
-              value: "{{ include "common.fullname" (tuple . "-gateway") }}"
+              value: "swo-gateway"
             - name: "GATEWAY_PORT"
               value: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
       containers:
@@ -58,7 +58,7 @@ spec:
             {{- end }}
             - --disable-prometheus-metrics
             - --enable-otlp-grpc-metrics
-            - --otlp-grpc-metrics-host={{ include "common.fullname" (tuple . "-gateway") }}
+            - --otlp-grpc-metrics-host=swo-gateway
             - --otlp-grpc-metrics-port={{ .Values.otel.gateway.otlp_endpoint.port }}
             - --num-ingest-shards={{ .Values.ebpfNetworkMonitoring.reducer.numIngestShards }}
             - --num-matching-shards={{ .Values.ebpfNetworkMonitoring.reducer.numMatchingShards }}
@@ -71,7 +71,7 @@ spec:
             {{- end }}
           env:
             - name: "EBPF_NET_CRASH_METRIC_HOST"
-              value: "{{ include "common.fullname" (tuple . "-gateway") }}"
+              value: "swo-gateway"
             - name: "EBPF_NET_CRASH_METRIC_PORT"
               value: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
           ports:

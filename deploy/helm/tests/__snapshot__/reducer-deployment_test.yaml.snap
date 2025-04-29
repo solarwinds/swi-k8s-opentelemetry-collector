@@ -9,14 +9,14 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
           - --enable-aws-enrichment
           - --disable-prometheus-metrics
           - --enable-otlp-grpc-metrics
-          - --otlp-grpc-metrics-host=RELEASE-NAME-swo-k8s-collector-gateway
+          - --otlp-grpc-metrics-host=swo-gateway
           - --otlp-grpc-metrics-port=4317
           - --num-ingest-shards=3
           - --num-matching-shards=3
           - --num-aggregation-shards=3
         env:
           - name: EBPF_NET_CRASH_METRIC_HOST
-            value: RELEASE-NAME-swo-k8s-collector-gateway
+            value: swo-gateway
           - name: EBPF_NET_CRASH_METRIC_PORT
             value: "4317"
         image: solarwinds/opentelemetry-ebpf-reducer:v0.10.3
@@ -45,7 +45,7 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
           - until nc -zv $GATEWAY_HOST $GATEWAY_PORT; do echo "Waiting for gateway endpoint..."; sleep 5; done;
         env:
           - name: GATEWAY_HOST
-            value: RELEASE-NAME-swo-k8s-collector-gateway
+            value: swo-gateway
           - name: GATEWAY_PORT
             value: "4317"
         image: busybox:1.36.1

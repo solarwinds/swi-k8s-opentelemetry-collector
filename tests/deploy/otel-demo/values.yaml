@@ -1,0 +1,63 @@
+components:
+  accounting:   
+    enabled: false
+  ad:
+    enabled: true
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "test-namespace/swo-instrumentation"
+      resource.opentelemetry.io/service.name: "ad"
+    env:
+      - name: AD_PORT
+        value: "8080"
+      - name: FLAGD_HOST
+        value: flagd
+      - name: FLAGD_PORT
+        value: "8013"
+      # - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      #   value: http://$(OTEL_COLLECTOR_NAME):4317
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+  cart:
+    enabled: false
+  checkout:
+    enabled: false
+  currency:
+    enabled: false
+  email:
+    enabled: false
+  fraud-detection:
+    enabled: false
+  frontend:
+    enabled: false
+  frontend-proxy:
+    enabled: false
+  image-provider:
+    enabled: false
+  load-generator:
+    enabled: false
+  payment:
+    enabled: false
+  product-catalog:
+    enabled: false
+  quote:
+    enabled: false
+  recommendation:
+    enabled: false
+  shipping:
+    enabled: false
+  flagd:
+    enabled: true
+  kafka:
+    enabled: false
+  valkey-cart:
+    enabled: false
+opentelemetry-collector:
+  enabled: false
+jaeger:
+  enabled: false
+prometheus:
+  enabled: false
+grafana:
+  enabled: false
+opensearch:
+  enabled: false
