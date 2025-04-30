@@ -118,11 +118,24 @@ processors:
       - statements:
           # convert body to string
           - set(log.body, log.body.string)
-  transform/set_status_for_pods:
+
+  transform/extract_resource_attrs_from_manifests:
     error_mode: ignore
     log_statements:
-      - statements:
-          - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"]) where log.body["kind"] == "Pod" and log.body["status"]["phase"] != nil
+      - conditions:
+          - body["kind"] == "Pod"
+        statements:
+          - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"]) where log.body["status"]["phase"] != nil
+      - conditions:
+          - body["kind"] == "CronJob"
+        statements:
+          - set(resource.attributes["sw.k8s.cronjob.suspended"], log.body["spec"]["suspend"]) where log.body["spec"]["suspend"] != nil
+          - set(resource.attributes["sw.k8s.cronjob.schedule"], log.body["spec"]["schedule"]) where log.body["spec"]["schedule"] != nil
+          - set(resource.attributes["sw.k8s.cronjob.concurrencypolicy"], log.body["spec"]["concurrencyPolicy"]) where log.body["spec"]["concurrencyPolicy"] != nil
+          - set(resource.attributes["sw.k8s.cronjob.failedjobshistorylimit"], log.body["spec"]["failedJobsHistoryLimit"]) where log.body["spec"]["failedJobsHistoryLimit"] != nil
+          - set(resource.attributes["sw.k8s.cronjob.successfuljobshistorylimit"], log.body["spec"]["successfulJobsHistoryLimit"]) where log.body["spec"]["successfulJobsHistoryLimit"] != nil
+          - set(resource.attributes["sw.k8s.cronjob.active"], Len(log.body["status"]["active"])) where log.body["status"]["active"] != nil
+          - set(resource.attributes["sw.k8s.cronjob.active"], 0) where log.body["status"]["active"] == nil
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
@@ -387,7 +400,7 @@ service:
         - transform/manifest
         - groupbyattrs/manifest
         - transform/set_labels_and_annotations_for_entities
-        - transform/set_status_for_pods
+        - transform/extract_resource_attrs_from_manifests
         - transform/stringify_body
         - resource/manifest
         - resourcedetection/providers
