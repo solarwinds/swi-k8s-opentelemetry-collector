@@ -152,6 +152,15 @@ processors:
         action: insert
         value: "false"
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
+  attributes/unify_configmap_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_configmap_.*              
+    actions:
+      - key: k8s.configmap.name
+        from_attribute: configmap
+        action: insert
 
   metricstransform/rename:
     transforms:
@@ -1151,6 +1160,7 @@ service:
         - attributes/unify_service_attribute
         - attributes/unify_endpoint_attribute
         - attributes/unify_pod_attribute
+        - attributes/unify_configmap_attribute
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
