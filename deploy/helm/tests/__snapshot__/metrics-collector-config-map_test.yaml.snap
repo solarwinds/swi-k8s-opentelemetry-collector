@@ -79,6 +79,15 @@ Metrics config should match snapshot when fargate is enabled:
             match_type: regexp
             metric_names:
             - .*
+        attributes/unify_configmap_attribute:
+          actions:
+          - action: insert
+            from_attribute: configmap
+            key: k8s.configmap.name
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_configmap_.*
         attributes/unify_endpoint_attribute:
           actions:
           - action: insert
@@ -276,7 +285,7 @@ Metrics config should match snapshot when fargate is enabled:
               == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
               or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
               or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
-              or\nname == \"kube_endpoint_address\"\n)\n"
+              or\nname == \"kube_endpoint_address\" or\nname == \"kube_configmap_created\"\n)\n"
         filter/preprocessing:
           error_mode: ignore
           metrics:
@@ -1691,6 +1700,7 @@ Metrics config should match snapshot when fargate is enabled:
             - attributes/unify_service_attribute
             - attributes/unify_endpoint_attribute
             - attributes/unify_pod_attribute
+            - attributes/unify_configmap_attribute
             - attributes/identify_init_container
             - attributes/identify_standard_container
             - metricstransform/rename
@@ -1812,6 +1822,15 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             match_type: regexp
             metric_names:
             - .*
+        attributes/unify_configmap_attribute:
+          actions:
+          - action: insert
+            from_attribute: configmap
+            key: k8s.configmap.name
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_configmap_.*
         attributes/unify_endpoint_attribute:
           actions:
           - action: insert
@@ -2012,7 +2031,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
               or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
               or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
-              or\nname == \"kube_endpoint_address\"\n)\n"
+              or\nname == \"kube_endpoint_address\" or\nname == \"kube_configmap_created\"\n)\n"
         filter/preprocessing:
           error_mode: ignore
           metrics:
@@ -3362,6 +3381,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - attributes/unify_service_attribute
             - attributes/unify_endpoint_attribute
             - attributes/unify_pod_attribute
+            - attributes/unify_configmap_attribute
             - attributes/identify_init_container
             - attributes/identify_standard_container
             - metricstransform/rename
@@ -3490,6 +3510,15 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - .*
+        attributes/unify_configmap_attribute:
+          actions:
+          - action: insert
+            from_attribute: configmap
+            key: k8s.configmap.name
+          include:
+            match_type: regexp
+            metric_names:
+            - kube_configmap_.*
         attributes/unify_endpoint_attribute:
           actions:
           - action: insert
@@ -3690,7 +3719,7 @@ Metrics config should match snapshot when using default values:
               == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
               or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
               or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
-              or\nname == \"kube_endpoint_address\"\n)\n"
+              or\nname == \"kube_endpoint_address\" or\nname == \"kube_configmap_created\"\n)\n"
         filter/preprocessing:
           error_mode: ignore
           metrics:
@@ -5025,6 +5054,7 @@ Metrics config should match snapshot when using default values:
             - attributes/unify_service_attribute
             - attributes/unify_endpoint_attribute
             - attributes/unify_pod_attribute
+            - attributes/unify_configmap_attribute
             - attributes/identify_init_container
             - attributes/identify_standard_container
             - metricstransform/rename
