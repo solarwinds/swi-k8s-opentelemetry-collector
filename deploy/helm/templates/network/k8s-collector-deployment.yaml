@@ -1,4 +1,7 @@
 {{- if and .Values.ebpfNetworkMonitoring.enabled .Values.ebpfNetworkMonitoring.k8sCollector.enabled  }}
+{{- if not .Values.otel.gateway.enabled }}
+{{- fail "The ebpfNetworkMonitoring.k8sCollector requires otel.gateway.enabled to be set to true" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,9 +67,9 @@ spec:
           - name: "EBPF_NET_INTAKE_PORT"
             value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
           - name: "EBPF_NET_CRASH_METRIC_HOST"
-            value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
+            value: "{{ include "common.fullname" (tuple . "-gateway") }}"
           - name: "EBPF_NET_CRASH_METRIC_PORT"
-            value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
+            value: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
         volumeMounts:
         - mountPath: /etc/network-explorer
           name: k8s-relay-config

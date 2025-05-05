@@ -903,7 +903,11 @@ receivers:
   otlp:
     protocols:
       grpc:
+{{- if .Values.otel.metrics.otlp_endpoint }}
         endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
+{{- else }}
+        endpoint: 0.0.0.0:4317
+{{- end }}
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
   prometheus/prometheus-server:
     config:

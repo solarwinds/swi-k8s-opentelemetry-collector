@@ -1,0 +1,24 @@
+{{- if .Values.otel.gateway.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.fullname" (tuple . "-gateway") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: otlp-grpc
+    port: {{ .Values.otel.gateway.otlp_endpoint.port }}
+    targetPort: otlp-grpc
+    protocol: TCP
+  - name: otlp-http
+    port: {{ .Values.otel.gateway.otlp_endpoint.http_port }}
+    targetPort: otlp-http
+    protocol: TCP
+  selector:
+    app: {{ include "common.fullname" (tuple . "-gateway") }}
+{{- end }}

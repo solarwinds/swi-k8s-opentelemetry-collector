@@ -1,10 +1,14 @@
-Metrics collector spec should match snapshot when using default values:
+Gateway spec should match snapshot when using default values:
   1: |
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
+                - key: eks.amazonaws.com/compute-type
+                  operator: NotIn
+                  values:
+                    - fargate
                 - key: kubernetes.io/arch
                   operator: In
                   values:
@@ -17,7 +21,7 @@ Metrics collector spec should match snapshot when using default values:
     containers:
       - command:
           - /solarwinds-otel-collector
-          - --config=/conf/relay.yaml
+          - --config=/conf/gateway.config
         env:
           - name: MY_POD_IP
             valueFrom:
@@ -37,8 +41,6 @@ Metrics collector spec should match snapshot when using default values:
         envFrom:
           - configMapRef:
               name: RELEASE-NAME-swo-k8s-collector-common-env
-          - configMapRef:
-              name: RELEASE-NAME-swo-k8s-collector-metrics-env-config
         image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -48,8 +50,14 @@ Metrics collector spec should match snapshot when using default values:
           initialDelaySeconds: 10
         name: swi-opentelemetry-collector
         ports:
+          - containerPort: 4317
+            name: otlp-grpc
+            protocol: TCP
+          - containerPort: 4318
+            name: otlp-http
+            protocol: TCP
           - containerPort: 8888
-            name: http
+            name: metrics
             protocol: TCP
         readinessProbe:
           httpGet:
@@ -58,9 +66,11 @@ Metrics collector spec should match snapshot when using default values:
           initialDelaySeconds: 10
         resources:
           limits:
-            memory: 3Gi
+            cpu: 1000m
+            memory: 1024Mi
           requests:
-            memory: 3Gi
+            cpu: 100m
+            memory: 128Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -68,6 +78,7 @@ Metrics collector spec should match snapshot when using default values:
               - ALL
           readOnlyRootFilesystem: true
           runAsNonRoot: true
+          runAsUser: 10001
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
@@ -95,13 +106,14 @@ Metrics collector spec should match snapshot when using default values:
         image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
         imagePullPolicy: IfNotPresent
         name: otel-endpoint-check
-    securityContext: {}
+    securityContext:
+      fsGroup: 10001
     serviceAccountName: RELEASE-NAME-swo-k8s-collector
-    terminationGracePeriodSeconds: 600
+    terminationGracePeriodSeconds: 30
     volumes:
       - configMap:
           items:
-            - key: metrics.config
-              path: relay.yaml
-          name: RELEASE-NAME-swo-k8s-collector-metrics-config
+            - key: gateway.config
+              path: gateway.config
+          name: RELEASE-NAME-swo-k8s-collector-gateway-config
         name: opentelemetry-collector-configmap

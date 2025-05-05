@@ -1,0 +1,189 @@
+exporters:
+  otlp:
+    endpoint: ${OTEL_ENVOY_ADDRESS}
+    tls:
+      insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+    headers:
+      "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+    retry_on_failure:
+      enabled: {{ .Values.otel.gateway.retry_on_failure.enabled }}
+      initial_interval: {{ .Values.otel.gateway.retry_on_failure.initial_interval }}
+      max_interval: {{ .Values.otel.gateway.retry_on_failure.max_interval }}
+      max_elapsed_time: {{ .Values.otel.gateway.retry_on_failure.max_elapsed_time }}
+    sending_queue:
+      enabled: {{ .Values.otel.gateway.sending_queue.enabled }}
+      num_consumers: {{ .Values.otel.gateway.sending_queue.num_consumers }}
+      queue_size: {{ .Values.otel.gateway.sending_queue.queue_size }}
+{{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
+      storage: file_storage/sending_queue
+{{- end }}
+    timeout: {{ .Values.otel.gateway.timeout }}
+
+extensions:
+{{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
+  file_storage/sending_queue:
+    directory: /var/lib/swo/sending_queue
+    fsync: true
+{{- end }}
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+processors:
+  batch:
+{{ toYaml .Values.otel.gateway.batch | indent 4 }}
+
+  memory_limiter:
+{{ toYaml .Values.otel.gateway.memory_limiter | indent 4 }}
+
+  k8sattributes:
+{{ include "common.k8s-instrumentation" . | indent 4 }}
+
+  metricstransform/rename:
+    transforms:
+      # add predefined prefix to all proxied metrics
+      - include: ^(.*)$$
+        match_type: regexp
+        action: update
+        new_name: {{ .Values.otel.gateway.prefix }}$${1}
+
+  resource:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: upsert
+
+  # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
+  attributes/clean-attributes-otlp-metrics:
+    actions:
+      - key: k8s.cluster.name
+        action: delete
+
+  transform/scope:
+    metric_statements:
+      - statements:
+        - set(scope.name, "")
+        - set(scope.version, "")
+    log_statements:
+      - statements:
+        - set(scope.name, "")
+        - set(scope.version, "")
+    trace_statements:
+      - statements:
+        - set(scope.name, "")
+        - set(scope.version, "")
+
+  filter/otlp-metrics:
+    metrics:
+      metric:
+        # metrics from EBPF reducer that are not needed
+        - 'IsMatch(name, "^ebpf_net.*$")'
+
+  filter/histograms:
+    metrics:
+      metric:
+        # Exclude all histograms except the ones listed below
+        # excluded histograms are:
+        # - all histograms required for system dashboards (apiserver, coredns, controller_manager)
+        # - all histograms from beyla
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(
+            name == "k8s.apiserver_request_duration_seconds" or 
+            name == "k8s.workqueue_queue_duration_seconds" or 
+            name == "k8s.coredns_dns_request_duration_seconds" or 
+            name == "k8s.coredns_dns_request_size_bytes" or 
+            name == "k8s.coredns_dns_response_size_bytes" or 
+            name == "k8s.http.client.request.duration" or
+            name == "k8s.http.client.request.body.size" or
+            name == "k8s.http.server.request.duration" or 
+            name == "k8s.http.server.request.body.size" or
+            name == "k8s.rpc.client.duration" or
+            name == "k8s.rpc.server.duration" or
+            name == "k8s.sql.client.duration" or
+            name == "k8s.redis.client.duration" or
+            name == "k8s.messaging.publish.duration" or
+            name == "k8s.messaging.process.duration"
+          )'
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:{{ .Values.otel.gateway.otlp_endpoint.port }}
+      http:
+        endpoint: 0.0.0.0:{{ .Values.otel.gateway.otlp_endpoint.http_port }}
+
+service:
+  extensions:
+{{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
+    - file_storage/sending_queue
+{{- end }}
+    - health_check
+  pipelines:
+    metrics:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+{{- if .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled }}
+        - filter/otlp-metrics
+{{- end }}
+        - k8sattributes
+{{- if .Values.otel.gateway.prefix }}
+        - metricstransform/rename
+{{- end }}
+        - attributes/clean-attributes-otlp-metrics
+        - resource
+        - filter/histograms
+        - transform/scope
+        - batch
+      receivers:
+        - otlp
+    logs:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - resource
+        - transform/scope
+        - batch
+      receivers:
+        - otlp
+    traces:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - k8sattributes
+        - resource
+        - transform/scope
+        - batch
+      receivers:
+        - otlp
+  telemetry:
+{{- if .Values.otel.gateway.telemetry.logs.enabled }}
+    logs:
+      level: {{ .Values.otel.gateway.telemetry.logs.level }}
+{{- end }}
+{{- if .Values.otel.gateway.telemetry.metrics.enabled }}
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._0 | quote }}
+                port: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._1 }}
+{{- end }}

@@ -48,8 +48,10 @@ subgraph Kubernetes
         EventCollector["Event Collector"]:::deployment
         Reducer["eBPF Network - Reducer"]:::deployment
         K8sCollector["eBPF Network - K8s Collector"]:::deployment
-
         KernelCollector["eBPF Network - Kernel Collector"]:::daemonset
+        Beyla["Beyla"]:::daemonset
+        Gateway["OTLP Gateway"]:::deployment
+
         NodeCollector["Node Collector"]:::daemonset
 
         OtelCollectorCrd["OpenTelemetryCollector CRD"]:::crd
@@ -79,11 +81,14 @@ OtelOperator---> |"autoinstruments"| PrometheusWorkloads
 NodeCollector --> WorkloadLogs
 NodeCollector --> |"ingest"| SWO_Interface
 
-Reducer --> K8sCollector
 K8sCollector --> |"watch"| KubeAPI
 TargetAllocator --> |"discover"| KubeAPI
 KubeStateMetrics --> KubeAPI
-Reducer --> |"ingest"| MetricsCollector
+
+%% Gateway connections
+Reducer --> |"ingest"| Gateway
+Beyla --> |"ingest"| Gateway
+Gateway --> |"ingest"| SWO_Interface
 
 MetricsCollector --> |"scrape"| KubeStateMetrics
 MetricsCollector --> |"scrape"| CoreDNS
@@ -543,12 +548,12 @@ To enable, set `autoupdate.enabled: true`.
 
 ## Receive 3rd party metrics
 
-SWO K8s Collector has an OTEL service endpoint which is able to forward metrics and logs into SolarWinds Observability. All incoming data is properly associated with current cluster. Additionally, metrics are decorated with prefix `k8s.`.
+SWO K8s Collector has an OTEL service endpoint which is able to forward metrics, logs and traces into SolarWinds Observability. All incoming data is properly associated with current cluster. Additionally, metrics are decorated by default with prefix `k8s.` (prefix can be configured).
 
 Service endpoint is provided in format
 
 ```text
-"<chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317"
+"<chart-name>-gateway.<namespace>.svc.cluster.local:4317"
 ```
 
 ### OpenTelemetry Collector configuration example

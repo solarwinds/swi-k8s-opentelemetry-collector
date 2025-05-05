@@ -275,10 +275,6 @@ otel:
     # Time to wait per individual attempt to send data to SWO
     timeout: 15s
 
-    # Configuration for endpoint on which metrics collector receives OpenTelemetry metrics
-    otlp_endpoint:
-      port: 4317
-
     kube-state-metrics:
       # URL of kube-state-metrics where to scrape
       url: ""
@@ -743,6 +739,92 @@ otel:
   # Check if SWI OTEL endpoint is reachable
   swi_endpoint_check:
     enabled: true
+
+  # Configuration for the Gateway collector
+  gateway:
+
+    # Enable the gateway collector that serves as a central proxy for all telemetry
+    enabled: true
+
+    # Resources for the gateway collector pod
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # Termination grace period for the gateway collector pod
+    terminationGracePeriodSeconds: 30
+
+    # Node selector for the gateway collector pod
+    nodeSelector: {}
+
+    # Tolerations for the gateway collector pod
+    tolerations: []
+
+    # Affinity for the gateway collector pod
+    affinity: {}
+    
+    # Autoscaler configuration for the gateway collector
+    autoscaler:
+      minReplicas: 1
+      maxReplicas: 5
+      targetCPUUtilization: 80
+      targetMemoryUtilization: 80
+
+    # OTLP endpoint configuration
+    otlp_endpoint:
+      port: 4317
+      http_port: 4318
+
+    # Probes configuration
+    livenessProbe:
+      initialDelaySeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 10
+
+    # Memory limiter processor configuration
+    memory_limiter:
+      check_interval: 1s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+
+    # Batch processor configuration
+    batch:
+      send_batch_size: 1024
+      timeout: 1s
+      send_batch_max_size: 1024
+
+    # Retry on failure configuration
+    retry_on_failure:
+      enabled: true
+      initial_interval: 10s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+    # Sending queue configuration
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+      offload_to_disk: false
+
+    # Request timeout
+    timeout: 30s
+
+    # Telemetry configuration
+    telemetry:
+      logs:
+        enabled: true
+        level: "info"
+      metrics:
+        enabled: true
+        address: 0.0.0.0:8888
+    
+    # Prefix that will be added to all metrics
+    prefix: "k8s."
 
 cluster:
   # A unique name of a cluster provided by user during deployment of the Helm chart.

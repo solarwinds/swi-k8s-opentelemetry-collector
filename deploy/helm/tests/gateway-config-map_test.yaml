@@ -1,0 +1,10 @@
+suite: Test for gateway-config-map
+templates:
+  - gateway/gateway-config-map.yaml
+  - common-env-config-map.yaml
+tests:
+  - it: Gateway config should match snapshot when using default values
+    template: gateway/gateway-config-map.yaml
+    asserts:
+      - matchSnapshot:
+          path: data
