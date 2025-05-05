@@ -34,10 +34,6 @@ Metrics config should match snapshot when fargate is enabled:
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
-        attributes/clean-attributes-otlp-metrics:
-          actions:
-          - action: delete
-            key: k8s.cluster.name
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -218,10 +214,6 @@ Metrics config should match snapshot when fargate is enabled:
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        filter/ebpf:
-          metrics:
-            metric:
-            - IsMatch(name, "^ebpf_net.*$")
         filter/histograms:
           metrics:
             metric:
@@ -1322,12 +1314,6 @@ Metrics config should match snapshot when fargate is enabled:
             include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
-        metricstransform/rename-otel:
-          transforms:
-          - action: update
-            include: ^(.*)$$
-            match_type: regexp
-            new_name: k8s.$${1}
         resource/metrics:
           attributes:
           - action: delete
@@ -1436,20 +1422,6 @@ Metrics config should match snapshot when fargate is enabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/otlp-metrics:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: upsert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
         transform:
           metric_statements:
           - statements:
@@ -1478,10 +1450,6 @@ Metrics config should match snapshot when fargate is enabled:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        otlp:
-          protocols:
-            grpc:
-              endpoint: 0.0.0.0:4317
         prometheus/kube-state-metrics:
           config:
             scrape_configs:
@@ -1664,17 +1632,6 @@ Metrics config should match snapshot when fargate is enabled:
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
-          metrics/otlp:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - filter/ebpf
-            - metricstransform/rename-otel
-            - attributes/clean-attributes-otlp-metrics
-            - resource/otlp-metrics
-            receivers:
-            - otlp
           metrics/prometheus:
             exporters:
             - forward/metric-exporter
@@ -1767,10 +1724,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
-        attributes/clean-attributes-otlp-metrics:
-          actions:
-          - action: delete
-            key: k8s.cluster.name
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -1954,10 +1907,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        filter/ebpf:
-          metrics:
-            metric:
-            - IsMatch(name, "^ebpf_net.*$")
         filter/histograms:
           metrics:
             metric:
@@ -3058,12 +3007,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
-        metricstransform/rename-otel:
-          transforms:
-          - action: update
-            include: ^(.*)$$
-            match_type: regexp
-            new_name: k8s.$${1}
         resource/metrics:
           attributes:
           - action: delete
@@ -3172,20 +3115,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/otlp-metrics:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: upsert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
         transform:
           metric_statements:
           - statements:
@@ -3214,10 +3143,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        otlp:
-          protocols:
-            grpc:
-              endpoint: 0.0.0.0:4317
         prometheus/kube-state-metrics:
           config:
             scrape_configs:
@@ -3335,17 +3260,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
-          metrics/otlp:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - filter/ebpf
-            - metricstransform/rename-otel
-            - attributes/clean-attributes-otlp-metrics
-            - resource/otlp-metrics
-            receivers:
-            - otlp
           metrics/prometheus:
             exporters:
             - forward/metric-exporter
@@ -3445,10 +3359,6 @@ Metrics config should match snapshot when using default values:
             match_type: regexp
             metric_names:
             - k8s.kube_namespace_status_phase
-        attributes/clean-attributes-otlp-metrics:
-          actions:
-          - action: delete
-            key: k8s.cluster.name
         attributes/identify_init_container:
           actions:
           - action: insert
@@ -3632,10 +3542,6 @@ Metrics config should match snapshot when using default values:
           - k8s.node.network.packets_transmitted
           - k8s.node.network.receive_packets_dropped
           - k8s.node.network.transmit_packets_dropped
-        filter/ebpf:
-          metrics:
-            metric:
-            - IsMatch(name, "^ebpf_net.*$")
         filter/histograms:
           metrics:
             metric:
@@ -4736,12 +4642,6 @@ Metrics config should match snapshot when using default values:
             include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
-        metricstransform/rename-otel:
-          transforms:
-          - action: update
-            include: ^(.*)$$
-            match_type: regexp
-            new_name: k8s.$${1}
         resource/metrics:
           attributes:
           - action: delete
@@ -4850,20 +4750,6 @@ Metrics config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
-        resource/otlp-metrics:
-          attributes:
-          - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: upsert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
         transform:
           metric_statements:
           - statements:
@@ -4892,10 +4778,6 @@ Metrics config should match snapshot when using default values:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        otlp:
-          protocols:
-            grpc:
-              endpoint: 0.0.0.0:4317
         prometheus/kube-state-metrics:
           config:
             scrape_configs:
@@ -4998,17 +4880,6 @@ Metrics config should match snapshot when using default values:
             - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
-          metrics/otlp:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - filter/ebpf
-            - metricstransform/rename-otel
-            - attributes/clean-attributes-otlp-metrics
-            - resource/otlp-metrics
-            receivers:
-            - otlp
           metrics/prometheus:
             exporters:
             - forward/metric-exporter
