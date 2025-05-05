@@ -152,6 +152,15 @@ processors:
         action: insert
         value: "false"
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
+  attributes/unify_configmap_attribute:
+    include:
+      match_type: regexp
+      metric_names:
+        - kube_configmap_.*              
+    actions:
+      - key: k8s.configmap.name
+        from_attribute: configmap
+        action: insert
 
   metricstransform/rename:
     transforms:
@@ -160,14 +169,6 @@ processors:
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
-  
-  metricstransform/rename-otel:
-    transforms:
-      # add `k8s.` prefix to all metrics
-      - include: ^(.*)$$
-        match_type: regexp
-        action: update
-        new_name: k8s.$${1}
 
   # Transformations done on all metrics before any grouping
   metricstransform/preprocessing:
@@ -703,32 +704,6 @@ processors:
 
   {{- include "common-config.attributes-remove-prometheus-attributes" . | nindent 2 }}
 
-  # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
-  attributes/clean-attributes-otlp-metrics:
-    actions:
-      - key: k8s.cluster.name
-        action: delete
-
-  resource/otlp-metrics:
-    attributes:
-      # Collector and Manifest version
-      - key: sw.k8s.agent.manifest.version
-        value: ${MANIFEST_VERSION}
-        action: insert
-
-      - key: sw.k8s.agent.app.version
-        value: ${APP_VERSION}
-        action: insert
-
-      # Cluster
-      - key: sw.k8s.cluster.uid
-        value: ${CLUSTER_UID}
-        action: insert
-
-      - key: k8s.cluster.name
-        value: ${CLUSTER_NAME}
-        action: upsert
-
   batch:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
   filter/kube-state-metrics:
@@ -783,6 +758,9 @@ processors:
           name == "kube_resourcequota" or
           name == "kube_node_status_allocatable" or
           name == "kube_node_spec_unschedulable" or
+          name == "kube_cronjob_info" or
+          name == "kube_cronjob_created" or
+          name == "kube_cronjob_status_last_schedule_time" or
           name == "kube_job_info" or
           name == "kube_job_owner" or
           name == "kube_job_created" or
@@ -814,12 +792,9 @@ processors:
           name == "kube_endpoint_info" or
           name == "kube_endpoint_created" or
           name == "kube_endpoint_ports" or
-          name == "kube_endpoint_address"
+          name == "kube_endpoint_address" or
+          name == "kube_configmap_created"
           )
-  filter/ebpf:
-    metrics:
-      metric:
-        - 'IsMatch(name, "^ebpf_net.*$")'
 
   filter/prometheus-node-metrics:
     metrics:
@@ -900,14 +875,6 @@ connectors:
   forward/metric-exporter:
 
 receivers:
-  otlp:
-    protocols:
-      grpc:
-{{- if .Values.otel.metrics.otlp_endpoint }}
-        endpoint: 0.0.0.0:{{ .Values.otel.metrics.otlp_endpoint.port }}
-{{- else }}
-        endpoint: 0.0.0.0:4317
-{{- end }}
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
   prometheus/prometheus-server:
     config:
@@ -1100,19 +1067,6 @@ service:
 {{- end }}
     - health_check
   pipelines:
-    metrics/otlp:
-      exporters:
-        - forward/metric-exporter
-      processors:
-        - memory_limiter
-{{- if and .Values.ebpfNetworkMonitoring.enabled (not .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled)  }}
-        - filter/ebpf
-{{- end }}
-        - metricstransform/rename-otel
-        - attributes/clean-attributes-otlp-metrics
-        - resource/otlp-metrics
-      receivers:
-        - otlp
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
     metrics/prometheus-server:
       exporters:
@@ -1154,6 +1108,7 @@ service:
         - attributes/unify_service_attribute
         - attributes/unify_endpoint_attribute
         - attributes/unify_pod_attribute
+        - attributes/unify_configmap_attribute
         - attributes/identify_init_container
         - attributes/identify_standard_container
         - metricstransform/rename
