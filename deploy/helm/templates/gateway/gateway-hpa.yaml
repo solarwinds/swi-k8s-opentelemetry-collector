@@ -1,0 +1,32 @@
+{{- if .Values.otel.gateway.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "common.fullname" (tuple . "-gateway") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: swo-k8s-collector
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "common.fullname" (tuple . "-gateway") }}
+  minReplicas: {{ .Values.otel.gateway.autoscaler.minReplicas }}
+  maxReplicas: {{ .Values.otel.gateway.autoscaler.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.otel.gateway.autoscaler.targetCPUUtilization }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.otel.gateway.autoscaler.targetMemoryUtilization }}
+{{- end }}

@@ -1,4 +1,7 @@
 {{- if .Values.ebpfNetworkMonitoring.enabled }}
+{{- if not .Values.otel.gateway.enabled }}
+{{- fail "The ebpfNetworkMonitoring.k8sCollector requires otel.gateway.enabled to be set to true" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,15 +34,15 @@ spec:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
       {{- end }}
       initContainers:
-        - name: wait-for-metrics-collector
+        - name: wait-for-gateway
           image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box") }}"
           imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
-          command: ['sh', '-c', 'until nc -zv $METRICS_COLLECTOR_HOST $METRICS_COLLECTOR_PORT; do echo "Waiting for metrics collector endpoint..."; sleep 5; done;']
+          command: ['sh', '-c', 'until nc -zv $GATEWAY_HOST $GATEWAY_PORT; do echo "Waiting for gateway endpoint..."; sleep 5; done;']
           env:
-            - name: "METRICS_COLLECTOR_HOST"
-              value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
-            - name: "METRICS_COLLECTOR_PORT"
-              value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
+            - name: "GATEWAY_HOST"
+              value: "{{ include "common.fullname" (tuple . "-gateway") }}"
+            - name: "GATEWAY_PORT"
+              value: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
       containers:
         - name: reducer
           image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.reducer (tuple "image" "ebpf_reducer")) }}"
@@ -55,8 +58,8 @@ spec:
             {{- end }}
             - --disable-prometheus-metrics
             - --enable-otlp-grpc-metrics
-            - --otlp-grpc-metrics-host={{ include "common.fullname" (tuple . "-metrics-collector") }}
-            - --otlp-grpc-metrics-port={{ .Values.otel.metrics.otlp_endpoint.port }}
+            - --otlp-grpc-metrics-host={{ include "common.fullname" (tuple . "-gateway") }}
+            - --otlp-grpc-metrics-port={{ .Values.otel.gateway.otlp_endpoint.port }}
             - --num-ingest-shards={{ .Values.ebpfNetworkMonitoring.reducer.numIngestShards }}
             - --num-matching-shards={{ .Values.ebpfNetworkMonitoring.reducer.numMatchingShards }}
             - --num-aggregation-shards={{ .Values.ebpfNetworkMonitoring.reducer.numAggregationShards }}
@@ -68,9 +71,9 @@ spec:
             {{- end }}
           env:
             - name: "EBPF_NET_CRASH_METRIC_HOST"
-              value: "{{ include "common.fullname" (tuple . "-metrics-collector") }}"
+              value: "{{ include "common.fullname" (tuple . "-gateway") }}"
             - name: "EBPF_NET_CRASH_METRIC_PORT"
-              value: "{{ .Values.otel.metrics.otlp_endpoint.port }}"
+              value: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
           ports:
             - name: telemetry
               containerPort: {{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}

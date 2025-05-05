@@ -1,8 +1,8 @@
-{{- if .Values.otel.metrics.enabled }}
+{{- if .Values.otel.gateway.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.fullname" (tuple . "-metrics") }}
+  name: {{ include "common.fullname" (tuple . "-gateway") }}
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: swo-k8s-collector
@@ -10,49 +10,52 @@ metadata:
   annotations:
 {{ include "common.annotations" . | indent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.otel.gateway.autoscaler.minReplicas }}
   selector:
     matchLabels:
-      app: {{ include "common.fullname" (tuple . "-metrics") }}
+      app: {{ include "common.fullname" (tuple . "-gateway") }}
   template:
     metadata:
+      labels:
+        app.kubernetes.io/name: swo-k8s-collector
+        app: {{ include "common.fullname" (tuple . "-gateway") }}
+{{ include "common.labels" . | indent 8 }}
+{{ include "common.pod-labels" . | indent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/metrics-collector-config-map.yaml") . | sha256sum }}
-        checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
-        checksum/config_env: {{ include (print $.Template.BasePath "/metrics-collector-env-config-map.yaml") . | sha256sum }}
+        checksum/config: {{ tpl (.Files.Get "gateway-collector-config.yaml") . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
 {{ include "common.annotations" . | indent 8 }}
-{{- if .Values.otel.metrics.telemetry.metrics.enabled }}
+{{- if .Values.otel.gateway.telemetry.metrics.enabled }}
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/port: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._1 | quote }}
         prometheus.io/path: "/metrics"
         prometheus.io/scheme: "http"
 {{- end}}
-      labels:
-        app.kubernetes.io/name: swo-k8s-collector
-{{ include "common.labels" . | indent 8 }}
-        app: {{ include "common.fullname" (tuple . "-metrics") }}
-{{ include "common.pod-labels" . | indent 8 }}
     spec:
-      terminationGracePeriodSeconds: {{ .Values.otel.metrics.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.otel.gateway.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "common.fullname" . }}
-      securityContext: {}
-      {{- if .Values.otel.metrics.nodeSelector }}
+      securityContext:
+        fsGroup: 10001
+      {{- if .Values.otel.gateway.nodeSelector }}
       nodeSelector:
-      {{ toYaml .Values.otel.metrics.nodeSelector | nindent 8 }}
+      {{ toYaml .Values.otel.gateway.nodeSelector | nindent 8 }}
       {{- end }}
-      {{- if .Values.otel.metrics.tolerations }}
+      {{- if .Values.otel.gateway.tolerations }}
       tolerations:
-        {{ toYaml .Values.otel.metrics.tolerations | nindent 8 }}
+      {{ toYaml .Values.otel.gateway.tolerations | nindent 8 }}
       {{- end }}
       affinity:
-      {{- if .Values.otel.metrics.affinity }}
-        {{- toYaml .Values.otel.metrics.affinity | nindent 8 }}
+      {{- if .Values.otel.gateway.affinity }}
+      {{- toYaml .Values.otel.gateway.affinity | nindent 8 }}
       {{- else }}
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
+              - key: eks.amazonaws.com/compute-type
+                operator: NotIn
+                values:
+                - fargate
               - key: kubernetes.io/arch
                 operator: In
                 values:
@@ -67,18 +70,8 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
       {{- end }}
-      {{- if or (and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url) (include "isSwiEndpointCheckEnabled" .) }}
+      {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
-        {{- if and .Values.otel.metrics.prometheus_check .Values.otel.metrics.prometheus.url }}
-        - name: prometheus-check
-          image: "{{ include "common.image" (tuple . .Values.otel.init_images "busy_box") }}"
-          imagePullPolicy: {{ .Values.otel.init_images.busy_box.pullPolicy }}
-          command: ['sh', '-c', 'until $(wget --spider -nv $PROMETHEUS_URL/federate?); do echo waiting on prometheus; sleep 1; done && echo "Prometheus is available"']
-          envFrom:
-            - configMapRef:
-                name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
-        {{- end }}
-        {{- if include "isSwiEndpointCheckEnabled" . }}
         - name: otel-endpoint-check
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
@@ -99,23 +92,22 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-common-env") }}
-        {{- end }}
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
           command:
             - /solarwinds-otel-collector
-            - --config=/conf/relay.yaml
+            - --config=/conf/gateway.config
           securityContext: 
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             runAsNonRoot: true
+            runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
             capabilities:
               drop:
               - ALL
-
           image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
@@ -134,50 +126,50 @@ spec:
               valueFrom:
                 resourceFieldRef:
                   resource: limits.memory
-          ports:
-{{- if .Values.otel.metrics.telemetry.metrics.enabled }}
-            - name: http
-              containerPort: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
-              protocol: TCP
-{{- end}}
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-common-env") }}
-            - configMapRef:
-                name: {{ include "common.fullname" (tuple . "-metrics-env-config") }}
+          ports:
+            - name: otlp-grpc
+              containerPort: {{ .Values.otel.gateway.otlp_endpoint.port }}
+              protocol: TCP
+            - name: otlp-http
+              containerPort: {{ .Values.otel.gateway.otlp_endpoint.http_port }}
+              protocol: TCP
+{{- if .Values.otel.gateway.telemetry.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._1 }}
+              protocol: TCP
+{{- end}}
           livenessProbe:
-            {{- if .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
-            initialDelaySeconds: {{ .Values.otel.metrics.livenessProbe.initialDelaySeconds }}
-            {{- end }}
             httpGet:
               path: /
               port: 13133
+            initialDelaySeconds: {{ .Values.otel.gateway.livenessProbe.initialDelaySeconds }}
           readinessProbe:
-            {{- if .Values.otel.metrics.readinessProbe.initialDelaySeconds }}
-            initialDelaySeconds: {{ .Values.otel.metrics.readinessProbe.initialDelaySeconds }}
-            {{- end }}
             httpGet:
               path: /
               port: 13133
+            initialDelaySeconds: {{ .Values.otel.gateway.readinessProbe.initialDelaySeconds }}
           resources:
-{{ toYaml .Values.otel.metrics.resources | indent 12 }}
+{{ toYaml .Values.otel.gateway.resources | indent 12 }}
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
-{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+{{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
             - name: sending-queue
               mountPath: /var/lib/swo/sending_queue
-{{- end }} 
+{{- end }}
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
-            name: {{ include "common.fullname" (tuple . "-metrics-config") }}
+            name: {{ include "common.fullname" (tuple . "-gateway-config") }}
             items:
-              - key: metrics.config
-                path: relay.yaml
-{{- if .Values.otel.metrics.sending_queue.offload_to_disk }}
+              - key: gateway.config
+                path: gateway.config
+{{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
         - name: sending-queue
           emptyDir: {}
 {{- end }}
-{{- end}}
+{{- end }}

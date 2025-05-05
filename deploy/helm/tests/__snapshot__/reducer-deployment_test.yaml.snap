@@ -9,14 +9,14 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
           - --enable-aws-enrichment
           - --disable-prometheus-metrics
           - --enable-otlp-grpc-metrics
-          - --otlp-grpc-metrics-host=RELEASE-NAME-swo-k8s-collector-metrics-collector
+          - --otlp-grpc-metrics-host=RELEASE-NAME-swo-k8s-collector-gateway
           - --otlp-grpc-metrics-port=4317
           - --num-ingest-shards=3
           - --num-matching-shards=3
           - --num-aggregation-shards=3
         env:
           - name: EBPF_NET_CRASH_METRIC_HOST
-            value: RELEASE-NAME-swo-k8s-collector-metrics-collector
+            value: RELEASE-NAME-swo-k8s-collector-gateway
           - name: EBPF_NET_CRASH_METRIC_PORT
             value: "4317"
         image: solarwinds/opentelemetry-ebpf-reducer:v0.10.3
@@ -42,15 +42,15 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
       - command:
           - sh
           - -c
-          - until nc -zv $METRICS_COLLECTOR_HOST $METRICS_COLLECTOR_PORT; do echo "Waiting for metrics collector endpoint..."; sleep 5; done;
+          - until nc -zv $GATEWAY_HOST $GATEWAY_PORT; do echo "Waiting for gateway endpoint..."; sleep 5; done;
         env:
-          - name: METRICS_COLLECTOR_HOST
-            value: RELEASE-NAME-swo-k8s-collector-metrics-collector
-          - name: METRICS_COLLECTOR_PORT
+          - name: GATEWAY_HOST
+            value: RELEASE-NAME-swo-k8s-collector-gateway
+          - name: GATEWAY_PORT
             value: "4317"
         image: busybox:1.36.1
         imagePullPolicy: IfNotPresent
-        name: wait-for-metrics-collector
+        name: wait-for-gateway
     nodeSelector:
       kubernetes.io/os: linux
     volumes: null

@@ -1,3 +1,4 @@
+# This service is depraceted and will be removed in future releases.
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,8 +12,12 @@ spec:
   type: ClusterIP
   ports:
   - name: otlp
+{{- if .Values.otel.metrics.otlp_endpoint }}
     port: {{ .Values.otel.metrics.otlp_endpoint.port }}
-    targetPort: otlp
+{{- else }}
+    port: 4317
+{{- end }}
+    targetPort: otlp-grpc
     protocol: TCP
   selector:
-    app: {{ include "common.fullname" (tuple . "-metrics") }}
+    app: {{ include "common.fullname" (tuple . "-gateway") }}

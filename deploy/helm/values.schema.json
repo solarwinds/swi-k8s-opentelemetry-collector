@@ -1214,6 +1214,7 @@
                         },
                         "otlp_endpoint": {
                             "type": "object",
+                            "description": "DEPRECATED: Use otel.gateway.otlp_endpoint instead",
                             "properties": {
                                 "port": {
                                     "$ref": "#/definitions/port"
@@ -1346,6 +1347,136 @@
                         "enabled": {
                             "type": "boolean",
                             "description": "Check if SWI OTEL endpoint is reachable"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "gateway": {
+                    "description": "Configuration for the Gateway collector that serves as a central proxy for all telemetry.",
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "description": "Enable the gateway collector that serves as a central proxy for all telemetry."
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/k8sResourceRequirements"
+                        },
+                        "terminationGracePeriodSeconds": {
+                            "$ref": "#/definitions/k8sTerminationGracePeriod"
+                        },
+                        "nodeSelector": {
+                            "$ref": "#/definitions/k8sNodeSelector"
+                        },
+                        "tolerations": {
+                            "$ref": "#/definitions/k8sTolerations"
+                        },
+                        "affinity": {
+                            "$ref": "#/definitions/k8sAffinity"
+                        },
+                        "autoscaler": {
+                            "type": "object",
+                            "properties": {
+                                "minReplicas": {
+                                    "type": "integer"
+                                },
+                                "maxReplicas": {
+                                    "type": "integer"
+                                },
+                                "targetCPUUtilization": {
+                                    "type": "integer"
+                                },
+                                "targetMemoryUtilization": {
+                                    "type": "integer"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "otlp_endpoint": {
+                            "type": "object",
+                            "properties": {
+                                "port": {
+                                    "$ref": "#/definitions/port"
+                                },
+                                "http_port": {
+                                    "$ref": "#/definitions/port"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "livenessProbe": {
+                            "type": "object",
+                            "properties": {
+                                "initialDelaySeconds": {
+                                    "type": "integer"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "readinessProbe": {
+                            "type": "object",
+                            "properties": {
+                                "initialDelaySeconds": {
+                                    "type": "integer"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "memory_limiter": {
+                            "type": "object",
+                            "properties": {
+                                "check_interval": {
+                                    "type": "string"
+                                },
+                                "limit_percentage": {
+                                    "type": "integer"
+                                },
+                                "spike_limit_percentage": {
+                                    "type": "integer"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "batch": {
+                            "type": "object",
+                            "properties": {
+                                "send_batch_size": {
+                                    "type": "integer"
+                                },
+                                "timeout": {
+                                    "type": "string"
+                                },
+                                "send_batch_max_size": {
+                                    "type": "integer"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "retry_on_failure": {
+                            "$ref": "#/definitions/collectorRetryOnFailure"
+                        },
+                        "sending_queue": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/collectorSendingQueue"
+                                },
+                                {
+                                    "properties": {
+                                        "offload_to_disk": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "timeout": {
+                            "$ref": "#/definitions/collectorTimeout"
+                        },
+                        "telemetry": {
+                            "$ref": "#/definitions/collectorTelemetry"
+                        },
+                        "prefix": {
+                            "type": "string"
                         }
                     },
                     "additionalProperties": false
