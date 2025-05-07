@@ -165,9 +165,6 @@ profiles:
         path: /deploy/helm/releases/1/setValueTemplates/prometheusCRDs.install
         value: true
       - op: add
-        path: /deploy/helm/releases/1/setValueTemplates/autoinstrumentation.installDefaultCR
-        value: true
-      - op: add
         path: /deploy/helm/releases/4/setValueTemplates
         value: 
           podMonitors:
@@ -177,6 +174,21 @@ profiles:
         value: 
           podMonitors:
             enabled: true
+      - op: add
+        path: /deploy/helm/hooks
+        value:
+          before:
+            - host:
+                command: ["sh", "-c", "./utils/pre-deploy.sh"]
+                os: [darwin, linux]
+            - host:
+                command: ["cmd", "/c", ".\\utils\\pre-deploy.bat || exit 0"]
+                os: [windows]
+  - name: auto-instrumentation
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/autoinstrumentation.installDefaultCR
+        value: true
       - op: add
         path: /deploy/helm/releases/-
         value: 
@@ -200,16 +212,6 @@ profiles:
                   value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
                 - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
                   value: cumulative
-      - op: add
-        path: /deploy/helm/hooks
-        value:
-          before:
-            - host:
-                command: ["sh", "-c", "./utils/pre-deploy.sh"]
-                os: [darwin, linux]
-            - host:
-                command: ["cmd", "/c", ".\\utils\\pre-deploy.bat || exit 0"]
-                os: [windows]
   - name: beyla
     activation:
       - env: CI=true
