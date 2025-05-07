@@ -1,5 +1,16 @@
 @echo off
 
+REM Set namespace from TEST_CLUSTER_NAMESPACE env var or command line parameter with "test-namespace" as default
+if defined TEST_CLUSTER_NAMESPACE (
+    set "NAMESPACE=%TEST_CLUSTER_NAMESPACE%"
+) else (
+    if not "%~1"=="" (
+        set "NAMESPACE=%~1"
+    ) else (
+        set "NAMESPACE=test-namespace"
+    )
+)
+
 REM Ensure the .tmp directory exists
 if not exist .tmp mkdir .tmp
 
@@ -31,18 +42,18 @@ REM Patch the CRD to remove finalizers
 echo Patching the CRD to remove finalizers
 kubectl patch crd/opentelemetrycollectors.opentelemetry.io -p "{\"metadata\":{\"finalizers\":[]}}" --type=merge
 
-REM Delete all resources in the test-namespace
-echo Deleting all resources in the test-namespace
-kubectl delete all --all -n test-namespace
+REM Delete all resources in the specified namespace
+echo Deleting all resources in the %NAMESPACE% namespace
+kubectl delete all --all -n %NAMESPACE%
 
 REM Those resources are not deleted by the previous command
-kubectl delete secrets --all -n test-namespace
-kubectl delete configmaps --all -n test-namespace
-kubectl delete persistentvolumeclaims --all -n test-namespace
-kubectl delete serviceaccounts --all -n test-namespace
-kubectl delete roles --all -n test-namespace
-kubectl delete rolebindings --all -n test-namespace
-kubectl delete networkpolicies --all -n test-namespace
+kubectl delete secrets --all -n %NAMESPACE%
+kubectl delete configmaps --all -n %NAMESPACE%
+kubectl delete persistentvolumeclaims --all -n %NAMESPACE%
+kubectl delete serviceaccounts --all -n %NAMESPACE%
+kubectl delete roles --all -n %NAMESPACE%
+kubectl delete rolebindings --all -n %NAMESPACE%
+kubectl delete networkpolicies --all -n %NAMESPACE%
 
 REM Delete all CRDs from monitoring.coreos.com group
 echo Deleting all CRDs from monitoring.coreos.com group

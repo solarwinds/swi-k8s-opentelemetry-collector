@@ -1,0 +1,45 @@
+{{- if .Values.autoinstrumentation.installDefaultCR }}
+{{- if not .Values.otel.gateway.enabled }}
+{{- fail "The auto-instrumentation requires otel.gateway.enabled to be set to true" }}
+{{- end }}
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: swo-instrumentation
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "4"
+spec:
+  java:
+    env:
+      - name: SW_APM_SERVICE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: solarwinds-apm
+            key: SW_APM_SERVICE_KEY
+      - name: SW_APM_COLLECTOR
+        value: {{ .Values.otel.endpoint | regexReplaceAll "(:\\d+)?$" "" | replace "otel" "apm" }}
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.port }}
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: grpc
+  python:
+    env:
+      - name: SW_APM_SERVICE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: solarwinds-apm
+            key: SW_APM_SERVICE_KEY
+      - name: SW_APM_COLLECTOR
+        value: {{ .Values.otel.endpoint | regexReplaceAll "(:\\d+)?$" "" | replace "otel" "apm" }}
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.port }}
+      - name: OTEL_TRACES_EXPORTER
+        value: solarwinds_exporter
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: grpc
+{{- end }}
+  

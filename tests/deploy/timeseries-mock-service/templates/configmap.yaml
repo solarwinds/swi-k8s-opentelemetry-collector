@@ -21,6 +21,10 @@ data:
         path: /data/manifests.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
         rotation:
+      file/traces:
+        path: /data/traces.json
+        # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
+        rotation:
       file/entitystateevents:
         path: /data/entitystateevents.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
@@ -97,5 +101,11 @@ data:
           - file/entitystateevents
           processors:
           - filter/entitystateevents
+          receivers:
+          - otlp
+        traces:
+          exporters:
+          - file/traces
+          processors:
           receivers:
           - otlp
