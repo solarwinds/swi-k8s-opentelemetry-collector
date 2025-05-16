@@ -18,6 +18,60 @@ entries:
       artifacthub.io/license: Apache-2.0
       artifacthub.io/prerelease: "true"
     apiVersion: v2
+    appVersion: 0.123.2
+    created: "2025-05-16T08:11:56.615872496Z"
+    dependencies:
+    - condition: kube-state-metrics.enabled
+      name: kube-state-metrics
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 5.31.0
+    - alias: operator
+      condition: operator.enabled
+      name: opentelemetry-operator
+      repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+      version: 0.82.2
+    - alias: certmanager
+      condition: certmanager.enabled
+      name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.16.1
+    description: SolarWinds Kubernetes Integration
+    digest: 0009f883b623c89db600482b850baa41fc0c271fd9fff2fefa5e46a13b1dcdd4
+    home: https://solarwinds.com/
+    icon: https://helm.solarwinds.com/favicon.png
+    keywords:
+    - monitoring
+    - observability
+    - metric
+    - logs
+    - events
+    - kubernetes
+    maintainers:
+    - email: support@solarwinds.com
+      name: SolarWinds
+    name: swo-k8s-collector
+    sources:
+    - https://github.com/solarwinds/swi-k8s-opentelemetry-collector/tree/master/deploy/helm
+    urls:
+    - https://github.com/solarwinds/swi-k8s-opentelemetry-collector/releases/download/swo-k8s-collector-4.6.0-alpha.12/swo-k8s-collector-4.6.0-alpha.12.tgz
+    version: 4.6.0-alpha.12
+  - annotations:
+      artifacthub.io/images: |
+        - name: ebpf-kernelCollector
+          image: solarwinds/opentelemetry-ebpf-kernel-collector:v0.10.3
+          whitelisted: true
+        - name: ebpf-k8sCollectorWatcher
+          image: solarwinds/opentelemetry-ebpf-k8s-watcher:v0.10.3
+          whitelisted: true
+        - name: ebpf-k8sCollectorRelay
+          image: solarwinds/opentelemetry-ebpf-k8s-relay:v0.10.3
+          whitelisted: true
+        - name: ebpf-reducer
+          image: solarwinds/opentelemetry-ebpf-reducer:v0.10.3
+          whitelisted: true
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/prerelease: "true"
+    apiVersion: v2
     appVersion: 0.119.10
     created: "2025-05-13T10:52:05.981838693Z"
     dependencies:
@@ -6760,4 +6814,4 @@ entries:
     urls:
     - https://helm.solarwinds.com/swo-k8s-collector-2.0.2-alpha.tgz
     version: 2.0.2-alpha
-generated: "2025-05-13T10:52:05.982443673Z"
+generated: "2025-05-16T08:11:56.616453385Z"
