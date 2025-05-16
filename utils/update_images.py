@@ -92,8 +92,10 @@ def get_latest_tag(registry, repository, version_pattern=None, github_token=None
         tags = get_docker_hub_tags(repository, version_pattern)
         return get_latest_version(tags)
     elif registry == "ghcr.io":
-        if repository.startswith("ghcr.io/"):
-            repo_name = repository[8:]
+        from urllib.parse import urlparse
+        parsed_url = urlparse(repository)
+        if parsed_url.hostname == "ghcr.io":
+            repo_name = parsed_url.path.lstrip("/")
         else:
             repo_name = repository
             
