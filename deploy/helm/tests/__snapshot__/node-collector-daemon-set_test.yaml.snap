@@ -101,8 +101,7 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
             name: logcheckpoints
     initContainers:
       - command:
-          - /solarwinds-otel-collector
-          - test-connection
+          - /connection-check
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
           - --clusteruid=$(CLUSTER_UID)
@@ -259,8 +258,7 @@ DaemonSet spec should match snapshot when openshift is enabled:
     hostNetwork: true
     initContainers:
       - command:
-          - /solarwinds-otel-collector
-          - test-connection
+          - /connection-check
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
           - --clusteruid=$(CLUSTER_UID)
@@ -422,8 +420,7 @@ DaemonSet spec should match snapshot when overriding cluster ID:
             name: logcheckpoints
     initContainers:
       - command:
-          - /solarwinds-otel-collector
-          - test-connection
+          - /connection-check
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
           - --clusteruid=$(CLUSTER_UID)
@@ -579,8 +576,7 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
             name: logcheckpoints
     initContainers:
       - command:
-          - /solarwinds-otel-collector
-          - test-connection
+          - /connection-check
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
           - --clusteruid=$(CLUSTER_UID)
@@ -736,8 +732,7 @@ DaemonSet spec should match snapshot when using default values:
             name: logcheckpoints
     initContainers:
       - command:
-          - /solarwinds-otel-collector
-          - test-connection
+          - /connection-check
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
           - --clusteruid=$(CLUSTER_UID)

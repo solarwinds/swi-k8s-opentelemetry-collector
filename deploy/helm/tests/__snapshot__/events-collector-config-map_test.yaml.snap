@@ -173,12 +173,12 @@ Custom events filter with new syntax:
           error_mode: ignore
           log_statements:
           - conditions:
-            - body["kind"] == "Pod"
+            - log.body["kind"] == "Pod"
             statements:
             - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
               where log.body["status"]["phase"] != nil
           - conditions:
-            - body["kind"] == "CronJob"
+            - log.body["kind"] == "CronJob"
             statements:
             - set(resource.attributes["sw.k8s.cronjob.suspended"], log.body["spec"]["suspend"])
               where log.body["spec"]["suspend"] != nil
@@ -754,12 +754,12 @@ Custom events filter with old syntax:
           error_mode: ignore
           log_statements:
           - conditions:
-            - body["kind"] == "Pod"
+            - log.body["kind"] == "Pod"
             statements:
             - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
               where log.body["status"]["phase"] != nil
           - conditions:
-            - body["kind"] == "CronJob"
+            - log.body["kind"] == "CronJob"
             statements:
             - set(resource.attributes["sw.k8s.cronjob.suspended"], log.body["spec"]["suspend"])
               where log.body["spec"]["suspend"] != nil
@@ -1328,12 +1328,12 @@ Events config should match snapshot when using default values:
           error_mode: ignore
           log_statements:
           - conditions:
-            - body["kind"] == "Pod"
+            - log.body["kind"] == "Pod"
             statements:
             - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
               where log.body["status"]["phase"] != nil
           - conditions:
-            - body["kind"] == "CronJob"
+            - log.body["kind"] == "CronJob"
             statements:
             - set(resource.attributes["sw.k8s.cronjob.suspended"], log.body["spec"]["suspend"])
               where log.body["spec"]["suspend"] != nil
@@ -1901,12 +1901,12 @@ Events config should not contain manifest collection pipeline when disabled:
           error_mode: ignore
           log_statements:
           - conditions:
-            - body["kind"] == "Pod"
+            - log.body["kind"] == "Pod"
             statements:
             - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"])
               where log.body["status"]["phase"] != nil
           - conditions:
-            - body["kind"] == "CronJob"
+            - log.body["kind"] == "CronJob"
             statements:
             - set(resource.attributes["sw.k8s.cronjob.suspended"], log.body["spec"]["suspend"])
               where log.body["spec"]["suspend"] != nil

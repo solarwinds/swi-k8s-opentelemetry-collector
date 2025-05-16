@@ -148,8 +148,7 @@ spec:
       image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
       imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
       command:
-        - /solarwinds-otel-collector
-        - test-connection
+        - /connection-check
         - --endpoint=$(OTEL_ENVOY_ADDRESS)
         - --apitoken=$(SOLARWINDS_API_TOKEN)
         - --clusteruid=$(CLUSTER_UID)

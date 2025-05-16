@@ -70,8 +70,7 @@ spec:
           image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil (printf "%s-k8s" .Chart.AppVersion) ) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
-            - c:\solarwinds-otel-collector.exe
-            - test-connection
+            - /connection-check.exe
             - --endpoint=$(OTEL_ENVOY_ADDRESS)
             - --apitoken=$(SOLARWINDS_API_TOKEN)
             - --clusteruid=$(CLUSTER_UID)

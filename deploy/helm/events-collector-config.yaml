@@ -123,11 +123,11 @@ processors:
     error_mode: ignore
     log_statements:
       - conditions:
-          - body["kind"] == "Pod"
+          - log.body["kind"] == "Pod"
         statements:
           - set(resource.attributes["sw.k8s.pod.status"], log.body["status"]["phase"]) where log.body["status"]["phase"] != nil
       - conditions:
-          - body["kind"] == "CronJob"
+          - log.body["kind"] == "CronJob"
         statements:
           - set(resource.attributes["sw.k8s.cronjob.suspended"], log.body["spec"]["suspend"]) where log.body["spec"]["suspend"] != nil
           - set(resource.attributes["sw.k8s.cronjob.schedule"], log.body["spec"]["schedule"]) where log.body["spec"]["schedule"] != nil

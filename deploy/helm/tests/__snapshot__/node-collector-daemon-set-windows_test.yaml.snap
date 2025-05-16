@@ -81,8 +81,7 @@ DaemonSet spec for windows nodes should match snapshot when overriding cluster I
             name: logcheckpoints
     initContainers:
       - command:
-          - c:\solarwinds-otel-collector.exe
-          - test-connection
+          - /connection-check.exe
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
           - --clusteruid=$(CLUSTER_UID)
@@ -211,8 +210,7 @@ DaemonSet spec for windows nodes should match snapshot when using default values
             name: logcheckpoints
     initContainers:
       - command:
-          - c:\solarwinds-otel-collector.exe
-          - test-connection
+          - /connection-check.exe
           - --endpoint=$(OTEL_ENVOY_ADDRESS)
           - --apitoken=$(SOLARWINDS_API_TOKEN)
           - --clusteruid=$(CLUSTER_UID)
