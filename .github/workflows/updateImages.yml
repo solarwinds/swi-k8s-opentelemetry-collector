@@ -1,0 +1,57 @@
+name: Update Docker Images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * 1'
+
+jobs:
+  update-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with: 
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install ruamel.yaml requests packaging PyGithub
+
+      - name: Run updater (no commit)
+        run: python utils/update_images.py --github-token ${{ secrets.GITHUB_TOKEN }} --update-chart
+
+      - name: Create API-signed commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE_SHA=$(gh api repos/${{ github.repository }}/git/ref/heads/master -q .object.sha)
+          gh api repos/${{ github.repository }}/git/refs \
+            -f ref="refs/heads/update-images-${{ github.run_id }}" \
+            -f sha="$BASE_SHA"
+
+          FILE=deploy/helm/values.yaml
+          FILE_SHA=$(gh api repos/${{ github.repository }}/contents/$FILE?ref=master -q .sha)
+          CONTENT=$(base64 -w0 $FILE)
+          gh api repos/${{ github.repository }}/contents/$FILE \
+            --method PUT \
+            -f branch="update-images-${{ github.run_id }}" \
+            -f message="chore: update Docker image versions" \
+            -f content="$CONTENT" \
+            -f sha="$FILE_SHA"
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "Update Docker image versions" \
+            --body "Automated image updates via API-signed commit." \
+            --head update-images-${{ github.run_id }} \
+            --base master
+          
