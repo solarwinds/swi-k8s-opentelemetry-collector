@@ -1,6 +1,84 @@
 Custom events filter with new syntax:
   1: |
     events.config: |-
+      connectors:
+        solarwindsentity/keepalive:
+          schema:
+            entities:
+            - entity: KubernetesConfigMap
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.configmap.name
+            - entity: KubernetesContainer
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+              - k8s.container.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesIngress
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.ingress.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesNode
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.node.name
+            - entity: KubernetesPersistentVolume
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.persistentvolume.name
+            - entity: KubernetesPersistentVolumeClaim
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.persistentvolumeclaim.name
+            - entity: KubernetesPod
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -529,6 +607,66 @@ Custom events filter with new syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
+        swok8sobjects/keepalive:
+          auth_type: serviceAccount
+          objects:
+          - interval: 20m
+            mode: pull
+            name: clusterrolebindings
+          - interval: 20m
+            mode: pull
+            name: clusterroles
+          - interval: 20m
+            mode: pull
+            name: configmaps
+          - interval: 20m
+            mode: pull
+            name: cronjobs
+          - interval: 20m
+            mode: pull
+            name: daemonsets
+          - interval: 20m
+            mode: pull
+            name: deployments
+          - interval: 20m
+            mode: pull
+            name: ingresses
+          - interval: 20m
+            mode: pull
+            name: jobs
+          - interval: 20m
+            mode: pull
+            name: namespaces
+          - interval: 20m
+            mode: pull
+            name: nodes
+          - interval: 20m
+            mode: pull
+            name: persistentvolumeclaims
+          - interval: 20m
+            mode: pull
+            name: persistentvolumes
+          - interval: 20m
+            mode: pull
+            name: pods
+          - interval: 20m
+            mode: pull
+            name: replicasets
+          - interval: 20m
+            mode: pull
+            name: rolebindings
+          - interval: 20m
+            mode: pull
+            name: roles
+          - interval: 20m
+            mode: pull
+            name: serviceaccounts
+          - interval: 20m
+            mode: pull
+            name: services
+          - interval: 20m
+            mode: pull
+            name: statefulsets
       service:
         extensions:
         - health_check
@@ -566,6 +704,27 @@ Custom events filter with new syntax:
             - batch
             receivers:
             - swok8sobjects
+          logs/manifests-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            processors:
+            - memory_limiter
+            - transform/manifest
+            - groupbyattrs/manifest
+            - resource/manifest
+            - k8sattributes
+            - k8seventgeneration
+            receivers:
+            - swok8sobjects/keepalive
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch
+            receivers:
+            - solarwindsentity/keepalive
         telemetry:
           logs:
             level: info
@@ -579,6 +738,84 @@ Custom events filter with new syntax:
 Custom events filter with old syntax:
   1: |
     events.config: |-
+      connectors:
+        solarwindsentity/keepalive:
+          schema:
+            entities:
+            - entity: KubernetesConfigMap
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.configmap.name
+            - entity: KubernetesContainer
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+              - k8s.container.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesIngress
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.ingress.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesNode
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.node.name
+            - entity: KubernetesPersistentVolume
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.persistentvolume.name
+            - entity: KubernetesPersistentVolumeClaim
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.persistentvolumeclaim.name
+            - entity: KubernetesPod
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -1110,6 +1347,66 @@ Custom events filter with old syntax:
             name: statefulsets
           - mode: watch
             name: statefulsets
+        swok8sobjects/keepalive:
+          auth_type: serviceAccount
+          objects:
+          - interval: 20m
+            mode: pull
+            name: clusterrolebindings
+          - interval: 20m
+            mode: pull
+            name: clusterroles
+          - interval: 20m
+            mode: pull
+            name: configmaps
+          - interval: 20m
+            mode: pull
+            name: cronjobs
+          - interval: 20m
+            mode: pull
+            name: daemonsets
+          - interval: 20m
+            mode: pull
+            name: deployments
+          - interval: 20m
+            mode: pull
+            name: ingresses
+          - interval: 20m
+            mode: pull
+            name: jobs
+          - interval: 20m
+            mode: pull
+            name: namespaces
+          - interval: 20m
+            mode: pull
+            name: nodes
+          - interval: 20m
+            mode: pull
+            name: persistentvolumeclaims
+          - interval: 20m
+            mode: pull
+            name: persistentvolumes
+          - interval: 20m
+            mode: pull
+            name: pods
+          - interval: 20m
+            mode: pull
+            name: replicasets
+          - interval: 20m
+            mode: pull
+            name: rolebindings
+          - interval: 20m
+            mode: pull
+            name: roles
+          - interval: 20m
+            mode: pull
+            name: serviceaccounts
+          - interval: 20m
+            mode: pull
+            name: services
+          - interval: 20m
+            mode: pull
+            name: statefulsets
       service:
         extensions:
         - health_check
@@ -1147,6 +1444,27 @@ Custom events filter with old syntax:
             - batch
             receivers:
             - swok8sobjects
+          logs/manifests-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            processors:
+            - memory_limiter
+            - transform/manifest
+            - groupbyattrs/manifest
+            - resource/manifest
+            - k8sattributes
+            - k8seventgeneration
+            receivers:
+            - swok8sobjects/keepalive
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch
+            receivers:
+            - solarwindsentity/keepalive
         telemetry:
           logs:
             level: info
@@ -1160,6 +1478,84 @@ Custom events filter with old syntax:
 Events config should match snapshot when using default values:
   1: |
     events.config: |-
+      connectors:
+        solarwindsentity/keepalive:
+          schema:
+            entities:
+            - entity: KubernetesConfigMap
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.configmap.name
+            - entity: KubernetesContainer
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+              - k8s.container.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesIngress
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.ingress.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesNode
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.node.name
+            - entity: KubernetesPersistentVolume
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.persistentvolume.name
+            - entity: KubernetesPersistentVolumeClaim
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.persistentvolumeclaim.name
+            - entity: KubernetesPod
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -1684,6 +2080,66 @@ Events config should match snapshot when using default values:
             name: statefulsets
           - mode: watch
             name: statefulsets
+        swok8sobjects/keepalive:
+          auth_type: serviceAccount
+          objects:
+          - interval: 20m
+            mode: pull
+            name: clusterrolebindings
+          - interval: 20m
+            mode: pull
+            name: clusterroles
+          - interval: 20m
+            mode: pull
+            name: configmaps
+          - interval: 20m
+            mode: pull
+            name: cronjobs
+          - interval: 20m
+            mode: pull
+            name: daemonsets
+          - interval: 20m
+            mode: pull
+            name: deployments
+          - interval: 20m
+            mode: pull
+            name: ingresses
+          - interval: 20m
+            mode: pull
+            name: jobs
+          - interval: 20m
+            mode: pull
+            name: namespaces
+          - interval: 20m
+            mode: pull
+            name: nodes
+          - interval: 20m
+            mode: pull
+            name: persistentvolumeclaims
+          - interval: 20m
+            mode: pull
+            name: persistentvolumes
+          - interval: 20m
+            mode: pull
+            name: pods
+          - interval: 20m
+            mode: pull
+            name: replicasets
+          - interval: 20m
+            mode: pull
+            name: rolebindings
+          - interval: 20m
+            mode: pull
+            name: roles
+          - interval: 20m
+            mode: pull
+            name: serviceaccounts
+          - interval: 20m
+            mode: pull
+            name: services
+          - interval: 20m
+            mode: pull
+            name: statefulsets
       service:
         extensions:
         - health_check
@@ -1720,6 +2176,27 @@ Events config should match snapshot when using default values:
             - batch
             receivers:
             - swok8sobjects
+          logs/manifests-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            processors:
+            - memory_limiter
+            - transform/manifest
+            - groupbyattrs/manifest
+            - resource/manifest
+            - k8sattributes
+            - k8seventgeneration
+            receivers:
+            - swok8sobjects/keepalive
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch
+            receivers:
+            - solarwindsentity/keepalive
         telemetry:
           logs:
             level: info
@@ -1733,6 +2210,7 @@ Events config should match snapshot when using default values:
 Events config should not contain manifest collection pipeline when disabled:
   1: |
     events.config: |-
+      connectors: null
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
