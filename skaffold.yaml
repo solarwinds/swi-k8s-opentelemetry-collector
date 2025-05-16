@@ -72,18 +72,13 @@ deploy:
                   - resource.attributes["k8s.namespace.name"] == "{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}"
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
-      - name: timeseries-mock-service-custom-resources
-        chartPath: tests/deploy/timeseries-mock-service-custom-resources
-        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
-        createNamespace: true
-        upgradeOnChange: true
       - name: monitoring
         remoteChart: kube-prometheus-stack
         namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         repo: https://prometheus-community.github.io/helm-charts
         version: 69.3.2
-        setValues:
+        setValueTemplates:
           alertmanager.enabled: false
           grafana.enabled: false
           nodeExporter.enabled: false
@@ -91,6 +86,27 @@ deploy:
           server:
             nodeSelector:
               "kubernetes\\.io\\/os": linux
+          prometheus.prometheusSpec.additionalScrapeConfigs:
+            - job_name: timeseries-mock-service
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names: ['{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}']
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_pod_label_app]
+                  action: keep
+                  regex: '^timeseries-mock-service$'
+                - source_labels: [__meta_kubernetes_pod_container_port_number]
+                  action: keepequal
+                  target_label: __meta_kubernetes_pod_annotation_prometheus_io_port
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                  action: replace
+                  target_label: __metrics_path__
+                  regex: (.+)
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+                  action: replace
+                  target_label: __scheme__
+                  regex: (.+)
       - name: tests
         chartPath: tests/deploy/tests
         namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
@@ -165,12 +181,7 @@ profiles:
         path: /deploy/helm/releases/1/setValueTemplates/prometheusCRDs.install
         value: true
       - op: add
-        path: /deploy/helm/releases/4/setValueTemplates
-        value: 
-          podMonitors:
-            enabled: true
-      - op: add
-        path: /deploy/helm/releases/2/setValueTemplates
+        path: /deploy/helm/releases/3/setValueTemplates
         value: 
           podMonitors:
             enabled: true
@@ -245,7 +256,7 @@ profiles:
   - name: no-tests
     patches:
       - op: remove
-        path: /deploy/helm/releases/4
+        path: /deploy/helm/releases/3
       - op: remove
         path: /build/artifacts/0
   - name: no-prometheus
@@ -254,7 +265,7 @@ profiles:
     patches:
       # remove `monitoring` (Prometheus Operator)
       - op: remove
-        path: /deploy/helm/releases/3
+        path: /deploy/helm/releases/2
       - op: remove
         path: /portForward/1
   - name: swo
