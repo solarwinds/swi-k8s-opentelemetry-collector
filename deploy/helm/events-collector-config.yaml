@@ -55,6 +55,82 @@ extensions:
   health_check:
     endpoint: 0.0.0.0:13133
 
+connectors:
+{{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
+  solarwindsentity/keepalive:
+    schema:
+      entities:
+        - entity: KubernetesConfigMap
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.configmap.name
+        - entity: KubernetesContainer
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+        - entity: KubernetesCronJob
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+        - entity: KubernetesDaemonSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+        - entity: KubernetesDeployment
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+        - entity: KubernetesIngress
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.ingress.name
+        - entity: KubernetesJob
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+        - entity: KubernetesNode
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+        - entity: KubernetesPersistentVolume
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.persistentvolume.name
+        - entity: KubernetesPersistentVolumeClaim
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.persistentvolumeclaim.name
+        - entity: KubernetesPod
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+        - entity: KubernetesReplicaSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.replicaset.name
+        - entity: KubernetesService
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.service.name
+        - entity: KubernetesStatefulSet 
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+{{- end }}
+
 processors:
   k8seventgeneration:
   memory_limiter:
@@ -331,7 +407,9 @@ processors:
 
 receivers:
   k8s_events:
-  swok8sobjects:
+{{- $root := . }}
+{{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
+  swok8sobjects/keepalive:
     auth_type: serviceAccount
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.persistent_storage.enabled }}
     storage: file_storage/manifests
@@ -341,7 +419,25 @@ receivers:
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
 {{- end }}
-{{- $root := . }}
+{{- range $index, $resource := $arrayOfWatchedResources }}
+      - name: {{ $resource }}
+        mode: pull
+        interval: {{ quote $root.Values.otel.manifests.keepalive_events.pull_every }}
+{{- end }}
+{{- else }}
+      - name: "configmaps"
+        mode: pull
+        interval: {{ quote .Values.otel.manifests.keepalive_events.pull_every }}
+{{- end }}
+{{- end}}
+
+  swok8sobjects:
+    auth_type: serviceAccount
+    objects:
+{{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
+{{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
+{{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
+{{- end }}
 {{- range $index, $resource := $arrayOfWatchedResources }}
       - name: {{ $resource }}
         mode: pull
@@ -419,6 +515,41 @@ service:
         - batch
       receivers:
         - swok8sobjects
+    
+{{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
+    logs/manifests-keepalive:
+      exporters:
+        - solarwindsentity/keepalive
+      processors:
+        - memory_limiter
+        - transform/manifest
+        - groupbyattrs/manifest
+        - resource/manifest
+        - k8sattributes
+        - k8seventgeneration
+{{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
+        - filter/k8s_collector_config_include
+{{- end }}
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}  
+{{- if .Values.otel.manifests.filter }}
+        - filter/manifests
+{{- end }}
+      receivers:
+        - swok8sobjects/keepalive
+
+    logs/stateevents:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - transform/scope
+        - batch
+      receivers:
+        - solarwindsentity/keepalive
+{{- end }}
+        
   telemetry:
 {{- if .Values.otel.events.telemetry.logs.enabled }}
     logs:

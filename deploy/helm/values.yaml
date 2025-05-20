@@ -736,6 +736,14 @@ otel:
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     filter: {}
 
+    # In order to keep `lastSeen` timestamp in entities of SWO, the collector needs to send keepalive events
+    # Those events are lightweight, includes only keys identifying the entity
+    keepalive_events:
+      enabled: true
+
+      # How often the keepalive events are sent
+      pull_every: 20m
+
   # Check if SWI OTEL endpoint is reachable
   swi_endpoint_check:
     enabled: true
