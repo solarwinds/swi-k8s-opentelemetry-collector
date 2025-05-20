@@ -6,6 +6,7 @@ import logging
 from packaging import version
 from ruamel.yaml import YAML
 from github import Github
+from urllib.parse import urlparse
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -25,7 +26,7 @@ def get_docker_hub_tags(repository, version_pattern=None):
     
     while next_url:
         try:
-            response = requests.get(next_url)
+            response = requests.get(next_url, timeout=10)
             response.raise_for_status()
             data = response.json()
             
@@ -51,7 +52,7 @@ def get_ghcr_tags(repository, version_pattern=None, github_token=None):
     url = f"https://ghcr.io/v2/{repository}/tags/list"
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         tags = data.get("tags", [])
@@ -92,7 +93,6 @@ def get_latest_tag(registry, repository, version_pattern=None, github_token=None
         tags = get_docker_hub_tags(repository, version_pattern)
         return get_latest_version(tags)
     elif registry == "ghcr.io":
-        from urllib.parse import urlparse
         parsed_url = urlparse(repository)
         if parsed_url.hostname == "ghcr.io":
             repo_name = parsed_url.path.lstrip("/")
@@ -199,14 +199,12 @@ def update_yaml_file(file_path, changes):
         
         current = data
         for part in path[:-1]:
-            if part not in current:
-                logger.warning(f"Path {path} not found in YAML")
-                break
             current = current[part]
         
-        if path[-1] in current and "tag" in current[path[-1]]:
-            old_tag = current[path[-1]]["tag"]
-            current[path[-1]]["tag"] = new_tag
+        last_key = path[-1]
+        if last_key in current and "tag" in current[last_key]:
+            old_tag = current[last_key]["tag"]
+            current[last_key]["tag"] = new_tag
             applied_changes.append({
                 "name": change["name"],
                 "old_tag": old_tag,
@@ -250,7 +248,6 @@ def update_chart_version(chart_file, app_version=None):
                 yaml.dump(chart_data, f)
             
             logger.info(f"Updated Chart.yaml: version {chart_version} -> {new_chart_version}")
-            return True
     except Exception as e:
         logger.error(f"Error updating Chart.yaml: {str(e)}")
     
