@@ -95,27 +95,67 @@ processors:
   filter/histograms:
     metrics:
       metric:
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM'
+
+  filter/histograms_beyla:
+    metrics:
+      metric:
         # Exclude all histograms except the ones listed below
         # excluded histograms are:
-        # - all histograms required for system dashboards (apiserver, coredns, controller_manager)
         # - all histograms from beyla
         - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(
-            name == "k8s.apiserver_request_duration_seconds" or 
-            name == "k8s.workqueue_queue_duration_seconds" or 
-            name == "k8s.coredns_dns_request_duration_seconds" or 
-            name == "k8s.coredns_dns_request_size_bytes" or 
-            name == "k8s.coredns_dns_response_size_bytes" or 
-            name == "k8s.http.client.request.duration" or
-            name == "k8s.http.client.request.body.size" or
-            name == "k8s.http.server.request.duration" or 
-            name == "k8s.http.server.request.body.size" or
-            name == "k8s.rpc.client.duration" or
-            name == "k8s.rpc.server.duration" or
-            name == "k8s.sql.client.duration" or
-            name == "k8s.redis.client.duration" or
-            name == "k8s.messaging.publish.duration" or
-            name == "k8s.messaging.process.duration"
+            name == "http.client.request.duration" or
+            name == "http.client.request.body.size" or
+            name == "http.client.response.body.size" or
+            name == "http.server.request.duration" or 
+            name == "http.server.request.body.size" or
+            name == "http.server.response.body.size" or
+            name == "rpc.client.duration" or
+            name == "rpc.server.duration" or
+            name == "sql.client.duration" or
+            name == "redis.client.duration" or
+            name == "messaging.publish.duration" or
+            name == "messaging.process.duration"
           )'
+
+  swok8sworkloadtype/beyla:
+    workload_mappings:
+      - name_attr: k8s.src.owner.name
+        namespace_attr: k8s.src.namespace
+        workload_type_attr: k8s.src.owner.type
+        expected_types:
+          - deployments
+          - daemonsets
+          - statefulsets
+          - services
+          - jobs
+          - cronjobs
+          - pods
+          - nodes
+      - name_attr: k8s.dst.owner.name
+        namespace_attr: k8s.dst.namespace
+        workload_type_attr: k8s.dst.owner.type
+        expected_types:
+          - deployments
+          - daemonsets
+          - statefulsets
+          - services
+          - jobs
+          - cronjobs
+          - pods
+          - nodes
+      - name_attr: k8s.owner.name
+        namespace_attr: k8s.namespace.name
+        workload_type_attr: k8s.owner.type
+        expected_types:
+          - deployments
+          - daemonsets
+          - statefulsets
+          - services
+          - jobs
+          - cronjobs
+          - pods
+          - nodes
 
 receivers:
   otlp:
@@ -124,6 +164,35 @@ receivers:
         endpoint: 0.0.0.0:{{ .Values.otel.gateway.otlp_endpoint.port }}
       http:
         endpoint: 0.0.0.0:{{ .Values.otel.gateway.otlp_endpoint.http_port }}
+
+connectors:
+  forward/metrics_common:
+  routing/metrics:
+    default_pipelines: [metrics]
+    table:
+      - context: metric
+        pipelines: [metrics/beyla]
+        condition: |
+          name == "http.client.request.duration" or
+          name == "http.client.request.body.size" or
+          name == "http.client.response.body.size" or
+          name == "http.server.request.duration" or 
+          name == "http.server.request.body.size" or
+          name == "http.server.response.body.size" or
+          name == "rpc.client.duration" or
+          name == "rpc.server.duration" or
+          name == "sql.client.duration" or
+          name == "redis.client.duration" or
+          name == "messaging.publish.duration" or
+          name == "messaging.process.duration" or
+          name == "process.cpu.time" or
+          name == "process.cpu.utilization" or
+          name == "process.memory.usage" or
+          name == "process.memory.virtual" or
+          name == "process.disk.io" or
+          name == "process.network.io" or
+          name == "beyla.network.flow.bytes" or
+          name == "beyla.network.inter.zone.bytes"
 
 service:
   extensions:
@@ -134,23 +203,44 @@ service:
   pipelines:
     metrics:
       exporters:
-        - otlp
+        - forward/metrics_common
       processors:
-        - memory_limiter
+        - filter/histograms
 {{- if .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled }}
         - filter/otlp-metrics
 {{- end }}
+      receivers:
+        - routing/metrics
+    metrics/beyla:
+      exporters:
+        - forward/metrics_common
+      processors:
+        - filter/histograms_beyla
+        - swok8sworkloadtype/beyla
+      receivers:
+        - routing/metrics
+    metrics/common_in:
+      exporters:
+        - routing/metrics
+      processors:
+        - memory_limiter
+      receivers:
+        - otlp
+    metrics/common_out:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
         - k8sattributes
 {{- if .Values.otel.gateway.prefix }}
         - metricstransform/rename
 {{- end }}
         - attributes/clean-attributes-otlp-metrics
         - resource
-        - filter/histograms
         - transform/scope
         - batch
       receivers:
-        - otlp
+        - forward/metrics_common
     logs:
       exporters:
         - otlp
