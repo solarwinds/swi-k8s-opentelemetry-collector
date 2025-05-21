@@ -79,7 +79,7 @@ deploy:
         namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         repo: https://prometheus-community.github.io/helm-charts
-        version: 69.3.2
+        version: 72.5.2
         setValueTemplates:
           alertmanager.enabled: false
           grafana.enabled: false
@@ -88,6 +88,7 @@ deploy:
           server:
             nodeSelector:
               "kubernetes\\.io\\/os": linux
+          prometheus.prometheusSpec.maximumStartupDurationSeconds: 900
           prometheus.prometheusSpec.additionalScrapeConfigs:
             - job_name: timeseries-mock-service
               kubernetes_sd_configs:

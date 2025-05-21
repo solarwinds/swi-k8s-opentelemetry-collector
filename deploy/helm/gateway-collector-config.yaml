@@ -120,6 +120,45 @@ processors:
             name == "messaging.process.duration"
           )'
 
+  swok8sworkloadtype/beyla:
+    workload_mappings:
+      - name_attr: k8s.src.owner.name
+        namespace_attr: k8s.src.namespace
+        workload_type_attr: k8s.src.owner.type_new
+        expected_types:
+          - deployments
+          - daemonsets
+          - statefulsets
+          - services
+          - jobs
+          - cronjobs
+          - pods
+          - nodes
+      - name_attr: k8s.dst.owner.name
+        namespace_attr: k8s.dst.namespace
+        workload_type_attr: k8s.dst.owner.type_new
+        expected_types:
+          - deployments
+          - daemonsets
+          - statefulsets
+          - services
+          - jobs
+          - cronjobs
+          - pods
+          - nodes
+      - name_attr: k8s.owner.name
+        namespace_attr: k8s.namespace.name
+        workload_type_attr: k8s.owner.type_new
+        expected_types:
+          - deployments
+          - daemonsets
+          - statefulsets
+          - services
+          - jobs
+          - cronjobs
+          - pods
+          - nodes
+
 receivers:
   otlp:
     protocols:
@@ -180,6 +219,7 @@ service:
         - debug
       processors:
         - filter/histograms_beyla
+        - swok8sworkloadtype/beyla
       receivers:
         - routing/metrics
     metrics/common_in:
@@ -194,7 +234,7 @@ service:
         - otlp
       processors:
         - memory_limiter
-        - k8sattributes
+        # - k8sattributes
 {{- if .Values.otel.gateway.prefix }}
         - metricstransform/rename
 {{- end }}
