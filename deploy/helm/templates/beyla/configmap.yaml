@@ -50,6 +50,21 @@ data:
     attributes:
       kubernetes:
         enable: true
+      select:
+        http_*:
+          include: ["*"]
+        rpc_*:
+          include: ["*"]
+        sql_*:
+          include: ["*"]
+        redis_*:
+          include: ["*"]
+        messaging_*:
+          include: ["*"]
+        process_*:
+          include: ["*"]
+        beyla_*:
+          include: ["*"]
     {{- end }}
     {{- if .Values.beyla.config }}
   {{- toYaml .Values.beyla.config | nindent 4}}
