@@ -261,23 +261,23 @@ def main():
     parser.add_argument("--chart-file", default="deploy/helm/Chart.yaml", help="Path to Chart.yaml")
     parser.add_argument("--filter", help="Only update images containing this string in repository")
     args = parser.parse_args()
-    
+
     yaml = YAML()
     yaml.preserve_quotes = True
     with open(args.values_file, 'r') as f:
         values = yaml.load(f)
-    
+
     logger.info(f"Detecting images in {args.values_file}...")
     detected_images = detect_images_in_yaml(values)
     logger.info(f"Found {len(detected_images)} images")
-    
+
     if args.filter:
         detected_images = [img for img in detected_images if args.filter in img["repository"]]
         logger.info(f"After filtering: {len(detected_images)} images")
-    
+
     changes = []
     app_version = None
-    
+
     for image in detected_images:
         name = image["name"]
         registry = image["registry"]
@@ -285,21 +285,21 @@ def main():
         yaml_path = image["yaml_path"]
         version_pattern = image["version_pattern"]
         current_tag = image["current_tag"]
-        
+
         logger.info(f"Checking for updates to {name} ({repository})...")
-        
+
         if not current_tag:
             logger.info(f"  Skipping {name}, no current tag")
             continue
-        
+
         latest_tag = get_latest_tag(registry, repository, version_pattern, args.github_token)
         if not latest_tag:
             logger.warning(f"  Skipping {name}, couldn't determine latest tag")
             continue
-        
+
         if repository == "solarwinds/solarwinds-otel-collector" and yaml_path == ["otel", "image"]:
             app_version = latest_tag
-        
+
         if current_tag == latest_tag:
             logger.info(f"  Latest version already in use: {current_tag}")
             continue
@@ -311,16 +311,25 @@ def main():
                 "old_tag": current_tag,
                 "new_tag": latest_tag
             })
-    
-    if changes and not args.dry_run:
-        applied_changes = update_yaml_file(args.values_file, changes)
-        logger.info(f"Updated {len(applied_changes)} images in {args.values_file}")
-        
-        if args.update_chart:
-            update_chart_version(args.chart_file, app_version)
-    
-    elif not changes:
+
+    if changes:
+        if args.dry_run:
+            logger.info("Dry run mode: Listing changes only")
+            for change in changes:
+                print(f"{change['name']}: {change['old_tag']} -> {change['new_tag']}")
+        else:
+            applied_changes = update_yaml_file(args.values_file, changes)
+            logger.info(f"Updated {len(applied_changes)} images in {args.values_file}")
+
+            if args.update_chart:
+                update_chart_version(args.chart_file, app_version)
+
+        with open("changes.log", "w") as log_file:
+            for change in changes:
+                log_file.write(f"{change['name']}: {change['old_tag']} -> {change['new_tag']}\n")
+    else:
         logger.info("No updates needed.")
+        exit(1)
 
 if __name__ == "__main__":
     main()

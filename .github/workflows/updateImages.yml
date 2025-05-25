@@ -24,9 +24,29 @@ jobs:
         run: pip install ruamel.yaml requests packaging PyGithub
 
       - name: Run updater
-        run: python utils/update_images.py --github-token ${{ secrets.GITHUB_TOKEN }} --update-chart
+        run: |
+          python utils/update_images.py --github-token ${{ secrets.GITHUB_TOKEN }} --update-chart
+          if [ $? -ne 0 ]; then
+            echo "No changes detected. Exiting."
+            exit 0
+          fi
+
+      - name: Check for existing PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING_PR=$(gh pr list --state open --head update-images-${{ github.run_id }} --json number -q '.[0].number')
+          echo "EXISTING_PR=$EXISTING_PR" >> $GITHUB_ENV
+
+      - name: Update existing PR
+        if: env.EXISTING_PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr edit $EXISTING_PR --add-label "updated" --body "Updated with new changes."
 
       - name: Create API-signed commit
+        if: !env.EXISTING_PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -46,12 +66,16 @@ jobs:
             -f sha="$FILE_SHA"
 
       - name: Create Pull Request
+        if: !env.EXISTING_PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          CHANGES=$(cat changes.log)
           gh pr create \
             --title "Update Docker image versions" \
-            --body "Automated image updates via API-signed commit." \
+            --body "Automated image updates via API-signed commit.\n\nChanged images:\n$CHANGES" \
             --head update-images-${{ github.run_id }} \
             --base master
-          
+      - name: Clean up changes.log
+        if: success()
+        run: rm changes.log
