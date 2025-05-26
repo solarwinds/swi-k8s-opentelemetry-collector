@@ -1,6 +1,6 @@
 # Collector pipeline
 
-The `swo-k8s-collector` Helm chart deploys several k8s workflows. The following chart shows dataflows inside the deployed OTEL collectors: `MetricsCollector Deployment`, `EventsCollector Deployment` and `NodeCollector DaemonSet`
+The `swo-k8s-collector` Helm chart deploys several k8s workflows. The following chart shows dataflows inside the deployed OTEL collectors: `MetricsCollector Deployment`, `MetricsDiscovery Deployment`, `EventsCollector Deployment`, `NodeCollector DaemonSet`, and `Gateway Collector Deployment`.
 
 Note: Some of the pipelines may not be actually utilized, depending on the environment and the Helm chart's settings provided during its installation.
 
@@ -60,6 +60,25 @@ stateDiagram-v2
     mc_metricsPrometheusServerPipeline --> mc_metricsPrometheusPipeline
   }
 
+  metricsDiscoveryDeployment: MetricsDiscovery Deployment
+  state metricsDiscoveryDeployment {
+    md_metricsDiscoveryPipeline: 'metrics/discovery' pipeline
+    state md_metricsDiscoveryPipeline {
+      md_r1: 'receiver_creator/discovery' receiver
+      md_e1: 'forward/metric-exporter' connector
+      md_r1 --> md_e1 : processors
+    }
+
+    md_metricsPipeline: 'metrics' pipeline
+    state md_metricsPipeline {
+      md_r2: 'forward/metric-exporter' connector
+      md_e2: 'otlp' exporter
+      md_r2 --> md_e2 : processors
+    }
+
+    md_metricsDiscoveryPipeline --> md_metricsPipeline
+  }
+
   eventsCollectorDeployment: EventsCollector Deployment
   state eventsCollectorDeployment {
 
@@ -79,11 +98,37 @@ stateDiagram-v2
 
   }
 
+  gatewayCollectorDeployment: Gateway Collector Deployment
+  state gatewayCollectorDeployment {
+    gw_metricsPipeline: 'metrics' pipeline
+    state gw_metricsPipeline {
+      gw_mr: 'otlp' receiver
+      gw_me: 'otlp' exporter
+      gw_mr --> gw_me : processors
+    }
+
+    gw_logsPipeline: 'logs' pipeline
+    state gw_logsPipeline {
+      gw_lr: 'otlp' receiver
+      gw_le: 'otlp' exporter
+      gw_lr --> gw_le : processors
+    }
+
+    gw_tracesPipeline: 'traces' pipeline
+    state gw_tracesPipeline {
+      gw_tr: 'otlp' receiver
+      gw_te: 'otlp' exporter
+      gw_tr --> gw_te : processors
+    }
+  }
+
   kubestatemetricsDeployment: KubeStateMetrics Deployment
   ebpfreducerDeployment: eBPF Reducer Deployment
+  beylaComponent: Beyla Auto-Instrumentation
 
   kubestatemetricsDeployment --> mc_metricsKubestatemetricsPipeline
   ebpfreducerDeployment --> mc_metricsOtlpPipeline
+  beylaComponent --> gatewayCollectorDeployment : traces/metrics
 
   nodeCollectorDaemonset: NodeCollector DaemonSet
   state nodeCollectorDaemonset {
