@@ -288,8 +288,7 @@ processors:
   transform/provider_defaults:
     log_statements:
       - statements:
-          - set(resource.attributes["cloud.provider"], "Other") where resource.attributes["cloud.provider"] == nil
-
+        - set(resource.attributes["cloud.provider"], "Other") where resource.attributes["cloud.provider"] == nil and resource.attributes["k8s.node.name"] != nil
   groupbyattrs/manifest:
     keys:
       - k8s.pod.name
