@@ -3,6 +3,166 @@ Metrics discovery config should match snapshot when Fargate is enabled:
     metrics-discovery.config: |
       connectors:
         forward/metric-exporter: null
+        forward/relationship-state-events-workload-service: null
+        forward/relationship-state-events-workload-workload: null
+        routing/discovered_metrics:
+          default_pipelines:
+          - metrics/discovery-custom
+          table:
+          - condition: |
+              IsMatch(name, "k8s.istio_")
+            context: metric
+            pipelines:
+            - metrics/discovery-istio
+        solarwindsentity/istio-workload-service:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesCronJob
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+        solarwindsentity/istio-workload-workload:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesCronJob
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesCronJob
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesCronJob
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -31,11 +191,58 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        batch/stateevents:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
+          timeout: 1s
+        cumulativetodelta/istio-metrics:
+          include:
+            match_type: strict
+            metrics:
+            - k8s.istio_request_bytes.rate
+            - k8s.istio_response_bytes.rate
+            - k8s.istio_request_duration_milliseconds_sum_temp
+            - k8s.istio_request_duration_milliseconds_count_temp
+            - k8s.istio_requests.rate
+            - k8s.istio_tcp_sent_bytes.rate
+            - k8s.istio_tcp_received_bytes.rate
+            - k8s.istio_request_bytes.delta
+            - k8s.istio_response_bytes.delta
+            - k8s.istio_requests.delta
+            - k8s.istio_tcp_sent_bytes.delta
+            - k8s.istio_tcp_received_bytes.delta
+        deltatorate/istio-metrics:
+          metrics:
+          - k8s.istio_request_bytes.rate
+          - k8s.istio_response_bytes.rate
+          - k8s.istio_request_duration_milliseconds_sum_temp
+          - k8s.istio_request_duration_milliseconds_count_temp
+          - k8s.istio_requests.rate
+          - k8s.istio_tcp_sent_bytes.rate
+          - k8s.istio_tcp_received_bytes.rate
         filter/histograms:
           metrics:
             metric:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds")
+        filter/keep-workload-service-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
+        filter/keep-workload-workload-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
         filter/remove_temporary_metrics:
           metrics:
             metric:
@@ -49,6 +256,22 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - k8s.node.name
           - host.name
           - service.name
+        groupbyattrs/istio-relationships:
+          keys:
+          - sw.k8s.cluster.uid
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.job.name
+          - source.k8s.cronjob.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.job.name
+          - dest.k8s.cronjob.name
+          - dest.k8s.namespace.name
+          - dest.k8s.service.name
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -71,6 +294,45 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           check_interval: 1s
           limit_mib: 2560
           spike_limit_mib: 512
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
+            metric2: k8s.istio_request_duration_milliseconds_count_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
+        metricstransform/istio-metrics:
+          transforms:
+          - action: insert
+            include: k8s.istio_request_bytes_sum
+            new_name: k8s.istio_request_bytes.rate
+          - action: insert
+            include: k8s.istio_response_bytes_sum
+            new_name: k8s.istio_response_bytes.rate
+          - action: insert
+            include: k8s.istio_requests_total
+            new_name: k8s.istio_requests.rate
+          - action: insert
+            include: k8s.istio_tcp_sent_bytes_total
+            new_name: k8s.istio_tcp_sent_bytes.rate
+          - action: insert
+            include: k8s.istio_tcp_received_bytes_total
+            new_name: k8s.istio_tcp_received_bytes.rate
+          - action: insert
+            include: k8s.istio_request_bytes.rate
+            new_name: k8s.istio_request_bytes.delta
+          - action: insert
+            include: k8s.istio_response_bytes.rate
+            new_name: k8s.istio_response_bytes.delta
+          - action: insert
+            include: k8s.istio_requests.rate
+            new_name: k8s.istio_requests.delta
+          - action: insert
+            include: k8s.istio_tcp_sent_bytes.rate
+            new_name: k8s.istio_tcp_sent_bytes.delta
+          - action: insert
+            include: k8s.istio_tcp_received_bytes.rate
+            new_name: k8s.istio_tcp_received_bytes.delta
         metricstransform/rename/discovery:
           transforms:
           - action: update
@@ -91,6 +353,96 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        swok8sworkloadtype/istio:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            - jobs
+            - cronjobs
+            - pods
+            name_attr: source_workload
+            namespace_attr: source_workload_namespace
+            workload_type_attr: source_workload_type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            - jobs
+            - cronjobs
+            - pods
+            name_attr: destination_workload
+            namespace_attr: destination_workload_namespace
+            workload_type_attr: destination_workload_type
+          - expected_types:
+            - services
+            name_attr: destination_service_name
+            namespace_attr: destination_service_namespace
+            workload_type_attr: destination_service_type
+        transform/istio-metrics:
+          metric_statements:
+          - statements:
+            - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
+              metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
+            - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where
+              metric.name == "k8s.istio_request_duration_milliseconds_sum"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
+              metric.name == "k8s.istio_request_duration_milliseconds_count"
+        transform/istio-workload-service:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_service_name", "destination_service_namespace", "source_workload_type",
+            "destination_service_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Job"
+          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "CronJob"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
+        transform/istio-workload-workload:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_workload", "destination_workload_namespace", "source_workload_type",
+            "destination_workload_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Job"
+          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "CronJob"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Deployment"
+          - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Job"
+          - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "CronJob"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/only-relationship-resource-attributes:
+          metric_statements:
+          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
+            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
+            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
+            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
+            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
         transform/scope:
           metric_statements:
           - statements:
@@ -148,6 +500,17 @@ Metrics discovery config should match snapshot when Fargate is enabled:
         - health_check
         - k8s_observer
         pipelines:
+          logs/stateevents:
+            exporters:
+            - otlp
+            - debug
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch/stateevents
+            receivers:
+            - solarwindsentity/istio-workload-workload
+            - solarwindsentity/istio-workload-service
           metrics:
             exporters:
             - otlp
@@ -160,16 +523,62 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - batch/metrics
             receivers:
             - forward/metric-exporter
-          metrics/discovery:
+          metrics/discovery-custom:
             exporters:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
             - groupbyattrs/common-all
             - resource/all
             receivers:
+            - routing/discovered_metrics
+          metrics/discovery-istio:
+            exporters:
+            - forward/metric-exporter
+            - forward/relationship-state-events-workload-workload
+            - forward/relationship-state-events-workload-service
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/istio
+            - transform/istio-metrics
+            - metricstransform/istio-metrics
+            - cumulativetodelta/istio-metrics
+            - deltatorate/istio-metrics
+            - metricsgeneration/istio-metrics
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-scrape:
+            exporters:
+            - routing/discovered_metrics
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
+            receivers:
             - receiver_creator/discovery
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/keep-workload-service-relationships
+            - transform/istio-workload-service
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/keep-workload-workload-relationships
+            - transform/istio-workload-workload
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-workload
         telemetry:
           logs:
             level: info
