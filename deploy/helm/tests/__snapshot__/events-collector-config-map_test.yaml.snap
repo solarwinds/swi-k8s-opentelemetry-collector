@@ -328,6 +328,11 @@ Custom events filter with new syntax:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/provider_defaults:
+          log_statements:
+          - statements:
+            - set(resource.attributes["cloud.provider"], "Other") where resource.attributes["cloud.provider"]
+              == nil and resource.attributes["k8s.node.name"] != nil
         transform/scope:
           log_statements:
           - statements:
@@ -693,6 +698,7 @@ Custom events filter with new syntax:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
+            - transform/provider_defaults
             - k8sattributes
             - k8seventgeneration
             - transform/scope
@@ -1063,6 +1069,11 @@ Custom events filter with old syntax:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/provider_defaults:
+          log_statements:
+          - statements:
+            - set(resource.attributes["cloud.provider"], "Other") where resource.attributes["cloud.provider"]
+              == nil and resource.attributes["k8s.node.name"] != nil
         transform/scope:
           log_statements:
           - statements:
@@ -1428,6 +1439,7 @@ Custom events filter with old syntax:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
+            - transform/provider_defaults
             - k8sattributes
             - k8seventgeneration
             - transform/scope
@@ -1791,6 +1803,11 @@ Events config should match snapshot when using default values:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/provider_defaults:
+          log_statements:
+          - statements:
+            - set(resource.attributes["cloud.provider"], "Other") where resource.attributes["cloud.provider"]
+              == nil and resource.attributes["k8s.node.name"] != nil
         transform/scope:
           log_statements:
           - statements:
@@ -2155,6 +2172,7 @@ Events config should match snapshot when using default values:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
+            - transform/provider_defaults
             - k8sattributes
             - k8seventgeneration
             - transform/scope
@@ -2446,6 +2464,11 @@ Events config should not contain manifest collection pipeline when disabled:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/provider_defaults:
+          log_statements:
+          - statements:
+            - set(resource.attributes["cloud.provider"], "Other") where resource.attributes["cloud.provider"]
+              == nil and resource.attributes["k8s.node.name"] != nil
         transform/scope:
           log_statements:
           - statements:
@@ -2660,6 +2683,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
+            - transform/provider_defaults
             - k8sattributes
             - k8seventgeneration
             - filter/k8s_collector_config_include
