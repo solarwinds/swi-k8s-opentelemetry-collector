@@ -32,3 +32,9 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: If specified, the custom cluster UID should be a valid string.
+  - it: should fail when operator.enabled is set to true but certmanager.enabled is not enabled (as is by default)
+    set:
+      operator.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Deployment of the OpenTelemetry Operator is enabled but cert-manager was not detected in your cluster. The operator's admission webhooks require valid certificates to function properly. Please set `certmanager.enabled` to `true` or follow the operator's documentation (https://opentelemetry.io/docs/platforms/kubernetes/helm/operator/#configuration) to ensure proper certificate management.
