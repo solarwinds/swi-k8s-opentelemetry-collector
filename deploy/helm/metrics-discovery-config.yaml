@@ -186,6 +186,7 @@ receivers:
                 metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
                 honor_timestamps: false
                 honor_labels: true
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
@@ -213,6 +214,7 @@ receivers:
                   insecure_skip_verify: true
                 follow_redirects: true
                 enable_http2: true
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
