@@ -212,6 +212,10 @@ processors:
           - set(resource.attributes["sw.k8s.cronjob.successfuljobshistorylimit"], log.body["spec"]["successfulJobsHistoryLimit"]) where log.body["spec"]["successfulJobsHistoryLimit"] != nil
           - set(resource.attributes["sw.k8s.cronjob.active"], Len(log.body["status"]["active"])) where log.body["status"]["active"] != nil
           - set(resource.attributes["sw.k8s.cronjob.active"], 0) where log.body["status"]["active"] == nil
+      - conditions:
+          - log.body["kind"] == "Service"
+        statements:
+          - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"]) where log.body["spec"]["type"] != nil
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
