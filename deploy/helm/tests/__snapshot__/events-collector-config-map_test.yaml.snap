@@ -267,6 +267,11 @@ Custom events filter with new syntax:
               where log.body["status"]["active"] != nil
             - set(resource.attributes["sw.k8s.cronjob.active"], 0) where log.body["status"]["active"]
               == nil
+          - conditions:
+            - log.body["kind"] == "Service"
+            statements:
+            - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
+              where log.body["spec"]["type"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1008,6 +1013,11 @@ Custom events filter with old syntax:
               where log.body["status"]["active"] != nil
             - set(resource.attributes["sw.k8s.cronjob.active"], 0) where log.body["status"]["active"]
               == nil
+          - conditions:
+            - log.body["kind"] == "Service"
+            statements:
+            - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
+              where log.body["spec"]["type"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1742,6 +1752,11 @@ Events config should match snapshot when using default values:
               where log.body["status"]["active"] != nil
             - set(resource.attributes["sw.k8s.cronjob.active"], 0) where log.body["status"]["active"]
               == nil
+          - conditions:
+            - log.body["kind"] == "Service"
+            statements:
+            - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
+              where log.body["spec"]["type"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -2403,6 +2418,11 @@ Events config should not contain manifest collection pipeline when disabled:
               where log.body["status"]["active"] != nil
             - set(resource.attributes["sw.k8s.cronjob.active"], 0) where log.body["status"]["active"]
               == nil
+          - conditions:
+            - log.body["kind"] == "Service"
+            statements:
+            - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
+              where log.body["spec"]["type"] != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
