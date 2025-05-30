@@ -63,14 +63,6 @@ Custom logs filter with new syntax:
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
         solarwindsentity/istio-workload-workload:
           destination_prefix: dest.
@@ -91,16 +83,6 @@ Custom logs filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.daemonset.name
-            - entity: KubernetesJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.job.name
-            - entity: KubernetesCronJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.cronjob.name
             events:
               relationships:
               - attributes: null
@@ -139,36 +121,8 @@ Custom logs filter with new syntax:
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        debug:
-          sampling_initial: 5
-          sampling_thereafter: 200
-          verbosity: detailed
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
@@ -428,14 +382,10 @@ Custom logs filter with new syntax:
           - source.k8s.deployment.name
           - source.k8s.statefulset.name
           - source.k8s.daemonset.name
-          - source.k8s.job.name
-          - source.k8s.cronjob.name
           - source.k8s.namespace.name
           - dest.k8s.deployment.name
           - dest.k8s.statefulset.name
           - dest.k8s.daemonset.name
-          - dest.k8s.job.name
-          - dest.k8s.cronjob.name
           - dest.k8s.namespace.name
           - dest.k8s.service.name
         groupbyattrs/node:
@@ -1124,9 +1074,6 @@ Custom logs filter with new syntax:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: source_workload
             namespace_attr: source_workload_namespace
             workload_type_attr: source_workload_type
@@ -1134,9 +1081,6 @@ Custom logs filter with new syntax:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: destination_workload
             namespace_attr: destination_workload_namespace
             workload_type_attr: destination_workload_type
@@ -1166,10 +1110,6 @@ Custom logs filter with new syntax:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
             where datapoint.attributes["destination_service_type"] == "Service"
@@ -1185,10 +1125,6 @@ Custom logs filter with new syntax:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "Deployment"
@@ -1196,10 +1132,6 @@ Custom logs filter with new syntax:
             where datapoint.attributes["destination_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "Job"
-          - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "CronJob"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
@@ -1589,14 +1521,6 @@ Custom logs filter with old syntax:
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
         solarwindsentity/istio-workload-workload:
           destination_prefix: dest.
@@ -1617,16 +1541,6 @@ Custom logs filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.daemonset.name
-            - entity: KubernetesJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.job.name
-            - entity: KubernetesCronJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.cronjob.name
             events:
               relationships:
               - attributes: null
@@ -1665,36 +1579,8 @@ Custom logs filter with old syntax:
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        debug:
-          sampling_initial: 5
-          sampling_thereafter: 200
-          verbosity: detailed
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
@@ -1957,14 +1843,10 @@ Custom logs filter with old syntax:
           - source.k8s.deployment.name
           - source.k8s.statefulset.name
           - source.k8s.daemonset.name
-          - source.k8s.job.name
-          - source.k8s.cronjob.name
           - source.k8s.namespace.name
           - dest.k8s.deployment.name
           - dest.k8s.statefulset.name
           - dest.k8s.daemonset.name
-          - dest.k8s.job.name
-          - dest.k8s.cronjob.name
           - dest.k8s.namespace.name
           - dest.k8s.service.name
         groupbyattrs/node:
@@ -2653,9 +2535,6 @@ Custom logs filter with old syntax:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: source_workload
             namespace_attr: source_workload_namespace
             workload_type_attr: source_workload_type
@@ -2663,9 +2542,6 @@ Custom logs filter with old syntax:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: destination_workload
             namespace_attr: destination_workload_namespace
             workload_type_attr: destination_workload_type
@@ -2695,10 +2571,6 @@ Custom logs filter with old syntax:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
             where datapoint.attributes["destination_service_type"] == "Service"
@@ -2714,10 +2586,6 @@ Custom logs filter with old syntax:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "Deployment"
@@ -2725,10 +2593,6 @@ Custom logs filter with old syntax:
             where datapoint.attributes["destination_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "Job"
-          - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "CronJob"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
@@ -3199,14 +3063,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
         solarwindsentity/istio-workload-workload:
           destination_prefix: dest.
@@ -3227,16 +3083,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.daemonset.name
-            - entity: KubernetesJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.job.name
-            - entity: KubernetesCronJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.cronjob.name
             events:
               relationships:
               - attributes: null
@@ -3275,36 +3121,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        debug:
-          sampling_initial: 5
-          sampling_thereafter: 200
-          verbosity: detailed
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
@@ -3560,14 +3378,10 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - source.k8s.deployment.name
           - source.k8s.statefulset.name
           - source.k8s.daemonset.name
-          - source.k8s.job.name
-          - source.k8s.cronjob.name
           - source.k8s.namespace.name
           - dest.k8s.deployment.name
           - dest.k8s.statefulset.name
           - dest.k8s.daemonset.name
-          - dest.k8s.job.name
-          - dest.k8s.cronjob.name
           - dest.k8s.namespace.name
           - dest.k8s.service.name
         groupbyattrs/node:
@@ -4256,9 +4070,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: source_workload
             namespace_attr: source_workload_namespace
             workload_type_attr: source_workload_type
@@ -4266,9 +4077,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: destination_workload
             namespace_attr: destination_workload_namespace
             workload_type_attr: destination_workload_type
@@ -4298,10 +4106,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
             where datapoint.attributes["destination_service_type"] == "Service"
@@ -4317,10 +4121,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "Deployment"
@@ -4328,10 +4128,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             where datapoint.attributes["destination_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "Job"
-          - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "CronJob"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
@@ -4678,14 +4474,6 @@ Node collector config should match snapshot when fargate is enabled:
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
         solarwindsentity/istio-workload-workload:
           destination_prefix: dest.
@@ -4706,16 +4494,6 @@ Node collector config should match snapshot when fargate is enabled:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.daemonset.name
-            - entity: KubernetesJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.job.name
-            - entity: KubernetesCronJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.cronjob.name
             events:
               relationships:
               - attributes: null
@@ -4754,36 +4532,8 @@ Node collector config should match snapshot when fargate is enabled:
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        debug:
-          sampling_initial: 5
-          sampling_thereafter: 200
-          verbosity: detailed
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
@@ -5036,14 +4786,10 @@ Node collector config should match snapshot when fargate is enabled:
           - source.k8s.deployment.name
           - source.k8s.statefulset.name
           - source.k8s.daemonset.name
-          - source.k8s.job.name
-          - source.k8s.cronjob.name
           - source.k8s.namespace.name
           - dest.k8s.deployment.name
           - dest.k8s.statefulset.name
           - dest.k8s.daemonset.name
-          - dest.k8s.job.name
-          - dest.k8s.cronjob.name
           - dest.k8s.namespace.name
           - dest.k8s.service.name
         groupbyattrs/node:
@@ -5732,9 +5478,6 @@ Node collector config should match snapshot when fargate is enabled:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: source_workload
             namespace_attr: source_workload_namespace
             workload_type_attr: source_workload_type
@@ -5742,9 +5485,6 @@ Node collector config should match snapshot when fargate is enabled:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: destination_workload
             namespace_attr: destination_workload_namespace
             workload_type_attr: destination_workload_type
@@ -5774,10 +5514,6 @@ Node collector config should match snapshot when fargate is enabled:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
             where datapoint.attributes["destination_service_type"] == "Service"
@@ -5793,10 +5529,6 @@ Node collector config should match snapshot when fargate is enabled:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "Deployment"
@@ -5804,10 +5536,6 @@ Node collector config should match snapshot when fargate is enabled:
             where datapoint.attributes["destination_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "Job"
-          - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "CronJob"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
@@ -6135,14 +5863,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
         solarwindsentity/istio-workload-workload:
           destination_prefix: dest.
@@ -6163,16 +5883,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.daemonset.name
-            - entity: KubernetesJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.job.name
-            - entity: KubernetesCronJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.cronjob.name
             events:
               relationships:
               - attributes: null
@@ -6211,36 +5921,8 @@ Node collector config should match snapshot when fargate is enabled and autodisc
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        debug:
-          sampling_initial: 5
-          sampling_thereafter: 200
-          verbosity: detailed
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
@@ -6488,14 +6170,10 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - source.k8s.deployment.name
           - source.k8s.statefulset.name
           - source.k8s.daemonset.name
-          - source.k8s.job.name
-          - source.k8s.cronjob.name
           - source.k8s.namespace.name
           - dest.k8s.deployment.name
           - dest.k8s.statefulset.name
           - dest.k8s.daemonset.name
-          - dest.k8s.job.name
-          - dest.k8s.cronjob.name
           - dest.k8s.namespace.name
           - dest.k8s.service.name
         groupbyattrs/node:
@@ -7184,9 +6862,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: source_workload
             namespace_attr: source_workload_namespace
             workload_type_attr: source_workload_type
@@ -7194,9 +6869,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: destination_workload
             namespace_attr: destination_workload_namespace
             workload_type_attr: destination_workload_type
@@ -7226,10 +6898,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
             where datapoint.attributes["destination_service_type"] == "Service"
@@ -7245,10 +6913,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "Deployment"
@@ -7256,10 +6920,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             where datapoint.attributes["destination_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "Job"
-          - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "CronJob"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
@@ -7533,14 +7193,6 @@ Node collector config should match snapshot when using default values:
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesService
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
         solarwindsentity/istio-workload-workload:
           destination_prefix: dest.
@@ -7561,16 +7213,6 @@ Node collector config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.daemonset.name
-            - entity: KubernetesJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.job.name
-            - entity: KubernetesCronJob
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.cronjob.name
             events:
               relationships:
               - attributes: null
@@ -7609,36 +7251,8 @@ Node collector config should match snapshot when using default values:
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDeployment
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesStatefulSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
-              - attributes: null
-                destination_entity: KubernetesDaemonSet
-                source_entity: KubernetesCronJob
-                type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        debug:
-          sampling_initial: 5
-          sampling_thereafter: 200
-          verbosity: detailed
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
@@ -7894,14 +7508,10 @@ Node collector config should match snapshot when using default values:
           - source.k8s.deployment.name
           - source.k8s.statefulset.name
           - source.k8s.daemonset.name
-          - source.k8s.job.name
-          - source.k8s.cronjob.name
           - source.k8s.namespace.name
           - dest.k8s.deployment.name
           - dest.k8s.statefulset.name
           - dest.k8s.daemonset.name
-          - dest.k8s.job.name
-          - dest.k8s.cronjob.name
           - dest.k8s.namespace.name
           - dest.k8s.service.name
         groupbyattrs/node:
@@ -8590,9 +8200,6 @@ Node collector config should match snapshot when using default values:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: source_workload
             namespace_attr: source_workload_namespace
             workload_type_attr: source_workload_type
@@ -8600,9 +8207,6 @@ Node collector config should match snapshot when using default values:
             - deployments
             - daemonsets
             - statefulsets
-            - jobs
-            - cronjobs
-            - pods
             name_attr: destination_workload
             namespace_attr: destination_workload_namespace
             workload_type_attr: destination_workload_type
@@ -8632,10 +8236,6 @@ Node collector config should match snapshot when using default values:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
             where datapoint.attributes["destination_service_type"] == "Service"
@@ -8651,10 +8251,6 @@ Node collector config should match snapshot when using default values:
             where datapoint.attributes["source_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "Job"
-          - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"])
-            where datapoint.attributes["source_workload_type"] == "CronJob"
           - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
           - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "Deployment"
@@ -8662,10 +8258,6 @@ Node collector config should match snapshot when using default values:
             where datapoint.attributes["destination_workload_type"] == "StatefulSet"
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-          - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "Job"
-          - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"])
-            where datapoint.attributes["destination_workload_type"] == "CronJob"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:

@@ -149,9 +149,6 @@ swok8sworkloadtype/istio:
         - deployments
         - daemonsets
         - statefulsets
-        - jobs
-        - cronjobs
-        - pods
     - name_attr: destination_workload
       namespace_attr: destination_workload_namespace
       workload_type_attr: destination_workload_type
@@ -159,9 +156,6 @@ swok8sworkloadtype/istio:
         - deployments
         - daemonsets
         - statefulsets
-        - jobs
-        - cronjobs
-        - pods
     - name_attr: destination_service_name
       namespace_attr: destination_service_namespace
       workload_type_attr: destination_service_type
@@ -174,14 +168,10 @@ groupbyattrs/istio-relationships:
     - source.k8s.deployment.name
     - source.k8s.statefulset.name
     - source.k8s.daemonset.name
-    - source.k8s.job.name
-    - source.k8s.cronjob.name
     - source.k8s.namespace.name
     - dest.k8s.deployment.name
     - dest.k8s.statefulset.name
     - dest.k8s.daemonset.name
-    - dest.k8s.job.name
-    - dest.k8s.cronjob.name
     - dest.k8s.namespace.name
     - dest.k8s.service.name
 
@@ -207,14 +197,10 @@ transform/istio-workload-workload:
     - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
     - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
     - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
-    - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Job"
-    - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "CronJob"
     - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
     - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "Deployment"
     - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "StatefulSet"
     - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-    - set(datapoint.attributes["dest.k8s.job.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "Job"
-    - set(datapoint.attributes["dest.k8s.cronjob.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "CronJob"
     - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
 
 transform/istio-workload-service:
@@ -223,8 +209,6 @@ transform/istio-workload-service:
     - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
     - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
     - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
-    - set(datapoint.attributes["source.k8s.job.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Job"
-    - set(datapoint.attributes["source.k8s.cronjob.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "CronJob"
     - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
     - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"]) where datapoint.attributes["destination_service_type"] == "Service"
     - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
@@ -271,16 +255,6 @@ solarwindsentity/istio-workload-workload:
           - sw.k8s.cluster.uid
           - k8s.namespace.name
           - k8s.daemonset.name
-      - entity: KubernetesJob
-        id:
-          - sw.k8s.cluster.uid
-          - k8s.namespace.name
-          - k8s.job.name
-      - entity: KubernetesCronJob
-        id:
-          - sw.k8s.cluster.uid
-          - k8s.namespace.name
-          - k8s.cronjob.name
 
     events:
       relationships:
@@ -321,32 +295,6 @@ solarwindsentity/istio-workload-workload:
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
-          destination_entity: KubernetesDaemonSet
-          attributes:
-        # source KubernetesJob
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesJob
-          destination_entity: KubernetesDeployment
-          attributes:
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesJob
-          destination_entity: KubernetesStatefulSet
-          attributes:
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesJob
-          destination_entity: KubernetesDaemonSet
-          attributes:
-        # source KubernetesCronJob
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesCronJob
-          destination_entity: KubernetesDeployment
-          attributes:
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesCronJob
-          destination_entity: KubernetesStatefulSet
-          attributes:
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesCronJob
           destination_entity: KubernetesDaemonSet
           attributes:
 
@@ -401,16 +349,6 @@ solarwindsentity/istio-workload-service:
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
-          destination_entity: KubernetesService
-          attributes:
-        # source KubernetesJob
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesJob
-          destination_entity: KubernetesService
-          attributes:
-        # source KubernetesCronJob
-        - type: KubernetesCommunicatesWith
-          source_entity: KubernetesCronJob
           destination_entity: KubernetesService
           attributes:
 {{- end }}
