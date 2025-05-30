@@ -580,6 +580,7 @@ receivers:
                 metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"] : "/metrics"`'
                 honor_timestamps: false
                 honor_labels: true
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
@@ -607,6 +608,7 @@ receivers:
                   insecure_skip_verify: true
                 follow_redirects: true
                 enable_http2: true
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:`"prometheus.io/port" in annotations ? annotations["prometheus.io/port"] : 9090`'
@@ -626,6 +628,7 @@ receivers:
                 metrics_path: {{ $rule.metrics_path | default "/metrics" | quote }}
                 honor_timestamps: false
                 honor_labels: true
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                     - '`endpoint`:{{ $rule.endpoint_port | default "9090" }}'
@@ -656,6 +659,7 @@ receivers:
                 follow_redirects: true
                 enable_http2: true
                 {{- end }}
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:{{ .Values.otel.metrics.control_plane.controller_manager.port }}'
@@ -683,6 +687,7 @@ receivers:
                 follow_redirects: true
                 enable_http2: true
                 {{- end }}
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:{{ .Values.otel.metrics.control_plane.etcd.port }}'
@@ -710,6 +715,7 @@ receivers:
                   ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                   insecure_skip_verify: true
                 bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:`kubelet_endpoint_port`'
@@ -724,6 +730,7 @@ receivers:
                   ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                   insecure_skip_verify: true
                 bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+{{ include "common.prometheus.relabelconfigs" . | indent 16 }}
                 static_configs:
                   - targets:
                       - '`endpoint`:`kubelet_endpoint_port`'

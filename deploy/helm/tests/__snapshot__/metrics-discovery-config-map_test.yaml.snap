@@ -106,6 +106,15 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: http
@@ -128,6 +137,15 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: https
