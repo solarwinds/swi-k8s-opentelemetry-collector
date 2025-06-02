@@ -18,5 +18,5 @@ Read the Jira issue ${input:jira} description and if needed related Jira issues,
     - #file deploy/helm/values.schema.json
 
 # Definition of Done
-- Helm unit tests are passing.
+- Helm unit tests are passing. Run tests with `helm unittest -u deploy/helm`.
 
