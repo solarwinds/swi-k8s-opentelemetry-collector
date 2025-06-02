@@ -70,7 +70,7 @@ The SWO K8s Collector consists of five main components, each with specific pipel
     - Location of component configuration can be infered from the `gomod` line
     - For example if you find `  - gomod: github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector v0.123.7` you will look for configuration settings into `https://github.com/solarwinds/solarwinds-otel-collector-contrib/tree/main/connector/solarwindsentityconnector`. 
     - You look first into README.md, if that does not contain configuration sample or example you have to look at the code of the component. 
-- Generally the component is referenced in the configuration typically without receiver/exporter/processor/connector suffux (e.g. in configuration use `solarwindsentity` key instead of `solarwindsentityconnector`)
+- Generally the component is referenced in the configuration typically without receiver/exporter/processor/connector suffix (e.g. in configuration use `solarwindsentity` key instead of `solarwindsentityconnector`)
 
 # Coding conventions 
 1. Maintain backward compatibility when updating chart configurations.  
