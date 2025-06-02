@@ -225,8 +225,8 @@ batch/stateevents:
 
 
 {{- define "common-discovery-config.connectors" -}}
-forward/relationship-state-events-workload-workload:
-forward/relationship-state-events-workload-service:
+forward/relationship-state-events-workload-workload: {}
+forward/relationship-state-events-workload-service: {}
 routing/discovered_metrics:
   default_pipelines: [metrics/discovery-custom]
   table:
