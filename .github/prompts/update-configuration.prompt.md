@@ -3,9 +3,6 @@ mode: 'agent'
 description: 'Update Helm chart configuration'
 ---
 
-# Task
-Read the Jira issue ${input:jira} description and if needed related Jira issues, comments or confluence documents.
-
 # Context
 - Relevant files: 
     - #file deploy/helm/events-collector-config.yaml
