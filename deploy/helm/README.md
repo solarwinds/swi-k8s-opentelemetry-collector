@@ -275,7 +275,7 @@ SWO K8s Collector can discover Prometheus Operator CRDs (`ServiceMonitors`, `Pod
 
 Internally, it leverages the [TargetAllocator](https://opentelemetry.io/docs/platforms/kubernetes/operator/target-allocator/) feature of the OpenTelemetry Operator.
 
-Keep in mind that there can be duplicate scrapes of the same targets if the [Annotation based discovery](#annotation-based-discovery)is enabled (which is the default). To avoid duplicate scrapes, it is recommended to disable the default discovery and also set the `sw.ignore=true` label on all CRDs that are already monitored by default by the SWO K8s Collector (kubelet metrics, kube-state-metrics, apiserver).
+Keep in mind that there can be duplicate scrapes of the same targets if the [Annotation based discovery](#annotation-based-discovery) is enabled (which is the default). To avoid duplicate scrapes, it is recommended to disable the default discovery and also set the `sw.ignore=true` label on all CRDs that are already monitored by default by the SWO K8s Collector (kubelet metrics, kube-state-metrics, apiserver).
 
 Configuration:
 

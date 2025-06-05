@@ -2,8 +2,126 @@ Custom logs filter with new syntax:
   1: |
     logs.config: |
       connectors:
-        forward/logs-exporter: null
-        forward/metric-exporter: null
+        forward/logs-exporter: {}
+        forward/metric-exporter: {}
+        forward/relationship-state-events-workload-service: {}
+        forward/relationship-state-events-workload-workload: {}
+        routing/discovered_metrics:
+          default_pipelines:
+          - metrics/discovery-custom
+          table:
+          - condition: |
+              IsMatch(name, "k8s.istio_")
+            context: metric
+            pipelines:
+            - metrics/discovery-istio
+        solarwindsentity/istio-workload-service:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+        solarwindsentity/istio-workload-workload:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -68,6 +186,10 @@ Custom logs filter with new syntax:
         batch/metrics:
           send_batch_max_size: 512
           send_batch_size: 512
+          timeout: 1s
+        batch/stateevents:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
           timeout: 1s
         cumulativetodelta/cadvisor:
           include:
@@ -160,6 +282,24 @@ Custom logs filter with new syntax:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/keep-workload-service-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
+        filter/keep-workload-workload-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
         filter/logs:
           logs:
             log_record:
@@ -236,6 +376,18 @@ Custom logs filter with new syntax:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/istio-relationships:
+          keys:
+          - sw.k8s.cluster.uid
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.namespace.name
+          - dest.k8s.service.name
         groupbyattrs/node:
           keys:
           - k8s.node.name
@@ -916,6 +1068,27 @@ Custom logs filter with new syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        swok8sworkloadtype/istio:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: source_workload
+            namespace_attr: source_workload_namespace
+            workload_type_attr: source_workload_type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: destination_workload
+            namespace_attr: destination_workload_namespace
+            workload_type_attr: destination_workload_type
+          - expected_types:
+            - services
+            name_attr: destination_service_name
+            namespace_attr: destination_service_namespace
+            workload_type_attr: destination_service_type
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -926,6 +1099,47 @@ Custom logs filter with new syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+        transform/istio-workload-service:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_service_name", "destination_service_namespace", "source_workload_type",
+            "destination_service_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
+        transform/istio-workload-workload:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_workload", "destination_workload_namespace", "source_workload_type",
+            "destination_workload_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Deployment"
+          - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/only-relationship-resource-attributes:
+          metric_statements:
+          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
+            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
+            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
+            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
+            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
         transform/scope:
           log_statements:
           - statements:
@@ -990,6 +1204,15 @@ Custom logs filter with new syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-controller-manager
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -1007,6 +1230,15 @@ Custom logs filter with new syntax:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: http
@@ -1029,6 +1261,15 @@ Custom logs filter with new syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: https
@@ -1049,6 +1290,15 @@ Custom logs filter with new syntax:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: http
                     scrape_interval: 60s
@@ -1068,6 +1318,15 @@ Custom logs filter with new syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes-cadvisor
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics/cadvisor
                     scheme: https
                     scrape_interval: 60s
@@ -1082,6 +1341,15 @@ Custom logs filter with new syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -1131,6 +1399,16 @@ Custom logs filter with new syntax:
             - resource/journal
             receivers:
             - journald
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch/stateevents
+            receivers:
+            - solarwindsentity/istio-workload-workload
+            - solarwindsentity/istio-workload-service
           metrics:
             exporters:
             - otlp
@@ -1143,12 +1421,23 @@ Custom logs filter with new syntax:
             - batch/metrics
             receivers:
             - forward/metric-exporter
-          metrics/discovery:
+          metrics/discovery-custom:
             exporters:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-istio:
+            exporters:
+            - forward/metric-exporter
+            - forward/relationship-state-events-workload-workload
+            - forward/relationship-state-events-workload-service
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/istio
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
@@ -1156,6 +1445,14 @@ Custom logs filter with new syntax:
             - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-scrape:
+            exporters:
+            - routing/discovered_metrics
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -1181,6 +1478,28 @@ Custom logs filter with new syntax:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/keep-workload-service-relationships
+            - transform/istio-workload-service
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/keep-workload-workload-relationships
+            - transform/istio-workload-workload
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-workload
         telemetry:
           logs:
             level: info
@@ -1195,8 +1514,126 @@ Custom logs filter with old syntax:
   1: |
     logs.config: |
       connectors:
-        forward/logs-exporter: null
-        forward/metric-exporter: null
+        forward/logs-exporter: {}
+        forward/metric-exporter: {}
+        forward/relationship-state-events-workload-service: {}
+        forward/relationship-state-events-workload-workload: {}
+        routing/discovered_metrics:
+          default_pipelines:
+          - metrics/discovery-custom
+          table:
+          - condition: |
+              IsMatch(name, "k8s.istio_")
+            context: metric
+            pipelines:
+            - metrics/discovery-istio
+        solarwindsentity/istio-workload-service:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+        solarwindsentity/istio-workload-workload:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -1261,6 +1698,10 @@ Custom logs filter with old syntax:
         batch/metrics:
           send_batch_max_size: 512
           send_batch_size: 512
+          timeout: 1s
+        batch/stateevents:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
           timeout: 1s
         cumulativetodelta/cadvisor:
           include:
@@ -1353,6 +1794,24 @@ Custom logs filter with old syntax:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/keep-workload-service-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
+        filter/keep-workload-workload-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
         filter/logs:
           logs:
             include:
@@ -1432,6 +1891,18 @@ Custom logs filter with old syntax:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/istio-relationships:
+          keys:
+          - sw.k8s.cluster.uid
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.namespace.name
+          - dest.k8s.service.name
         groupbyattrs/node:
           keys:
           - k8s.node.name
@@ -2112,6 +2583,27 @@ Custom logs filter with old syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        swok8sworkloadtype/istio:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: source_workload
+            namespace_attr: source_workload_namespace
+            workload_type_attr: source_workload_type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: destination_workload
+            namespace_attr: destination_workload_namespace
+            workload_type_attr: destination_workload_type
+          - expected_types:
+            - services
+            name_attr: destination_service_name
+            namespace_attr: destination_service_namespace
+            workload_type_attr: destination_service_type
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -2122,6 +2614,47 @@ Custom logs filter with old syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+        transform/istio-workload-service:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_service_name", "destination_service_namespace", "source_workload_type",
+            "destination_service_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
+        transform/istio-workload-workload:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_workload", "destination_workload_namespace", "source_workload_type",
+            "destination_workload_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Deployment"
+          - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/only-relationship-resource-attributes:
+          metric_statements:
+          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
+            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
+            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
+            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
+            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
         transform/scope:
           log_statements:
           - statements:
@@ -2267,6 +2800,15 @@ Custom logs filter with old syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-controller-manager
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -2284,6 +2826,15 @@ Custom logs filter with old syntax:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: http
@@ -2306,6 +2857,15 @@ Custom logs filter with old syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: https
@@ -2326,6 +2886,15 @@ Custom logs filter with old syntax:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: http
                     scrape_interval: 60s
@@ -2345,6 +2914,15 @@ Custom logs filter with old syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes-cadvisor
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics/cadvisor
                     scheme: https
                     scrape_interval: 60s
@@ -2359,6 +2937,15 @@ Custom logs filter with old syntax:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -2408,6 +2995,16 @@ Custom logs filter with old syntax:
             - resource/journal
             receivers:
             - journald
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch/stateevents
+            receivers:
+            - solarwindsentity/istio-workload-workload
+            - solarwindsentity/istio-workload-service
           metrics:
             exporters:
             - otlp
@@ -2420,12 +3017,23 @@ Custom logs filter with old syntax:
             - batch/metrics
             receivers:
             - forward/metric-exporter
-          metrics/discovery:
+          metrics/discovery-custom:
             exporters:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-istio:
+            exporters:
+            - forward/metric-exporter
+            - forward/relationship-state-events-workload-workload
+            - forward/relationship-state-events-workload-service
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/istio
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
@@ -2433,6 +3041,14 @@ Custom logs filter with old syntax:
             - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-scrape:
+            exporters:
+            - routing/discovered_metrics
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -2458,6 +3074,28 @@ Custom logs filter with old syntax:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/keep-workload-service-relationships
+            - transform/istio-workload-service
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/keep-workload-workload-relationships
+            - transform/istio-workload-workload
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-workload
         telemetry:
           logs:
             level: info
@@ -2472,8 +3110,126 @@ Node collector config should match snapshot when autodiscovery is disabled:
   1: |
     logs.config: |
       connectors:
-        forward/logs-exporter: null
-        forward/metric-exporter: null
+        forward/logs-exporter: {}
+        forward/metric-exporter: {}
+        forward/relationship-state-events-workload-service: {}
+        forward/relationship-state-events-workload-workload: {}
+        routing/discovered_metrics:
+          default_pipelines:
+          - metrics/discovery-custom
+          table:
+          - condition: |
+              IsMatch(name, "k8s.istio_")
+            context: metric
+            pipelines:
+            - metrics/discovery-istio
+        solarwindsentity/istio-workload-service:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+        solarwindsentity/istio-workload-workload:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -2538,6 +3294,10 @@ Node collector config should match snapshot when autodiscovery is disabled:
         batch/metrics:
           send_batch_max_size: 512
           send_batch_size: 512
+          timeout: 1s
+        batch/stateevents:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
           timeout: 1s
         cumulativetodelta/cadvisor:
           include:
@@ -2630,6 +3390,24 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/keep-workload-service-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
+        filter/keep-workload-workload-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -2702,6 +3480,18 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/istio-relationships:
+          keys:
+          - sw.k8s.cluster.uid
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.namespace.name
+          - dest.k8s.service.name
         groupbyattrs/node:
           keys:
           - k8s.node.name
@@ -3382,6 +4172,27 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        swok8sworkloadtype/istio:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: source_workload
+            namespace_attr: source_workload_namespace
+            workload_type_attr: source_workload_type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: destination_workload
+            namespace_attr: destination_workload_namespace
+            workload_type_attr: destination_workload_type
+          - expected_types:
+            - services
+            name_attr: destination_service_name
+            namespace_attr: destination_service_namespace
+            workload_type_attr: destination_service_type
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -3392,6 +4203,47 @@ Node collector config should match snapshot when autodiscovery is disabled:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+        transform/istio-workload-service:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_service_name", "destination_service_namespace", "source_workload_type",
+            "destination_service_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
+        transform/istio-workload-workload:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_workload", "destination_workload_namespace", "source_workload_type",
+            "destination_workload_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Deployment"
+          - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/only-relationship-resource-attributes:
+          metric_statements:
+          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
+            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
+            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
+            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
+            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
         transform/scope:
           log_statements:
           - statements:
@@ -3456,6 +4308,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-controller-manager
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -3473,6 +4334,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: http
                     scrape_interval: 60s
@@ -3492,6 +4362,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes-cadvisor
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics/cadvisor
                     scheme: https
                     scrape_interval: 60s
@@ -3506,6 +4385,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -3554,6 +4442,16 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/journal
             receivers:
             - journald
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch/stateevents
+            receivers:
+            - solarwindsentity/istio-workload-workload
+            - solarwindsentity/istio-workload-service
           metrics:
             exporters:
             - otlp
@@ -3566,12 +4464,23 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - batch/metrics
             receivers:
             - forward/metric-exporter
-          metrics/discovery:
+          metrics/discovery-custom:
             exporters:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-istio:
+            exporters:
+            - forward/metric-exporter
+            - forward/relationship-state-events-workload-workload
+            - forward/relationship-state-events-workload-service
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/istio
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
@@ -3579,6 +4488,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-scrape:
+            exporters:
+            - routing/discovered_metrics
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -3604,6 +4521,28 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/keep-workload-service-relationships
+            - transform/istio-workload-service
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/keep-workload-workload-relationships
+            - transform/istio-workload-workload
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-workload
         telemetry:
           logs:
             level: info
@@ -3618,8 +4557,126 @@ Node collector config should match snapshot when fargate is enabled:
   1: |
     logs.config: |
       connectors:
-        forward/logs-exporter: null
-        forward/metric-exporter: null
+        forward/logs-exporter: {}
+        forward/metric-exporter: {}
+        forward/relationship-state-events-workload-service: {}
+        forward/relationship-state-events-workload-workload: {}
+        routing/discovered_metrics:
+          default_pipelines:
+          - metrics/discovery-custom
+          table:
+          - condition: |
+              IsMatch(name, "k8s.istio_")
+            context: metric
+            pipelines:
+            - metrics/discovery-istio
+        solarwindsentity/istio-workload-service:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+        solarwindsentity/istio-workload-workload:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -3682,6 +4739,10 @@ Node collector config should match snapshot when fargate is enabled:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        batch/stateevents:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
+          timeout: 1s
         cumulativetodelta/cadvisor:
           include:
             match_type: strict
@@ -3773,6 +4834,24 @@ Node collector config should match snapshot when fargate is enabled:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/keep-workload-service-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
+        filter/keep-workload-workload-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -3845,6 +4924,18 @@ Node collector config should match snapshot when fargate is enabled:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/istio-relationships:
+          keys:
+          - sw.k8s.cluster.uid
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.namespace.name
+          - dest.k8s.service.name
         groupbyattrs/node:
           keys:
           - k8s.node.name
@@ -4525,6 +5616,27 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        swok8sworkloadtype/istio:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: source_workload
+            namespace_attr: source_workload_namespace
+            workload_type_attr: source_workload_type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: destination_workload
+            namespace_attr: destination_workload_namespace
+            workload_type_attr: destination_workload_type
+          - expected_types:
+            - services
+            name_attr: destination_service_name
+            namespace_attr: destination_service_namespace
+            workload_type_attr: destination_service_type
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -4535,6 +5647,47 @@ Node collector config should match snapshot when fargate is enabled:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+        transform/istio-workload-service:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_service_name", "destination_service_namespace", "source_workload_type",
+            "destination_service_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
+        transform/istio-workload-workload:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_workload", "destination_workload_namespace", "source_workload_type",
+            "destination_workload_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Deployment"
+          - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/only-relationship-resource-attributes:
+          metric_statements:
+          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
+            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
+            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
+            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
+            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
         transform/scope:
           log_statements:
           - statements:
@@ -4599,6 +5752,15 @@ Node collector config should match snapshot when fargate is enabled:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-controller-manager
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -4616,6 +5778,15 @@ Node collector config should match snapshot when fargate is enabled:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: http
@@ -4638,6 +5809,15 @@ Node collector config should match snapshot when fargate is enabled:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: https
@@ -4658,6 +5838,15 @@ Node collector config should match snapshot when fargate is enabled:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: http
                     scrape_interval: 60s
@@ -4702,6 +5891,16 @@ Node collector config should match snapshot when fargate is enabled:
             - resource/journal
             receivers:
             - journald
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch/stateevents
+            receivers:
+            - solarwindsentity/istio-workload-workload
+            - solarwindsentity/istio-workload-service
           metrics:
             exporters:
             - otlp
@@ -4714,12 +5913,23 @@ Node collector config should match snapshot when fargate is enabled:
             - batch/metrics
             receivers:
             - forward/metric-exporter
-          metrics/discovery:
+          metrics/discovery-custom:
             exporters:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-istio:
+            exporters:
+            - forward/metric-exporter
+            - forward/relationship-state-events-workload-workload
+            - forward/relationship-state-events-workload-service
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/istio
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
@@ -4728,7 +5938,37 @@ Node collector config should match snapshot when fargate is enabled:
             - groupbyattrs/common-all
             - resource/all
             receivers:
+            - routing/discovered_metrics
+          metrics/discovery-scrape:
+            exporters:
+            - routing/discovered_metrics
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
+            receivers:
             - receiver_creator/discovery
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/keep-workload-service-relationships
+            - transform/istio-workload-service
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/keep-workload-workload-relationships
+            - transform/istio-workload-workload
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-workload
         telemetry:
           logs:
             level: info
@@ -4743,7 +5983,125 @@ Node collector config should match snapshot when fargate is enabled and autodisc
   1: |
     logs.config: |
       connectors:
-        forward/logs-exporter: null
+        forward/logs-exporter: {}
+        forward/relationship-state-events-workload-service: {}
+        forward/relationship-state-events-workload-workload: {}
+        routing/discovered_metrics:
+          default_pipelines:
+          - metrics/discovery-custom
+          table:
+          - condition: |
+              IsMatch(name, "k8s.istio_")
+            context: metric
+            pipelines:
+            - metrics/discovery-istio
+        solarwindsentity/istio-workload-service:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+        solarwindsentity/istio-workload-workload:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -4801,6 +6159,10 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        batch/stateevents:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
+          timeout: 1s
         cumulativetodelta/cadvisor:
           include:
             match_type: strict
@@ -4892,6 +6254,24 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/keep-workload-service-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
+        filter/keep-workload-workload-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -4964,6 +6344,18 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/istio-relationships:
+          keys:
+          - sw.k8s.cluster.uid
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.namespace.name
+          - dest.k8s.service.name
         groupbyattrs/node:
           keys:
           - k8s.node.name
@@ -5644,6 +7036,27 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        swok8sworkloadtype/istio:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: source_workload
+            namespace_attr: source_workload_namespace
+            workload_type_attr: source_workload_type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: destination_workload
+            namespace_attr: destination_workload_namespace
+            workload_type_attr: destination_workload_type
+          - expected_types:
+            - services
+            name_attr: destination_service_name
+            namespace_attr: destination_service_namespace
+            workload_type_attr: destination_service_type
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -5654,6 +7067,47 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+        transform/istio-workload-service:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_service_name", "destination_service_namespace", "source_workload_type",
+            "destination_service_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
+        transform/istio-workload-workload:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_workload", "destination_workload_namespace", "source_workload_type",
+            "destination_workload_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Deployment"
+          - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/only-relationship-resource-attributes:
+          metric_statements:
+          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
+            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
+            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
+            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
+            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
         transform/scope:
           log_statements:
           - statements:
@@ -5718,6 +7172,15 @@ Node collector config should match snapshot when fargate is enabled and autodisc
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-controller-manager
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -5735,6 +7198,15 @@ Node collector config should match snapshot when fargate is enabled and autodisc
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: http
                     scrape_interval: 60s
@@ -5778,12 +7250,33 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - resource/journal
             receivers:
             - journald
-          metrics/discovery:
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch/stateevents
+            receivers:
+            - solarwindsentity/istio-workload-workload
+            - solarwindsentity/istio-workload-service
+          metrics/discovery-custom:
             exporters:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-istio:
+            exporters:
+            - forward/metric-exporter
+            - forward/relationship-state-events-workload-workload
+            - forward/relationship-state-events-workload-service
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/istio
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
@@ -5792,7 +7285,37 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - groupbyattrs/common-all
             - resource/all
             receivers:
+            - routing/discovered_metrics
+          metrics/discovery-scrape:
+            exporters:
+            - routing/discovered_metrics
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
+            receivers:
             - receiver_creator/discovery
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/keep-workload-service-relationships
+            - transform/istio-workload-service
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/keep-workload-workload-relationships
+            - transform/istio-workload-workload
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-workload
         telemetry:
           logs:
             level: info
@@ -5807,8 +7330,126 @@ Node collector config should match snapshot when using default values:
   1: |
     logs.config: |
       connectors:
-        forward/logs-exporter: null
-        forward/metric-exporter: null
+        forward/logs-exporter: {}
+        forward/metric-exporter: {}
+        forward/relationship-state-events-workload-service: {}
+        forward/relationship-state-events-workload-workload: {}
+        routing/discovered_metrics:
+          default_pipelines:
+          - metrics/discovery-custom
+          table:
+          - condition: |
+              IsMatch(name, "k8s.istio_")
+            context: metric
+            pipelines:
+            - metrics/discovery-istio
+        solarwindsentity/istio-workload-service:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+        solarwindsentity/istio-workload-workload:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            events:
+              relationships:
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - attributes: null
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -5874,6 +7515,10 @@ Node collector config should match snapshot when using default values:
           send_batch_max_size: 512
           send_batch_size: 512
           timeout: 1s
+        batch/stateevents:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
+          timeout: 1s
         cumulativetodelta/cadvisor:
           include:
             match_type: strict
@@ -5965,6 +7610,24 @@ Node collector config should match snapshot when using default values:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
               or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/keep-workload-service-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
+        filter/keep-workload-workload-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == ""
+            metric:
+            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -6037,6 +7700,18 @@ Node collector config should match snapshot when using default values:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/istio-relationships:
+          keys:
+          - sw.k8s.cluster.uid
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.namespace.name
+          - dest.k8s.service.name
         groupbyattrs/node:
           keys:
           - k8s.node.name
@@ -6717,6 +8392,27 @@ Node collector config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        swok8sworkloadtype/istio:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: source_workload
+            namespace_attr: source_workload_namespace
+            workload_type_attr: source_workload_type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            name_attr: destination_workload
+            namespace_attr: destination_workload_namespace
+            workload_type_attr: destination_workload_type
+          - expected_types:
+            - services
+            name_attr: destination_service_name
+            namespace_attr: destination_service_namespace
+            workload_type_attr: destination_service_type
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -6727,6 +8423,47 @@ Node collector config should match snapshot when using default values:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+        transform/istio-workload-service:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_service_name", "destination_service_namespace", "source_workload_type",
+            "destination_service_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
+        transform/istio-workload-workload:
+          metric_statements:
+          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
+            "destination_workload", "destination_workload_namespace", "source_workload_type",
+            "destination_workload_type"])
+          - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "Deployment"
+          - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"])
+            where datapoint.attributes["source_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "Deployment"
+          - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "StatefulSet"
+          - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
+            where datapoint.attributes["destination_workload_type"] == "DaemonSet"
+          - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/only-relationship-resource-attributes:
+          metric_statements:
+          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
+            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
+            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
+            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
+            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
         transform/scope:
           log_statements:
           - statements:
@@ -6791,6 +8528,15 @@ Node collector config should match snapshot when using default values:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-controller-manager
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -6808,6 +8554,15 @@ Node collector config should match snapshot when using default values:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: http
@@ -6830,6 +8585,15 @@ Node collector config should match snapshot when using default values:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: pod
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: '`"prometheus.io/path" in annotations ? annotations["prometheus.io/path"]
                       : "/metrics"`'
                     scheme: https
@@ -6850,6 +8614,15 @@ Node collector config should match snapshot when using default values:
                   - honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-etcd
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: http
                     scrape_interval: 60s
@@ -6869,6 +8642,15 @@ Node collector config should match snapshot when using default values:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes-cadvisor
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics/cadvisor
                     scheme: https
                     scrape_interval: 60s
@@ -6883,6 +8665,15 @@ Node collector config should match snapshot when using default values:
                     honor_labels: true
                     honor_timestamps: false
                     job_name: kubernetes-nodes
+                    metric_relabel_configs:
+                    - action: replace
+                      regex: (.+)
+                      replacement: $1
+                      source_labels:
+                      - service_name
+                      target_label: job
+                    - action: labeldrop
+                      regex: ^service_name$
                     metrics_path: /metrics
                     scheme: https
                     scrape_interval: 60s
@@ -6931,6 +8722,16 @@ Node collector config should match snapshot when using default values:
             - resource/journal
             receivers:
             - journald
+          logs/stateevents:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - batch/stateevents
+            receivers:
+            - solarwindsentity/istio-workload-workload
+            - solarwindsentity/istio-workload-service
           metrics:
             exporters:
             - otlp
@@ -6943,12 +8744,23 @@ Node collector config should match snapshot when using default values:
             - batch/metrics
             receivers:
             - forward/metric-exporter
-          metrics/discovery:
+          metrics/discovery-custom:
             exporters:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - groupbyattrs/common-all
+            - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-istio:
+            exporters:
+            - forward/metric-exporter
+            - forward/relationship-state-events-workload-workload
+            - forward/relationship-state-events-workload-service
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/istio
             - transform/istio-metrics
             - metricstransform/istio-metrics
             - cumulativetodelta/istio-metrics
@@ -6956,6 +8768,14 @@ Node collector config should match snapshot when using default values:
             - metricsgeneration/istio-metrics
             - groupbyattrs/common-all
             - resource/all
+            receivers:
+            - routing/discovered_metrics
+          metrics/discovery-scrape:
+            exporters:
+            - routing/discovered_metrics
+            processors:
+            - memory_limiter
+            - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -6981,6 +8801,28 @@ Node collector config should match snapshot when using default values:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/keep-workload-service-relationships
+            - transform/istio-workload-service
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/keep-workload-workload-relationships
+            - transform/istio-workload-workload
+            - groupbyattrs/istio-relationships
+            - transform/only-relationship-resource-attributes
+            receivers:
+            - forward/relationship-state-events-workload-workload
         telemetry:
           logs:
             level: info

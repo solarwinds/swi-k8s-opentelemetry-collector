@@ -195,6 +195,7 @@ spec:
           scrape_configs:
             - job_name: 'otel-collector'
               scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+{{ include "common.prometheus.relabelconfigs" . | indent 14 }}
               static_configs:
               - targets: [ '0.0.0.0:8888' ]
     
@@ -204,6 +205,8 @@ spec:
 
     connectors:
       forward/metric-exporter: {}
+
+{{ include "common-discovery-config.connectors" . | indent 6 }}
 
     processors:
       memory_limiter:
@@ -253,132 +256,6 @@ spec:
       batch/metrics:
 {{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.batch | indent 8 }}
 
-{{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
-      filter/metrics-discovery:
-        metrics:
-{{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 10 }}
-{{- end }}
-
-      metricstransform/rename/discovery:
-        transforms:
-          # add `k8s.` prefix to all metrics
-          - include: ^(.*)$$
-            match_type: regexp
-            action: update
-            new_name: {{ .Values.otel.metrics.autodiscovery.prefix }}$${1}
-
-{{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
-  # in case the prefix differs from "k8s." we need to copy the required metrics
-  # so that SWO built-in dashboards works correctly
-{{- $arrayOfRequiredMetrics := list 
-  "etcd_disk_backend_commit_duration_seconds"
-  "etcd_disk_wal_fsync_duration_seconds" 
-  "etcd_network_client_grpc_received_bytes_total" 
-  "etcd_network_client_grpc_sent_bytes_total" 
-  "etcd_network_peer_received_bytes_total" 
-  "etcd_network_peer_sent_bytes_total" 
-  "etcd_server_leader_changes_seen_total" 
-  "etcd_server_proposals_applied_total" 
-  "etcd_server_proposals_committed_total"
-  "etcd_server_proposals_failed_total"
-  "etcd_server_proposals_pending"
-  "etcd_server_has_leader"
-  "etcd_mvcc_db_total_size_in_bytes"
-  "process_resident_memory_bytes"
-  "grpc_server_started_total"
-  "grpc_server_handled_total"
-  "rest_client_request_duration_seconds"
-  "rest_client_requests_total"
-  "workqueue_adds_total"
-  "workqueue_depth"
-  "workqueue_queue_duration_seconds"
-}}
-      metricstransform/copy-required-metrics:
-        transforms:
-        {{- $root := . }}
-        {{- range $index, $metric := $arrayOfRequiredMetrics }}
-          - include: {{ $root.Values.otel.metrics.autodiscovery.prefix }}{{ $metric }}
-            action: insert
-            new_name: k8s.{{ $metric }}
-        {{- end }}
-{{- end }}
-
-      transform/istio-metrics:
-        metric_statements:
-          - statements:
-              - extract_sum_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
-              - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
-              - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
-              - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
-
-      metricstransform/istio-metrics:
-        transforms:
-          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum
-            action: insert
-            new_name: k8s.istio_request_bytes.rate
-          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes_sum
-            action: insert
-            new_name: k8s.istio_response_bytes.rate
-          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_requests_total
-            action: insert
-            new_name: k8s.istio_requests.rate
-          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_sent_bytes_total
-            action: insert
-            new_name: k8s.istio_tcp_sent_bytes.rate
-          - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_received_bytes_total
-            action: insert
-            new_name: k8s.istio_tcp_received_bytes.rate
-          - include: k8s.istio_request_bytes.rate
-            action: insert
-            new_name: k8s.istio_request_bytes.delta
-          - include: k8s.istio_response_bytes.rate
-            action: insert
-            new_name: k8s.istio_response_bytes.delta
-          - include: k8s.istio_requests.rate
-            action: insert
-            new_name: k8s.istio_requests.delta
-          - include: k8s.istio_tcp_sent_bytes.rate
-            action: insert
-            new_name: k8s.istio_tcp_sent_bytes.delta
-          - include: k8s.istio_tcp_received_bytes.rate
-            action: insert
-            new_name: k8s.istio_tcp_received_bytes.delta
-
-      cumulativetodelta/istio-metrics:
-        include:
-          metrics:
-            - k8s.istio_request_bytes.rate
-            - k8s.istio_response_bytes.rate
-            - k8s.istio_request_duration_milliseconds_sum_temp
-            - k8s.istio_request_duration_milliseconds_count_temp
-            - k8s.istio_requests.rate
-            - k8s.istio_tcp_sent_bytes.rate
-            - k8s.istio_tcp_received_bytes.rate
-            - k8s.istio_request_bytes.delta
-            - k8s.istio_response_bytes.delta
-            - k8s.istio_requests.delta
-            - k8s.istio_tcp_sent_bytes.delta
-            - k8s.istio_tcp_received_bytes.delta
-          match_type: strict
-
-      deltatorate/istio-metrics:
-        metrics:
-          - k8s.istio_request_bytes.rate
-          - k8s.istio_response_bytes.rate
-          - k8s.istio_request_duration_milliseconds_sum_temp
-          - k8s.istio_request_duration_milliseconds_count_temp
-          - k8s.istio_requests.rate
-          - k8s.istio_tcp_sent_bytes.rate
-          - k8s.istio_tcp_received_bytes.rate
-
-      metricsgeneration/istio-metrics:
-        rules:
-          - name: k8s.istio_request_duration_milliseconds.rate
-            type: calculate
-            metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
-            operation: divide
-
       groupbyattrs/common-all:
         keys:
           - k8s.container.name
@@ -408,6 +285,8 @@ spec:
           - key: k8s.cluster.name
             value: ${CLUSTER_NAME}
             action: insert
+
+{{ include "common-discovery-config.processors" . | indent 6 }}
 
     exporters:
       otlp:
@@ -447,29 +326,8 @@ spec:
           receivers:
             - forward/metric-exporter
 
-        metrics/discovery:
-          exporters:
-            - forward/metric-exporter
-          processors:
-            - memory_limiter
-    {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
-            - filter/metrics-discovery
-    {{- end }}
-    {{- if .Values.otel.metrics.autodiscovery.prefix }}
-            - metricstransform/rename/discovery
-    {{- end }}
-    {{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
-            - metricstransform/copy-required-metrics
-    {{- end }}
-            - transform/istio-metrics
-            - metricstransform/istio-metrics
-            - cumulativetodelta/istio-metrics
-            - deltatorate/istio-metrics
-            - metricsgeneration/istio-metrics
-            - groupbyattrs/common-all
-            - resource/all
-          receivers:
-            - prometheus
+{{ include "common-discovery-config.pipelines" (tuple . "prometheus" "forward/metric-exporter") | indent 8 }}
+
       telemetry:
     {{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.enabled }}
         logs:

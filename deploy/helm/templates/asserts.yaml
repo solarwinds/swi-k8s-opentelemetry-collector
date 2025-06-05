@@ -21,3 +21,17 @@
 {{- if and (or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex))) (or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex))) -}}
 {{ fail "Only one namespace filter can be used at time, either include or exclude." }}
 {{- end -}}
+
+{{- if and .Values.operator.enabled .Values.operator.admissionWebhooks.certManager.enabled (not .Values.certmanager.enabled) -}}
+{{- $certManagerFound:=false -}}
+{{- range $index, $conf := (lookup "admissionregistration.k8s.io/v1" "MutatingWebhookConfiguration" "" "").items -}}
+{{- range $index, $webhook := $conf.webhooks -}}
+{{- if eq $webhook.name "webhook.cert-manager.io" -}}
+{{- $certManagerFound = true -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if not $certManagerFound -}}
+{{ fail "Deployment of the OpenTelemetry Operator is enabled but cert-manager was not detected in your cluster. The operator's admission webhooks require valid certificates to function properly. Please set `certmanager.enabled` to `true` or follow the operator's documentation (https://opentelemetry.io/docs/platforms/kubernetes/helm/operator/#configuration) to ensure proper certificate management." }}
+{{- end -}}
+{{- end -}}

@@ -736,6 +736,14 @@ otel:
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
     filter: {}
 
+    # In order to keep `lastSeen` timestamp in entities of SWO, the collector needs to send keepalive events
+    # Those events are lightweight, includes only keys identifying the entity
+    keepalive_events:
+      enabled: true
+
+      # How often the keepalive events are sent
+      pull_every: 20m
+
   # Check if SWI OTEL endpoint is reachable
   swi_endpoint_check:
     enabled: true
@@ -750,10 +758,10 @@ otel:
     resources:
       limits:
         cpu: 1000m
-        memory: 1024Mi
+        memory: 400Mi
       requests:
-        cpu: 100m
-        memory: 128Mi
+        cpu: 1000m
+        memory: 400Mi
 
     # Termination grace period for the gateway collector pod
     terminationGracePeriodSeconds: 30
@@ -855,7 +863,7 @@ autoupdate:
 
   image:
     repository: "alpine/k8s"
-    tag: "1.27.16"
+    tag: "1.30.12"
     pullPolicy: IfNotPresent
 
 # Set labels to every deployed resource
@@ -879,7 +887,7 @@ swoagent:
   enabled: false
   image:
     repository: solarwinds/swo-agent
-    tag: "v2.10.156"
+    tag: "v2.10.212"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -1096,7 +1104,7 @@ operator:
         tag: ""
       python:
         repository: "solarwinds/autoinstrumentation-python"
-        tag: "4.0.0"
+        tag: "4.1.0"
       dotnet:
         repository: ""
         tag: ""
@@ -1127,7 +1135,7 @@ waitJobs:
 
     image:
       repository: "alpine/k8s"
-      tag: "1.27.16"
+      tag: "1.30.12"
       pullPolicy: IfNotPresent
 
   # is valid only if `certmanager.enable=true`, otherwise is ignored
@@ -1136,7 +1144,7 @@ waitJobs:
 
     image:
       repository: "alpine/k8s"
-      tag: "1.27.16"
+      tag: "1.30.12"
       pullPolicy: IfNotPresent
   
 beyla:
@@ -1144,7 +1152,7 @@ beyla:
 
   image:
     repository: "grafana/beyla"
-    tag: "2.0.3"
+    tag: "2.2.3"
     pullPolicy: IfNotPresent
 
   resources:

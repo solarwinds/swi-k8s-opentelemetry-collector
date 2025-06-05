@@ -377,3 +377,14 @@ Usage:
 - not({{ $joinedConditions }}) 
 {{- end -}}
 {{- end -}}
+
+{{- define "common.prometheus.relabelconfigs" -}}
+metric_relabel_configs:
+  - source_labels: [service_name]
+    regex: (.+)
+    target_label: job
+    replacement: $1
+    action: replace
+  - regex: ^service_name$
+    action: labeldrop
+{{- end -}}
