@@ -49,6 +49,9 @@ def get_ghcr_tags(repository, version_pattern=None, github_token=None):
     if github_token:
         headers["Authorization"] = f"Bearer {github_token}"
     
+    if repository.startswith('ghcr.io/'):
+        repository = repository[len('ghcr.io/'):]
+    
     url = f"https://ghcr.io/v2/{repository}/tags/list"
 
     try:
@@ -329,7 +332,7 @@ def main():
                 log_file.write(f"{change['name']}: {change['old_tag']} -> {change['new_tag']}\n")
     else:
         logger.info("No updates needed.")
-        exit(1)
+        exit(0)
 
 if __name__ == "__main__":
     main()
