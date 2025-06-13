@@ -211,7 +211,7 @@ transform/istio-workload-workload:
 
 transform/istio-workload-service:
   metric_statements:
-    - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace", "destination_service_name", "destination_service_namespace", "source_workload_type", "destination_service_type"])
+    - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace", "destination_service_name", "destination_service_namespace", "source_workload_type", "destination_service_type", "dest.sw.server.address.fqdn"])
     - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
     - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
     - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
@@ -222,6 +222,8 @@ transform/istio-workload-service:
 transform/only-relationship-resource-attributes:
   metric_statements:
     - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name", "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name", "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name", "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name", "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name", "dest.sw.server.address.fqdn"])
+    # Temporary, to be removed when solarwindsentityconnector supports creation of entities from attributes with prefixes
+    - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"]) where resource.attributes["dest.sw.server.address.fqdn"] != nil
 
 batch/stateevents:
   send_batch_size: 1024
@@ -268,40 +270,58 @@ solarwindsentity/istio-workload-workload:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDeployment
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesStatefulSet
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDaemonSet
+          conditions: []
+          context: "metric"
           attributes:
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDeployment
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesStatefulSet
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDaemonSet
+          conditions: []
+          context: "metric"
           attributes:
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDeployment
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesStatefulSet
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDaemonSet
+          conditions: []
+          context: "metric"
           attributes:
 
 
@@ -352,28 +372,40 @@ solarwindsentity/istio-workload-service:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesService
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: PublicNetworkLocation
+          conditions: []
+          context: "metric"
           attributes:
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesService
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: PublicNetworkLocation
+          conditions: []
+          context: "metric"
           attributes:
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesService
+          conditions: []
+          context: "metric"
           attributes:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: PublicNetworkLocation
+          conditions: []
+          context: "metric"
           attributes:
 {{- end }}
 
