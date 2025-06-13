@@ -52,13 +52,11 @@ data:
       filter/logs:
         logs:
           log_record:
-            - IsMatch(resource.attributes["sw.k8s.log.type"], "event")
-            - IsMatch(resource.attributes["sw.k8s.log.type"], "manifest")
-            - IsMatch(resource.attributes["sw.k8s.log.type"], "entitystateevent")
+            - not(IsMatch(resource.attributes["sw.k8s.log.type"], "container") or IsMatch(resource.attributes["sw.k8s.log.type"], "journal"))
       filter/entitystateevents:
         logs:
           log_record:
-            - not(IsMatch(resource.attributes["sw.k8s.log.type"], "entitystateevent"))
+            - not(IsMatch(instrumentation_scope.attributes["otel.entity.event_as_log"], "true"))
     receivers:
       otlp:
         protocols:

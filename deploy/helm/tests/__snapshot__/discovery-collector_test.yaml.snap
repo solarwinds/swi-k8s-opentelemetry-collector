@@ -71,18 +71,48 @@ Discovery collector spec should match snapshot when using default values:
                   - sw.k8s.cluster.uid
                   - k8s.namespace.name
                   - k8s.service.name
+              - entity: PublicNetworkLocation
+                id:
+                  - sw.server.address.fqdn
             events:
+              entities:
+                - context: metric
+                  type: PublicNetworkLocation
               relationships:
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesService
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
+                  destination_entity: PublicNetworkLocation
+                  source_entity: KubernetesDeployment
+                  type: KubernetesCommunicatesWith
+                - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesService
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
+                  destination_entity: PublicNetworkLocation
+                  source_entity: KubernetesStatefulSet
+                  type: KubernetesCommunicatesWith
+                - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesService
+                  source_entity: KubernetesDaemonSet
+                  type: KubernetesCommunicatesWith
+                - attributes: null
+                  conditions: []
+                  context: metric
+                  destination_entity: PublicNetworkLocation
                   source_entity: KubernetesDaemonSet
                   type: KubernetesCommunicatesWith
           source_prefix: source.
@@ -108,38 +138,56 @@ Discovery collector spec should match snapshot when using default values:
             events:
               relationships:
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesDeployment
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesStatefulSet
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesDaemonSet
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesDeployment
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesStatefulSet
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesDaemonSet
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesDeployment
                   source_entity: KubernetesDaemonSet
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesStatefulSet
                   source_entity: KubernetesDaemonSet
                   type: KubernetesCommunicatesWith
                 - attributes: null
+                  conditions: []
+                  context: metric
                   destination_entity: KubernetesDaemonSet
                   source_entity: KubernetesDaemonSet
                   type: KubernetesCommunicatesWith
@@ -206,7 +254,7 @@ Discovery collector spec should match snapshot when using default values:
           error_mode: ignore
           metrics:
             datapoint:
-              - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_service_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_service_type"] == ""
+              - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
             metric:
               - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
@@ -240,6 +288,7 @@ Discovery collector spec should match snapshot when using default values:
             - dest.k8s.daemonset.name
             - dest.k8s.namespace.name
             - dest.k8s.service.name
+            - dest.sw.server.address.fqdn
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -341,6 +390,10 @@ Discovery collector spec should match snapshot when using default values:
               name_attr: destination_service_name
               namespace_attr: destination_service_namespace
               workload_type_attr: destination_service_type
+        transform/istio-metric-datapoints:
+          metric_statements:
+            - statements:
+                - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
         transform/istio-metrics:
           metric_statements:
             - statements:
@@ -350,7 +403,7 @@ Discovery collector spec should match snapshot when using default values:
                 - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-            - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace", "destination_service_name", "destination_service_namespace", "source_workload_type", "destination_service_type"])
+            - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace", "destination_service_name", "destination_service_namespace", "source_workload_type", "destination_service_type", "dest.sw.server.address.fqdn"])
             - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
             - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
             - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
@@ -370,7 +423,8 @@ Discovery collector spec should match snapshot when using default values:
             - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-            - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name", "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name", "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name", "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name", "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name"])
+            - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name", "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name", "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name", "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name", "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name", "dest.sw.server.address.fqdn"])
+            - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"]) where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
           log_statements:
             - statements:
@@ -442,6 +496,7 @@ Discovery collector spec should match snapshot when using default values:
               - memory_limiter
               - swok8sworkloadtype/istio
               - transform/istio-metrics
+              - transform/istio-metric-datapoints
               - metricstransform/istio-metrics
               - cumulativetodelta/istio-metrics
               - deltatorate/istio-metrics
