@@ -289,10 +289,6 @@ processors:
       - statements:
         - set(scope.name, "")
         - set(scope.version, "")
-  transform/provider_defaults:
-    log_statements:
-      - statements:
-        - set(resource.attributes["cloud.provider"], "Other") where resource.attributes["cloud.provider"] == nil and resource.attributes["k8s.node.name"] != nil
   groupbyattrs/manifest:
     keys:
       - k8s.pod.name
@@ -507,7 +503,6 @@ service:
         - transform/stringify_body
         - resource/manifest
         - resourcedetection/providers
-        - transform/provider_defaults
         - k8sattributes
         - k8seventgeneration
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
