@@ -5,6 +5,16 @@ filter/metrics-discovery:
 {{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 4 }}
 {{- end }}
 
+filter/keep-entity-state-events:
+  logs:
+    log_record:
+      - not(attributes["otel.entity.event.type"] == "entity_state")
+
+filter/keep-relationship-state-events:
+  logs:
+    log_record:
+      - not(attributes["otel.entity.event.type"] == "entity_relationship_state")
+
 metricstransform/rename/discovery:
   transforms:
     # add `k8s.` prefix to all metrics
@@ -473,16 +483,33 @@ metrics/relationship-state-events-workload-service-preparation:
   receivers:
     - forward/relationship-state-events-workload-service
 
-logs/stateevents:
+# Current SWO pipeline cannot process state events and relationships events together,
+# so we need to split them into two separate pipelines.
+# TODO - merge them into one pipeline when SWO supports it.
+logs/stateevents-entities:
   exporters:
     - otlp
   processors:
     - memory_limiter
+    - filter/keep-entity-state-events
     - transform/scope
     - batch/stateevents
   receivers:
     - solarwindsentity/istio-workload-workload
     - solarwindsentity/istio-workload-service
+
+logs/stateevents-relationships:
+  exporters:
+    - otlp
+  processors:
+    - memory_limiter
+    - filter/keep-relationship-state-events
+    - transform/scope
+    - batch/stateevents
+  receivers:
+    - solarwindsentity/istio-workload-workload
+    - solarwindsentity/istio-workload-service
+
 metrics/discovery-custom:
   exporters:
     - {{ $metricExporter }}
