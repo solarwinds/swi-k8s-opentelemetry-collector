@@ -250,6 +250,14 @@ Discovery collector spec should match snapshot when using default values:
           metrics:
             metric:
               - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")
+        filter/keep-entity-state-events:
+          logs:
+            log_record:
+              - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-relationship-state-events:
+          logs:
+            log_record:
+              - not(attributes["otel.entity.event.type"] == "entity_relationship_state")
         filter/keep-workload-service-relationships:
           error_mode: ignore
           metrics:
@@ -456,11 +464,23 @@ Discovery collector spec should match snapshot when using default values:
         extensions:
           - health_check
         pipelines:
-          logs/stateevents:
+          logs/stateevents-entities:
             exporters:
               - otlp
             processors:
               - memory_limiter
+              - filter/keep-entity-state-events
+              - transform/scope
+              - batch/stateevents
+            receivers:
+              - solarwindsentity/istio-workload-workload
+              - solarwindsentity/istio-workload-service
+          logs/stateevents-relationships:
+            exporters:
+              - otlp
+            processors:
+              - memory_limiter
+              - filter/keep-relationship-state-events
               - transform/scope
               - batch/stateevents
             receivers:
