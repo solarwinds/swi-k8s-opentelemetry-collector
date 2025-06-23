@@ -37,3 +37,17 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Pprof should not be in the configuration by default
+    template: events-collector-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["events.config"]
+          pattern: "pprof"
+  - it: Pprof should be in the configuration when enabled
+    template: events-collector-config-map.yaml
+    set:
+      diagnostics.profiling.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["events.config"]
+          pattern: "pprof"

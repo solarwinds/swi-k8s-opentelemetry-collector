@@ -125,12 +125,16 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-common-env") }}
-{{- if .Values.otel.events.telemetry.metrics.enabled }}
           ports:
+{{- if .Values.otel.events.telemetry.metrics.enabled }}
             - name: http
               containerPort: {{ (split ":" .Values.otel.events.telemetry.metrics.address)._1 }}
               protocol: TCP
-{{- end}}
+{{- end }}
+{{- if .Values.diagnostics.profiling.enabled }}
+            - name: pprof
+              containerPort: {{ .Values.diagnostics.profiling.port }}
+{{- end }}
           livenessProbe:
             httpGet:
               path: /

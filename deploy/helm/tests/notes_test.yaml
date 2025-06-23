@@ -148,4 +148,11 @@ tests:
       - equalRaw:
           value: |
             WARNING: Configuration `otel.events.k8s_instrumentation.annotations` is deprecated and will be removed in a future release.
-            
+
+  - it: should show warning when profiler is enabled
+    set:
+      diagnostics.profiling.enabled: true
+    asserts:
+      - equalRaw:
+          value: |
+            WARNING: Collector profiling is enabled. Profiler endpoint is available on port 1777.

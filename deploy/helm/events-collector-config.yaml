@@ -54,6 +54,10 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 connectors:
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
@@ -465,6 +469,9 @@ service:
     - file_storage/manifests
 {{- end}}
     - health_check
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
 {{- if .Values.otel.events.enabled }}
     logs:
