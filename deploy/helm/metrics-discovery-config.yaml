@@ -28,7 +28,11 @@ extensions:
     endpoint: 0.0.0.0:13133
   k8s_observer:
     auth_type: serviceAccount
-    observe_pods: true    
+    observe_pods: true
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 processors:
   k8sattributes:
@@ -164,6 +168,9 @@ service:
 {{- end }}
     - health_check
     - k8s_observer
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
 
 {{ include "common-discovery-config.pipelines" (tuple . "receiver_creator/discovery" "forward/metric-exporter") | indent 4 }}

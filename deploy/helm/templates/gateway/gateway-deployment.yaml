@@ -140,6 +140,10 @@ spec:
               containerPort: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._1 }}
               protocol: TCP
 {{- end}}
+{{- if .Values.diagnostics.profiling.enabled }}
+            - name: pprof
+              containerPort: {{ .Values.diagnostics.profiling.port }}
+{{- end }}
           livenessProbe:
             httpGet:
               path: /
