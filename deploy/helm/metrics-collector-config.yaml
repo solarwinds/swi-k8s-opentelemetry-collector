@@ -26,6 +26,10 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 processors:
   k8sattributes:
@@ -1056,6 +1060,9 @@ service:
     - file_storage/sending_queue
 {{- end }}
     - health_check
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
     metrics/prometheus-server:

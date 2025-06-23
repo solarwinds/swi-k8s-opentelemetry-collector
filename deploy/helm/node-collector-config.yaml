@@ -35,6 +35,10 @@ extensions:
     observe_pods: true
     observe_nodes: true
 {{- end }}
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 processors:
   memory_limiter:
@@ -610,6 +614,9 @@ service:
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     - k8s_observer
 {{- end}}
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
 {{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
 {{- if .Values.otel.logs.container }}
