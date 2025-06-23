@@ -1152,9 +1152,9 @@ Custom logs filter with new syntax:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -2749,9 +2749,9 @@ Custom logs filter with old syntax:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -4420,9 +4420,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -5946,9 +5946,9 @@ Node collector config should match snapshot when fargate is enabled:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -7448,9 +7448,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -8886,9 +8886,9 @@ Node collector config should match snapshot when using default values:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:

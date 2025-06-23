@@ -97,32 +97,19 @@ processors:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 
-  filter/histograms_beyla:
+  filter/beyla_test:
     metrics:
       metric:
-        # Exclude all histograms except the ones listed below
-        # excluded histograms are:
-        # - all histograms from beyla
-        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(
-            name == "http.client.request.duration" or
-            name == "http.client.request.body.size" or
-            name == "http.client.response.body.size" or
-            name == "http.server.request.duration" or 
-            name == "http.server.request.body.size" or
-            name == "http.server.response.body.size" or
-            name == "rpc.client.duration" or
-            name == "rpc.server.duration" or
-            name == "sql.client.duration" or
-            name == "redis.client.duration" or
-            name == "messaging.publish.duration" or
-            name == "messaging.process.duration"
-          )'
+        - 'not(name == "http.client.request.duration")'
 
   swok8sworkloadtype/beyla:
     workload_mappings:
       - name_attr: k8s.src.owner.name
         namespace_attr: k8s.src.namespace
-        workload_type_attr: k8s.src.owner.type
+        workload_type_attr: sw.k8s.src.workload.type
+        workload_name_attr: sw.k8s.src.workload.name
+        workload_namespace_attr: sw.k8s.src.workload.namespace
+        prefer_owner_for_pods: true
         expected_types:
           - deployments
           - daemonsets
@@ -134,7 +121,10 @@ processors:
           - nodes
       - name_attr: k8s.dst.owner.name
         namespace_attr: k8s.dst.namespace
-        workload_type_attr: k8s.dst.owner.type
+        workload_type_attr: sw.k8s.dst.workload.type
+        workload_name_attr: sw.k8s.dst.workload.name
+        workload_namespace_attr: sw.k8s.dst.workload.namespace
+        prefer_owner_for_pods: true
         expected_types:
           - deployments
           - daemonsets
@@ -144,18 +134,106 @@ processors:
           - cronjobs
           - pods
           - nodes
-      - name_attr: k8s.owner.name
+      - name_attr: resource.k8s.owner.name
+        namespace_attr: resource.k8s.namespace.name
+        workload_type_attr: resource.sw.k8s.workload.type
+        workload_name_attr: resource.sw.k8s.workload.name
+        workload_namespace_attr: resource.sw.k8s.workload.namespace
+        prefer_owner_for_pods: true
+        expected_types:
+          - deployments
+          - daemonsets
+          - statefulsets
+          - services
+          - jobs
+          - cronjobs
+          - pods
+          - nodes
+      - address_attr: server.address
         namespace_attr: k8s.namespace.name
-        workload_type_attr: k8s.owner.type
+        workload_type_attr: sw.k8s.dst.workload.type
+        workload_name_attr: sw.k8s.dst.workload.name
+        workload_namespace_attr: sw.k8s.dst.workload.namespace
+        prefer_owner_for_pods: true
         expected_types:
-          - deployments
-          - daemonsets
-          - statefulsets
           - services
-          - jobs
-          - cronjobs
           - pods
-          - nodes
+      - address_attr: client.address
+        namespace_attr: k8s.namespace.name
+        workload_type_attr: sw.k8s.src.workload.type
+        workload_name_attr: sw.k8s.src.workload.name
+        workload_namespace_attr: sw.k8s.src.workload.namespace
+        prefer_owner_for_pods: true
+        expected_types:
+          - services
+          - pods
+
+  transform/beyla-fqdn-attribute:
+    metric_statements:
+      - statements:
+          # The logic of what shapes of addresses are considered FQDNs should match 'transform/istio-metric-datapoints'.
+          # Also, Beyla prefers filling 'client.address' and 'server.address' attributes with OTEL Service name (or name + k8s namespace) instead of an actual FQDN, when possible. This makes their values useless for us because they would create fake FQDNs.
+          # - set(datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"], datapoint.attributes["server.address"]) where IsMatch(metric.name, "^http\\.client\\.") and datapoint.attributes["sw.k8s.dst.workload.type"] == nil and IsMatch(datapoint.attributes["server.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["server.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["server.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+          # - set(datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"], datapoint.attributes["client.address"]) where IsMatch(metric.name, "^http\\.server\\.") and datapoint.attributes["sw.k8s.src.workload.type"] == nil and IsMatch(datapoint.attributes["client.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["client.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["client.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+          # While 'dst.address' and 'src.adderess' contain an actual address, in practice they often contain an IP address, which we currently do not want to use as an FQDN.
+          - set(datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"], datapoint.attributes["dst.address"]) where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.dst.workload.type"] == nil and IsMatch(datapoint.attributes["dst.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["dst.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["dst.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+          - set(datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"], datapoint.attributes["src.address"]) where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.src.workload.type"] == nil and IsMatch(datapoint.attributes["src.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["src.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["src.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+
+          # Temporary, to be removed when solarwindsentityconnector supports creation of entities from attributes with prefixes
+          - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"]) where datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"] != nil
+          - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"]) where datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"] != nil
+
+  transform/beyla-entity-ids:
+    metric_statements:
+      - keep_keys(resource.attributes, ["sw.k8s.workload.type", "sw.k8s.workload.name", "sw.k8s.workload.namespace", "sw.k8s.dst.workload.type", "sw.k8s.dst.workload.name", "sw.k8s.dst.workload.namespace", "sw.k8s.src.workload.type", "sw.k8s.src.workload.name", "sw.k8s.src.workload.namespace", "sw.k8s.dst.sw.server.address.fqdn", "sw.k8s.src.sw.server.address.fqdn", "sw.server.address.fqdn"])
+
+      - set(resource.attributes["sw.k8s.src.k8s.deployment.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Deployment" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.statefulset.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.daemonset.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.service.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Service" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.job.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Job" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.node.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Node" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.pod.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Pod" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.namespace.name"], resource.attributes["sw.k8s.src.workload.namespace"]) where resource.attributes["sw.k8s.src.workload.namespace"] != nil
+
+      - set(resource.attributes["sw.k8s.dst.k8s.deployment.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Deployment" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.statefulset.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.daemonset.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.service.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Service" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.job.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Job" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.node.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Node" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.pod.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Pod" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.namespace.name"], resource.attributes["sw.k8s.dst.workload.namespace"]) where resource.attributes["sw.k8s.dst.workload.namespace"] != nil
+
+      - set(resource.attributes["sw.k8s.src.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.service.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.job.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.src.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+
+      - set(resource.attributes["sw.k8s.dst.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.service.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.job.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["sw.k8s.dst.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+
+  groupbyattrs/beyla-entity-ids:
+    keys:
+      - sw.k8s.dst.sw.server.address.fqdn
+      - sw.k8s.src.sw.server.address.fqdn
+      - sw.server.address.fqdn
+      - sw.k8s.dst.workload.type
+      - sw.k8s.dst.workload.name
+      - sw.k8s.dst.workload.namespace
+      - sw.k8s.src.workload.type
+      - sw.k8s.src.workload.name
+      - sw.k8s.src.workload.namespace
 
 receivers:
   otlp:
@@ -171,7 +249,9 @@ connectors:
     default_pipelines: [metrics]
     table:
       - context: metric
-        pipelines: [metrics/beyla]
+        pipelines:
+          - metrics/beyla
+          - metrics/beyla-network-entities-and-relationships
         condition: |
           name == "http.client.request.duration" or
           name == "http.client.request.body.size" or
@@ -194,6 +274,239 @@ connectors:
           name == "beyla.network.flow.bytes" or
           name == "beyla.network.inter.zone.bytes"
 
+  solarwindsentity/beyla-relationships:
+    source_prefix: "sw.k8s.src."
+    destination_prefix: "sw.k8s.dst."
+    schema:
+      entities:
+        - entity: KubernetesDeployment
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+        - entity: KubernetesStatefulSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+        - entity: KubernetesDaemonSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+        - entity: KubernetesJob
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+        - entity: KubernetesCronJob
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+        - entity: KubernetesService
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.service.name
+        - entity: KubernetesPod
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+        - entity: KubernetesNode
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+        - entity: PublicNetworkLocation
+          id:
+            - sw.server.address.fqdn
+      events:
+        relationships:
+          # source KubernetesDeployment
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDeployment
+            destination_entity: KubernetesService
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDeployment
+            destination_entity: PublicNetworkLocation
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDeployment
+            destination_entity: KubernetesDeployment
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDeployment
+            destination_entity: KubernetesStatefulSet
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDeployment
+            destination_entity: KubernetesDaemonSet
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDeployment
+            destination_entity: KubernetesNode
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDeployment
+            destination_entity: KubernetesPod
+            conditions: []
+            context: "metric"
+            attributes:
+          # source KubernetesStatefulSet
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesStatefulSet
+            destination_entity: KubernetesService
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesStatefulSet
+            destination_entity: PublicNetworkLocation
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesStatefulSet
+            destination_entity: KubernetesDeployment
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesStatefulSet
+            destination_entity: KubernetesStatefulSet
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesStatefulSet
+            destination_entity: KubernetesDaemonSet
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesStatefulSet
+            destination_entity: KubernetesNode
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesStatefulSet
+            destination_entity: KubernetesPod
+            conditions: []
+            context: "metric"
+            attributes:
+          # source KubernetesDaemonSet
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDaemonSet
+            destination_entity: KubernetesService
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDaemonSet
+            destination_entity: PublicNetworkLocation
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDaemonSet
+            destination_entity: KubernetesDeployment
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDaemonSet
+            destination_entity: KubernetesStatefulSet
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDaemonSet
+            destination_entity: KubernetesDaemonSet
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDaemonSet
+            destination_entity: KubernetesNode
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesDaemonSet
+            destination_entity: KubernetesPod
+            conditions: []
+            context: "metric"
+            attributes:
+          # source KubernetesJob
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesJob
+            destination_entity: KubernetesService
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesJob
+            destination_entity: PublicNetworkLocation
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesJob
+            destination_entity: KubernetesDeployment
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesJob
+            destination_entity: KubernetesStatefulSet
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesJob
+            destination_entity: KubernetesJob
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesJob
+            destination_entity: KubernetesNode
+            conditions: []
+            context: "metric"
+            attributes:
+          - type: KubernetesCommunicatesWith
+            source_entity: KubernetesJob
+            destination_entity: KubernetesPod
+            conditions: []
+            context: "metric"
+            attributes:
+
+  solarwindsentity/beyla-entities:
+    schema:
+      entities:
+        - entity: PublicNetworkLocation
+          id:
+            - sw.server.address.fqdn
+      events:
+        entities:
+          - type: "PublicNetworkLocation"
+            context: "metric"
+
 service:
   extensions:
 {{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
@@ -201,10 +514,18 @@ service:
 {{- end }}
     - health_check
   pipelines:
+    metrics/common_in:
+      exporters:
+        - routing/metrics
+      processors:
+        - memory_limiter
+      receivers:
+        - otlp
     metrics:
       exporters:
         - forward/metrics_common
       processors:
+        - memory_limiter
         - filter/histograms
 {{- if .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled }}
         - filter/otlp-metrics
@@ -215,17 +536,9 @@ service:
       exporters:
         - forward/metrics_common
       processors:
-        - filter/histograms_beyla
-        - swok8sworkloadtype/beyla
-      receivers:
-        - routing/metrics
-    metrics/common_in:
-      exporters:
-        - routing/metrics
-      processors:
         - memory_limiter
       receivers:
-        - otlp
+        - routing/metrics
     metrics/common_out:
       exporters:
         - otlp
@@ -263,6 +576,43 @@ service:
         - batch
       receivers:
         - otlp
+
+    # Current SWO pipeline cannot process state events and relationships events together,
+    # so we need to split them into two separate pipelines.
+    # TODO - merge 'logs/beyla-stateevents-entities' and 'logs/beyla-stateevents-relationships' into one pipeline when SWO supports it.
+    metrics/beyla-network-entities-and-relationships:
+      exporters:
+        - solarwindsentity/beyla-relationships
+        - solarwindsentity/beyla-entities
+      processors:
+        - memory_limiter
+        # - filter/beyla_test
+        - swok8sworkloadtype/beyla
+        - transform/beyla-fqdn-attribute
+        - groupbyattrs/beyla-entity-ids
+        - transform/beyla-entity-ids
+        - resource
+      receivers:
+        - routing/metrics
+    logs/beyla-stateevents-entities:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - transform/scope
+        - batch
+      receivers:
+        - solarwindsentity/beyla-entities
+    logs/beyla-stateevents-relationships:
+      exporters:
+        - otlp
+      processors:
+        - memory_limiter
+        - transform/scope
+        - batch
+      receivers:
+        - solarwindsentity/beyla-relationships
+
   telemetry:
 {{- if .Values.otel.gateway.telemetry.logs.enabled }}
     logs:
