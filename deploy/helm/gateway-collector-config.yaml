@@ -97,11 +97,6 @@ processors:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 
-  filter/beyla_test:
-    metrics:
-      metric:
-        - 'not(name == "http.client.request.duration")'
-
   swok8sworkloadtype/beyla:
     workload_mappings:
       - name_attr: k8s.src.owner.name
@@ -234,6 +229,8 @@ processors:
       - sw.k8s.src.workload.type
       - sw.k8s.src.workload.name
       - sw.k8s.src.workload.namespace
+
+  logdedup/solarwindsentity: {}
 
 receivers:
   otlp:
@@ -586,7 +583,6 @@ service:
         - solarwindsentity/beyla-entities
       processors:
         - memory_limiter
-        # - filter/beyla_test
         - swok8sworkloadtype/beyla
         - transform/beyla-fqdn-attribute
         - groupbyattrs/beyla-entity-ids
@@ -600,6 +596,7 @@ service:
       processors:
         - memory_limiter
         - transform/scope
+        - logdedup/solarwindsentity
         - batch
       receivers:
         - solarwindsentity/beyla-entities
@@ -609,6 +606,7 @@ service:
       processors:
         - memory_limiter
         - transform/scope
+        - logdedup/solarwindsentity
         - batch
       receivers:
         - solarwindsentity/beyla-relationships
