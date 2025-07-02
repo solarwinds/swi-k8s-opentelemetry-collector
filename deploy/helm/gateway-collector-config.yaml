@@ -27,6 +27,10 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 processors:
   batch:
@@ -200,6 +204,9 @@ service:
     - file_storage/sending_queue
 {{- end }}
     - health_check
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
     metrics:
       exporters:
