@@ -50,6 +50,40 @@ data:
     attributes:
       kubernetes:
         enable: true
+      select:
+        http_*:
+          include:
+            - http.request.method
+            - http.response.status_code
+            - service.name
+            - service.namespace
+            - target.instance
+            - server.address
+            - client.address
+        rpc_*:
+          include:
+            - http.request.method
+            - http.response.status_code
+            - service.name
+            - service.namespace
+            - target.instance
+            - server.address
+            - client.address
+            - rpc.grpc.status_code
+            - rpc.method
+            - rpc.system
+        beyla_*:
+          include:
+            - direction
+            - dst.address
+            - k8s.dst.namespace
+            - k8s.dst.owner.name
+            - k8s.dst.owner.type
+            - src.address
+            - k8s.src.namespace
+            - k8s.src.owner.name
+            - k8s.src.owner.type
+            - transport
     {{- end }}
     {{- if .Values.beyla.config }}
   {{- toYaml .Values.beyla.config | nindent 4}}
