@@ -475,8 +475,8 @@ service:
   pipelines:
 {{- if .Values.otel.events.enabled }}
     logs:
-      exporters:
-        - otlp
+      receivers:
+        - k8s_events
       processors:
         - memory_limiter
 {{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "true") }}
@@ -495,12 +495,12 @@ service:
 {{- end }}
         - transform/scope
         - batch
-      receivers:
-        - k8s_events
-{{- end }}
-    logs/manifests:
       exporters:
         - otlp
+{{- end }}
+    logs/manifests:
+      receivers:
+        - swok8sobjects
       processors:
         - memory_limiter
         - transform/manifest
@@ -523,13 +523,13 @@ service:
 {{- end }}
         - transform/scope
         - batch
-      receivers:
-        - swok8sobjects
+      exporters:
+        - otlp
     
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
     logs/manifests-keepalive:
-      exporters:
-        - solarwindsentity/keepalive
+      receivers:
+        - swok8sobjects/keepalive
       processors:
         - memory_limiter
         - transform/manifest
@@ -546,18 +546,18 @@ service:
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
-      receivers:
-        - swok8sobjects/keepalive
+      exporters:
+        - solarwindsentity/keepalive
 
     logs/stateevents:
-      exporters:
-        - otlp
+      receivers:
+        - solarwindsentity/keepalive
       processors:
         - memory_limiter
         - transform/scope
         - batch
-      receivers:
-        - solarwindsentity/keepalive
+      exporters:
+        - otlp
 {{- end }}
         
   telemetry:

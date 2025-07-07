@@ -424,8 +424,8 @@ solarwindsentity/istio-workload-service:
 {{- $entryReceiver := index . 1 -}}
 {{- $metricExporter := index . 2 -}}
 metrics/discovery-scrape:
-  exporters:
-    - routing/discovered_metrics
+  receivers:
+    - {{ $entryReceiver }}
   processors:
     - memory_limiter
 {{- if $context.Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
@@ -437,14 +437,12 @@ metrics/discovery-scrape:
 {{- if ne $context.Values.otel.metrics.autodiscovery.prefix "k8s." }}
     - metricstransform/copy-required-metrics
 {{- end }}
-  receivers:
-    - {{ $entryReceiver }}
+  exporters:
+    - routing/discovered_metrics
 
 metrics/discovery-istio:
-  exporters:
-    - {{ $metricExporter }}
-    - forward/relationship-state-events-workload-workload
-    - forward/relationship-state-events-workload-service
+  receivers:
+    - routing/discovered_metrics
   processors:
     - memory_limiter
     - swok8sworkloadtype/istio
@@ -456,63 +454,65 @@ metrics/discovery-istio:
     - metricsgeneration/istio-metrics
     - groupbyattrs/common-all
     - resource/all
-  receivers:
-    - routing/discovered_metrics
+  exporters:
+    - {{ $metricExporter }}
+    - forward/relationship-state-events-workload-workload
+    - forward/relationship-state-events-workload-service
 
 metrics/relationship-state-events-workload-workload-preparation:
-  exporters:
-    - solarwindsentity/istio-workload-workload
+  receivers:
+    - forward/relationship-state-events-workload-workload
   processors:
     - memory_limiter
     - filter/keep-workload-workload-relationships
     - transform/istio-workload-workload
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
-  receivers:
-    - forward/relationship-state-events-workload-workload
+  exporters:
+    - solarwindsentity/istio-workload-workload
 
 metrics/relationship-state-events-workload-service-preparation:
-  exporters:
-    - solarwindsentity/istio-workload-service
+  receivers:
+    - forward/relationship-state-events-workload-service
   processors:
     - memory_limiter
     - filter/keep-workload-service-relationships
     - transform/istio-workload-service
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
-  receivers:
-    - forward/relationship-state-events-workload-service
+  exporters:
+    - solarwindsentity/istio-workload-service
 
 # Current SWO pipeline cannot process state events and relationships events together,
 # so we need to split them into two separate pipelines.
 # TODO - merge them into one pipeline when SWO supports it.
 logs/stateevents-entities:
-  exporters:
-    - otlp
+  receivers:
+    - solarwindsentity/istio-workload-workload
+    - solarwindsentity/istio-workload-service
   processors:
     - memory_limiter
     - filter/keep-entity-state-events
     - transform/scope
     - batch/stateevents
+  exporters:
+    - otlp
+
+logs/stateevents-relationships:
   receivers:
     - solarwindsentity/istio-workload-workload
     - solarwindsentity/istio-workload-service
-
-logs/stateevents-relationships:
-  exporters:
-    - otlp
   processors:
     - memory_limiter
     - filter/keep-relationship-state-events
     - transform/scope
     - batch/stateevents
-  receivers:
-    - solarwindsentity/istio-workload-workload
-    - solarwindsentity/istio-workload-service
+  exporters:
+    - otlp
 
 metrics/discovery-custom:
-  exporters:
-    - {{ $metricExporter }}
+  receivers:
+    - routing/discovered_metrics
   processors:
     - memory_limiter
 {{- if $context.Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
@@ -521,6 +521,6 @@ metrics/discovery-custom:
 {{- end }}
     - groupbyattrs/common-all
     - resource/all
-  receivers:
-    - routing/discovered_metrics
+  exporters:
+    - {{ $metricExporter }}
 {{- end }}

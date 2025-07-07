@@ -519,33 +519,33 @@ service:
 {{- end }}
   pipelines:
     metrics/common_in:
-      exporters:
-        - routing/metrics
-      processors:
-        - memory_limiter
       receivers:
         - otlp
-    metrics:
+      processors:
+        - memory_limiter
       exporters:
-        - forward/metrics_common
+        - routing/metrics
+    metrics:
+      receivers:
+        - routing/metrics
       processors:
         - memory_limiter
         - filter/histograms
 {{- if .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled }}
         - filter/otlp-metrics
 {{- end }}
-      receivers:
-        - routing/metrics
-    metrics/beyla:
       exporters:
         - forward/metrics_common
-      processors:
-        - memory_limiter
+    metrics/beyla:
       receivers:
         - routing/metrics
-    metrics/common_out:
+      processors:
+        - memory_limiter
       exporters:
-        - otlp
+        - forward/metrics_common
+    metrics/common_out:
+      receivers:
+        - forward/metrics_common
       processors:
         - memory_limiter
         - k8sattributes
@@ -556,10 +556,10 @@ service:
         - resource
         - transform/scope
         - batch
-      receivers:
-        - forward/metrics_common
-    logs:
       exporters:
+        - otlp
+    logs:
+      receivers:
         - otlp
       processors:
         - memory_limiter
@@ -567,10 +567,10 @@ service:
         - resource
         - transform/scope
         - batch
-      receivers:
+      exporters:
         - otlp
     traces:
-      exporters:
+      receivers:
         - otlp
       processors:
         - memory_limiter
@@ -578,16 +578,15 @@ service:
         - resource
         - transform/scope
         - batch
-      receivers:
+      exporters:
         - otlp
 
     # Current SWO pipeline cannot process state events and relationships events together,
     # so we need to split them into two separate pipelines.
     # TODO - merge 'logs/beyla-stateevents-entities' and 'logs/beyla-stateevents-relationships' into one pipeline when SWO supports it.
     metrics/beyla-network-entities-and-relationships:
-      exporters:
-        - solarwindsentity/beyla-relationships
-        - solarwindsentity/beyla-entities
+      receivers:
+        - routing/metrics
       processors:
         - memory_limiter
         - swok8sworkloadtype/beyla
@@ -595,28 +594,29 @@ service:
         - groupbyattrs/beyla-entity-ids
         - transform/beyla-entity-ids
         - resource
-      receivers:
-        - routing/metrics
-    logs/beyla-stateevents-entities:
       exporters:
-        - otlp
-      processors:
-        - memory_limiter
-        - transform/scope
-        - logdedup/solarwindsentity
-        - batch
+        - solarwindsentity/beyla-relationships
+        - solarwindsentity/beyla-entities
+    logs/beyla-stateevents-entities:
       receivers:
         - solarwindsentity/beyla-entities
-    logs/beyla-stateevents-relationships:
-      exporters:
-        - otlp
       processors:
         - memory_limiter
         - transform/scope
         - logdedup/solarwindsentity
         - batch
+      exporters:
+        - otlp
+    logs/beyla-stateevents-relationships:
       receivers:
         - solarwindsentity/beyla-relationships
+      processors:
+        - memory_limiter
+        - transform/scope
+        - logdedup/solarwindsentity
+        - batch
+      exporters:
+        - otlp
 
   telemetry:
 {{- if .Values.otel.gateway.telemetry.logs.enabled }}
