@@ -7,4 +7,5 @@ metadata:
     app.kubernetes.io/name: swo-k8s-collector
 {{ include "common.labels" . | indent 4 }}
 data:
-  gateway.config: {{ tpl (.Files.Get "gateway-collector-config.yaml") . | quote }}
+  gateway.config: |
+{{ tpl (.Files.Get "gateway-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
