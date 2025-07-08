@@ -326,6 +326,8 @@ Custom events filter with new syntax:
               == "Ingress" or log.body["kind"] == "VirtualService"
             - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
               != nil
+            - set(log.attributes["k8s.object.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
@@ -1066,6 +1068,8 @@ Custom events filter with old syntax:
               == "Ingress" or log.body["kind"] == "VirtualService"
             - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
               != nil
+            - set(log.attributes["k8s.object.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
@@ -1799,6 +1803,8 @@ Events config should match snapshot when using default values:
               == "Ingress" or log.body["kind"] == "VirtualService"
             - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
               != nil
+            - set(log.attributes["k8s.object.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
@@ -2459,6 +2465,8 @@ Events config should not contain manifest collection pipeline when disabled:
               == "Ingress" or log.body["kind"] == "VirtualService"
             - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"]
               != nil
+            - set(log.attributes["k8s.object.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")

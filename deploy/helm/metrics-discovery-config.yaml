@@ -176,8 +176,8 @@ service:
 {{ include "common-discovery-config.pipelines" (tuple . "receiver_creator/discovery" "forward/metric-exporter") | indent 4 }}
 
     metrics:
-      exporters:
-        - otlp
+      receivers:
+        - forward/metric-exporter
       processors:
         - memory_limiter
         - filter/histograms
@@ -191,8 +191,8 @@ service:
         - filter/remove_temporary_metrics
         - transform/scope
         - batch/metrics
-      receivers:
-        - forward/metric-exporter
+      exporters:
+        - otlp
     
   telemetry:
 {{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.enabled }}
