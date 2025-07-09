@@ -346,8 +346,6 @@ Node collector config for windows nodes should match snapshot when using default
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -355,8 +353,6 @@ Node collector config for windows nodes should match snapshot when using default
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -468,6 +464,7 @@ Node collector config for windows nodes should match snapshot when using default
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1143,9 +1140,6 @@ Node collector config for windows nodes should match snapshot when using default
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -1158,9 +1152,6 @@ Node collector config for windows nodes should match snapshot when using default
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -1177,12 +1168,6 @@ Node collector config for windows nodes should match snapshot when using default
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -1434,6 +1419,7 @@ Node collector config for windows nodes should match snapshot when using default
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1445,6 +1431,7 @@ Node collector config for windows nodes should match snapshot when using default
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1472,7 +1459,6 @@ Node collector config for windows nodes should match snapshot when using default
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -1521,6 +1507,7 @@ Node collector config for windows nodes should match snapshot when using default
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -1532,6 +1519,7 @@ Node collector config for windows nodes should match snapshot when using default
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -1899,8 +1887,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -1908,8 +1894,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/logs:
           logs:
             include:
@@ -2028,6 +2012,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2703,9 +2688,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -2718,9 +2700,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -2737,12 +2716,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -3076,6 +3049,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3087,6 +3061,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3114,7 +3089,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -3163,6 +3137,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -3174,6 +3149,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter

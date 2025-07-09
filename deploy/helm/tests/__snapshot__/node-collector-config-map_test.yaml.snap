@@ -346,8 +346,6 @@ Custom logs filter with new syntax:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -355,8 +353,6 @@ Custom logs filter with new syntax:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/logs:
           logs:
             log_record:
@@ -472,6 +468,7 @@ Custom logs filter with new syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1167,9 +1164,6 @@ Custom logs filter with new syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -1182,9 +1176,6 @@ Custom logs filter with new syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -1201,12 +1192,6 @@ Custom logs filter with new syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -1475,6 +1460,7 @@ Custom logs filter with new syntax:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1486,6 +1472,7 @@ Custom logs filter with new syntax:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1513,7 +1500,6 @@ Custom logs filter with new syntax:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -1562,6 +1548,7 @@ Custom logs filter with new syntax:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -1573,6 +1560,7 @@ Custom logs filter with new syntax:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -1940,8 +1928,6 @@ Custom logs filter with old syntax:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -1949,8 +1935,6 @@ Custom logs filter with old syntax:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/logs:
           logs:
             include:
@@ -2069,6 +2053,7 @@ Custom logs filter with old syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2764,9 +2749,6 @@ Custom logs filter with old syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -2779,9 +2761,6 @@ Custom logs filter with old syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -2798,12 +2777,6 @@ Custom logs filter with old syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -3153,6 +3126,7 @@ Custom logs filter with old syntax:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3164,6 +3138,7 @@ Custom logs filter with old syntax:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3191,7 +3166,6 @@ Custom logs filter with old syntax:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -3240,6 +3214,7 @@ Custom logs filter with old syntax:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -3251,6 +3226,7 @@ Custom logs filter with old syntax:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -3618,8 +3594,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -3627,8 +3601,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -3740,6 +3712,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -4435,9 +4408,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -4450,9 +4420,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -4469,12 +4436,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -4682,6 +4643,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -4693,6 +4655,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -4720,7 +4683,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -4769,6 +4731,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -4780,6 +4743,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -5144,8 +5108,6 @@ Node collector config should match snapshot when fargate is enabled:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -5153,8 +5115,6 @@ Node collector config should match snapshot when fargate is enabled:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -5266,6 +5226,7 @@ Node collector config should match snapshot when fargate is enabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -5961,9 +5922,6 @@ Node collector config should match snapshot when fargate is enabled:
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -5976,9 +5934,6 @@ Node collector config should match snapshot when fargate is enabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -5995,12 +5950,6 @@ Node collector config should match snapshot when fargate is enabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -6213,6 +6162,7 @@ Node collector config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -6224,6 +6174,7 @@ Node collector config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -6251,7 +6202,6 @@ Node collector config should match snapshot when fargate is enabled:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -6277,6 +6227,7 @@ Node collector config should match snapshot when fargate is enabled:
             - receiver_creator/discovery
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -6288,6 +6239,7 @@ Node collector config should match snapshot when fargate is enabled:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -6646,8 +6598,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -6655,8 +6605,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -6768,6 +6716,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -7463,9 +7412,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -7478,9 +7424,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -7497,12 +7440,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -7654,6 +7591,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -7665,6 +7603,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -7680,7 +7619,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -7706,6 +7644,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - receiver_creator/discovery
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -7717,6 +7656,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -8084,8 +8024,6 @@ Node collector config should match snapshot when using default values:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -8093,8 +8031,6 @@ Node collector config should match snapshot when using default values:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -8206,6 +8142,7 @@ Node collector config should match snapshot when using default values:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -8901,9 +8838,6 @@ Node collector config should match snapshot when using default values:
               metric.name == "k8s.istio_request_duration_milliseconds_count"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -8916,9 +8850,6 @@ Node collector config should match snapshot when using default values:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -8935,12 +8866,6 @@ Node collector config should match snapshot when using default values:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -9208,6 +9133,7 @@ Node collector config should match snapshot when using default values:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -9219,6 +9145,7 @@ Node collector config should match snapshot when using default values:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -9246,7 +9173,6 @@ Node collector config should match snapshot when using default values:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
             processors:
@@ -9295,6 +9221,7 @@ Node collector config should match snapshot when using default values:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -9306,6 +9233,7 @@ Node collector config should match snapshot when using default values:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
+            - forward/metric-exporter
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
