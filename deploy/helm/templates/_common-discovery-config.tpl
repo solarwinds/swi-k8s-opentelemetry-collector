@@ -296,6 +296,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesStatefulSet
@@ -303,6 +304,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDaemonSet
@@ -310,6 +312,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -318,6 +321,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesStatefulSet
@@ -325,6 +329,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDaemonSet
@@ -332,6 +337,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -340,6 +346,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesStatefulSet
@@ -347,6 +354,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDaemonSet
@@ -354,6 +362,7 @@ solarwindsentity/istio-workload-workload:
           context: "metric"
           attributes:
             - istio
+          action: "update"
 
 
 solarwindsentity/istio-workload-service:
@@ -398,6 +407,7 @@ solarwindsentity/istio-workload-service:
       entities:
         - type: "PublicNetworkLocation"
           context: "metric"
+          action: "update"
       relationships:
         # source KubernetesDeployment
         - type: KubernetesCommunicatesWith
@@ -407,6 +417,7 @@ solarwindsentity/istio-workload-service:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: PublicNetworkLocation
@@ -414,6 +425,7 @@ solarwindsentity/istio-workload-service:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -422,6 +434,7 @@ solarwindsentity/istio-workload-service:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: PublicNetworkLocation
@@ -429,6 +442,7 @@ solarwindsentity/istio-workload-service:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -437,6 +451,7 @@ solarwindsentity/istio-workload-service:
           context: "metric"
           attributes:
             - istio
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: PublicNetworkLocation
@@ -444,6 +459,7 @@ solarwindsentity/istio-workload-service:
           context: "metric"
           attributes:
             - istio
+          action: "update"
 {{- end }}
 
 {{- define "common-discovery-config.pipelines" -}}
