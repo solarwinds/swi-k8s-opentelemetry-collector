@@ -27,6 +27,7 @@ Discovery collector spec should match snapshot when using default values:
       connectors:
         forward/discovery-istio-metrics-clean: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -270,6 +271,11 @@ Discovery collector spec should match snapshot when using default values:
           logs:
             log_record:
               - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+              - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -528,6 +534,7 @@ Discovery collector spec should match snapshot when using default values:
             exporters:
               - forward/relationship-state-events-workload-workload
               - forward/relationship-state-events-workload-service
+              - forward/not-relationship-state-events
             processors:
               - memory_limiter
               - swok8sworkloadtype/istio
@@ -557,6 +564,14 @@ Discovery collector spec should match snapshot when using default values:
               - metricstransform/rename/discovery
             receivers:
               - prometheus
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+              - forward/metric-exporter
+            processors:
+              - memory_limiter
+              - filter/keep-not-relationships
+            receivers:
+              - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
               - forward/discovery-istio-metrics-clean

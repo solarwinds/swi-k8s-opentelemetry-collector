@@ -5,6 +5,7 @@ Custom logs filter with new syntax:
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -350,6 +351,15 @@ Custom logs filter with new syntax:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -1523,6 +1533,7 @@ Custom logs filter with new syntax:
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -1575,6 +1586,14 @@ Custom logs filter with new syntax:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -1616,6 +1635,7 @@ Custom logs filter with old syntax:
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -1961,6 +1981,15 @@ Custom logs filter with old syntax:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -3218,6 +3247,7 @@ Custom logs filter with old syntax:
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -3270,6 +3300,14 @@ Custom logs filter with old syntax:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -3311,6 +3349,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -3656,6 +3695,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -4764,6 +4812,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -4816,6 +4865,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -4857,6 +4914,7 @@ Node collector config should match snapshot when fargate is enabled:
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -5199,6 +5257,15 @@ Node collector config should match snapshot when fargate is enabled:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -6312,6 +6379,7 @@ Node collector config should match snapshot when fargate is enabled:
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -6341,6 +6409,14 @@ Node collector config should match snapshot when fargate is enabled:
             - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -6381,6 +6457,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
       connectors:
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -6718,6 +6795,15 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -7758,6 +7844,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -7787,6 +7874,14 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -7828,6 +7923,7 @@ Node collector config should match snapshot when using default values:
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -8173,6 +8269,15 @@ Node collector config should match snapshot when using default values:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -9341,6 +9446,7 @@ Node collector config should match snapshot when using default values:
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -9393,6 +9499,14 @@ Node collector config should match snapshot when using default values:
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean

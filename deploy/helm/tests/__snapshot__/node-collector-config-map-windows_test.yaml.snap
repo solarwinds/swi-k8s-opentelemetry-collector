@@ -5,6 +5,7 @@ Node collector config for windows nodes should match snapshot when using default
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -350,6 +351,15 @@ Node collector config for windows nodes should match snapshot when using default
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -1482,6 +1492,7 @@ Node collector config for windows nodes should match snapshot when using default
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -1534,6 +1545,14 @@ Node collector config for windows nodes should match snapshot when using default
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -1575,6 +1594,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
         forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -1920,6 +1940,15 @@ Node collector config for windows nodes should match snapshot when using legacy 
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -3141,6 +3170,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -3193,6 +3223,14 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean

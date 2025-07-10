@@ -206,6 +206,15 @@ filter/keep-workload-service-relationships:
     datapoint:
       - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
 
+# filter is used to keep only metrics that are not workload-to-workload or workload-to-service
+filter/keep-not-relationships:
+  error_mode: ignore
+  metrics:
+    datapoint:
+      - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
+
+
+
 transform/istio-workload-workload:
   metric_statements:
     - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
@@ -246,6 +255,7 @@ resource/clean-temporary-attributes:
 {{- define "common-discovery-config.connectors" -}}
 forward/relationship-state-events-workload-workload: {}
 forward/relationship-state-events-workload-service: {}
+forward/not-relationship-state-events: {}
 forward/discovery-istio-metrics-clean: {}
 routing/discovered_metrics:
   default_pipelines: [metrics/discovery-custom]
@@ -474,6 +484,7 @@ metrics/discovery-istio:
   exporters:
     - forward/relationship-state-events-workload-workload
     - forward/relationship-state-events-workload-service
+    - forward/not-relationship-state-events
 
 metrics/relationship-state-events-workload-workload-preparation:
   receivers:
@@ -500,6 +511,15 @@ metrics/relationship-state-events-workload-service-preparation:
   exporters:
     - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-service
+
+metrics/not-relationship-state-events-preparation:
+  receivers:
+    - forward/not-relationship-state-events
+  processors:
+    - memory_limiter
+    - filter/keep-not-relationships
+  exporters:
+    - {{ $metricExporter }}
 
 metrics/discovery-istio-clean:
   receivers:

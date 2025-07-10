@@ -4,6 +4,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
       connectors:
         forward/discovery-istio-metrics-clean: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -251,6 +252,15 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -578,6 +588,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             exporters:
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -607,6 +618,14 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
