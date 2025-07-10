@@ -70,6 +70,11 @@ processors:
         value: ${CLUSTER_NAME}
         action: upsert
 
+  resource/clean-temporary-attributes:
+    attributes:      
+      - key: beyla
+        action: delete
+
   # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
   attributes/clean-attributes-otlp-metrics:
     actions:
@@ -184,43 +189,43 @@ processors:
 
   transform/beyla-entity-ids:
     metric_statements:
-      - keep_keys(resource.attributes, ["sw.k8s.workload.type", "sw.k8s.workload.name", "sw.k8s.workload.namespace", "sw.k8s.dst.workload.type", "sw.k8s.dst.workload.name", "sw.k8s.dst.workload.namespace", "sw.k8s.src.workload.type", "sw.k8s.src.workload.name", "sw.k8s.src.workload.namespace", "sw.k8s.dst.sw.server.address.fqdn", "sw.k8s.src.sw.server.address.fqdn", "sw.server.address.fqdn"])
+      - set(resource.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Deployment" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Service" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Job" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Node" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Pod" and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.src.workload.namespace"]) where resource.attributes["sw.k8s.src.workload.namespace"] != nil
 
-      - set(resource.attributes["sw.k8s.src.k8s.deployment.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Deployment" and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.statefulset.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.daemonset.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.service.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Service" and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.job.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Job" and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.node.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Node" and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.pod.name"], resource.attributes["sw.k8s.src.workload.name"]) where resource.attributes["sw.k8s.src.workload.type"] == "Pod" and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.namespace.name"], resource.attributes["sw.k8s.src.workload.namespace"]) where resource.attributes["sw.k8s.src.workload.namespace"] != nil
+      - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Deployment" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Service" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Job" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Node" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Pod" and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.dst.workload.namespace"]) where resource.attributes["sw.k8s.dst.workload.namespace"] != nil
 
-      - set(resource.attributes["sw.k8s.dst.k8s.deployment.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Deployment" and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.statefulset.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.daemonset.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.service.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Service" and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.job.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Job" and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.node.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Node" and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.pod.name"], resource.attributes["sw.k8s.dst.workload.name"]) where resource.attributes["sw.k8s.dst.workload.type"] == "Pod" and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.namespace.name"], resource.attributes["sw.k8s.dst.workload.namespace"]) where resource.attributes["sw.k8s.dst.workload.namespace"] != nil
+      - set(resource.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
 
-      - set(resource.attributes["sw.k8s.src.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.service.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.job.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.src.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
 
-      - set(resource.attributes["sw.k8s.dst.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.service.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.job.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-      - set(resource.attributes["sw.k8s.dst.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+      - set(resource.attributes["beyla"], "true")
 
   groupbyattrs/beyla-entity-ids:
     keys:
@@ -251,7 +256,6 @@ connectors:
     table:
       - context: metric
         pipelines:
-          - metrics/beyla
           - metrics/beyla-network-entities-and-relationships
         condition: |
           name == "http.client.request.duration" or
@@ -276,8 +280,8 @@ connectors:
           name == "beyla.network.inter.zone.bytes"
 
   solarwindsentity/beyla-relationships:
-    source_prefix: "sw.k8s.src."
-    destination_prefix: "sw.k8s.dst."
+    source_prefix: "source."
+    destination_prefix: "dest."
     schema:
       entities:
         - entity: KubernetesDeployment
@@ -331,6 +335,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
@@ -338,6 +343,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
@@ -345,6 +351,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
@@ -352,6 +359,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
@@ -359,6 +367,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
@@ -366,6 +375,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
@@ -373,6 +383,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           # source KubernetesStatefulSet
           - type: KubernetesCommunicatesWith
@@ -381,6 +392,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
@@ -388,6 +400,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
@@ -395,6 +408,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
@@ -402,6 +416,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
@@ -409,6 +424,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
@@ -416,6 +432,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
@@ -423,6 +440,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           # source KubernetesDaemonSet
           - type: KubernetesCommunicatesWith
@@ -431,6 +449,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
@@ -438,6 +457,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
@@ -445,6 +465,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
@@ -452,6 +473,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
@@ -459,6 +481,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
@@ -466,6 +489,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
@@ -473,6 +497,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           # source KubernetesJob
           - type: KubernetesCommunicatesWith
@@ -481,6 +506,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
@@ -488,6 +514,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
@@ -495,6 +522,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
@@ -502,6 +530,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
@@ -509,6 +538,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
@@ -516,6 +546,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
@@ -523,6 +554,7 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
             action: "update"
 
   solarwindsentity/beyla-entities:
@@ -565,13 +597,6 @@ service:
 {{- end }}
       exporters:
         - forward/metrics_common
-    metrics/beyla:
-      receivers:
-        - routing/metrics
-      processors:
-        - memory_limiter
-      exporters:
-        - forward/metrics_common
     metrics/common_out:
       receivers:
         - forward/metrics_common
@@ -582,6 +607,7 @@ service:
         - metricstransform/rename
 {{- end }}
         - attributes/clean-attributes-otlp-metrics
+        - resource/clean-temporary-attributes
         - resource
         - transform/scope
         - batch
@@ -624,6 +650,7 @@ service:
         - transform/beyla-entity-ids
         - resource
       exporters:
+        - forward/metrics_common
         - solarwindsentity/beyla-relationships
         - solarwindsentity/beyla-entities
     logs/beyla-stateevents-entities:
