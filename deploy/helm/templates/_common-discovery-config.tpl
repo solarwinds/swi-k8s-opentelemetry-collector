@@ -151,6 +151,7 @@ transform/istio-metrics:
         - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
         - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
         - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
+        - set(resource.attributes["istio"], true) 
 
 transform/istio-metric-datapoints:
   metric_statements:
@@ -234,12 +235,18 @@ batch/stateevents:
   send_batch_size: 1024
   timeout: 1s
   send_batch_max_size: 1024
+
+attributes/clean-temporary-attributes:
+  actions:
+    - key: istio
+      action: delete  
 {{- end }}
 
 
 {{- define "common-discovery-config.connectors" -}}
 forward/relationship-state-events-workload-workload: {}
 forward/relationship-state-events-workload-service: {}
+forward/discovery-istio-metrics-clean: {}
 routing/discovered_metrics:
   default_pipelines: [metrics/discovery-custom]
   table:
@@ -278,18 +285,21 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
           attributes:
+            - istio
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -297,18 +307,21 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
           attributes:
+            - istio
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -316,18 +329,21 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
           attributes:
+            - istio
 
 
 solarwindsentity/istio-workload-service:
@@ -380,12 +396,14 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
           attributes:
+            - istio
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -393,12 +411,14 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
           attributes:
+            - istio
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -406,12 +426,14 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
           attributes:
+            - istio
 {{- end }}
 
 {{- define "common-discovery-config.pipelines" -}}
@@ -463,7 +485,7 @@ metrics/relationship-state-events-workload-workload-preparation:
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
   exporters:
-    - {{ $metricExporter }}
+    - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-workload
 
 metrics/relationship-state-events-workload-service-preparation:
@@ -476,8 +498,17 @@ metrics/relationship-state-events-workload-service-preparation:
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
   exporters:
-    - {{ $metricExporter }}
+    - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-service
+
+metrics/discovery-istio-metrics-clean:
+  receivers:
+    - forward/discovery-istio-metrics-clean
+  processors:
+    - memory_limiter
+    - attributes/clean-temporary-attributes
+  exporters:
+    - {{ $metricExporter }}
 
 # Current SWO pipeline cannot process state events and relationships events together,
 # so we need to split them into two separate pipelines.
