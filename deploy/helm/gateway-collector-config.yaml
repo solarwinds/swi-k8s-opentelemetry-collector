@@ -75,6 +75,8 @@ processors:
     actions:
       - key: k8s.cluster.name
         action: delete
+      - key: beyla
+        action: delete
 
   transform/scope:
     metric_statements:
@@ -220,6 +222,8 @@ processors:
       - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
       - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
 
+      - set(resource.attributes["beyla"], true)
+
   groupbyattrs/beyla-entity-ids:
     keys:
       - sw.k8s.dst.sw.server.address.fqdn
@@ -328,42 +332,49 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           # source KubernetesStatefulSet
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
@@ -371,42 +382,49 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           # source KubernetesDaemonSet
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
@@ -414,42 +432,49 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           # source KubernetesJob
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
@@ -457,42 +482,49 @@ connectors:
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesJob
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
             attributes:
+              - beyla
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
             attributes:
+              - beyla
 
   solarwindsentity/beyla-entities:
     schema:
