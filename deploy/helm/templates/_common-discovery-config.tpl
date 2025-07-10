@@ -151,7 +151,7 @@ transform/istio-metrics:
         - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
         - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
         - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
-        - set(resource.attributes["istio"], true) 
+        - set(resource.attributes["istio"], "true") 
 
 transform/istio-metric-datapoints:
   metric_statements:
