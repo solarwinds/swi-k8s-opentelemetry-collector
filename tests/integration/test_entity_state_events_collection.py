@@ -58,7 +58,8 @@ def assert_test_entitystateevents_found(content):
                 log_records = scope_log['logRecords']
 
                 for log_record in log_records:
-                    has_correct_log_record_attributes(log_record)
+                    if not has_correct_log_record_attributes(log_record):
+                        continue
                     if has_all_attributes_for_entity(log_record):
                         return True
     return False
@@ -77,8 +78,13 @@ def has_correct_scope_attributes_set(scope_log):
         raise Exception('Attribute "otel.entity.event_as_log" is not set')
 
 def has_correct_log_record_attributes(log_record):
+    if has_attribute_with_key_and_value(log_record, 'otel.entity.event.type', 'entity_relationship_state'):
+        print('Entity relationship state event found, skipping')
+        return False
     if not has_attribute_with_key_and_value(log_record, 'otel.entity.event.type', 'entity_state'):
-        raise Exception(f'Attribute "otel.entity.event.type" has unexpected value')
+        raise Exception('Attribute "otel.entity.event.type" has unexpected value')
+
+    return True
 
 
 def has_id_attributes_for_container(log_record):
