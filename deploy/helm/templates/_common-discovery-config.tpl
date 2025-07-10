@@ -501,7 +501,7 @@ metrics/relationship-state-events-workload-service-preparation:
     - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-service
 
-metrics/discovery-istio-metrics-clean:
+metrics/discovery-istio-clean:
   receivers:
     - forward/discovery-istio-metrics-clean
   processors:
