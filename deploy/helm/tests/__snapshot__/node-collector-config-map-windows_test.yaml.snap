@@ -216,10 +216,6 @@ Node collector config for windows nodes should match snapshot when using default
           observe_nodes: true
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -991,6 +987,10 @@ Node collector config for windows nodes should match snapshot when using default
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -1500,7 +1500,7 @@ Node collector config for windows nodes should match snapshot when using default
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
@@ -1786,10 +1786,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
           observe_nodes: true
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -2568,6 +2564,10 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -3159,7 +3159,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:

@@ -236,10 +236,10 @@ batch/stateevents:
   timeout: 1s
   send_batch_max_size: 1024
 
-attributes/clean-temporary-attributes:
-  actions:
+resource/clean-temporary-attributes:
+  attributes:      
     - key: istio
-      action: delete  
+      action: delete
 {{- end }}
 
 
@@ -506,7 +506,7 @@ metrics/discovery-istio-clean:
     - forward/discovery-istio-metrics-clean
   processors:
     - memory_limiter
-    - attributes/clean-temporary-attributes
+    - resource/clean-temporary-attributes
   exporters:
     - {{ $metricExporter }}
 

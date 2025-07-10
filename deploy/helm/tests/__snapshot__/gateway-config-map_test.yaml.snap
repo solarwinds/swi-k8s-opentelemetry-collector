@@ -296,12 +296,13 @@ Gateway config should match snapshot when using default values:
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
+        attributes:
+        - action: delete
+          key: beyla
         attributes/clean-attributes-otlp-metrics:
           actions:
           - action: delete
             key: k8s.cluster.name
-          - action: delete
-            key: beyla
         batch:
           send_batch_max_size: 1024
           send_batch_size: 1024
@@ -368,6 +369,7 @@ Gateway config should match snapshot when using default values:
           - action: upsert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/clean-temporary-attributes: null
         swok8sworkloadtype/beyla:
           workload_mappings:
           - expected_types:
@@ -639,6 +641,7 @@ Gateway config should match snapshot when using default values:
             - k8sattributes
             - metricstransform/rename
             - attributes/clean-attributes-otlp-metrics
+            - resource/clean-temporary-attributes
             - resource
             - transform/scope
             - batch

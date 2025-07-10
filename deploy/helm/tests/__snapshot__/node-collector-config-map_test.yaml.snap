@@ -216,10 +216,6 @@ Custom logs filter with new syntax:
           observe_nodes: true
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -995,6 +991,10 @@ Custom logs filter with new syntax:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -1541,7 +1541,7 @@ Custom logs filter with new syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
@@ -1827,10 +1827,6 @@ Custom logs filter with old syntax:
           observe_nodes: true
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -2609,6 +2605,10 @@ Custom logs filter with old syntax:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -3236,7 +3236,7 @@ Custom logs filter with old syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
@@ -3522,10 +3522,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           observe_nodes: true
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -4297,6 +4293,10 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -4782,7 +4782,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
@@ -5068,10 +5068,6 @@ Node collector config should match snapshot when fargate is enabled:
           observe_nodes: true
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -5840,6 +5836,10 @@ Node collector config should match snapshot when fargate is enabled:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -6330,7 +6330,7 @@ Node collector config should match snapshot when fargate is enabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
@@ -6587,10 +6587,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -7359,6 +7355,10 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -7776,7 +7776,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
@@ -8039,10 +8039,6 @@ Node collector config should match snapshot when using default values:
           observe_nodes: true
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -8814,6 +8810,10 @@ Node collector config should match snapshot when using default values:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         resource/container:
           attributes:
           - action: insert
@@ -9359,7 +9359,7 @@ Node collector config should match snapshot when using default values:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:

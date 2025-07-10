@@ -70,12 +70,15 @@ processors:
         value: ${CLUSTER_NAME}
         action: upsert
 
+  resource/clean-temporary-attributes:
+  attributes:      
+    - key: beyla
+      action: delete
+
   # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
   attributes/clean-attributes-otlp-metrics:
     actions:
       - key: k8s.cluster.name
-        action: delete
-      - key: beyla
         action: delete
 
   transform/scope:
@@ -575,6 +578,7 @@ service:
         - metricstransform/rename
 {{- end }}
         - attributes/clean-attributes-otlp-metrics
+        - resource/clean-temporary-attributes
         - resource
         - transform/scope
         - batch

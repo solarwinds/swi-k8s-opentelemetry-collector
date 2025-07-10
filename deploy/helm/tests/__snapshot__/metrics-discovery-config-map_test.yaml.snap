@@ -209,10 +209,6 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           auth_type: serviceAccount
           observe_pods: true
       processors:
-        attributes/clean-temporary-attributes:
-          actions:
-          - action: delete
-            key: istio
         batch/metrics:
           send_batch_max_size: 512
           send_batch_size: 512
@@ -382,6 +378,10 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -596,7 +596,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
-            - attributes/clean-temporary-attributes
+            - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
