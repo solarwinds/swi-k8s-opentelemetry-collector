@@ -519,7 +519,7 @@ metrics/not-relationship-state-events-preparation:
     - memory_limiter
     - filter/keep-not-relationships
   exporters:
-    - {{ $metricExporter }}
+    - forward/discovery-istio-metrics-clean
 
 metrics/discovery-istio-clean:
   receivers:
