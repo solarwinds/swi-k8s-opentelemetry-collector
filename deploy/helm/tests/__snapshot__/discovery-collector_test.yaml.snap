@@ -25,6 +25,7 @@ Discovery collector spec should match snapshot when using default values:
       targetMemoryUtilization: 80
     config:
       connectors:
+        forward/discovery-istio-metrics-clean: {}
         forward/metric-exporter: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
@@ -79,37 +80,43 @@ Discovery collector spec should match snapshot when using default values:
                 - context: metric
                   type: PublicNetworkLocation
               relationships:
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesService
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: PublicNetworkLocation
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesService
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: PublicNetworkLocation
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesService
                   source_entity: KubernetesDaemonSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: PublicNetworkLocation
@@ -137,55 +144,64 @@ Discovery collector spec should match snapshot when using default values:
                   - k8s.daemonset.name
             events:
               relationships:
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesDeployment
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesStatefulSet
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesDaemonSet
                   source_entity: KubernetesDeployment
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesDeployment
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesStatefulSet
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesDaemonSet
                   source_entity: KubernetesStatefulSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesDeployment
                   source_entity: KubernetesDaemonSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesStatefulSet
                   source_entity: KubernetesDaemonSet
                   type: KubernetesCommunicatesWith
-                - attributes: null
+                - attributes:
+                    - istio
                   conditions: []
                   context: metric
                   destination_entity: KubernetesDaemonSet
@@ -213,6 +229,10 @@ Discovery collector spec should match snapshot when using default values:
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
+        attributes/clean-temporary-attributes:
+          actions:
+            - action: delete
+              key: istio
         batch/metrics:
           send_batch_max_size: 512
           send_batch_size: 512
@@ -406,6 +426,7 @@ Discovery collector spec should match snapshot when using default values:
                 - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
                 - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "k8s.istio_request_duration_milliseconds_sum"
                 - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "k8s.istio_request_duration_milliseconds_count"
+                - set(resource.attributes["istio"], true)
         transform/istio-workload-service:
           metric_statements:
             - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
@@ -520,6 +541,14 @@ Discovery collector spec should match snapshot when using default values:
               - resource/all
             receivers:
               - routing/discovered_metrics
+          metrics/discovery-istio-metrics-clean:
+            exporters:
+              - forward/metric-exporter
+            processors:
+              - memory_limiter
+              - attributes/clean-temporary-attributes
+            receivers:
+              - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
               - routing/discovered_metrics
@@ -530,7 +559,7 @@ Discovery collector spec should match snapshot when using default values:
               - prometheus
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
-              - forward/metric-exporter
+              - forward/discovery-istio-metrics-clean
               - solarwindsentity/istio-workload-service
             processors:
               - memory_limiter
@@ -542,7 +571,7 @@ Discovery collector spec should match snapshot when using default values:
               - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
-              - forward/metric-exporter
+              - forward/discovery-istio-metrics-clean
               - solarwindsentity/istio-workload-workload
             processors:
               - memory_limiter

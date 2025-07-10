@@ -2,6 +2,7 @@ Custom logs filter with new syntax:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/relationship-state-events-workload-service: {}
@@ -57,37 +58,43 @@ Custom logs filter with new syntax:
               - context: metric
                 type: PublicNetworkLocation
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -115,55 +122,64 @@ Custom logs filter with new syntax:
               - k8s.daemonset.name
             events:
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -200,6 +216,10 @@ Custom logs filter with new syntax:
           observe_nodes: true
           observe_pods: true
       processors:
+        attributes/clean-temporary-attributes:
+          actions:
+          - action: delete
+            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -1162,6 +1182,7 @@ Custom logs filter with new syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], true)
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -1515,6 +1536,14 @@ Custom logs filter with new syntax:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-metrics-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - attributes/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -1548,7 +1577,7 @@ Custom logs filter with new syntax:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -1560,7 +1589,7 @@ Custom logs filter with new syntax:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -1584,6 +1613,7 @@ Custom logs filter with old syntax:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/relationship-state-events-workload-service: {}
@@ -1639,37 +1669,43 @@ Custom logs filter with old syntax:
               - context: metric
                 type: PublicNetworkLocation
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -1697,55 +1733,64 @@ Custom logs filter with old syntax:
               - k8s.daemonset.name
             events:
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -1782,6 +1827,10 @@ Custom logs filter with old syntax:
           observe_nodes: true
           observe_pods: true
       processors:
+        attributes/clean-temporary-attributes:
+          actions:
+          - action: delete
+            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -2747,6 +2796,7 @@ Custom logs filter with old syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], true)
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -3181,6 +3231,14 @@ Custom logs filter with old syntax:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-metrics-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - attributes/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -3214,7 +3272,7 @@ Custom logs filter with old syntax:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -3226,7 +3284,7 @@ Custom logs filter with old syntax:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -3250,6 +3308,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/relationship-state-events-workload-service: {}
@@ -3305,37 +3364,43 @@ Node collector config should match snapshot when autodiscovery is disabled:
               - context: metric
                 type: PublicNetworkLocation
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -3363,55 +3428,64 @@ Node collector config should match snapshot when autodiscovery is disabled:
               - k8s.daemonset.name
             events:
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -3448,6 +3522,10 @@ Node collector config should match snapshot when autodiscovery is disabled:
           observe_nodes: true
           observe_pods: true
       processors:
+        attributes/clean-temporary-attributes:
+          actions:
+          - action: delete
+            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -4406,6 +4484,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], true)
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -4698,6 +4777,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-metrics-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - attributes/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -4731,7 +4818,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -4743,7 +4830,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -4767,6 +4854,7 @@ Node collector config should match snapshot when fargate is enabled:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/relationship-state-events-workload-service: {}
@@ -4822,37 +4910,43 @@ Node collector config should match snapshot when fargate is enabled:
               - context: metric
                 type: PublicNetworkLocation
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -4880,55 +4974,64 @@ Node collector config should match snapshot when fargate is enabled:
               - k8s.daemonset.name
             events:
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -4965,6 +5068,10 @@ Node collector config should match snapshot when fargate is enabled:
           observe_nodes: true
           observe_pods: true
       processors:
+        attributes/clean-temporary-attributes:
+          actions:
+          - action: delete
+            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -5920,6 +6027,7 @@ Node collector config should match snapshot when fargate is enabled:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], true)
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -6217,6 +6325,14 @@ Node collector config should match snapshot when fargate is enabled:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-metrics-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - attributes/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -6227,7 +6343,7 @@ Node collector config should match snapshot when fargate is enabled:
             - receiver_creator/discovery
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -6239,7 +6355,7 @@ Node collector config should match snapshot when fargate is enabled:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -6263,6 +6379,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
@@ -6317,37 +6434,43 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               - context: metric
                 type: PublicNetworkLocation
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -6375,55 +6498,64 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               - k8s.daemonset.name
             events:
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -6455,6 +6587,10 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         health_check:
           endpoint: 0.0.0.0:13133
       processors:
+        attributes/clean-temporary-attributes:
+          actions:
+          - action: delete
+            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -7410,6 +7546,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], true)
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -7634,6 +7771,14 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-metrics-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - attributes/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -7644,7 +7789,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - receiver_creator/discovery
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -7656,7 +7801,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
@@ -7680,6 +7825,7 @@ Node collector config should match snapshot when using default values:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/relationship-state-events-workload-service: {}
@@ -7735,37 +7881,43 @@ Node collector config should match snapshot when using default values:
               - context: metric
                 type: PublicNetworkLocation
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -7793,55 +7945,64 @@ Node collector config should match snapshot when using default values:
               - k8s.daemonset.name
             events:
               relationships:
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
-              - attributes: null
+              - attributes:
+                - istio
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -7878,6 +8039,10 @@ Node collector config should match snapshot when using default values:
           observe_nodes: true
           observe_pods: true
       processors:
+        attributes/clean-temporary-attributes:
+          actions:
+          - action: delete
+            key: istio
         attributes/remove_prometheus_attributes:
           actions:
           - action: delete
@@ -8836,6 +9001,7 @@ Node collector config should match snapshot when using default values:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], true)
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -9188,6 +9354,14 @@ Node collector config should match snapshot when using default values:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-metrics-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - attributes/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -9221,7 +9395,7 @@ Node collector config should match snapshot when using default values:
             - receiver_creator/node
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-service
             processors:
             - memory_limiter
@@ -9233,7 +9407,7 @@ Node collector config should match snapshot when using default values:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
-            - forward/metric-exporter
+            - forward/discovery-istio-metrics-clean
             - solarwindsentity/istio-workload-workload
             processors:
             - memory_limiter
