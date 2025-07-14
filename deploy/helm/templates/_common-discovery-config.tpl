@@ -5,6 +5,8 @@ filter/metrics-discovery:
 {{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 4 }}
 {{- end }}
 
+logdedup/solarwindsentity: {}
+
 filter/keep-entity-state-events:
   logs:
     log_record:
@@ -149,6 +151,7 @@ transform/istio-metrics:
         - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
         - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
         - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
+        - set(resource.attributes["istio"], "true") 
 
 transform/istio-metric-datapoints:
   metric_statements:
@@ -194,22 +197,26 @@ groupbyattrs/istio-relationships:
 filter/keep-workload-workload-relationships:
   error_mode: ignore
   metrics:
-    metric:
-      - name != "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum"
     datapoint:
       - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == ""
 
 filter/keep-workload-service-relationships:
   error_mode: ignore
   metrics:
-    metric:
-      - name != "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum"
     datapoint:
       - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
 
+# filter is used to keep only metrics that are not workload-to-workload or workload-to-service
+filter/keep-not-relationships:
+  error_mode: ignore
+  metrics:
+    datapoint:
+      - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
+
+
+
 transform/istio-workload-workload:
   metric_statements:
-    - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace", "destination_workload", "destination_workload_namespace", "source_workload_type", "destination_workload_type"])
     - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
     - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
     - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
@@ -221,7 +228,6 @@ transform/istio-workload-workload:
 
 transform/istio-workload-service:
   metric_statements:
-    - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace", "destination_service_name", "destination_service_namespace", "source_workload_type", "destination_service_type", "dest.sw.server.address.fqdn"])
     - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
     - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
     - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
@@ -231,7 +237,6 @@ transform/istio-workload-service:
 
 transform/only-relationship-resource-attributes:
   metric_statements:
-    - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name", "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name", "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name", "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name", "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name", "dest.sw.server.address.fqdn"])
     # Temporary, to be removed when solarwindsentityconnector supports creation of entities from attributes with prefixes
     - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"]) where resource.attributes["dest.sw.server.address.fqdn"] != nil
 
@@ -239,12 +244,19 @@ batch/stateevents:
   send_batch_size: 1024
   timeout: 1s
   send_batch_max_size: 1024
+
+resource/clean-temporary-attributes:
+  attributes:      
+    - key: istio
+      action: delete
 {{- end }}
 
 
 {{- define "common-discovery-config.connectors" -}}
 forward/relationship-state-events-workload-workload: {}
 forward/relationship-state-events-workload-service: {}
+forward/not-relationship-state-events: {}
+forward/discovery-istio-metrics-clean: {}
 routing/discovered_metrics:
   default_pipelines: [metrics/discovery-custom]
   table:
@@ -283,6 +295,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
@@ -290,6 +303,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
@@ -297,6 +311,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
@@ -305,6 +320,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -312,6 +328,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -319,6 +336,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
@@ -327,6 +345,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -334,6 +353,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -341,6 +361,7 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
 
 
@@ -395,6 +416,7 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
@@ -402,6 +424,7 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
@@ -410,6 +433,7 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -417,6 +441,7 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
@@ -425,6 +450,7 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -432,6 +458,7 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+            - istio
           action: "update"
 {{- end }}
 
@@ -471,9 +498,9 @@ metrics/discovery-istio:
     - groupbyattrs/common-all
     - resource/all
   exporters:
-    - {{ $metricExporter }}
     - forward/relationship-state-events-workload-workload
     - forward/relationship-state-events-workload-service
+    - forward/not-relationship-state-events
 
 metrics/relationship-state-events-workload-workload-preparation:
   receivers:
@@ -485,6 +512,7 @@ metrics/relationship-state-events-workload-workload-preparation:
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
   exporters:
+    - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-workload
 
 metrics/relationship-state-events-workload-service-preparation:
@@ -497,7 +525,26 @@ metrics/relationship-state-events-workload-service-preparation:
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
   exporters:
+    - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-service
+
+metrics/not-relationship-state-events-preparation:
+  receivers:
+    - forward/not-relationship-state-events
+  processors:
+    - memory_limiter
+    - filter/keep-not-relationships
+  exporters:
+    - forward/discovery-istio-metrics-clean
+
+metrics/discovery-istio-clean:
+  receivers:
+    - forward/discovery-istio-metrics-clean
+  processors:
+    - memory_limiter
+    - resource/clean-temporary-attributes
+  exporters:
+    - {{ $metricExporter }}
 
 # Current SWO pipeline cannot process state events and relationships events together,
 # so we need to split them into two separate pipelines.
@@ -510,6 +557,7 @@ logs/stateevents-entities:
     - memory_limiter
     - filter/keep-entity-state-events
     - transform/scope
+    - logdedup/solarwindsentity
     - batch/stateevents
   exporters:
     - otlp
@@ -522,6 +570,7 @@ logs/stateevents-relationships:
     - memory_limiter
     - filter/keep-relationship-state-events
     - transform/scope
+    - logdedup/solarwindsentity
     - batch/stateevents
   exporters:
     - otlp
