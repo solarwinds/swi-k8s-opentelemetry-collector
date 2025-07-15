@@ -158,7 +158,7 @@ transform/istio-metric-datapoints:
     - statements:
         - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
 
-transform/istio-metric-relationship-datapoints:
+transform/istio-relationship-types:
   metric_statements:
     - statements:
         - set(resource.attributes["tcp"], "true") where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_sent_bytes_total" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"] == "tcp"
@@ -509,7 +509,7 @@ metrics/relationship-state-events-workload-workload-preparation:
     - transform/istio-workload-workload
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
-    - transform/istio-metric-relationship-datapoints
+    - transform/istio-relationship-types
   exporters:
     - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-workload
@@ -523,7 +523,7 @@ metrics/relationship-state-events-workload-service-preparation:
     - transform/istio-workload-service
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
-    - transform/istio-metric-relationship-datapoints
+    - transform/istio-relationship-types
   exporters:
     - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-service
