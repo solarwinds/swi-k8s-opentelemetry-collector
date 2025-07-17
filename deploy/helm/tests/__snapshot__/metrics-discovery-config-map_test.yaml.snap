@@ -62,6 +62,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -70,6 +73,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -78,6 +84,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -86,6 +95,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -94,6 +106,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -102,6 +117,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -132,6 +150,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -140,6 +161,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -148,6 +172,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -156,6 +183,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -164,6 +194,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -172,6 +205,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -180,6 +216,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -188,6 +227,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -196,6 +238,9 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -408,6 +453,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           attributes:
           - action: delete
             key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -448,6 +499,18 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -652,6 +715,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
@@ -664,6 +728,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:

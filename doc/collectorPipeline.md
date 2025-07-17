@@ -29,23 +29,23 @@ stateDiagram-v2
 
     mc_metricsPrometheusPipeline: 'metrics/prometheus' pipeline
     state mc_metricsPrometheusPipeline {
-      mc_r4: 'forward/prometheus' connector
-      mc_e4: 'forward/metric-exporter' connector
-      mc_r4 --> mc_e4 : processors
+      mc_r3: 'forward/prometheus' connector
+      mc_e3: 'forward/metric-exporter' connector
+      mc_r3 --> mc_e3 : processors
     }
 
     mc_metricsPrometheusNodeMetricsPipeline: 'metrics/prometheus-node-metrics' pipeline
     state mc_metricsPrometheusNodeMetricsPipeline {
-      mc_r5: 'prometheus/node-metrics' receiver
-      mc_e5: 'forward/prometheus' connector
-      mc_r5 --> mc_e5 : processors
+      mc_r4: 'prometheus/node-metrics' receiver
+      mc_e4: 'forward/prometheus' connector
+      mc_r4 --> mc_e4 : processors
     }
 
     mc_metricsPrometheusServerPipeline: 'metrics/prometheus-server' pipeline
     state mc_metricsPrometheusServerPipeline {
-      mc_r6: 'prometheus/prometheus-server' receiver
-      mc_e6: 'forward/prometheus' connector
-      mc_r6 --> mc_e6 : processors
+      mc_r5: 'prometheus/prometheus-server' receiver
+      mc_e5: 'forward/prometheus' connector
+      mc_r5 --> mc_e5 : processors
     }
 
     mc_metricsPrometheusPipeline --> mc_metricsPipeline
@@ -72,14 +72,16 @@ stateDiagram-v2
       md_r2: 'routing/discovered_metrics' connector
       md_e2a: 'forward/relationship-state-events-workload-workload' connector
       md_e2b: 'forward/relationship-state-events-workload-service' connector
+      md_e2c: 'forward/not-relationship-state-events' connector
       md_r2 --> md_e2a : processors
       md_r2 --> md_e2b : processors
+      md_r2 --> md_e2c : processors
     }
 
     md_metricsRelationshipWorkloadPipeline: 'metrics/relationship-state-events-workload-workload-preparation' pipeline
     state md_metricsRelationshipWorkloadPipeline {
       md_r3: 'forward/relationship-state-events-workload-workload' connector
-      md_e3a: 'forward/metric-exporter' connector
+      md_e3a: 'forward/discovery-istio-metrics-clean' connector
       md_e3b: 'solarwindsentity/istio-workload-workload' connector
       md_r3 --> md_e3a : processors
       md_r3 --> md_e3b : processors
@@ -88,54 +90,71 @@ stateDiagram-v2
     md_metricsRelationshipServicePipeline: 'metrics/relationship-state-events-workload-service-preparation' pipeline
     state md_metricsRelationshipServicePipeline {
       md_r4: 'forward/relationship-state-events-workload-service' connector
-      md_e4a: 'forward/metric-exporter' connector
+      md_e4a: 'forward/discovery-istio-metrics-clean' connector
       md_e4b: 'solarwindsentity/istio-workload-service' connector
       md_r4 --> md_e4a : processors
       md_r4 --> md_e4b : processors
     }
 
+    md_metricsNotRelationshipPipeline: 'metrics/not-relationship-state-events-preparation' pipeline
+    state md_metricsNotRelationshipPipeline {
+      md_r5: 'forward/not-relationship-state-events' connector
+      md_e5: 'forward/discovery-istio-metrics-clean' connector
+      md_r5 --> md_e5 : processors
+    }
+
+    md_metricsDiscoveryIstioCleanPipeline: 'metrics/discovery-istio-clean' pipeline
+    state md_metricsDiscoveryIstioCleanPipeline {
+      md_r6: 'forward/discovery-istio-metrics-clean' connector
+      md_e6: 'forward/metric-exporter' connector
+      md_r6 --> md_e6 : processors
+    }
+
     md_logsStateEventsEntitiesPipeline: 'logs/stateevents-entities' pipeline
     state md_logsStateEventsEntitiesPipeline {
-      md_r5a: 'solarwindsentity/istio-workload-workload' connector
-      md_r5b: 'solarwindsentity/istio-workload-service' connector
-      md_e5: 'otlp' exporter
-      md_r5a --> md_e5 : processors
-      md_r5b --> md_e5 : processors
+      md_r7a: 'solarwindsentity/istio-workload-workload' connector
+      md_r7b: 'solarwindsentity/istio-workload-service' connector
+      md_e7: 'otlp' exporter
+      md_r7a --> md_e7 : processors
+      md_r7b --> md_e7 : processors
     }
 
     md_logsStateEventsRelationshipsPipeline: 'logs/stateevents-relationships' pipeline
     state md_logsStateEventsRelationshipsPipeline {
-      md_r6a: 'solarwindsentity/istio-workload-workload' connector
-      md_r6b: 'solarwindsentity/istio-workload-service' connector
-      md_e6: 'otlp' exporter
-      md_r6a --> md_e6 : processors
-      md_r6b --> md_e6 : processors
+      md_r8a: 'solarwindsentity/istio-workload-workload' connector
+      md_r8b: 'solarwindsentity/istio-workload-service' connector
+      md_e8: 'otlp' exporter
+      md_r8a --> md_e8 : processors
+      md_r8b --> md_e8 : processors
     }
 
     md_metricsDiscoveryCustomPipeline: 'metrics/discovery-custom' pipeline
     state md_metricsDiscoveryCustomPipeline {
-      md_r7: 'routing/discovered_metrics' connector
-      md_e7: 'forward/metric-exporter' connector
-      md_r7 --> md_e7 : processors
+      md_r9: 'routing/discovered_metrics' connector
+      md_e9: 'forward/metric-exporter' connector
+      md_r9 --> md_e9 : processors
     }
 
     md_metricsPipeline: 'metrics' pipeline
     state md_metricsPipeline {
-      md_r8: 'forward/metric-exporter' connector
-      md_e8: 'otlp' exporter
-      md_r8 --> md_e8 : processors
+      md_r10: 'forward/metric-exporter' connector
+      md_e10: 'otlp' exporter
+      md_r10 --> md_e10 : processors
     }
 
     md_metricsDiscoveryScrapePipeline --> md_metricsDiscoveryCustomPipeline
     md_metricsDiscoveryScrapePipeline --> md_metricsDiscoveryIstioPipeline
     md_metricsDiscoveryIstioPipeline --> md_metricsRelationshipWorkloadPipeline
     md_metricsDiscoveryIstioPipeline --> md_metricsRelationshipServicePipeline
+    md_metricsDiscoveryIstioPipeline --> md_metricsNotRelationshipPipeline
+    md_metricsRelationshipWorkloadPipeline --> md_metricsDiscoveryIstioCleanPipeline
+    md_metricsRelationshipServicePipeline --> md_metricsDiscoveryIstioCleanPipeline
+    md_metricsNotRelationshipPipeline --> md_metricsDiscoveryIstioCleanPipeline
+    md_metricsDiscoveryIstioCleanPipeline --> md_metricsPipeline
     md_metricsRelationshipWorkloadPipeline --> md_logsStateEventsEntitiesPipeline
     md_metricsRelationshipServicePipeline --> md_logsStateEventsEntitiesPipeline
     md_metricsRelationshipWorkloadPipeline --> md_logsStateEventsRelationshipsPipeline
     md_metricsRelationshipServicePipeline --> md_logsStateEventsRelationshipsPipeline
-    md_metricsRelationshipWorkloadPipeline --> md_metricsPipeline
-    md_metricsRelationshipServicePipeline --> md_metricsPipeline
     md_metricsDiscoveryCustomPipeline --> md_metricsPipeline
   }
 
@@ -307,14 +326,16 @@ stateDiagram-v2
       nc_r6: 'routing/discovered_metrics' connector
       nc_e6a: 'forward/relationship-state-events-workload-workload' connector
       nc_e6b: 'forward/relationship-state-events-workload-service' connector
+      nc_e6c: 'forward/not-relationship-state-events' connector
       nc_r6 --> nc_e6a : processors
       nc_r6 --> nc_e6b : processors
+      nc_r6 --> nc_e6c : processors
     }
 
     nc_metricsRelationshipWorkloadPipeline: 'metrics/relationship-state-events-workload-workload-preparation' pipeline
     state nc_metricsRelationshipWorkloadPipeline {
       nc_r7: 'forward/relationship-state-events-workload-workload' connector
-      nc_e7a: 'forward/metric-exporter' connector
+      nc_e7a: 'forward/discovery-istio-metrics-clean' connector
       nc_e7b: 'solarwindsentity/istio-workload-workload' connector
       nc_r7 --> nc_e7a : processors
       nc_r7 --> nc_e7b : processors
@@ -323,42 +344,56 @@ stateDiagram-v2
     nc_metricsRelationshipServicePipeline: 'metrics/relationship-state-events-workload-service-preparation' pipeline
     state nc_metricsRelationshipServicePipeline {
       nc_r8: 'forward/relationship-state-events-workload-service' connector
-      nc_e8a: 'forward/metric-exporter' connector
+      nc_e8a: 'forward/discovery-istio-metrics-clean' connector
       nc_e8b: 'solarwindsentity/istio-workload-service' connector
       nc_r8 --> nc_e8a : processors
       nc_r8 --> nc_e8b : processors
     }
 
+    nc_metricsNotRelationshipPipeline: 'metrics/not-relationship-state-events-preparation' pipeline
+    state nc_metricsNotRelationshipPipeline {
+      nc_r9: 'forward/not-relationship-state-events' connector
+      nc_e9: 'forward/discovery-istio-metrics-clean' connector
+      nc_r9 --> nc_e9 : processors
+    }
+
+    nc_metricsDiscoveryIstioCleanPipeline: 'metrics/discovery-istio-clean' pipeline
+    state nc_metricsDiscoveryIstioCleanPipeline {
+      nc_r10: 'forward/discovery-istio-metrics-clean' connector
+      nc_e10: 'forward/metric-exporter' connector
+      nc_r10 --> nc_e10 : processors
+    }
+
     nc_logsStateEventsEntitiesPipeline: 'logs/stateevents-entities' pipeline
     state nc_logsStateEventsEntitiesPipeline {
-      nc_r9a: 'solarwindsentity/istio-workload-workload' connector
-      nc_r9b: 'solarwindsentity/istio-workload-service' connector
-      nc_e9: 'otlp' exporter
-      nc_r9a --> nc_e9 : processors
-      nc_r9b --> nc_e9 : processors
+      nc_r11a: 'solarwindsentity/istio-workload-workload' connector
+      nc_r11b: 'solarwindsentity/istio-workload-service' connector
+      nc_e11: 'otlp' exporter
+      nc_r11a --> nc_e11 : processors
+      nc_r11b --> nc_e11 : processors
     }
 
     nc_logsStateEventsRelationshipsPipeline: 'logs/stateevents-relationships' pipeline
     state nc_logsStateEventsRelationshipsPipeline {
-      nc_r10a: 'solarwindsentity/istio-workload-workload' connector
-      nc_r10b: 'solarwindsentity/istio-workload-service' connector
-      nc_e10: 'otlp' exporter
-      nc_r10a --> nc_e10 : processors
-      nc_r10b --> nc_e10 : processors
+      nc_r12a: 'solarwindsentity/istio-workload-workload' connector
+      nc_r12b: 'solarwindsentity/istio-workload-service' connector
+      nc_e12: 'otlp' exporter
+      nc_r12a --> nc_e12 : processors
+      nc_r12b --> nc_e12 : processors
     }
 
     nc_metricsDiscoveryCustomPipeline: 'metrics/discovery-custom' pipeline
     state nc_metricsDiscoveryCustomPipeline {
-      nc_r11: 'routing/discovered_metrics' connector
-      nc_e11: 'forward/metric-exporter' connector
-      nc_r11 --> nc_e11 : processors
+      nc_r13: 'routing/discovered_metrics' connector
+      nc_e13: 'forward/metric-exporter' connector
+      nc_r13 --> nc_e13 : processors
     }
 
     nc_metricsNodePipeline: 'metrics/node' pipeline
     state nc_metricsNodePipeline {
-      nc_r12: 'receiver_creator/node' receiver
-      nc_e12: 'forward/metric-exporter' connector
-      nc_r12 --> nc_e12 : processors
+      nc_r14: 'receiver_creator/node' receiver
+      nc_e14: 'forward/metric-exporter' connector
+      nc_r14 --> nc_e14 : processors
     }
 
     nc_logsContainerPipeline --> nc_logsPipeline
@@ -368,14 +403,17 @@ stateDiagram-v2
     nc_metricsDiscoveryScrapePipeline --> nc_metricsDiscoveryIstioPipeline
     nc_metricsDiscoveryIstioPipeline --> nc_metricsRelationshipWorkloadPipeline
     nc_metricsDiscoveryIstioPipeline --> nc_metricsRelationshipServicePipeline
+    nc_metricsDiscoveryIstioPipeline --> nc_metricsNotRelationshipPipeline
+    nc_metricsRelationshipWorkloadPipeline --> nc_metricsDiscoveryIstioCleanPipeline
+    nc_metricsRelationshipServicePipeline --> nc_metricsDiscoveryIstioCleanPipeline
+    nc_metricsNotRelationshipPipeline --> nc_metricsDiscoveryIstioCleanPipeline
+    nc_metricsDiscoveryIstioCleanPipeline --> nc_metricsPipeline
     nc_metricsRelationshipWorkloadPipeline --> nc_logsStateEventsEntitiesPipeline
     nc_metricsRelationshipServicePipeline --> nc_logsStateEventsEntitiesPipeline
     nc_metricsRelationshipWorkloadPipeline --> nc_logsStateEventsRelationshipsPipeline
     nc_metricsRelationshipServicePipeline --> nc_logsStateEventsRelationshipsPipeline
 
     nc_metricsDiscoveryCustomPipeline --> nc_metricsPipeline
-    nc_metricsRelationshipWorkloadPipeline --> nc_metricsPipeline
-    nc_metricsRelationshipServicePipeline --> nc_metricsPipeline
     nc_metricsNodePipeline --> nc_metricsPipeline
   }
 

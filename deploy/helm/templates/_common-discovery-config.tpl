@@ -151,12 +151,19 @@ transform/istio-metrics:
         - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
         - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
         - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
-        - set(resource.attributes["istio"], "true") 
+        - set(resource.attributes["istio"], "true")
 
 transform/istio-metric-datapoints:
   metric_statements:
     - statements:
         - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+
+transform/istio-relationship-types:
+  metric_statements:
+    - statements:
+        - set(resource.attributes["tcp"], "true") where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_sent_bytes_total" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"] == "tcp"
+        - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta" or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"] == "http"
+        - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta" or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"] == "grpc"
 
 swok8sworkloadtype/istio:
   workload_mappings:
@@ -249,6 +256,12 @@ resource/clean-temporary-attributes:
   attributes:      
     - key: istio
       action: delete
+    - key: tcp
+      action: delete
+    - key: http
+      action: delete
+    - key: grpc
+      action: delete
 {{- end }}
 
 
@@ -294,24 +307,21 @@ solarwindsentity/istio-workload-workload:
           destination_entity: KubernetesDeployment
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
@@ -319,24 +329,21 @@ solarwindsentity/istio-workload-workload:
           destination_entity: KubernetesDeployment
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
@@ -344,24 +351,21 @@ solarwindsentity/istio-workload-workload:
           destination_entity: KubernetesDeployment
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
 
 
@@ -415,16 +419,14 @@ solarwindsentity/istio-workload-service:
           destination_entity: KubernetesService
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
@@ -432,16 +434,14 @@ solarwindsentity/istio-workload-service:
           destination_entity: KubernetesService
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
@@ -449,16 +449,14 @@ solarwindsentity/istio-workload-service:
           destination_entity: KubernetesService
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
-          attributes:
-            - istio
+          attributes: [istio, tcp, http, grpc]
           action: "update"
 {{- end }}
 
@@ -511,6 +509,7 @@ metrics/relationship-state-events-workload-workload-preparation:
     - transform/istio-workload-workload
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
+    - transform/istio-relationship-types
   exporters:
     - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-workload
@@ -524,6 +523,7 @@ metrics/relationship-state-events-workload-service-preparation:
     - transform/istio-workload-service
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
+    - transform/istio-relationship-types
   exporters:
     - forward/discovery-istio-metrics-clean
     - solarwindsentity/istio-workload-service
