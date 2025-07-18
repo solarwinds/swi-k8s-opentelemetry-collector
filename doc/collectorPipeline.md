@@ -155,8 +155,17 @@ stateDiagram-v2
     ec_manifestsPipeline: 'logs/manifests' pipeline
     state ec_manifestsPipeline {
       ec_r2: 'swok8sobjects' receiver
-      ec_e2: 'otlp' exporter
-      ec_r2 --> ec_e2 : processors
+      ec_e2a: 'routing/manifests' connector
+      ec_r2 --> ec_e2a : processors
+    }
+    
+    ec_manifestsExportPipeline: 'logs/manifests-export' pipeline
+    state ec_manifestsExportPipeline {
+      ec_r2b: 'routing/manifests' connector
+      ec_r2c: 'solarwindsentity/serviceendpointsmapping' connector
+      ec_e2b: 'otlp' exporter
+      ec_r2b --> ec_e2b : processors
+      ec_r2c --> ec_e2b : processors
     }
 
     ec_manifestsKeepalivePipeline: 'logs/manifests-keepalive' pipeline
@@ -173,7 +182,17 @@ stateDiagram-v2
       ec_r4 --> ec_e4 : processors
     }
 
+    ec_serviceEndpointsMappingPipeline: 'logs/serviceendpointsmapping' pipeline
+    state ec_serviceEndpointsMappingPipeline {
+      ec_r5: 'routing/manifests' connector
+      ec_e5: 'solarwindsentity/serviceendpointsmapping' connector
+      ec_r5 --> ec_e5 : processors
+    }
+
+    ec_manifestsPipeline --> ec_manifestsExportPipeline
+    ec_manifestsPipeline --> ec_serviceEndpointsMappingPipeline
     ec_manifestsKeepalivePipeline --> ec_stateEventsPipeline
+    ec_serviceEndpointsMappingPipeline --> ec_manifestsExportPipeline
   }
 
 %% ──────────────────────────────────────────────────────────────────────────────
