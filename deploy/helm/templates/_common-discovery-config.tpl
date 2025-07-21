@@ -283,18 +283,21 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -302,18 +305,21 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -321,19 +327,21 @@ solarwindsentity/istio-workload-workload:
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesStatefulSet
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDaemonSet
           conditions: []
           context: "metric"
           attributes:
-
+          action: "update"
 
 solarwindsentity/istio-workload-service:
   source_prefix: "source."
@@ -377,6 +385,7 @@ solarwindsentity/istio-workload-service:
       entities:
         - type: "PublicNetworkLocation"
           context: "metric"
+          action: "update"
       relationships:
         # source KubernetesDeployment
         - type: KubernetesCommunicatesWith
@@ -385,12 +394,14 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         # source KubernetesStatefulSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
@@ -398,12 +409,14 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         # source KubernetesDaemonSet
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
@@ -411,12 +424,14 @@ solarwindsentity/istio-workload-service:
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: PublicNetworkLocation
           conditions: []
           context: "metric"
           attributes:
+          action: "update"
 {{- end }}
 
 {{- define "common-discovery-config.pipelines" -}}
