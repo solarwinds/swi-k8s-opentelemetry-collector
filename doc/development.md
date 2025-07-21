@@ -303,7 +303,7 @@ The `k8s collector` can be configured to enable performance profiling with `ppro
     curl -s http://localhost:1777/debug/pprof/heap > ./heap.out
     ```
 
-    For ideal results, collect multiple such heap profiles, with with enough time between them.
+    For ideal results, collect multiple such heap profiles, with enough time between them.
 
 5. Open the heap profile:
 
