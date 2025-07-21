@@ -54,6 +54,10 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 connectors:
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
@@ -279,6 +283,7 @@ processors:
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
             - set(log.attributes["sw.k8s.ingress.type"], log.body["kind"]) where log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
             - set(log.attributes["k8s.object.kind"], log.body["kind"]) where log.body["kind"] != nil
+            - set(log.attributes["k8s.object.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"] != nil
 
             # There are some attributes added by k8sobjects receiver, SWO do not need them so removing it
             - delete_key(log.attributes, "k8s.resource.name")
@@ -465,6 +470,9 @@ service:
     - file_storage/manifests
 {{- end}}
     - health_check
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
 {{- if .Values.otel.events.enabled }}
     logs:

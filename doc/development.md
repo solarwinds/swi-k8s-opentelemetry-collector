@@ -8,6 +8,7 @@
 - [Develop against remote prometheus](#develop-against-remote-prometheus)
 - [Helm Unit tests](#helm-unit-tests)
 - [Integration tests](#integration-tests)
+- [Performance profiling](#performance-profiling)
 - [Updating Chart dependencies](#updating-chart-dependencies)
 - [Updating Chart configuration](#updating-chart-configuration)
 - [Release](#release)
@@ -233,6 +234,46 @@ Deploy cluster locally using `skaffold dev`
 ### Updating utils used for testing
 
 Whenever there is a need to improve the test tooling, eg. the script for scraping test data from a Prometheus (`utils/cleanup_mocked_prometheus_response.py`), or data comparison code, or versions or Python packages, ..., it should always happen in a separate PR. Do not mix changes to the test framework with changes to the k8s collector itself. Otherwise a change to the testing framework might hide an unintentional change to the collector code.
+
+## Performance profiling
+
+The `k8s collector` can be configured to enable performance profiling with `pprof`.
+
+Steps:
+
+1. Deploy the `k8s collector` with setting:
+
+    ```yaml
+    diagnostics:
+     profiling:
+       enabled: true
+    ```
+
+2. Port-forward the `pprof` port on any of the `k8s collector`'s Pods:
+
+    ```shell
+    kubectl -n <namespace> port-forward pod/<pod-name> 1777:pprof
+    ```
+
+3. On a machine with Go runtime, run command:
+
+    ```shell
+    go tool pprof http://localhost:1777/debug/pprof/<command>
+    ```
+
+    Alternatively, get the `pprof` binary already compiled and use that.
+
+    It will connect to the port-forwarded instance of the `k8s collector`, get the requested data, store it in a local file (path will be mentioned on the screen) and open the file in an interactive mode.
+
+    For documentation about available commands, see [net/http/pprof](https://pkg.go.dev/net/http/pprof).
+
+Note:
+
+To render the data as graphs, `pprof` requires `Graphwiz` to be installed on the machine:
+
+```shell
+choco install graphviz
+```
 
 ## Updating Chart dependencies
 
