@@ -63,6 +63,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -71,6 +74,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -79,6 +85,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -87,6 +96,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -95,6 +107,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -103,6 +118,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -133,6 +151,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -141,6 +162,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -149,6 +173,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -157,6 +184,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -165,6 +195,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -173,6 +206,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -181,6 +217,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -189,6 +228,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -197,6 +239,9 @@ Node collector config for windows nodes should match snapshot when using default
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -1017,6 +1062,12 @@ Node collector config for windows nodes should match snapshot when using default
           attributes:
           - action: delete
             key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -1185,6 +1236,18 @@ Node collector config for windows nodes should match snapshot when using default
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -1579,6 +1642,7 @@ Node collector config for windows nodes should match snapshot when using default
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
@@ -1591,6 +1655,7 @@ Node collector config for windows nodes should match snapshot when using default
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:
@@ -1668,6 +1733,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -1676,6 +1744,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -1684,6 +1755,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -1692,6 +1766,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -1700,6 +1777,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesService
@@ -1708,6 +1788,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: PublicNetworkLocation
@@ -1738,6 +1821,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -1746,6 +1832,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -1754,6 +1843,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -1762,6 +1854,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -1770,6 +1865,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -1778,6 +1876,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -1786,6 +1887,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDeployment
@@ -1794,6 +1898,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesStatefulSet
@@ -1802,6 +1909,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - action: update
                 attributes:
                 - istio
+                - tcp
+                - http
+                - grpc
                 conditions: []
                 context: metric
                 destination_entity: KubernetesDaemonSet
@@ -2629,6 +2739,12 @@ Node collector config for windows nodes should match snapshot when using legacy 
           attributes:
           - action: delete
             key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -2797,6 +2913,18 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
@@ -3273,6 +3401,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
           metrics/relationship-state-events-workload-workload-preparation:
@@ -3285,6 +3414,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:
