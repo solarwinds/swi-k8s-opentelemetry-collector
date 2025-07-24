@@ -372,6 +372,7 @@ processors:
     detectors: 
       - ec2
       - azure
+      - gcp
     azure:
       # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region, azure.resourcegroup.name
       resource_attributes:
@@ -397,6 +398,23 @@ processors:
         host.name:
           enabled: false
         host.type:
+          enabled: false
+    gcp:
+      # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region
+      resource_attributes:
+        cloud.availability_zone:
+          enabled: false
+        host.id:
+          enabled: false
+        host.name:
+          enabled: false
+        host.type:
+          enabled: false
+        gcp.gce.instance.hostname:
+          enabled: false
+        gcp.gce.instance.name:
+          enabled: false
+        k8s.cluster.name:
           enabled: false
 {{- else }}
     detectors:     
