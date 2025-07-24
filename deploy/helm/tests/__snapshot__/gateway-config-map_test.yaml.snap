@@ -1,4 +1,530 @@
-
+Gateway config should match snapshot when using default values:
+  1: |
+    gateway.config: |
+      connectors:
+        forward/metrics_common: {}
+        routing/metrics:
+          default_pipelines:
+          - metrics
+          table:
+          - condition: "name == \"http.client.request.duration\" or\nname == \"http.client.request.body.size\"
+              or\nname == \"http.client.response.body.size\" or\nname == \"http.server.request.duration\"
+              or \nname == \"http.server.request.body.size\" or\nname == \"http.server.response.body.size\"
+              or\nname == \"rpc.client.duration\" or \nname == \"rpc.server.duration\" or
+              \nname == \"beyla.network.flow.bytes\"\n"
+            context: metric
+            pipelines:
+            - metrics/beyla-network-entities-and-relationships
+        solarwindsentity/beyla-entities:
+          schema:
+            entities:
+            - entity: PublicNetworkLocation
+              id:
+              - sw.server.address.fqdn
+            events:
+              entities:
+              - action: update
+                context: metric
+                type: PublicNetworkLocation
+        solarwindsentity/beyla-relationships:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesPod
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+            - entity: KubernetesNode
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.node.name
+            - entity: PublicNetworkLocation
+              id:
+              - sw.server.address.fqdn
+            events:
+              relationships:
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                  and metric.data_points[0].value_double > 0.0
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesJob
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - name == "beyla.network.flow.bytes.delta" or name == "beyla.network.inter.zone.bytes.delta"
+                  or name == "http.client.request.duration.delta" or name == "http.client.request.body.size.delta"
+                  or name == "http.client.response.body.size.delta" or name == "http.server.request.duration.delta"
+                  or name == "http.server.request.body.size.delta" or name == "http.server.response.body.size.delta"
+                  or name == "rpc.client.duration.delta" or name == "rpc.server.duration.delta"
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+      exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
@@ -40,6 +566,7 @@
             - rpc.client.duration.delta
             - rpc.server.duration.delta
             - beyla.network.flow.bytes.delta
+            - beyla.network.inter.zone.bytes.delta
         filter/histograms:
           metrics:
             metric:
