@@ -17,4 +17,8 @@ RUN ls /integration
 RUN pip install --no-cache-dir --upgrade -r /integration/requirements.txt
 COPY /tests/integration/ .
 
-CMD ["pytest", "-s", "--tb=short"]
+# Make all Python scripts executable
+RUN chmod +x run_*.py
+
+# Default entrypoint for test suite selection
+CMD ["python", "-u", "run_tests.py"]

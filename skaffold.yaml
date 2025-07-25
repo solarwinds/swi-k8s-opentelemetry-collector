@@ -117,16 +117,49 @@ deploy:
         createNamespace: true
         upgradeOnChange: true
   kubeContext: docker-desktop
+
+verify:
+  - name: integration-tests
+    container:
+      name: integration-test
+      image: integration-test
+      command: ["python", "-u", "run_tests.py"]
+      env:
+        - name: TIMESERIES_MOCK_ENDPOINT
+          value: timeseries-mock-service:8088
+        - name: TEST_SUITE
+          value: all
+        - name: PYTHONUNBUFFERED
+          value: "1"
+    executionMode:
+      kubernetesCluster:
+        overrides: |
+          { 
+            "metadata": {
+              "namespace": "test-namespace"
+            },
+            "spec": {
+              "template": {
+                "spec": {
+                  "serviceAccountName": "kube-api-for-tests",
+                  "restartPolicy": "Never"
+                }
+              },
+              "activeDeadlineSeconds": 3600
+            }
+          }
+    timeout: 3600
 portForward:
-- resourceType: service
-  resourceName: timeseries-mock-service
-  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
-  port: 8088
-- resourceType: service
-  resourceName: prometheus-operated
-  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
-  port: 9090
-  localPort: 8080
+  - resourceType: service
+    resourceName: timeseries-mock-service
+    namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
+    port: 8088
+  - resourceType: service
+    resourceName: prometheus-operated
+    namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
+    port: 9090
+    localPort: 8080
+
 profiles:
   - name: build-collector
     build:
@@ -263,6 +296,8 @@ profiles:
         path: /deploy/helm/releases/3
       - op: remove
         path: /build/artifacts/0
+      - op: remove
+        path: /verify
   - name: no-prometheus
     activation:
       - env: CI=true
@@ -289,6 +324,20 @@ profiles:
         concurrency: 0
     deploy:
       kubeContext: default
+    patches:
+      - op: replace
+        path: /verify/0/executionMode/kubernetesCluster/overrides
+        value: |
+          {
+            "spec": {
+              "serviceAccountName": "kube-api-for-tests",
+              "activeDeadlineSeconds": 3600,
+              "restartPolicy": "Never"
+            },
+            "metadata": {
+              "namespace": "{{ env \"TEST_CLUSTER_NAMESPACE\" | default \"test-namespace\" }}"
+            }
+          }
   - name: ci-helm-e2e
     build:
       local:
@@ -298,3 +347,28 @@ profiles:
     deploy:
       # `default` is k3s default context name
       kubeContext: default
+  - name: test-metrics
+    patches:
+      - op: replace
+        path: /verify/0/container/env/1/value
+        value: "metrics"
+  - name: test-logs
+    patches:
+      - op: replace
+        path: /verify/0/container/env/1/value
+        value: "logs"
+  - name: test-events
+    patches:
+      - op: replace
+        path: /verify/0/container/env/1/value
+        value: "events"
+  - name: test-manifests
+    patches:
+      - op: replace
+        path: /verify/0/container/env/1/value
+        value: "manifests"
+  - name: test-entity-state
+    patches:
+      - op: replace
+        path: /verify/0/container/env/1/value
+        value: "entity-state"

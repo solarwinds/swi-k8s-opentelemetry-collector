@@ -3,6 +3,15 @@
 *Domain*: Kubernetes monitoring and observability  
 *Key technologies*: OpenTelemetry, Helm, Kubernetes, Python, Prometheus, eBPF
 
+# Testing rules
+- Use Helm unit tests for verifying chart rendering.  
+- Update snapshot tests with `helm unittest -u deploy/helm`.
+- To run integration test you DO NOT CHECK for its configuration, DO NOT VALIDATE anything else, you simply run these commands in order:
+1. Build artifacts: `skaffold build --file-output=/tmp/tags.json`
+1. Deploy environment: `skaffold deploy --build-artifacts /tmp/tags.json --status-check=true`
+2. Run tests: `skaffold verify --build-artifacts /tmp/tags.json`
+3. Delete environment: `skaffold delete`
+
 # Directory layout
 - **deploy/helm/** – Helm chart for deploying the collector
   - **templates/metrics-deployment.yaml** – MetricsCollector deployment definition
@@ -70,12 +79,8 @@ The SWO K8s Collector consists of five main components, each with specific pipel
     - Location of component configuration can be infered from the `gomod` line
     - For example if you find `  - gomod: github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector v0.123.7` you will look for configuration settings into `https://github.com/solarwinds/solarwinds-otel-collector-contrib/tree/main/connector/solarwindsentityconnector`. 
     - You look first into README.md, if that does not contain configuration sample or example you have to look at the code of the component. 
-- Generally the component is referenced in the configuration typically without receiver/exporter/processor/connector suffix (e.g. in configuration use `solarwindsentity` key instead of `solarwindsentityconnector`)
+- Generally the component is referenced in the configuration typically without receiver/exporter/processor/connector suffux (e.g. in configuration use `solarwindsentity` key instead of `solarwindsentityconnector`)
 
 # Coding conventions 
 1. Maintain backward compatibility when updating chart configurations.  
 2. Follow JSON schema validation for Helm values through `values.schema.json`.  
-
-# Testing rules
-- Use Helm unit tests for verifying chart rendering.  
-- Update snapshot tests with `helm unittest -u deploy/helm`.
