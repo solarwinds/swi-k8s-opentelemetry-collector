@@ -239,7 +239,20 @@ Whenever there is a need to improve the test tooling, eg. the script for scrapin
 
 The `k8s collector` can be configured to enable performance profiling with `pprof`.
 
-Steps:
+`pprof` documentation: https://github.com/google/pprof/blob/main/doc/README.md
+
+### Prerequisites
+
+- `pprof` - to analyze the profiles
+- `graphviz` - to render the data as graphs
+
+  ```shell
+  choco install graphviz
+  ```
+
+- `curl` - to fetch the profiles on computers without `pprof`
+
+### Connecting pprof to the analyzed process on a local machine
 
 1. Deploy the `k8s collector` with setting:
 
@@ -267,13 +280,46 @@ Steps:
 
     For documentation about available commands, see [net/http/pprof](https://pkg.go.dev/net/http/pprof).
 
-Note:
+### Go memory investigation on a remote computer without pprof
 
-To render the data as graphs, `pprof` requires `Graphwiz` to be installed on the machine:
+1. Deploy the `k8s collector` with setting:
 
-```shell
-choco install graphviz
-```
+    ```yaml
+    diagnostics:
+      profiling:
+        enabled: true
+    ```
+
+2. Wait until some of its instances consumes too much memory.
+3. Port-forward the pprof port on the instance locally:
+
+    ```shell
+    kubectl -n <namespace> port-forward pod/<pod-name> 1777:pprof
+    ```
+
+4. Fetch a memory heap profile:
+
+    ```shell
+    curl -s http://localhost:1777/debug/pprof/heap > ./heap.out
+    ```
+
+    For ideal results, collect multiple such heap profiles, with enough time between them.
+
+5. Open the heap profile:
+
+    ```shell
+    go tool pprof -http=:8080 ./heap.out
+    ```
+
+    This will start a local `pprof` web server listening on `http://localhost:8080`.
+
+    If the `pprof` (or Go) is not available on computer, the file can be open on another computer.
+
+6. When done:
+   - Stop port-forwarding
+   - Close the browser window
+   - Stop the `pprofs`s webserver
+   - Disable exposing diagnostics in the `k8s collector` using the `diagnostics.profiling.enabled` setting
 
 ## Updating Chart dependencies
 

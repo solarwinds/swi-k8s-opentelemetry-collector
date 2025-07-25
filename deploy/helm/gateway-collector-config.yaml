@@ -74,6 +74,12 @@ processors:
     attributes:      
       - key: beyla
         action: delete
+      - key: tcp
+        action: delete
+      - key: http
+        action: delete
+      - key: grpc
+        action: delete
 
   # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
   attributes/clean-attributes-otlp-metrics:
@@ -227,6 +233,13 @@ processors:
 
       - set(resource.attributes["beyla"], "true")
 
+  transform/beyla-relationship-types:
+    metric_statements:
+      - set(resource.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
+      - set(resource.attributes["http"], "true") where (metric.name == "http.client.request.body.size" or metric.name == "http.client.response.body.size")
+      - set(resource.attributes["grpc"], "true") where metric.name == "rpc.client.duration"
+
+
   groupbyattrs/beyla-entity-ids:
     keys:
       - sw.k8s.dst.sw.server.address.fqdn
@@ -264,20 +277,9 @@ connectors:
           name == "http.server.request.duration" or 
           name == "http.server.request.body.size" or
           name == "http.server.response.body.size" or
-          name == "rpc.client.duration" or
-          name == "rpc.server.duration" or
-          name == "sql.client.duration" or
-          name == "redis.client.duration" or
-          name == "messaging.publish.duration" or
-          name == "messaging.process.duration" or
-          name == "process.cpu.time" or
-          name == "process.cpu.utilization" or
-          name == "process.memory.usage" or
-          name == "process.memory.virtual" or
-          name == "process.disk.io" or
-          name == "process.network.io" or
-          name == "beyla.network.flow.bytes" or
-          name == "beyla.network.inter.zone.bytes"
+          name == "rpc.client.duration" or 
+          name == "rpc.server.duration" or 
+          name == "beyla.network.flow.bytes"
 
   solarwindsentity/beyla-relationships:
     source_prefix: "source."
@@ -334,56 +336,49 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           # source KubernetesStatefulSet
           - type: KubernetesCommunicatesWith
@@ -391,56 +386,49 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           # source KubernetesDaemonSet
           - type: KubernetesCommunicatesWith
@@ -448,56 +436,49 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           # source KubernetesJob
           - type: KubernetesCommunicatesWith
@@ -505,56 +486,49 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesJob
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes:
-              - beyla
+            attributes: [beyla, tcp, http, grpc]
             action: "update"
 
   solarwindsentity/beyla-entities:
@@ -648,6 +622,7 @@ service:
         - transform/beyla-fqdn-attribute
         - groupbyattrs/beyla-entity-ids
         - transform/beyla-entity-ids
+        - transform/beyla-relationship-types
         - resource
       exporters:
         - forward/metrics_common
