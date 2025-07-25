@@ -147,16 +147,52 @@ connectors:
             - sw.k8s.cluster.uid
             - k8s.namespace.name
             - k8s.service.name
-        - entity: KubernetesPod
+        - entity: KubernetesDaemonSet
           id:
             - sw.k8s.cluster.uid
             - k8s.namespace.name
-            - k8s.pod.name
+            - k8s.daemonset.name
+        - entity: KubernetesDeployment
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+        - entity: KubernetesStatefulSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+        - entity: KubernetesReplicaSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.replicaset.name
       events:
         relationships:
           - type: KubernetesServiceRoutesTo
             source_entity: KubernetesService
-            destination_entity: KubernetesPod
+            destination_entity: KubernetesDaemonSet
+            conditions: []
+            context: "log"
+            attributes: []
+            action: "update"
+          - type: KubernetesServiceRoutesTo
+            source_entity: KubernetesService
+            destination_entity: KubernetesDeployment
+            conditions: []
+            context: "log"
+            attributes: []
+            action: "update"
+          - type: KubernetesServiceRoutesTo
+            source_entity: KubernetesService
+            destination_entity: KubernetesStatefulSet
+            conditions: []
+            context: "log"
+            attributes: []
+            action: "update"
+          - type: KubernetesServiceRoutesTo
+            source_entity: KubernetesService
+            destination_entity: KubernetesReplicaSet
             conditions: []
             context: "log"
             attributes: []
@@ -343,27 +379,7 @@ processors:
     error_mode: ignore
     log_statements:
       - statements:
-          - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"]) where resource.attributes["sw.k8s.workload.ip"] != nil
-
-  k8sattributes/serviceendpointsmapping:
-    auth_type: "serviceAccount"
-    passthrough: false
-    extract:
-      metadata:
-        - k8s.pod.name
-        - k8s.deployment.name
-        - k8s.replicaset.name
-        - k8s.daemonset.name
-        - k8s.job.name
-        - k8s.cronjob.name
-        - k8s.statefulset.name
-        - k8s.node.name
-    pod_association:
-      - sources:
-        - from: resource_attribute
-          name: k8s.pod.ip
-        - from: resource_attribute
-          name: k8s.namespace.name
+          - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"]) where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping" and resource.attributes["sw.k8s.workload.ip"] != nil
 
   transform/serviceendpointsmapping:
     error_mode: ignore
@@ -371,9 +387,12 @@ processors:
       - statements:
           - set(resource.attributes["source.k8s.service.name"], resource.attributes["k8s.service.name"]) where resource.attributes["k8s.service.name"] != nil
           - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"]) where resource.attributes["k8s.namespace.name"] != nil
-
-          - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["k8s.pod.name"]) where resource.attributes["k8s.pod.name"] != nil
+          
           - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"]) where resource.attributes["k8s.namespace.name"] != nil
+          - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"]) where resource.attributes["k8s.deployment.name"] != nil
+          - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"]) where resource.attributes["k8s.statefulset.name"] != nil
+          - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"]) where resource.attributes["k8s.replicaset.name"] != nil
+          - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"]) where resource.attributes["k8s.daemonset.name"] != nil
 
   transform/scope:
     log_statements:
@@ -501,6 +520,18 @@ processors:
   k8sattributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
+  logdedup/entitystateevents: 
+    interval: {{ quote .Values.otel.manifests.pull_every }}
+    conditions: 
+      - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+    include_fields:
+      - attributes.otel.entity.event.type
+      - attributes.otel.entity_relationship.source_entity.id
+      - attributes.otel.entity_relationship.destination_entity.id
+      - attributes.otel.entity_relationship.type
+      - attributes.otel.entity_relationship.source_entity.type
+      - attributes.otel.entity_relationship.destination_entity.type
+
 receivers:
   k8s_events:
 {{- $root := . }}
@@ -603,8 +634,10 @@ service:
         - transform/stringify_body
         - resource/manifest
         - resourcedetection/providers
-        - k8sattributes
         - k8seventgeneration
+        - groupbyattrs/serviceendpointsmapping
+        - transform/serviceendpointsmapping-renamepodip
+        - k8sattributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}
@@ -619,9 +652,6 @@ service:
         - routing/manifests
       processors:
         - memory_limiter
-        - groupbyattrs/serviceendpointsmapping
-        - transform/serviceendpointsmapping-renamepodip
-        - k8sattributes/serviceendpointsmapping
         - transform/serviceendpointsmapping
       exporters:
         - solarwindsentity/serviceendpointsmapping
@@ -632,6 +662,7 @@ service:
         - solarwindsentity/serviceendpointsmapping
       processors:
         - memory_limiter
+        - logdedup/entitystateevents
         - transform/scope
         - batch
       exporters:
