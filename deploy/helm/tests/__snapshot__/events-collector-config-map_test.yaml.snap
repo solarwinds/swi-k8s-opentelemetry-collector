@@ -93,18 +93,54 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.service.name
-            - entity: KubernetesPod
+            - entity: KubernetesDaemonSet
               id:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
-              - k8s.pod.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
             events:
               relationships:
               - action: update
                 attributes: []
                 conditions: []
                 context: log
-                destination_entity: KubernetesPod
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
                 source_entity: KubernetesService
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
@@ -177,6 +213,7 @@ Custom events filter with new syntax:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -191,26 +228,23 @@ Custom events filter with new syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        k8sattributes/serviceendpointsmapping:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.pod.name
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-            - k8s.node.name
-          passthrough: false
-          pod_association:
           - sources:
             - from: resource_attribute
               name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -417,16 +451,23 @@ Custom events filter with new syntax:
               where resource.attributes["k8s.service.name"] != nil
             - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
-            - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["k8s.pod.name"])
-              where resource.attributes["k8s.pod.name"] != nil
             - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
         transform/serviceendpointsmapping-renamepodip:
           error_mode: ignore
           log_statements:
           - statements:
             - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
-              where resource.attributes["sw.k8s.workload.ip"] != nil
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -815,8 +856,10 @@ Custom events filter with new syntax:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -824,6 +867,7 @@ Custom events filter with new syntax:
             - otlp
             processors:
             - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
@@ -846,9 +890,6 @@ Custom events filter with new syntax:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes/serviceendpointsmapping
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -966,18 +1007,54 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.service.name
-            - entity: KubernetesPod
+            - entity: KubernetesDaemonSet
               id:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
-              - k8s.pod.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
             events:
               relationships:
               - action: update
                 attributes: []
                 conditions: []
                 context: log
-                destination_entity: KubernetesPod
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
                 source_entity: KubernetesService
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
@@ -1053,6 +1130,7 @@ Custom events filter with old syntax:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -1067,26 +1145,23 @@ Custom events filter with old syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        k8sattributes/serviceendpointsmapping:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.pod.name
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-            - k8s.node.name
-          passthrough: false
-          pod_association:
           - sources:
             - from: resource_attribute
               name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1293,16 +1368,23 @@ Custom events filter with old syntax:
               where resource.attributes["k8s.service.name"] != nil
             - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
-            - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["k8s.pod.name"])
-              where resource.attributes["k8s.pod.name"] != nil
             - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
         transform/serviceendpointsmapping-renamepodip:
           error_mode: ignore
           log_statements:
           - statements:
             - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
-              where resource.attributes["sw.k8s.workload.ip"] != nil
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -1691,8 +1773,10 @@ Custom events filter with old syntax:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -1700,6 +1784,7 @@ Custom events filter with old syntax:
             - otlp
             processors:
             - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
@@ -1722,9 +1807,6 @@ Custom events filter with old syntax:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes/serviceendpointsmapping
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -1842,18 +1924,54 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.service.name
-            - entity: KubernetesPod
+            - entity: KubernetesDaemonSet
               id:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
-              - k8s.pod.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
             events:
               relationships:
               - action: update
                 attributes: []
                 conditions: []
                 context: log
-                destination_entity: KubernetesPod
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
                 source_entity: KubernetesService
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
@@ -1922,6 +2040,7 @@ Events config should match snapshot when using default values:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -1936,26 +2055,23 @@ Events config should match snapshot when using default values:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        k8sattributes/serviceendpointsmapping:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.pod.name
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-            - k8s.node.name
-          passthrough: false
-          pod_association:
           - sources:
             - from: resource_attribute
               name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2162,16 +2278,23 @@ Events config should match snapshot when using default values:
               where resource.attributes["k8s.service.name"] != nil
             - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
-            - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["k8s.pod.name"])
-              where resource.attributes["k8s.pod.name"] != nil
             - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
         transform/serviceendpointsmapping-renamepodip:
           error_mode: ignore
           log_statements:
           - statements:
             - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
-              where resource.attributes["sw.k8s.workload.ip"] != nil
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -2559,8 +2682,10 @@ Events config should match snapshot when using default values:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -2568,6 +2693,7 @@ Events config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
@@ -2590,9 +2716,6 @@ Events config should match snapshot when using default values:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes/serviceendpointsmapping
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -2638,18 +2761,54 @@ Events config should not contain manifest collection pipeline when disabled:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.service.name
-            - entity: KubernetesPod
+            - entity: KubernetesDaemonSet
               id:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
-              - k8s.pod.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
             events:
               relationships:
               - action: update
                 attributes: []
                 conditions: []
                 context: log
-                destination_entity: KubernetesPod
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
                 source_entity: KubernetesService
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
@@ -2718,6 +2877,7 @@ Events config should not contain manifest collection pipeline when disabled:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -2732,26 +2892,23 @@ Events config should not contain manifest collection pipeline when disabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        k8sattributes/serviceendpointsmapping:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-            - k8s.pod.name
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-            - k8s.node.name
-          passthrough: false
-          pod_association:
           - sources:
             - from: resource_attribute
               name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2958,16 +3115,23 @@ Events config should not contain manifest collection pipeline when disabled:
               where resource.attributes["k8s.service.name"] != nil
             - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
-            - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["k8s.pod.name"])
-              where resource.attributes["k8s.pod.name"] != nil
             - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
               where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
         transform/serviceendpointsmapping-renamepodip:
           error_mode: ignore
           log_statements:
           - statements:
             - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
-              where resource.attributes["sw.k8s.workload.ip"] != nil
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -3190,8 +3354,10 @@ Events config should not contain manifest collection pipeline when disabled:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -3199,6 +3365,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - otlp
             processors:
             - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
@@ -3209,9 +3376,6 @@ Events config should not contain manifest collection pipeline when disabled:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes/serviceendpointsmapping
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
