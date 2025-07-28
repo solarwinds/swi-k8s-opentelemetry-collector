@@ -877,6 +877,25 @@ kube-state-metrics:
   nodeSelector:
     kubernetes.io/os: linux
 
+  # Configure collectors to only include metrics we actually scrape
+  # This reduces API Server usage by disabling unused collectors
+  collectors:
+    - configmaps
+    - cronjobs
+    - daemonsets
+    - deployments
+    - endpoints
+    - jobs
+    - namespaces
+    - nodes
+    - persistentvolumeclaims
+    - persistentvolumes
+    - pods
+    - replicasets
+    - resourcequotas
+    - services
+    - statefulsets
+
 # DEPRECATED: Node exporter is deployed only in case opencost section is enabled. Otherwise this section can be ignored.
 # prometheus-node-exporter:
 
