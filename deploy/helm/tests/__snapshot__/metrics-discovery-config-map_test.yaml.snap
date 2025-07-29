@@ -3,6 +3,8 @@ Metrics discovery config should match snapshot when Fargate is enabled:
     metrics-discovery.config: |
       connectors:
         forward/discovery-istio-metrics-clean: {}
+        forward/istio-workload-service-filtering: {}
+        forward/istio-workload-workload-filtering: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -65,7 +67,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
@@ -76,7 +83,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
@@ -87,7 +99,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
@@ -98,7 +115,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
@@ -109,7 +131,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
@@ -120,7 +147,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDaemonSet
@@ -153,7 +185,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
@@ -164,7 +201,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
@@ -175,7 +217,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
@@ -186,7 +233,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
@@ -197,7 +249,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
@@ -208,7 +265,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
@@ -219,7 +281,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
@@ -230,7 +297,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
@@ -241,7 +313,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 - tcp
                 - http
                 - grpc
-                conditions: []
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
@@ -345,6 +422,11 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
+        filter/zero-delta-values:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
         groupbyattrs/common-all:
           keys:
           - k8s.container.name
@@ -711,10 +793,18 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - filter/keep-not-relationships
             receivers:
             - forward/not-relationship-state-events
+          metrics/relationship-state-events-workload-service-filtering:
+            exporters:
+            - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-service-filtering
           metrics/relationship-state-events-workload-service-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
-            - solarwindsentity/istio-workload-service
+            - forward/istio-workload-service-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
@@ -724,10 +814,18 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
+          metrics/relationship-state-events-workload-workload-filtering:
+            exporters:
+            - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
-            - solarwindsentity/istio-workload-workload
+            - forward/istio-workload-workload-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-workload-relationships

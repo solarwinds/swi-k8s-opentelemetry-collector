@@ -220,7 +220,11 @@ filter/keep-not-relationships:
     datapoint:
       - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
 
-
+filter/zero-delta-values:
+  error_mode: ignore
+  metrics:
+    datapoint:
+      - 'IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0'
 
 transform/istio-workload-workload:
   metric_statements:
@@ -270,6 +274,8 @@ forward/relationship-state-events-workload-workload: {}
 forward/relationship-state-events-workload-service: {}
 forward/not-relationship-state-events: {}
 forward/discovery-istio-metrics-clean: {}
+forward/istio-workload-workload-filtering: {}
+forward/istio-workload-service-filtering: {}
 routing/discovered_metrics:
   default_pipelines: [metrics/discovery-custom]
   table:
@@ -305,21 +311,36 @@ solarwindsentity/istio-workload-workload:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDeployment
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesStatefulSet
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesDaemonSet
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
@@ -327,21 +348,36 @@ solarwindsentity/istio-workload-workload:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDeployment
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesStatefulSet
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesDaemonSet
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
@@ -349,21 +385,36 @@ solarwindsentity/istio-workload-workload:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDeployment
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesStatefulSet
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesDaemonSet
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
@@ -417,14 +468,24 @@ solarwindsentity/istio-workload-service:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: KubernetesService
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDeployment
           destination_entity: PublicNetworkLocation
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
@@ -432,14 +493,24 @@ solarwindsentity/istio-workload-service:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: KubernetesService
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesStatefulSet
           destination_entity: PublicNetworkLocation
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
@@ -447,14 +518,24 @@ solarwindsentity/istio-workload-service:
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: KubernetesService
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
         - type: KubernetesCommunicatesWith
           source_entity: KubernetesDaemonSet
           destination_entity: PublicNetworkLocation
-          conditions: []
+          conditions:
+            - metric.name == "k8s.istio_request_bytes.delta"
+            - metric.name == "k8s.istio_response_bytes.delta"
+            - metric.name == "k8s.istio_requests.delta"
+            - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+            - metric.name == "k8s.istio_tcp_received_bytes.delta"
           context: "metric"
           attributes: [istio, tcp, http, grpc]
           action: "update"
@@ -512,6 +593,15 @@ metrics/relationship-state-events-workload-workload-preparation:
     - transform/istio-relationship-types
   exporters:
     - forward/discovery-istio-metrics-clean
+    - forward/istio-workload-workload-filtering
+
+metrics/relationship-state-events-workload-workload-filtering:
+  receivers:
+    - forward/istio-workload-workload-filtering
+  processors:
+    - memory_limiter
+    - filter/zero-delta-values
+  exporters:
     - solarwindsentity/istio-workload-workload
 
 metrics/relationship-state-events-workload-service-preparation:
@@ -526,6 +616,15 @@ metrics/relationship-state-events-workload-service-preparation:
     - transform/istio-relationship-types
   exporters:
     - forward/discovery-istio-metrics-clean
+    - forward/istio-workload-service-filtering
+
+metrics/relationship-state-events-workload-service-filtering:
+  receivers:
+    - forward/istio-workload-service-filtering
+  processors:
+    - memory_limiter
+    - filter/zero-delta-values
+  exporters:
     - solarwindsentity/istio-workload-service
 
 metrics/not-relationship-state-events-preparation:
