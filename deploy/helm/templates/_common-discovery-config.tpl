@@ -460,7 +460,7 @@ solarwindsentity/istio-workload-service:
           - sw.server.address.fqdn
     events:
       entities:
-        - type: "PublicNetworkLocation"
+        - entity: "PublicNetworkLocation"
           context: "metric"
           action: "update"
       relationships:

@@ -59,7 +59,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               entities:
               - action: update
                 context: metric
-                type: PublicNetworkLocation
+                entity: PublicNetworkLocation
               relationships:
               - action: update
                 attributes:
@@ -453,6 +453,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -465,6 +466,11 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - sources:
             - from: resource_attribute
               name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         logdedup/solarwindsentity: {}

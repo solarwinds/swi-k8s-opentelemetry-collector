@@ -426,6 +426,7 @@ Metrics config should match snapshot when fargate is enabled:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -438,6 +439,11 @@ Metrics config should match snapshot when fargate is enabled:
           - sources:
             - from: resource_attribute
               name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         memory_limiter:
@@ -2126,6 +2132,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -2138,6 +2145,11 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - sources:
             - from: resource_attribute
               name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         memory_limiter:
@@ -3768,6 +3780,7 @@ Metrics config should match snapshot when using default values:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -3780,6 +3793,11 @@ Metrics config should match snapshot when using default values:
           - sources:
             - from: resource_attribute
               name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
         memory_limiter:

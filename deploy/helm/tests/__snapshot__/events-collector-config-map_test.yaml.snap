@@ -2,6 +2,16 @@ Custom events filter with new syntax:
   1: |
     events.config: |-
       connectors:
+        forward/exportserviceendpointsmapping: {}
+        routing/manifests:
+          default_pipelines:
+          - logs/manifests-export
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+            context: resource
+            pipelines:
+            - logs/serviceendpointsmapping
         solarwindsentity/keepalive:
           schema:
             entities:
@@ -74,6 +84,66 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+        solarwindsentity/serviceendpointsmapping:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
+            events:
+              relationships:
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -131,10 +201,19 @@ Custom events filter with new syntax:
           - k8s.clusterrole.name
           - k8s.clusterrolebinding.name
           - k8s.serviceaccount.name
+          - k8s.endpoint.name
+          - k8s.endpointslice.name
+        groupbyattrs/serviceendpointsmapping:
+          keys:
+          - sw.k8s.cluster.uid
+          - sw.k8s.workload.ip
+          - k8s.service.name
+          - k8s.namespace.name
         k8sattributes:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -149,7 +228,23 @@ Custom events filter with new syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
+            - from: resource_attribute
+              name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -299,43 +394,51 @@ Custom events filter with new syntax:
             - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
             - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRoleBinding"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRoleBinding"
             - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRole"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRole"
             - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ConfigMap"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ConfigMap"
             - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "CronJob"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "CronJob"
             - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "DaemonSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "DaemonSet"
             - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Deployment"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.endpoints.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Endpoints"
+            - set(log.attributes["k8s.endpointslice.name"], log.body["metadata"]["name"])
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "EndpointSlice"
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Ingress"
-            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Job"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Job"
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Namespace"
-            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Node"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Node"
             - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolumeClaim"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolumeClaim"
             - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolume"
-            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Pod"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Pod"
             - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ReplicaSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ReplicaSet"
             - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "RoleBinding"
-            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Role"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Role"
             - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ServiceAccount"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ServiceAccount"
             - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Service"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Service"
             - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "StatefulSet"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.endpoint.name"], log.attributes["k8s.endpoints.name"])
+              where log.attributes["k8s.endpoints.name"] != nil
+            - delete_key(log.attributes, "k8s.endpoints.name") where log.attributes["k8s.endpoints.name"]
+              != nil
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
               log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
@@ -357,6 +460,31 @@ Custom events filter with new syntax:
           - statements:
             - set(scope.name, "")
             - set(scope.version, "")
+        transform/serviceendpointsmapping:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["source.k8s.service.name"], resource.attributes["k8s.service.name"])
+              where resource.attributes["k8s.service.name"] != nil
+            - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
+        transform/serviceendpointsmapping-renamepodip:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -364,7 +492,8 @@ Custom events filter with new syntax:
             - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -382,6 +511,10 @@ Custom events filter with new syntax:
               == "DaemonSet" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
               == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpoints.annotations") where log.body["kind"]
+              == "Endpoints" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpointslice.annotations") where log.body["kind"]
+              == "EndpointSlice" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
               == "Ingress" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
@@ -413,6 +546,7 @@ Custom events filter with new syntax:
               (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
               or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
               == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Endpoints" or log.body["kind"] == "EndpointSlice" or log.body["kind"] ==
               "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
               or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
               or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
@@ -422,7 +556,8 @@ Custom events filter with new syntax:
             - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -440,6 +575,10 @@ Custom events filter with new syntax:
               == "DaemonSet" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
               == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpoints.labels") where log.body["kind"]
+              == "Endpoints" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpointslice.labels") where log.body["kind"]
+              == "EndpointSlice" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
               == "Ingress" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
@@ -469,7 +608,8 @@ Custom events filter with new syntax:
             - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -563,6 +703,16 @@ Custom events filter with new syntax:
             name: deployments
           - interval: 60m
             mode: pull
+            name: endpoints
+          - mode: watch
+            name: endpoints
+          - interval: 60m
+            mode: pull
+            name: endpointslices
+          - mode: watch
+            name: endpointslices
+          - interval: 60m
+            mode: pull
             name: ingresses
           - mode: watch
             name: ingresses
@@ -649,6 +799,12 @@ Custom events filter with new syntax:
             name: deployments
           - interval: 20m
             mode: pull
+            name: endpoints
+          - interval: 20m
+            mode: pull
+            name: endpointslices
+          - interval: 20m
+            mode: pull
             name: ingresses
           - interval: 20m
             mode: pull
@@ -707,7 +863,7 @@ Custom events filter with new syntax:
             - k8s_events
           logs/manifests:
             exporters:
-            - otlp
+            - routing/manifests
             processors:
             - memory_limiter
             - transform/manifest
@@ -717,12 +873,23 @@ Custom events filter with new syntax:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
+            receivers:
+            - swok8sobjects
+          logs/manifests-export:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
-            - swok8sobjects
+            - routing/manifests
+            - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
             - solarwindsentity/keepalive
@@ -735,6 +902,14 @@ Custom events filter with new syntax:
             - k8seventgeneration
             receivers:
             - swok8sobjects/keepalive
+          logs/serviceendpointsmapping:
+            exporters:
+            - solarwindsentity/serviceendpointsmapping
+            processors:
+            - memory_limiter
+            - transform/serviceendpointsmapping
+            receivers:
+            - routing/manifests
           logs/stateevents:
             exporters:
             - otlp
@@ -758,6 +933,16 @@ Custom events filter with old syntax:
   1: |
     events.config: |-
       connectors:
+        forward/exportserviceendpointsmapping: {}
+        routing/manifests:
+          default_pipelines:
+          - logs/manifests-export
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+            context: resource
+            pipelines:
+            - logs/serviceendpointsmapping
         solarwindsentity/keepalive:
           schema:
             entities:
@@ -830,6 +1015,66 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+        solarwindsentity/serviceendpointsmapping:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
+            events:
+              relationships:
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -890,10 +1135,19 @@ Custom events filter with old syntax:
           - k8s.clusterrole.name
           - k8s.clusterrolebinding.name
           - k8s.serviceaccount.name
+          - k8s.endpoint.name
+          - k8s.endpointslice.name
+        groupbyattrs/serviceendpointsmapping:
+          keys:
+          - sw.k8s.cluster.uid
+          - sw.k8s.workload.ip
+          - k8s.service.name
+          - k8s.namespace.name
         k8sattributes:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -908,7 +1162,23 @@ Custom events filter with old syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
+            - from: resource_attribute
+              name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1058,43 +1328,51 @@ Custom events filter with old syntax:
             - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
             - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRoleBinding"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRoleBinding"
             - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRole"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRole"
             - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ConfigMap"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ConfigMap"
             - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "CronJob"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "CronJob"
             - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "DaemonSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "DaemonSet"
             - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Deployment"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.endpoints.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Endpoints"
+            - set(log.attributes["k8s.endpointslice.name"], log.body["metadata"]["name"])
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "EndpointSlice"
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Ingress"
-            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Job"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Job"
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Namespace"
-            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Node"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Node"
             - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolumeClaim"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolumeClaim"
             - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolume"
-            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Pod"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Pod"
             - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ReplicaSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ReplicaSet"
             - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "RoleBinding"
-            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Role"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Role"
             - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ServiceAccount"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ServiceAccount"
             - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Service"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Service"
             - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "StatefulSet"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.endpoint.name"], log.attributes["k8s.endpoints.name"])
+              where log.attributes["k8s.endpoints.name"] != nil
+            - delete_key(log.attributes, "k8s.endpoints.name") where log.attributes["k8s.endpoints.name"]
+              != nil
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
               log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
@@ -1116,6 +1394,31 @@ Custom events filter with old syntax:
           - statements:
             - set(scope.name, "")
             - set(scope.version, "")
+        transform/serviceendpointsmapping:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["source.k8s.service.name"], resource.attributes["k8s.service.name"])
+              where resource.attributes["k8s.service.name"] != nil
+            - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
+        transform/serviceendpointsmapping-renamepodip:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -1123,7 +1426,8 @@ Custom events filter with old syntax:
             - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -1141,6 +1445,10 @@ Custom events filter with old syntax:
               == "DaemonSet" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
               == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpoints.annotations") where log.body["kind"]
+              == "Endpoints" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpointslice.annotations") where log.body["kind"]
+              == "EndpointSlice" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
               == "Ingress" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
@@ -1172,6 +1480,7 @@ Custom events filter with old syntax:
               (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
               or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
               == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Endpoints" or log.body["kind"] == "EndpointSlice" or log.body["kind"] ==
               "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
               or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
               or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
@@ -1181,7 +1490,8 @@ Custom events filter with old syntax:
             - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -1199,6 +1509,10 @@ Custom events filter with old syntax:
               == "DaemonSet" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
               == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpoints.labels") where log.body["kind"]
+              == "Endpoints" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpointslice.labels") where log.body["kind"]
+              == "EndpointSlice" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
               == "Ingress" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
@@ -1228,7 +1542,8 @@ Custom events filter with old syntax:
             - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -1322,6 +1637,16 @@ Custom events filter with old syntax:
             name: deployments
           - interval: 60m
             mode: pull
+            name: endpoints
+          - mode: watch
+            name: endpoints
+          - interval: 60m
+            mode: pull
+            name: endpointslices
+          - mode: watch
+            name: endpointslices
+          - interval: 60m
+            mode: pull
             name: ingresses
           - mode: watch
             name: ingresses
@@ -1408,6 +1733,12 @@ Custom events filter with old syntax:
             name: deployments
           - interval: 20m
             mode: pull
+            name: endpoints
+          - interval: 20m
+            mode: pull
+            name: endpointslices
+          - interval: 20m
+            mode: pull
             name: ingresses
           - interval: 20m
             mode: pull
@@ -1466,7 +1797,7 @@ Custom events filter with old syntax:
             - k8s_events
           logs/manifests:
             exporters:
-            - otlp
+            - routing/manifests
             processors:
             - memory_limiter
             - transform/manifest
@@ -1476,12 +1807,23 @@ Custom events filter with old syntax:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
+            receivers:
+            - swok8sobjects
+          logs/manifests-export:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
-            - swok8sobjects
+            - routing/manifests
+            - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
             - solarwindsentity/keepalive
@@ -1494,6 +1836,14 @@ Custom events filter with old syntax:
             - k8seventgeneration
             receivers:
             - swok8sobjects/keepalive
+          logs/serviceendpointsmapping:
+            exporters:
+            - solarwindsentity/serviceendpointsmapping
+            processors:
+            - memory_limiter
+            - transform/serviceendpointsmapping
+            receivers:
+            - routing/manifests
           logs/stateevents:
             exporters:
             - otlp
@@ -1517,6 +1867,16 @@ Events config should match snapshot when using default values:
   1: |
     events.config: |-
       connectors:
+        forward/exportserviceendpointsmapping: {}
+        routing/manifests:
+          default_pipelines:
+          - logs/manifests-export
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+            context: resource
+            pipelines:
+            - logs/serviceendpointsmapping
         solarwindsentity/keepalive:
           schema:
             entities:
@@ -1589,6 +1949,66 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+        solarwindsentity/serviceendpointsmapping:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
+            events:
+              relationships:
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -1642,10 +2062,19 @@ Events config should match snapshot when using default values:
           - k8s.clusterrole.name
           - k8s.clusterrolebinding.name
           - k8s.serviceaccount.name
+          - k8s.endpoint.name
+          - k8s.endpointslice.name
+        groupbyattrs/serviceendpointsmapping:
+          keys:
+          - sw.k8s.cluster.uid
+          - sw.k8s.workload.ip
+          - k8s.service.name
+          - k8s.namespace.name
         k8sattributes:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -1660,7 +2089,23 @@ Events config should match snapshot when using default values:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
+            - from: resource_attribute
+              name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1810,43 +2255,51 @@ Events config should match snapshot when using default values:
             - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
             - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRoleBinding"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRoleBinding"
             - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRole"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRole"
             - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ConfigMap"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ConfigMap"
             - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "CronJob"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "CronJob"
             - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "DaemonSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "DaemonSet"
             - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Deployment"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.endpoints.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Endpoints"
+            - set(log.attributes["k8s.endpointslice.name"], log.body["metadata"]["name"])
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "EndpointSlice"
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Ingress"
-            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Job"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Job"
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Namespace"
-            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Node"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Node"
             - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolumeClaim"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolumeClaim"
             - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolume"
-            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Pod"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Pod"
             - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ReplicaSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ReplicaSet"
             - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "RoleBinding"
-            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Role"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Role"
             - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ServiceAccount"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ServiceAccount"
             - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Service"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Service"
             - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "StatefulSet"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.endpoint.name"], log.attributes["k8s.endpoints.name"])
+              where log.attributes["k8s.endpoints.name"] != nil
+            - delete_key(log.attributes, "k8s.endpoints.name") where log.attributes["k8s.endpoints.name"]
+              != nil
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
               log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
@@ -1868,6 +2321,31 @@ Events config should match snapshot when using default values:
           - statements:
             - set(scope.name, "")
             - set(scope.version, "")
+        transform/serviceendpointsmapping:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["source.k8s.service.name"], resource.attributes["k8s.service.name"])
+              where resource.attributes["k8s.service.name"] != nil
+            - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
+        transform/serviceendpointsmapping-renamepodip:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -1875,7 +2353,8 @@ Events config should match snapshot when using default values:
             - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -1893,6 +2372,10 @@ Events config should match snapshot when using default values:
               == "DaemonSet" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
               == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpoints.annotations") where log.body["kind"]
+              == "Endpoints" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpointslice.annotations") where log.body["kind"]
+              == "EndpointSlice" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
               == "Ingress" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
@@ -1924,6 +2407,7 @@ Events config should match snapshot when using default values:
               (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
               or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
               == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Endpoints" or log.body["kind"] == "EndpointSlice" or log.body["kind"] ==
               "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
               or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
               or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
@@ -1933,7 +2417,8 @@ Events config should match snapshot when using default values:
             - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -1951,6 +2436,10 @@ Events config should match snapshot when using default values:
               == "DaemonSet" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
               == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpoints.labels") where log.body["kind"]
+              == "Endpoints" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpointslice.labels") where log.body["kind"]
+              == "EndpointSlice" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
               == "Ingress" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
@@ -1980,7 +2469,8 @@ Events config should match snapshot when using default values:
             - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -2072,6 +2562,16 @@ Events config should match snapshot when using default values:
             name: deployments
           - mode: watch
             name: deployments
+          - interval: 60m
+            mode: pull
+            name: endpoints
+          - mode: watch
+            name: endpoints
+          - interval: 60m
+            mode: pull
+            name: endpointslices
+          - mode: watch
+            name: endpointslices
           - interval: 60m
             mode: pull
             name: ingresses
@@ -2160,6 +2660,12 @@ Events config should match snapshot when using default values:
             name: deployments
           - interval: 20m
             mode: pull
+            name: endpoints
+          - interval: 20m
+            mode: pull
+            name: endpointslices
+          - interval: 20m
+            mode: pull
             name: ingresses
           - interval: 20m
             mode: pull
@@ -2217,7 +2723,7 @@ Events config should match snapshot when using default values:
             - k8s_events
           logs/manifests:
             exporters:
-            - otlp
+            - routing/manifests
             processors:
             - memory_limiter
             - transform/manifest
@@ -2227,12 +2733,23 @@ Events config should match snapshot when using default values:
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
+            receivers:
+            - swok8sobjects
+          logs/manifests-export:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
-            - swok8sobjects
+            - routing/manifests
+            - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
             - solarwindsentity/keepalive
@@ -2245,6 +2762,14 @@ Events config should match snapshot when using default values:
             - k8seventgeneration
             receivers:
             - swok8sobjects/keepalive
+          logs/serviceendpointsmapping:
+            exporters:
+            - solarwindsentity/serviceendpointsmapping
+            processors:
+            - memory_limiter
+            - transform/serviceendpointsmapping
+            receivers:
+            - routing/manifests
           logs/stateevents:
             exporters:
             - otlp
@@ -2267,7 +2792,77 @@ Events config should match snapshot when using default values:
 Events config should not contain manifest collection pipeline when disabled:
   1: |
     events.config: |-
-      connectors: null
+      connectors:
+        forward/exportserviceendpointsmapping: {}
+        routing/manifests:
+          default_pipelines:
+          - logs/manifests-export
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+            context: resource
+            pipelines:
+            - logs/serviceendpointsmapping
+        solarwindsentity/serviceendpointsmapping:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesReplicaSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.replicaset.name
+            events:
+              relationships:
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+              - action: update
+                attributes: []
+                conditions: []
+                context: log
+                destination_entity: KubernetesReplicaSet
+                source_entity: KubernetesService
+                type: KubernetesServiceRoutesTo
+          source_prefix: source.
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -2321,10 +2916,19 @@ Events config should not contain manifest collection pipeline when disabled:
           - k8s.clusterrole.name
           - k8s.clusterrolebinding.name
           - k8s.serviceaccount.name
+          - k8s.endpoint.name
+          - k8s.endpointslice.name
+        groupbyattrs/serviceendpointsmapping:
+          keys:
+          - sw.k8s.cluster.uid
+          - sw.k8s.workload.ip
+          - k8s.service.name
+          - k8s.namespace.name
         k8sattributes:
           auth_type: serviceAccount
           extract:
             metadata:
+            - k8s.pod.name
             - k8s.deployment.name
             - k8s.replicaset.name
             - k8s.daemonset.name
@@ -2339,7 +2943,23 @@ Events config should not contain manifest collection pipeline when disabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
+            - from: resource_attribute
+              name: k8s.namespace.name
         k8seventgeneration: null
+        logdedup/entitystateevents:
+          conditions:
+          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+          include_fields:
+          - attributes.otel.entity.event.type
+          - attributes.otel.entity_relationship.source_entity.id
+          - attributes.otel.entity_relationship.destination_entity.id
+          - attributes.otel.entity_relationship.type
+          - attributes.otel.entity_relationship.source_entity.type
+          - attributes.otel.entity_relationship.destination_entity.type
+          interval: 60m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2489,43 +3109,51 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(log.body, log.body["object"]) where IsMap(log.body) and log.body["object"]
               != nil
             - set(log.attributes["k8s.clusterrolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRoleBinding"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRoleBinding"
             - set(log.attributes["k8s.clusterrole.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ClusterRole"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ClusterRole"
             - set(log.attributes["k8s.configmap.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ConfigMap"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ConfigMap"
             - set(log.attributes["k8s.cronjob.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "CronJob"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "CronJob"
             - set(log.attributes["k8s.daemonset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "DaemonSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "DaemonSet"
             - set(log.attributes["k8s.deployment.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Deployment"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Deployment"
+            - set(log.attributes["k8s.endpoints.name"], log.body["metadata"]["name"]) where
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Endpoints"
+            - set(log.attributes["k8s.endpointslice.name"], log.body["metadata"]["name"])
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "EndpointSlice"
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Ingress"
-            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Job"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Ingress"
+            - set(log.attributes["k8s.job.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Job"
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Namespace"
-            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Node"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Namespace"
+            - set(log.attributes["k8s.node.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Node"
             - set(log.attributes["k8s.persistentvolumeclaim.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolumeClaim"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolumeClaim"
             - set(log.attributes["k8s.persistentvolume.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "PersistentVolume"
-            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Pod"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "PersistentVolume"
+            - set(log.attributes["k8s.pod.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Pod"
             - set(log.attributes["k8s.replicaset.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "ReplicaSet"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "ReplicaSet"
             - set(log.attributes["k8s.rolebinding.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "RoleBinding"
-            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["kind"]
-              == "Role"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "RoleBinding"
+            - set(log.attributes["k8s.role.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"]
+              != nil and log.body["kind"] == "Role"
             - set(log.attributes["k8s.serviceaccount.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "ServiceAccount"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "ServiceAccount"
             - set(log.attributes["k8s.service.name"], log.body["metadata"]["name"]) where
-              log.body["kind"] == "Service"
+              log.body["metadata"]["name"] != nil and log.body["kind"] == "Service"
             - set(log.attributes["k8s.statefulset.name"], log.body["metadata"]["name"])
-              where log.body["kind"] == "StatefulSet"
+              where log.body["metadata"]["name"] != nil and log.body["kind"] == "StatefulSet"
+            - set(log.attributes["k8s.endpoint.name"], log.attributes["k8s.endpoints.name"])
+              where log.attributes["k8s.endpoints.name"] != nil
+            - delete_key(log.attributes, "k8s.endpoints.name") where log.attributes["k8s.endpoints.name"]
+              != nil
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where
               log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
@@ -2547,6 +3175,31 @@ Events config should not contain manifest collection pipeline when disabled:
           - statements:
             - set(scope.name, "")
             - set(scope.version, "")
+        transform/serviceendpointsmapping:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["source.k8s.service.name"], resource.attributes["k8s.service.name"])
+              where resource.attributes["k8s.service.name"] != nil
+            - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+              where resource.attributes["k8s.namespace.name"] != nil
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+              where resource.attributes["k8s.deployment.name"] != nil
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+              where resource.attributes["k8s.statefulset.name"] != nil
+            - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+              where resource.attributes["k8s.replicaset.name"] != nil
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+              where resource.attributes["k8s.daemonset.name"] != nil
+        transform/serviceendpointsmapping-renamepodip:
+          error_mode: ignore
+          log_statements:
+          - statements:
+            - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"])
+              where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+              and resource.attributes["sw.k8s.workload.ip"] != nil
         transform/set_labels_and_annotations_for_entities:
           error_mode: ignore
           log_statements:
@@ -2554,7 +3207,8 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(log.cache["annotations"], log.body["metadata"]["annotations"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -2572,6 +3226,10 @@ Events config should not contain manifest collection pipeline when disabled:
               == "DaemonSet" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.deployment.annotations") where log.body["kind"]
               == "Deployment" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpoints.annotations") where log.body["kind"]
+              == "Endpoints" and log.cache["annotations"] != nil
+            - flatten(log.cache["annotations"], "k8s.endpointslice.annotations") where log.body["kind"]
+              == "EndpointSlice" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.ingress.annotations") where log.body["kind"]
               == "Ingress" and log.cache["annotations"] != nil
             - flatten(log.cache["annotations"], "k8s.job.annotations") where log.body["kind"]
@@ -2603,6 +3261,7 @@ Events config should not contain manifest collection pipeline when disabled:
               (log.body["kind"] == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole"
               or log.body["kind"] == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"]
               == "DaemonSet" or log.body["kind"] == "Deployment" or log.body["kind"] ==
+              "Endpoints" or log.body["kind"] == "EndpointSlice" or log.body["kind"] ==
               "Ingress" or log.body["kind"] == "Job" or log.body["kind"] == "Namespace"
               or log.body["kind"] == "Node" or log.body["kind"] == "PersistentVolumeClaim"
               or log.body["kind"] == "PersistentVolume" or log.body["kind"] == "Pod" or
@@ -2612,7 +3271,8 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(log.cache["labels"], log.body["metadata"]["labels"]) where log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -2630,6 +3290,10 @@ Events config should not contain manifest collection pipeline when disabled:
               == "DaemonSet" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.deployment.labels") where log.body["kind"]
               == "Deployment" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpoints.labels") where log.body["kind"]
+              == "Endpoints" and log.cache["labels"] != nil
+            - flatten(log.cache["labels"], "k8s.endpointslice.labels") where log.body["kind"]
+              == "EndpointSlice" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.ingress.labels") where log.body["kind"]
               == "Ingress" and log.cache["labels"] != nil
             - flatten(log.cache["labels"], "k8s.job.labels") where log.body["kind"] == "Job"
@@ -2659,7 +3323,8 @@ Events config should not contain manifest collection pipeline when disabled:
             - merge_maps(resource.attributes, log.cache["labels"], "upsert") where (log.body["kind"]
               == "ClusterRoleBinding" or log.body["kind"] == "ClusterRole" or log.body["kind"]
               == "ConfigMap" or log.body["kind"] == "CronJob" or log.body["kind"] == "DaemonSet"
-              or log.body["kind"] == "Deployment" or log.body["kind"] == "Ingress" or log.body["kind"]
+              or log.body["kind"] == "Deployment" or log.body["kind"] == "Endpoints" or
+              log.body["kind"] == "EndpointSlice" or log.body["kind"] == "Ingress" or log.body["kind"]
               == "Job" or log.body["kind"] == "Namespace" or log.body["kind"] == "Node"
               or log.body["kind"] == "PersistentVolumeClaim" or log.body["kind"] == "PersistentVolume"
               or log.body["kind"] == "Pod" or log.body["kind"] == "ReplicaSet" or log.body["kind"]
@@ -2746,23 +3411,42 @@ Events config should not contain manifest collection pipeline when disabled:
             - k8s_events
           logs/manifests:
             exporters:
-            - otlp
+            - routing/manifests
             processors:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
             - transform/set_labels_and_annotations_for_entities
+            - filter/k8s_collector_config_include
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
             - resource/manifest
             - resourcedetection/providers
-            - k8sattributes
             - k8seventgeneration
-            - filter/k8s_collector_config_include
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8sattributes
+            receivers:
+            - swok8sobjects
+          logs/manifests-export:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
-            - swok8sobjects
+            - routing/manifests
+            - solarwindsentity/serviceendpointsmapping
+          logs/serviceendpointsmapping:
+            exporters:
+            - solarwindsentity/serviceendpointsmapping
+            processors:
+            - memory_limiter
+            - transform/serviceendpointsmapping
+            receivers:
+            - routing/manifests
         telemetry:
           logs:
             level: info
