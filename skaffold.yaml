@@ -131,6 +131,8 @@ verify:
           value: all
         - name: PYTHONUNBUFFERED
           value: "1"
+        - name: INTEGRATION_TEST_TIMEOUT
+          value: "30"
     executionMode:
       kubernetesCluster:
         overrides: |
@@ -165,10 +167,9 @@ profiles:
     build:
       artifacts:
         - image: swi-k8s-opentelemetry-collector
-          # Path to cloned https://github.com/solarwinds/solarwinds-otel-collector.git repo
-          context: ../solarwinds-otel-collector
+          context: ../private-solarwinds-otel-collector-releases
           docker:
-            dockerfile: build/docker/Dockerfile.k8s
+            dockerfile: build/docker/Dockerfile.local
     patches:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/otel.image.repository
@@ -338,6 +339,10 @@ profiles:
               "namespace": "{{ env \"TEST_CLUSTER_NAMESPACE\" | default \"test-namespace\" }}"
             }
           }
+      - op: replace
+        path: /verify/0/container/env/3/value
+        # increase timeout for CI
+        value: "300"
   - name: ci-helm-e2e
     build:
       local:

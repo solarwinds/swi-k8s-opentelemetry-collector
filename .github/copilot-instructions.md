@@ -7,10 +7,15 @@
 - Use Helm unit tests for verifying chart rendering.  
 - Update snapshot tests with `helm unittest -u deploy/helm`.
 - To run integration test you DO NOT CHECK for its configuration, DO NOT VALIDATE anything else, you simply run these commands in order:
-1. Build artifacts: `skaffold build --file-output=/tmp/tags.json`
-1. Deploy environment: `skaffold deploy --build-artifacts /tmp/tags.json --status-check=true`
-2. Run tests: `skaffold verify --build-artifacts /tmp/tags.json`
-3. Delete environment: `skaffold delete`
+1. Build artifacts: `skaffold build --file-output=/tmp/tags.json -v info`
+  * This is needed for the first time and every time you change the integration test.
+2. Deploy environment: `skaffold deploy --build-artifacts /tmp/tags.json -p beyla,operator,no-prometheus --status-check=true -v info`
+  * This is needed for the first time and any time there are configuration changes. This is not needed if only integration test is changed. 
+3. Run tests: `skaffold verify --build-artifacts /tmp/tags.json -v info`
+4. Delete environment: `skaffold delete -v info`
+  * This will cleanup everything what `skaffold deploy` created.
+
+You must wait for all the commands that you run, avoid running them in the background.
 
 # Directory layout
 - **deploy/helm/** – Helm chart for deploying the collector
