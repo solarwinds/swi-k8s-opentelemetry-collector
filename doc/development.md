@@ -225,11 +225,49 @@ To enable code completion when writing new tests, install a VS Code extension pr
 Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
 
 ### Prerequisites
-Deploy cluster locally using `skaffold dev`
-### Run tests locally
-* Install all dependencies: `pip install --user -r tests/integration/requirements.txt` 
-* Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
-* You can run it directly in cluster by manually triggering `integration-test` CronJob
+- Deploy cluster locally using `skaffold dev` (or ensure artifacts are built and deployed)
+- For standalone `skaffold verify` commands, ensure you have run the build and deploy steps first:
+  - Efficient approach: `skaffold build -q | tee build-artifacts.json | skaffold deploy --build-artifacts - --status-check`
+  - Simple approach: `skaffold build` and `skaffold deploy`
+
+### Run tests using Skaffold verify (Recommended)
+
+The integration tests can now be executed using Skaffold's verify feature, which provides a streamlined and automated testing experience.
+
+**Important:** Skaffold verify requires artifacts to be built and deployed first. You can either:
+1. Use the efficient build artifacts approach: `skaffold build -q | tee build-artifacts.json | skaffold deploy --build-artifacts - --status-check`
+#### Run all tests:
+```shell
+skaffold verify --build-artifacts build-artifacts.json
+```
+
+#### Run specific test suites:
+```shell
+skaffold verify -p test-metrics --build-artifacts build-artifacts.json
+
+# Run only logs tests (after build/deploy with build artifacts)
+skaffold verify -p test-logs --build-artifacts build-artifacts.json
+
+# Run only events tests (after build/deploy with build artifacts)
+skaffold verify -p test-events --build-artifacts build-artifacts.json
+
+# Run only manifests tests (after build/deploy with build artifacts)
+skaffold verify -p test-manifests --build-artifacts build-artifacts.json
+
+# Run only entity state tests (after build/deploy with build artifacts)
+skaffold verify -p test-entity-state --build-artifacts build-artifacts.json
+```
+
+### Modular test execution
+
+The test suite is now modularized into separate runners for better maintainability and performance:
+
+- `run_metrics_tests.py` - Metrics collection tests
+- `run_logs_tests.py` - Log collection tests  
+- `run_events_tests.py` - Event collection tests
+- `run_manifests_tests.py` - Manifest collection tests
+- `run_entity_state_tests.py` - Entity state event tests
+- `run_tests.py` - Main test runner that orchestrates other runners
 
 ### Updating utils used for testing
 

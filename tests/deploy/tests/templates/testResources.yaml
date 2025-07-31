@@ -167,10 +167,8 @@ metadata:
 spec:
   capacity:
     storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
+  accessModes: [ReadWriteOnce]
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: test-storage-class
   hostPath:
     path: "/tmp/data"
 ---
@@ -183,20 +181,10 @@ metadata:
   annotations:
     example.com/annotation: "example-annotation"
 spec:
-  accessModes:
-    - ReadWriteOnce
+  accessModes: [ReadWriteOnce]
   resources:
     requests:
       storage: 5Gi
-  storageClassName: test-storage-class
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: test-storage-class
-provisioner: kubernetes.io/no-provisioner
-reclaimPolicy: Delete
-volumeBindingMode: Immediate
 ---
 apiVersion: v1
 kind: Service

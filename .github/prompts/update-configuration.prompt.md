@@ -15,5 +15,5 @@ description: 'Update Helm chart configuration'
     - #file deploy/helm/values.schema.json
 
 # Definition of Done
-- Helm unit tests are passing. Run tests with `helm unittest -u deploy/helm`.
+- Helm unit tests are passing.
 
