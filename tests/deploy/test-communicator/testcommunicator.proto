@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package testcommunicator;
+
+option go_package = "./proto";
+
+service TestCommunicator {
+    rpc Health(HealthRequest) returns (HealthResponse);
+    rpc GetData(DataRequest) returns (DataResponse);
+    rpc CallTarget(TargetRequest) returns (TargetResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+    string status = 1;
+    string service = 2;
+    string timestamp = 3;
+}
+
+message DataRequest {}
+
+message DataResponse {
+    string message = 1;
+    string service = 2;
+    string timestamp = 3;
+    repeated string items = 4;
+    int32 count = 5;
+    bool active = 6;
+}
+
+message TargetRequest {}
+
+message TargetResponse {
+    string message = 1;
+    string service = 2;
+    string target_host = 3;
+    int32 target_port = 4;
+    string target_response = 5;
+    string timestamp = 6;
+}
