@@ -388,30 +388,30 @@ Output will be a duration string like "120s", "4m", etc.
 {{- if .Values.otel.metrics.prometheus.max_staleness -}}
   {{- .Values.otel.metrics.prometheus.max_staleness -}}
 {{- else -}}
-  {{- include "common.doubleInterval" .Values.otel.metrics.prometheus.scrape_interval -}}
+  {{- include "common.tripleInterval" .Values.otel.metrics.prometheus.scrape_interval -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Calculate max_staleness as twice the scrape_interval
 Input should be a duration string like "60s", "5m", etc.
-Output will be the same format but doubled
+Output will be the same format but tripled
 */}}
-{{- define "common.doubleInterval" -}}
+{{- define "common.tripleInterval" -}}
 {{- $interval := . -}}
 {{- if hasSuffix "s" $interval -}}
   {{- $num := $interval | trimSuffix "s" | int -}}
-  {{- printf "%ds" (mul $num 2) -}}
+  {{- printf "%ds" (mul $num 3) -}}
 {{- else if hasSuffix "m" $interval -}}
   {{- $num := $interval | trimSuffix "m" | int -}}
-  {{- printf "%dm" (mul $num 2) -}}
+  {{- printf "%dm" (mul $num 3) -}}
 {{- else if hasSuffix "h" $interval -}}
   {{- $num := $interval | trimSuffix "h" | int -}}
-  {{- printf "%dh" (mul $num 2) -}}
+  {{- printf "%dh" (mul $num 3) -}}
 {{- else -}}
   {{- /* Default case - assume seconds if no suffix */ -}}
   {{- $num := $interval | int -}}
-  {{- printf "%ds" (mul $num 2) -}}
+  {{- printf "%ds" (mul $num 3) -}}
 {{- end -}}
 {{- end -}}
 
