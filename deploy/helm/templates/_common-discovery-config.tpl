@@ -61,6 +61,7 @@ metricstransform/copy-required-metrics:
 
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
 cumulativetodelta/discovery:
+  max_staleness: {{ include "common.maxStaleness" . }}
   include:
     metrics:
 {{- range .Values.otel.metrics.autodiscovery.prometheusEndpoints.customTransformations.counterToRate }}
@@ -108,6 +109,7 @@ metricstransform/istio-metrics:
       new_name: k8s.istio_tcp_received_bytes.delta
 
 cumulativetodelta/istio-metrics:
+  max_staleness: {{ include "common.maxStaleness" . }}
   include:
     metrics:
       - k8s.istio_request_bytes.rate
