@@ -380,7 +380,7 @@ Usage:
 
 {{/*
 Calculate max_staleness for cumulativetodelta processor
-If max_staleness is explicitly set, use it. Otherwise, default to twice the scrape_interval
+If max_staleness is explicitly set, use it. Otherwise, default to thrice the scrape_interval
 Input should be the Values object with prometheus configuration
 Output will be a duration string like "120s", "4m", etc.
 */}}
