@@ -384,6 +384,43 @@ Usage:
 {{- end -}}
 {{- end -}}
 
+{{/*
+Calculate max_staleness for cumulativetodelta processor
+If max_staleness is explicitly set, use it. Otherwise, default to twice the scrape_interval
+Input should be the Values object with prometheus configuration
+Output will be a duration string like "120s", "4m", etc.
+*/}}
+{{- define "common.maxStaleness" -}}
+{{- if .Values.otel.metrics.prometheus.max_staleness -}}
+  {{- .Values.otel.metrics.prometheus.max_staleness -}}
+{{- else -}}
+  {{- include "common.doubleInterval" .Values.otel.metrics.prometheus.scrape_interval -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Calculate max_staleness as twice the scrape_interval
+Input should be a duration string like "60s", "5m", etc.
+Output will be the same format but doubled
+*/}}
+{{- define "common.doubleInterval" -}}
+{{- $interval := . -}}
+{{- if hasSuffix "s" $interval -}}
+  {{- $num := $interval | trimSuffix "s" | int -}}
+  {{- printf "%ds" (mul $num 2) -}}
+{{- else if hasSuffix "m" $interval -}}
+  {{- $num := $interval | trimSuffix "m" | int -}}
+  {{- printf "%dm" (mul $num 2) -}}
+{{- else if hasSuffix "h" $interval -}}
+  {{- $num := $interval | trimSuffix "h" | int -}}
+  {{- printf "%dh" (mul $num 2) -}}
+{{- else -}}
+  {{- /* Default case - assume seconds if no suffix */ -}}
+  {{- $num := $interval | int -}}
+  {{- printf "%ds" (mul $num 2) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "common.prometheus.relabelconfigs" -}}
 metric_relabel_configs:
   - source_labels: [service_name]
