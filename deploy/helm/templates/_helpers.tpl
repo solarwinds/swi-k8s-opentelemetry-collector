@@ -393,7 +393,7 @@ Output will be a duration string like "120s", "4m", etc.
 {{- end -}}
 
 {{/*
-Calculate max_staleness as twice the scrape_interval
+Calculate max_staleness as thrice the scrape_interval
 Input should be a duration string like "60s", "5m", etc.
 Output will be the same format but tripled
 */}}
