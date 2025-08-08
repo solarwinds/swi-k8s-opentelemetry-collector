@@ -81,6 +81,7 @@ processors:
   {{- include "common-config.attributes-remove-temp" . | nindent 2 }}
 
   cumulativetodelta/cadvisor:
+    max_staleness: {{ include "common.maxStaleness" . }}
     include:
       metrics:
         {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}

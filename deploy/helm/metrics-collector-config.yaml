@@ -571,6 +571,7 @@ processors:
         - 'metric.name == "k8s.kube_job_status_start_time" and value_double == 0'
 
   cumulativetodelta:
+    max_staleness: {{ include "common.maxStaleness" . }}
     include:
       metrics:
         {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}
