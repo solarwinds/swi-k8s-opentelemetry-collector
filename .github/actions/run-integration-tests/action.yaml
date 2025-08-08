@@ -7,26 +7,13 @@ runs:
       run: |
         kubectl wait --for=condition=ready --timeout=60s pod -l app=timeseries-mock-service -n test-namespace
 
-        kubectl create job --from=cronjob/integration-test integration-test-manual -n test-namespace
-
-        kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n test-namespace
-        kubetail -l job-name=integration-test-manual -n test-namespace &  
-
-        # Wait for either complete or failed
-        echo "Waiting for tests to complete"
-        while true; do
-            if kubectl wait --for=condition=complete --timeout=0 jobs/integration-test-manual -n test-namespace 2>/dev/null; then
-                job_result=0
-                break
-            fi
-
-            if kubectl wait --for=condition=failed --timeout=0 jobs/integration-test-manual -n test-namespace 2>/dev/null; then
-                job_result=1
-                break
-            fi
-            echo -n "."
-            sleep 3
-        done
+        echo "Running skaffold verify..."
+        kubectl config set-context kind-kind
+        if skaffold verify --build-artifacts /tmp/tags.json; then
+            job_result=0
+        else
+            job_result=1
+        fi
 
         if [[ $job_result -eq 1 ]]; then
             echo "Tests failed"
