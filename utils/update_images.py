@@ -91,7 +91,7 @@ class DockerImageUpdater:
         """Fetch tags from GitHub Container Registry."""
         try:
             if repository.startswith('ghcr.io/'):
-                repo_path = repository.replace('ghcr.io/', '')
+                repo_path = repository[len('ghcr.io/'):]
             else:
                 repo_path = repository
                 
@@ -159,7 +159,13 @@ class DockerImageUpdater:
 
     def get_latest_version(self, repository: str, current_version: str = "") -> Optional[str]:
         """Get the latest semantic version for a Docker image."""
-        clean_repo = repository.strip().replace('docker.io/', '').replace('index.docker.io/', '')
+        clean_repo = repository.strip()
+        
+        # Only remove Docker registry prefixes from the beginning of the string to prevent URL injection
+        if clean_repo.startswith('docker.io/'):
+            clean_repo = clean_repo[len('docker.io/'):]  # Remove 'docker.io/'
+        elif clean_repo.startswith('index.docker.io/'):
+            clean_repo = clean_repo[len('index.docker.io/'):]  # Remove 'index.docker.io/'
         
         if clean_repo.startswith('ghcr.io/'):
             tags = self.get_ghcr_tags(clean_repo)
