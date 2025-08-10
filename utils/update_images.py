@@ -9,6 +9,7 @@ import traceback
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from pathlib import Path
+from urllib.parse import urlparse
 import requests
 from github import Github, GithubException, InputGitTreeElement
 from packaging import version
@@ -90,8 +91,14 @@ class DockerImageUpdater:
     def get_ghcr_tags(self, repository: str) -> List[str]:
         """Fetch tags from GitHub Container Registry."""
         try:
-            if repository.startswith('ghcr.io/'):
-                repo_path = repository[len('ghcr.io/'):]
+            # Parse the repository string as a URL to properly extract the hostname
+            repo_url = repository if repository.startswith(('http://', 'https://')) else f'https://{repository}'
+            parsed_url = urlparse(repo_url)
+            
+            # Check if the hostname is exactly 'ghcr.io'
+            if parsed_url.hostname == 'ghcr.io':
+                # Remove the leading slash and extract the repository path
+                repo_path = parsed_url.path.lstrip('/')
             else:
                 repo_path = repository
                 
@@ -161,25 +168,28 @@ class DockerImageUpdater:
         """Get the latest semantic version for a Docker image."""
         clean_repo = repository.strip()
         
-        # Only remove Docker registry prefixes from the beginning of the string to prevent URL injection
-        if clean_repo.startswith('docker.io/'):
-            clean_repo = clean_repo[len('docker.io/'):]  # Remove 'docker.io/'
-        elif clean_repo.startswith('index.docker.io/'):
-            clean_repo = clean_repo[len('index.docker.io/'):]  # Remove 'index.docker.io/'
+        # Parse the repository string as a URL to properly extract the hostname
+        repo_url = clean_repo if clean_repo.startswith(('http://', 'https://')) else f'https://{clean_repo}'
+        parsed_url = urlparse(repo_url)
+        hostname = parsed_url.hostname
         
-        if clean_repo.startswith('ghcr.io/'):
-            tags = self.get_ghcr_tags(clean_repo)
-        elif '/' in clean_repo and not clean_repo.startswith('library/'):
-            # Extract registry/host from the repository string
-            registry = clean_repo.split('/')[0] if '/' in clean_repo else ''
-            if registry in ['ghcr.io', 'gcr.io', 'quay.io']:
-                if registry == 'ghcr.io':
-                    tags = self.get_ghcr_tags(clean_repo)
-                else:
-                    tags = self.get_docker_hub_tags(clean_repo)
-            else:
-                tags = self.get_docker_hub_tags(clean_repo)
+        # Handle Docker Hub aliases by normalizing them
+        if hostname in ['docker.io', 'index.docker.io']:
+            clean_repo = parsed_url.path.lstrip('/')
+        elif hostname == 'ghcr.io':
+            clean_repo = parsed_url.path.lstrip('/')
+        
+        # Determine which registry API to use based on hostname
+        if hostname == 'ghcr.io':
+            tags = self.get_ghcr_tags(repository)
+        elif hostname in ['docker.io', 'index.docker.io', None]:
+            # None hostname means it's likely a Docker Hub repository without explicit hostname
+            tags = self.get_docker_hub_tags(clean_repo)
+        elif hostname in ['gcr.io', 'quay.io']:
+            # For other registries, fallback to Docker Hub API format (may not always work)
+            tags = self.get_docker_hub_tags(clean_repo)
         else:
+            # Default fallback for unknown registries
             tags = self.get_docker_hub_tags(clean_repo)
             
         if not tags:
@@ -463,7 +473,6 @@ class DockerImageUpdater:
                 
             title = f"update docker image versions"
             
-            # Simple PR body
             body_parts = [
                 "## Updated Images",
                 ""
