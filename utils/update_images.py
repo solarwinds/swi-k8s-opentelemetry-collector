@@ -164,8 +164,10 @@ class DockerImageUpdater:
         if clean_repo.startswith('ghcr.io/'):
             tags = self.get_ghcr_tags(clean_repo)
         elif '/' in clean_repo and not clean_repo.startswith('library/'):
-            if any(registry in clean_repo for registry in ['ghcr.io', 'gcr.io', 'quay.io']):
-                if 'ghcr.io' in clean_repo:
+            # Extract registry/host from the repository string
+            registry = clean_repo.split('/')[0] if '/' in clean_repo else ''
+            if registry in ['ghcr.io', 'gcr.io', 'quay.io']:
+                if registry == 'ghcr.io':
                     tags = self.get_ghcr_tags(clean_repo)
                 else:
                     tags = self.get_docker_hub_tags(clean_repo)
