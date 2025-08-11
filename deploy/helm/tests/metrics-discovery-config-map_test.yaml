@@ -2,6 +2,8 @@
 suite: Test for metrics-discovery-config-map
 templates:
   - metrics-discovery-config-map.yaml
+chart:
+  version: 1.0.0
 tests:
   - it: Metrics discovery config should match snapshot when Fargate is enabled
     template: metrics-discovery-config-map.yaml
@@ -14,4 +16,21 @@ tests:
     template: metrics-discovery-config-map.yaml
     asserts:
       - hasDocuments:
-          count: 0      
+          count: 0
+  - it: Pprof should not be in the configuration by default
+    template: metrics-discovery-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+    asserts:
+      - notMatchRegex:
+          path: data["metrics-discovery.config"]
+          pattern: "pprof"
+  - it: Pprof should be in the configuration when enabled
+    template: metrics-discovery-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+      diagnostics.profiling.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["metrics-discovery.config"]
+          pattern: "pprof"

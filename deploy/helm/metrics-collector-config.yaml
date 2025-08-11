@@ -5,6 +5,7 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+      "swi-reporter": "k8s swo-k8s-collector/{{ .Chart.Version }}"
     retry_on_failure:
       enabled: {{ .Values.otel.metrics.retry_on_failure.enabled }}
       initial_interval: {{ .Values.otel.metrics.retry_on_failure.initial_interval }}
@@ -26,6 +27,10 @@ extensions:
 {{- end }}
   health_check:
     endpoint: 0.0.0.0:13133
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 processors:
   k8sattributes:
@@ -1056,35 +1061,38 @@ service:
     - file_storage/sending_queue
 {{- end }}
     - health_check
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
     metrics/prometheus-server:
-      exporters:
-        - forward/prometheus
-      processors:
-        - memory_limiter
       receivers:
         - prometheus/prometheus-server
-{{- end }}
-    metrics/kubestatemetrics:
+      processors:
+        - memory_limiter
       exporters:
         - forward/prometheus
+{{- end }}
+    metrics/kubestatemetrics:
+      receivers:
+        - prometheus/kube-state-metrics
       processors:
         - memory_limiter
         - filter/kube-state-metrics
-      receivers:
-        - prometheus/kube-state-metrics
-    metrics/prometheus-node-metrics:
       exporters:
         - forward/prometheus
+    metrics/prometheus-node-metrics:
+      receivers:
+        - prometheus/node-metrics
       processors:
         - memory_limiter
         - filter/prometheus-node-metrics
-      receivers:
-        - prometheus/node-metrics
-    metrics/prometheus:
       exporters:
-        - forward/metric-exporter
+        - forward/prometheus
+    metrics/prometheus:
+      receivers:
+        - forward/prometheus
       processors:
         - memory_limiter
         - filter/receiver
@@ -1125,18 +1133,18 @@ service:
         - filter
 {{- end }}
         - filter/remove_temporary_metrics
-      receivers:
-        - forward/prometheus
-    metrics:
       exporters:
-        - otlp
+        - forward/metric-exporter
+    metrics:
+      receivers:
+        - forward/metric-exporter
       processors:
         - memory_limiter
         - filter/histograms
         - transform/scope
         - batch
-      receivers:
-        - forward/metric-exporter
+      exporters:
+        - otlp
     
   telemetry:
 {{- if .Values.otel.metrics.telemetry.logs.enabled }}

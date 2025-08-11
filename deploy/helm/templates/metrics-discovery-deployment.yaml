@@ -122,6 +122,10 @@ spec:
               containerPort: {{ (split ":" .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.address)._1 }}
               protocol: TCP
 {{- end}}
+{{- if .Values.diagnostics.profiling.enabled }}
+            - name: pprof
+              containerPort: {{ .Values.diagnostics.profiling.port }}
+{{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-common-env") }}

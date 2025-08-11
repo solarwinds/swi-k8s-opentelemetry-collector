@@ -5,6 +5,7 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+      "swi-reporter": "k8s swo-k8s-collector/{{ .Chart.Version }}"
     retry_on_failure:
       enabled: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.enabled }}
       initial_interval: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.initial_interval }}
@@ -28,7 +29,11 @@ extensions:
     endpoint: 0.0.0.0:13133
   k8s_observer:
     auth_type: serviceAccount
-    observe_pods: true    
+    observe_pods: true
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
 
 processors:
   k8sattributes:
@@ -164,13 +169,16 @@ service:
 {{- end }}
     - health_check
     - k8s_observer
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
   pipelines:
 
 {{ include "common-discovery-config.pipelines" (tuple . "receiver_creator/discovery" "forward/metric-exporter") | indent 4 }}
 
     metrics:
-      exporters:
-        - otlp
+      receivers:
+        - forward/metric-exporter
       processors:
         - memory_limiter
         - filter/histograms
@@ -184,8 +192,8 @@ service:
         - filter/remove_temporary_metrics
         - transform/scope
         - batch/metrics
-      receivers:
-        - forward/metric-exporter
+      exporters:
+        - otlp
     
   telemetry:
 {{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.enabled }}

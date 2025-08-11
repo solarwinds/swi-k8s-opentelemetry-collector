@@ -2,6 +2,8 @@
 suite: Test for node-collector-config-map-windows
 templates:
   - node-collector-config-map-windows.yaml
+chart:
+  version: 1.0.0
 tests:
   - it: Node collector config for windows nodes should match snapshot when using default values
     template: node-collector-config-map-windows.yaml
@@ -20,3 +22,17 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Pprof should not be in the configuration by default
+    template: node-collector-config-map-windows.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: "pprof"
+  - it: Pprof should be in the configuration when enabled
+    template: node-collector-config-map-windows.yaml
+    set:
+      diagnostics.profiling.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: "pprof"

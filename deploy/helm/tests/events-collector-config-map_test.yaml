@@ -2,6 +2,8 @@
 suite: Test for events-collector-config-map
 templates:
   - events-collector-config-map.yaml
+chart:
+  version: 1.0.0
 tests:
   - it: Events config should match snapshot when using default values
     template: events-collector-config-map.yaml
@@ -37,3 +39,17 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Pprof should not be in the configuration by default
+    template: events-collector-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["events.config"]
+          pattern: "pprof"
+  - it: Pprof should be in the configuration when enabled
+    template: events-collector-config-map.yaml
+    set:
+      diagnostics.profiling.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["events.config"]
+          pattern: "pprof"

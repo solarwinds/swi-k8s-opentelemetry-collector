@@ -1,3 +1,798 @@
 Gateway config should match snapshot when using default values:
   1: |
-    gateway.config: "exporters:\n  otlp:\n    endpoint: ${OTEL_ENVOY_ADDRESS}\n    tls:\n      insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}\n    headers:\n      \"Authorization\": \"Bearer ${SOLARWINDS_API_TOKEN}\"\n    retry_on_failure:\n      enabled: true\n      initial_interval: 10s\n      max_interval: 30s\n      max_elapsed_time: 300s\n    sending_queue:\n      enabled: true\n      num_consumers: 10\n      queue_size: 1000\n    timeout: 30s\n\nextensions:\n  health_check:\n    endpoint: 0.0.0.0:13133\n\nprocessors:\n  batch:\n    send_batch_max_size: 1024\n    send_batch_size: 1024\n    timeout: 1s\n\n  memory_limiter:\n    check_interval: 1s\n    limit_percentage: 80\n    spike_limit_percentage: 25\n\n  k8sattributes:\n    auth_type: \"serviceAccount\"\n    passthrough: false\n    extract:\n      metadata:\n        - k8s.deployment.name\n        - k8s.replicaset.name\n        - k8s.daemonset.name\n        - k8s.job.name\n        - k8s.cronjob.name\n        - k8s.statefulset.name\n        - k8s.node.name\n    pod_association:\n      - sources:\n          - from: resource_attribute\n            name: k8s.pod.name\n          - from: resource_attribute\n            name: k8s.namespace.name\n\n  metricstransform/rename:\n    transforms:\n      # add predefined prefix to all proxied metrics\n      - include: ^(.*)$$\n        match_type: regexp\n        action: update\n        new_name: k8s.$${1}\n\n  resource:\n    attributes:\n      # Collector and Manifest version\n      - key: sw.k8s.agent.manifest.version\n        value: ${MANIFEST_VERSION}\n        action: insert\n\n      - key: sw.k8s.agent.app.version\n        value: ${APP_VERSION}\n        action: insert\n\n      # Cluster\n      - key: sw.k8s.cluster.uid\n        value: ${CLUSTER_UID}\n        action: insert\n\n      - key: k8s.cluster.name\n        value: ${CLUSTER_NAME}\n        action: upsert\n\n  # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message\n  attributes/clean-attributes-otlp-metrics:\n    actions:\n      - key: k8s.cluster.name\n        action: delete\n\n  transform/scope:\n    metric_statements:\n      - statements:\n        - set(scope.name, \"\")\n        - set(scope.version, \"\")\n    log_statements:\n      - statements:\n        - set(scope.name, \"\")\n        - set(scope.version, \"\")\n    trace_statements:\n      - statements:\n        - set(scope.name, \"\")\n        - set(scope.version, \"\")\n\n  filter/otlp-metrics:\n    metrics:\n      metric:\n        # metrics from EBPF reducer that are not needed\n        - 'IsMatch(name, \"^ebpf_net.*$\")'\n\n  filter/histograms:\n    metrics:\n      metric:\n        - 'type == METRIC_DATA_TYPE_HISTOGRAM'\n\n  filter/histograms_beyla:\n    metrics:\n      metric:\n        # Exclude all histograms except the ones listed below\n        # excluded histograms are:\n        # - all histograms from beyla\n        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(\n            name == \"http.client.request.duration\" or\n            name == \"http.client.request.body.size\" or\n            name == \"http.client.response.body.size\" or\n            name == \"http.server.request.duration\" or \n            name == \"http.server.request.body.size\" or\n            name == \"http.server.response.body.size\" or\n            name == \"rpc.client.duration\" or\n            name == \"rpc.server.duration\" or\n            name == \"sql.client.duration\" or\n            name == \"redis.client.duration\" or\n            name == \"messaging.publish.duration\" or\n            name == \"messaging.process.duration\"\n          )'\n\n  swok8sworkloadtype/beyla:\n    workload_mappings:\n      - name_attr: k8s.src.owner.name\n        namespace_attr: k8s.src.namespace\n        workload_type_attr: k8s.src.owner.type\n        expected_types:\n          - deployments\n          - daemonsets\n          - statefulsets\n          - services\n          - jobs\n          - cronjobs\n          - pods\n          - nodes\n      - name_attr: k8s.dst.owner.name\n        namespace_attr: k8s.dst.namespace\n        workload_type_attr: k8s.dst.owner.type\n        expected_types:\n          - deployments\n          - daemonsets\n          - statefulsets\n          - services\n          - jobs\n          - cronjobs\n          - pods\n          - nodes\n      - name_attr: k8s.owner.name\n        namespace_attr: k8s.namespace.name\n        workload_type_attr: k8s.owner.type\n        expected_types:\n          - deployments\n          - daemonsets\n          - statefulsets\n          - services\n          - jobs\n          - cronjobs\n          - pods\n          - nodes\n\nreceivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n      http:\n        endpoint: 0.0.0.0:4318\n\nconnectors:\n  forward/metrics_common: {}\n  routing/metrics:\n    default_pipelines: [metrics]\n    table:\n      - context: metric\n        pipelines: [metrics/beyla]\n        condition: |\n          name == \"http.client.request.duration\" or\n          name == \"http.client.request.body.size\" or\n          name == \"http.client.response.body.size\" or\n          name == \"http.server.request.duration\" or \n          name == \"http.server.request.body.size\" or\n          name == \"http.server.response.body.size\" or\n          name == \"rpc.client.duration\" or\n          name == \"rpc.server.duration\" or\n          name == \"sql.client.duration\" or\n          name == \"redis.client.duration\" or\n          name == \"messaging.publish.duration\" or\n          name == \"messaging.process.duration\" or\n          name == \"process.cpu.time\" or\n          name == \"process.cpu.utilization\" or\n          name == \"process.memory.usage\" or\n          name == \"process.memory.virtual\" or\n          name == \"process.disk.io\" or\n          name == \"process.network.io\" or\n          name == \"beyla.network.flow.bytes\" or\n          name == \"beyla.network.inter.zone.bytes\"\n\nservice:\n  extensions:\n    - health_check\n  pipelines:\n    metrics:\n      exporters:\n        - forward/metrics_common\n      processors:\n        - filter/histograms\n      receivers:\n        - routing/metrics\n    metrics/beyla:\n      exporters:\n        - forward/metrics_common\n      processors:\n        - filter/histograms_beyla\n        - swok8sworkloadtype/beyla\n      receivers:\n        - routing/metrics\n    metrics/common_in:\n      exporters:\n        - routing/metrics\n      processors:\n        - memory_limiter\n      receivers:\n        - otlp\n    metrics/common_out:\n      exporters:\n        - otlp\n      processors:\n        - memory_limiter\n        - k8sattributes\n        - metricstransform/rename\n        - attributes/clean-attributes-otlp-metrics\n        - resource\n        - transform/scope\n        - batch\n      receivers:\n        - forward/metrics_common\n    logs:\n      exporters:\n        - otlp\n      processors:\n        - memory_limiter\n        - k8sattributes\n        - resource\n        - transform/scope\n        - batch\n      receivers:\n        - otlp\n    traces:\n      exporters:\n        - otlp\n      processors:\n        - memory_limiter\n        - k8sattributes\n        - resource\n        - transform/scope\n        - batch\n      receivers:\n        - otlp\n  telemetry:\n    logs:\n      level: info\n    metrics:\n      readers:\n        - pull:\n            exporter:\n              prometheus:\n                host: \"0.0.0.0\"\n                port: 8888"
+    gateway.config: |
+      connectors:
+        forward/metrics_common: {}
+        routing/metrics:
+          default_pipelines:
+          - metrics
+          table:
+          - condition: "name == \"http.client.request.duration\" or\nname == \"http.client.request.body.size\"
+              or\nname == \"http.client.response.body.size\" or\nname == \"http.server.request.duration\"
+              or \nname == \"http.server.request.body.size\" or\nname == \"http.server.response.body.size\"
+              or\nname == \"rpc.client.duration\" or \nname == \"rpc.server.duration\" or
+              \nname == \"beyla.network.flow.bytes\"\n"
+            context: metric
+            pipelines:
+            - metrics/beyla-network-entities-and-relationships
+        solarwindsentity/beyla-entities:
+          schema:
+            entities:
+            - entity: PublicNetworkLocation
+              id:
+              - sw.server.address.fqdn
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: PublicNetworkLocation
+        solarwindsentity/beyla-relationships:
+          destination_prefix: dest.
+          schema:
+            entities:
+            - entity: KubernetesDeployment
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.deployment.name
+            - entity: KubernetesStatefulSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.statefulset.name
+            - entity: KubernetesDaemonSet
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.daemonset.name
+            - entity: KubernetesJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.job.name
+            - entity: KubernetesCronJob
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.cronjob.name
+            - entity: KubernetesService
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.service.name
+            - entity: KubernetesPod
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.pod.name
+            - entity: KubernetesNode
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.node.name
+            - entity: PublicNetworkLocation
+              id:
+              - sw.server.address.fqdn
+            events:
+              relationships:
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesDeployment
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesStatefulSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesDaemonSet
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesDaemonSet
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesService
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: PublicNetworkLocation
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesDeployment
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesStatefulSet
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesJob
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesNode
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+              - action: update
+                attributes:
+                - beyla
+                - tcp
+                - http
+                - grpc
+                conditions: []
+                context: metric
+                destination_entity: KubernetesPod
+                source_entity: KubernetesJob
+                type: KubernetesCommunicatesWith
+          source_prefix: source.
+      exporters:
+        otlp:
+          endpoint: ${OTEL_ENVOY_ADDRESS}
+          headers:
+            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            swi-reporter: k8s swo-k8s-collector/1.0.0
+          retry_on_failure:
+            enabled: true
+            initial_interval: 10s
+            max_elapsed_time: 300s
+            max_interval: 30s
+          sending_queue:
+            enabled: true
+            num_consumers: 10
+            queue_size: 1000
+          timeout: 30s
+          tls:
+            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      extensions:
+        health_check:
+          endpoint: 0.0.0.0:13133
+      processors:
+        attributes/clean-attributes-otlp-metrics:
+          actions:
+          - action: delete
+            key: k8s.cluster.name
+        batch:
+          send_batch_max_size: 1024
+          send_batch_size: 1024
+          timeout: 1s
+        filter/histograms:
+          metrics:
+            metric:
+            - type == METRIC_DATA_TYPE_HISTOGRAM
+        filter/otlp-metrics:
+          metrics:
+            metric:
+            - IsMatch(name, "^ebpf_net.*$")
+        groupbyattrs/beyla-entity-ids:
+          keys:
+          - sw.k8s.dst.sw.server.address.fqdn
+          - sw.k8s.src.sw.server.address.fqdn
+          - sw.server.address.fqdn
+          - sw.k8s.dst.workload.type
+          - sw.k8s.dst.workload.name
+          - sw.k8s.dst.workload.namespace
+          - sw.k8s.src.workload.type
+          - sw.k8s.src.workload.name
+          - sw.k8s.src.workload.namespace
+        k8sattributes:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.name
+            - k8s.deployment.name
+            - k8s.replicaset.name
+            - k8s.daemonset.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.statefulset.name
+            - k8s.node.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
+            - from: resource_attribute
+              name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
+        memory_limiter:
+          check_interval: 1s
+          limit_percentage: 80
+          spike_limit_percentage: 25
+        metricstransform/rename:
+          transforms:
+          - action: update
+            include: ^(.*)$$
+            match_type: regexp
+            new_name: k8s.$${1}
+        resource:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: upsert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: beyla
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
+        swok8sworkloadtype/beyla:
+          workload_mappings:
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            - services
+            - jobs
+            - cronjobs
+            - pods
+            - nodes
+            name_attr: k8s.src.owner.name
+            namespace_attr: k8s.src.namespace
+            prefer_owner_for_pods: true
+            workload_name_attr: sw.k8s.src.workload.name
+            workload_namespace_attr: sw.k8s.src.workload.namespace
+            workload_type_attr: sw.k8s.src.workload.type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            - services
+            - jobs
+            - cronjobs
+            - pods
+            - nodes
+            name_attr: k8s.dst.owner.name
+            namespace_attr: k8s.dst.namespace
+            prefer_owner_for_pods: true
+            workload_name_attr: sw.k8s.dst.workload.name
+            workload_namespace_attr: sw.k8s.dst.workload.namespace
+            workload_type_attr: sw.k8s.dst.workload.type
+          - expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
+            - services
+            - jobs
+            - cronjobs
+            - pods
+            - nodes
+            name_attr: resource.k8s.owner.name
+            namespace_attr: resource.k8s.namespace.name
+            prefer_owner_for_pods: true
+            workload_name_attr: resource.sw.k8s.workload.name
+            workload_namespace_attr: resource.sw.k8s.workload.namespace
+            workload_type_attr: resource.sw.k8s.workload.type
+          - address_attr: server.address
+            expected_types:
+            - services
+            - pods
+            namespace_attr: k8s.namespace.name
+            prefer_owner_for_pods: true
+            workload_name_attr: sw.k8s.dst.workload.name
+            workload_namespace_attr: sw.k8s.dst.workload.namespace
+            workload_type_attr: sw.k8s.dst.workload.type
+          - address_attr: client.address
+            expected_types:
+            - services
+            - pods
+            namespace_attr: k8s.namespace.name
+            prefer_owner_for_pods: true
+            workload_name_attr: sw.k8s.src.workload.name
+            workload_namespace_attr: sw.k8s.src.workload.namespace
+            workload_type_attr: sw.k8s.src.workload.type
+        transform/beyla-entity-ids:
+          metric_statements:
+          - set(resource.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.src.workload.name"])
+            where resource.attributes["sw.k8s.src.workload.type"] == "Deployment" and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.src.workload.name"])
+            where resource.attributes["sw.k8s.src.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.src.workload.name"])
+            where resource.attributes["sw.k8s.src.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.src.workload.name"])
+            where resource.attributes["sw.k8s.src.workload.type"] == "Service" and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.src.workload.name"])
+            where resource.attributes["sw.k8s.src.workload.type"] == "Job" and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.src.workload.name"])
+            where resource.attributes["sw.k8s.src.workload.type"] == "Node" and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.src.workload.name"])
+            where resource.attributes["sw.k8s.src.workload.type"] == "Pod" and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.src.workload.namespace"])
+            where resource.attributes["sw.k8s.src.workload.namespace"] != nil
+          - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.dst.workload.name"])
+            where resource.attributes["sw.k8s.dst.workload.type"] == "Deployment" and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.dst.workload.name"])
+            where resource.attributes["sw.k8s.dst.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.dst.workload.name"])
+            where resource.attributes["sw.k8s.dst.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.dst.workload.name"])
+            where resource.attributes["sw.k8s.dst.workload.type"] == "Service" and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.dst.workload.name"])
+            where resource.attributes["sw.k8s.dst.workload.type"] == "Job" and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.dst.workload.name"])
+            where resource.attributes["sw.k8s.dst.workload.type"] == "Node" and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.dst.workload.name"])
+            where resource.attributes["sw.k8s.dst.workload.type"] == "Pod" and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.dst.workload.namespace"])
+            where resource.attributes["sw.k8s.dst.workload.namespace"] != nil
+          - set(resource.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+          - set(resource.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+          - set(resource.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+          - set(resource.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+          - set(resource.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+          - set(resource.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+          - set(resource.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
+          - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"])
+            where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.dst.workload.name"]
+            != nil
+          - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+          - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+          - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+          - set(resource.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+          - set(resource.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+          - set(resource.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+          - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"])
+            where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"]
+            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
+          - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"])
+            where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.src.workload.name"]
+            != nil
+          - set(resource.attributes["beyla"], "true")
+        transform/beyla-fqdn-attribute:
+          metric_statements:
+          - statements:
+            - set(datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"], datapoint.attributes["dst.address"])
+              where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.dst.workload.type"]
+              == nil and IsMatch(datapoint.attributes["dst.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["dst.address"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["dst.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+            - set(datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"], datapoint.attributes["src.address"])
+              where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.src.workload.type"]
+              == nil and IsMatch(datapoint.attributes["src.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["src.address"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["src.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+            - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"])
+              where datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"] != nil
+            - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"])
+              where datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"] != nil
+        transform/beyla-relationship-types:
+          metric_statements:
+          - set(resource.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
+          - set(resource.attributes["http"], "true") where (metric.name == "http.client.request.body.size"
+            or metric.name == "http.client.response.body.size")
+          - set(resource.attributes["grpc"], "true") where metric.name == "rpc.client.duration"
+        transform/scope:
+          log_statements:
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
+          metric_statements:
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
+          trace_statements:
+          - statements:
+            - set(scope.name, "")
+            - set(scope.version, "")
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+      service:
+        extensions:
+        - health_check
+        pipelines:
+          logs:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - k8sattributes
+            - resource
+            - transform/scope
+            - batch
+            receivers:
+            - otlp
+          logs/beyla-stateevents-entities:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - logdedup/solarwindsentity
+            - batch
+            receivers:
+            - solarwindsentity/beyla-entities
+          logs/beyla-stateevents-relationships:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - transform/scope
+            - logdedup/solarwindsentity
+            - batch
+            receivers:
+            - solarwindsentity/beyla-relationships
+          metrics:
+            exporters:
+            - forward/metrics_common
+            processors:
+            - memory_limiter
+            - filter/histograms
+            receivers:
+            - routing/metrics
+          metrics/beyla-network-entities-and-relationships:
+            exporters:
+            - forward/metrics_common
+            - solarwindsentity/beyla-relationships
+            - solarwindsentity/beyla-entities
+            processors:
+            - memory_limiter
+            - swok8sworkloadtype/beyla
+            - transform/beyla-fqdn-attribute
+            - groupbyattrs/beyla-entity-ids
+            - transform/beyla-entity-ids
+            - transform/beyla-relationship-types
+            - resource
+            receivers:
+            - routing/metrics
+          metrics/common_in:
+            exporters:
+            - routing/metrics
+            processors:
+            - memory_limiter
+            receivers:
+            - otlp
+          metrics/common_out:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - k8sattributes
+            - metricstransform/rename
+            - attributes/clean-attributes-otlp-metrics
+            - resource/clean-temporary-attributes
+            - resource
+            - transform/scope
+            - batch
+            receivers:
+            - forward/metrics_common
+          traces:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - k8sattributes
+            - resource
+            - transform/scope
+            - batch
+            receivers:
+            - otlp
+        telemetry:
+          logs:
+            level: info
+          metrics:
+            readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888

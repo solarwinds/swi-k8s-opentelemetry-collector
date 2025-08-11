@@ -295,6 +295,7 @@ spec:
           insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
         headers:
           "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+          "swi-reporter": "k8s swo-k8s-collector/{{ .Chart.Version }}"
         retry_on_failure:
           enabled: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.enabled }}
           initial_interval: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.initial_interval }}
@@ -311,8 +312,8 @@ spec:
         - health_check
       pipelines:
         metrics:
-          exporters:
-            - otlp
+          receivers:
+            - forward/metric-exporter
           processors:
             - memory_limiter
             - filter/histograms
@@ -323,8 +324,8 @@ spec:
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
-          receivers:
-            - forward/metric-exporter
+          exporters:
+            - otlp
 
 {{ include "common-discovery-config.pipelines" (tuple . "prometheus" "forward/metric-exporter") | indent 8 }}
 
