@@ -5,6 +5,7 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+      "swi-reporter": "k8s swo-k8s-collector/{{ .Chart.Version }}"
     retry_on_failure:
       enabled: {{ .Values.otel.node_collector.retry_on_failure.enabled }}
       initial_interval: {{ .Values.otel.node_collector.retry_on_failure.initial_interval }}
@@ -622,8 +623,8 @@ service:
 {{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
 {{- if .Values.otel.logs.container }}
     logs/container:
-      exporters:
-        - forward/logs-exporter
+      receivers:
+        - filelog
       processors:
         - memory_limiter
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" }}
@@ -641,30 +642,30 @@ service:
         - filter/logs
 {{- end }}
 {{- end }}
-      receivers:
-        - filelog
+      exporters:
+        - forward/logs-exporter
 {{- end }}
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
     logs/journal:
-      exporters:
-        - forward/logs-exporter
+      receivers:
+        - journald
       processors:
         - memory_limiter
         - groupbyattrs/common-all
         - resource/journal
-      receivers:
-        - journald
+      exporters:
+        - forward/logs-exporter
 {{- end }}
 
     logs:
-      exporters:
-        - otlp
+      receivers:
+        - forward/logs-exporter
       processors:
         - memory_limiter
         - transform/scope
         - batch/logs
-      receivers:
-        - forward/logs-exporter
+      exporters:
+        - otlp
 {{- end }}
 
 {{- if .Values.otel.metrics.enabled }}
@@ -673,8 +674,8 @@ service:
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
     metrics/node:
-      exporters:
-        - forward/metric-exporter
+      receivers:
+        - receiver_creator/node
       processors:
         - memory_limiter
         - filter/receiver
@@ -693,13 +694,13 @@ service:
         - groupbyattrs/all
         - resource/metrics
         - resource/all
-      receivers:
-        - receiver_creator/node
+      exporters:
+        - forward/metric-exporter
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     metrics:
-      exporters:
-        - otlp
+      receivers:
+        - forward/metric-exporter
       processors:
         - memory_limiter
         - filter/histograms
@@ -713,8 +714,8 @@ service:
         - filter/remove_temporary_metrics
         - transform/scope
         - batch/metrics
-      receivers:
-        - forward/metric-exporter
+      exporters:
+        - otlp
 {{- end }}
   telemetry:
 {{- if .Values.otel.logs.telemetry.logs.enabled }}

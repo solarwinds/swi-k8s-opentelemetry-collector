@@ -2,8 +2,12 @@ Custom logs filter with new syntax:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
+        forward/istio-workload-service-filtering: {}
+        forward/istio-workload-workload-filtering: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -56,46 +60,100 @@ Custom logs filter with new syntax:
               entities:
               - action: update
                 context: metric
-                type: PublicNetworkLocation
+                entity: PublicNetworkLocation
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDaemonSet
@@ -123,64 +181,145 @@ Custom logs filter with new syntax:
             events:
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
@@ -191,6 +330,7 @@ Custom logs filter with new syntax:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            swi-reporter: k8s swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -352,6 +492,15 @@ Custom logs filter with new syntax:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -364,8 +513,6 @@ Custom logs filter with new syntax:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -373,8 +520,6 @@ Custom logs filter with new syntax:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/logs:
           logs:
             log_record:
@@ -401,6 +546,11 @@ Custom logs filter with new syntax:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
+        filter/zero-delta-values:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -490,6 +640,7 @@ Custom logs filter with new syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -996,6 +1147,16 @@ Custom logs filter with new syntax:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -1170,9 +1331,9 @@ Custom logs filter with new syntax:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -1183,11 +1344,21 @@ Custom logs filter with new syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -1200,9 +1371,6 @@ Custom logs filter with new syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -1219,12 +1387,6 @@ Custom logs filter with new syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -1493,6 +1655,7 @@ Custom logs filter with new syntax:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1504,6 +1667,7 @@ Custom logs filter with new syntax:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1531,9 +1695,9 @@ Custom logs filter with new syntax:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -1547,6 +1711,14 @@ Custom logs filter with new syntax:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - resource/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -1578,26 +1750,54 @@ Custom logs filter with new syntax:
             - resource/all
             receivers:
             - receiver_creator/node
-          metrics/relationship-state-events-workload-service-preparation:
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-service-filtering
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-service-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
-          metrics/relationship-state-events-workload-workload-preparation:
+          metrics/relationship-state-events-workload-workload-filtering:
             exporters:
             - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-workload-filtering
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-workload-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-workload-relationships
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:
@@ -1614,8 +1814,12 @@ Custom logs filter with old syntax:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
+        forward/istio-workload-service-filtering: {}
+        forward/istio-workload-workload-filtering: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -1668,46 +1872,100 @@ Custom logs filter with old syntax:
               entities:
               - action: update
                 context: metric
-                type: PublicNetworkLocation
+                entity: PublicNetworkLocation
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDaemonSet
@@ -1735,64 +1993,145 @@ Custom logs filter with old syntax:
             events:
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
@@ -1803,6 +2142,7 @@ Custom logs filter with old syntax:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            swi-reporter: k8s swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -1964,6 +2304,15 @@ Custom logs filter with old syntax:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -1976,8 +2325,6 @@ Custom logs filter with old syntax:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -1985,8 +2332,6 @@ Custom logs filter with old syntax:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/logs:
           logs:
             include:
@@ -2016,6 +2361,11 @@ Custom logs filter with old syntax:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
+        filter/zero-delta-values:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -2105,6 +2455,7 @@ Custom logs filter with old syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2611,6 +2962,16 @@ Custom logs filter with old syntax:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -2785,9 +3146,9 @@ Custom logs filter with old syntax:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -2798,11 +3159,21 @@ Custom logs filter with old syntax:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -2815,9 +3186,6 @@ Custom logs filter with old syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -2834,12 +3202,6 @@ Custom logs filter with old syntax:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -3189,6 +3551,7 @@ Custom logs filter with old syntax:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3200,6 +3563,7 @@ Custom logs filter with old syntax:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3227,9 +3591,9 @@ Custom logs filter with old syntax:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -3243,6 +3607,14 @@ Custom logs filter with old syntax:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - resource/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -3274,26 +3646,54 @@ Custom logs filter with old syntax:
             - resource/all
             receivers:
             - receiver_creator/node
-          metrics/relationship-state-events-workload-service-preparation:
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-service-filtering
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-service-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
-          metrics/relationship-state-events-workload-workload-preparation:
+          metrics/relationship-state-events-workload-workload-filtering:
             exporters:
             - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-workload-filtering
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-workload-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-workload-relationships
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:
@@ -3310,8 +3710,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
+        forward/istio-workload-service-filtering: {}
+        forward/istio-workload-workload-filtering: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -3364,46 +3768,100 @@ Node collector config should match snapshot when autodiscovery is disabled:
               entities:
               - action: update
                 context: metric
-                type: PublicNetworkLocation
+                entity: PublicNetworkLocation
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDaemonSet
@@ -3431,64 +3889,145 @@ Node collector config should match snapshot when autodiscovery is disabled:
             events:
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
@@ -3499,6 +4038,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            swi-reporter: k8s swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -3660,6 +4200,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -3672,8 +4221,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -3681,8 +4228,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -3705,6 +4250,11 @@ Node collector config should match snapshot when autodiscovery is disabled:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
+        filter/zero-delta-values:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -3794,6 +4344,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -4300,6 +4851,16 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -4474,9 +5035,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -4487,11 +5048,21 @@ Node collector config should match snapshot when autodiscovery is disabled:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -4504,9 +5075,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -4523,12 +5091,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -4736,6 +5298,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -4747,6 +5310,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -4774,9 +5338,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -4790,6 +5354,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - resource/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -4821,26 +5393,54 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/all
             receivers:
             - receiver_creator/node
-          metrics/relationship-state-events-workload-service-preparation:
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-service-filtering
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-service-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
-          metrics/relationship-state-events-workload-workload-preparation:
+          metrics/relationship-state-events-workload-workload-filtering:
             exporters:
             - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-workload-filtering
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-workload-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-workload-relationships
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:
@@ -4857,8 +5457,12 @@ Node collector config should match snapshot when fargate is enabled:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
+        forward/istio-workload-service-filtering: {}
+        forward/istio-workload-workload-filtering: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -4911,46 +5515,100 @@ Node collector config should match snapshot when fargate is enabled:
               entities:
               - action: update
                 context: metric
-                type: PublicNetworkLocation
+                entity: PublicNetworkLocation
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDaemonSet
@@ -4978,64 +5636,145 @@ Node collector config should match snapshot when fargate is enabled:
             events:
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
@@ -5046,6 +5785,7 @@ Node collector config should match snapshot when fargate is enabled:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            swi-reporter: k8s swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -5204,6 +5944,15 @@ Node collector config should match snapshot when fargate is enabled:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -5216,8 +5965,6 @@ Node collector config should match snapshot when fargate is enabled:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -5225,8 +5972,6 @@ Node collector config should match snapshot when fargate is enabled:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -5249,6 +5994,11 @@ Node collector config should match snapshot when fargate is enabled:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
+        filter/zero-delta-values:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -5338,6 +6088,7 @@ Node collector config should match snapshot when fargate is enabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -5844,6 +6595,16 @@ Node collector config should match snapshot when fargate is enabled:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -6018,9 +6779,9 @@ Node collector config should match snapshot when fargate is enabled:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -6031,11 +6792,21 @@ Node collector config should match snapshot when fargate is enabled:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -6048,9 +6819,6 @@ Node collector config should match snapshot when fargate is enabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -6067,12 +6835,6 @@ Node collector config should match snapshot when fargate is enabled:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -6285,6 +7047,7 @@ Node collector config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -6296,6 +7059,7 @@ Node collector config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -6323,9 +7087,9 @@ Node collector config should match snapshot when fargate is enabled:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -6339,6 +7103,14 @@ Node collector config should match snapshot when fargate is enabled:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - resource/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -6347,26 +7119,54 @@ Node collector config should match snapshot when fargate is enabled:
             - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
-          metrics/relationship-state-events-workload-service-preparation:
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-service-filtering
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-service-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
-          metrics/relationship-state-events-workload-workload-preparation:
+          metrics/relationship-state-events-workload-workload-filtering:
             exporters:
             - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-workload-filtering
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-workload-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-workload-relationships
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:
@@ -6383,7 +7183,11 @@ Node collector config should match snapshot when fargate is enabled and autodisc
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
+        forward/istio-workload-service-filtering: {}
+        forward/istio-workload-workload-filtering: {}
         forward/logs-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -6436,46 +7240,100 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               entities:
               - action: update
                 context: metric
-                type: PublicNetworkLocation
+                entity: PublicNetworkLocation
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDaemonSet
@@ -6503,64 +7361,145 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             events:
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
@@ -6571,6 +7510,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            swi-reporter: k8s swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -6724,6 +7664,15 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -6736,8 +7685,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -6745,8 +7692,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -6769,6 +7714,11 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
+        filter/zero-delta-values:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -6858,6 +7808,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -7364,6 +8315,16 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -7538,9 +8499,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -7551,11 +8512,21 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -7568,9 +8539,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -7587,12 +8555,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -7744,6 +8706,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -7755,6 +8718,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -7770,9 +8734,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -7786,6 +8750,14 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - resource/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -7794,26 +8766,54 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - metricstransform/rename/discovery
             receivers:
             - receiver_creator/discovery
-          metrics/relationship-state-events-workload-service-preparation:
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-service-filtering
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-service-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
-          metrics/relationship-state-events-workload-workload-preparation:
+          metrics/relationship-state-events-workload-workload-filtering:
             exporters:
             - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-workload-filtering
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-workload-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-workload-relationships
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:
@@ -7830,8 +8830,12 @@ Node collector config should match snapshot when using default values:
   1: |
     logs.config: |
       connectors:
+        forward/discovery-istio-metrics-clean: {}
+        forward/istio-workload-service-filtering: {}
+        forward/istio-workload-workload-filtering: {}
         forward/logs-exporter: {}
         forward/metric-exporter: {}
+        forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
         routing/discovered_metrics:
@@ -7884,46 +8888,100 @@ Node collector config should match snapshot when using default values:
               entities:
               - action: update
                 context: metric
-                type: PublicNetworkLocation
+                entity: PublicNetworkLocation
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesService
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: PublicNetworkLocation
                 source_entity: KubernetesDaemonSet
@@ -7951,64 +9009,145 @@ Node collector config should match snapshot when using default values:
             events:
               relationships:
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDeployment
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesStatefulSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDeployment
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesStatefulSet
                 source_entity: KubernetesDaemonSet
                 type: KubernetesCommunicatesWith
               - action: update
-                attributes: null
-                conditions: []
+                attributes:
+                - istio
+                - tcp
+                - http
+                - grpc
+                conditions:
+                - metric.name == "k8s.istio_request_bytes.delta"
+                - metric.name == "k8s.istio_response_bytes.delta"
+                - metric.name == "k8s.istio_requests.delta"
+                - metric.name == "k8s.istio_tcp_sent_bytes.delta"
+                - metric.name == "k8s.istio_tcp_received_bytes.delta"
                 context: metric
                 destination_entity: KubernetesDaemonSet
                 source_entity: KubernetesDaemonSet
@@ -8019,6 +9158,7 @@ Node collector config should match snapshot when using default values:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            swi-reporter: k8s swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -8180,6 +9320,15 @@ Node collector config should match snapshot when using default values:
           logs:
             log_record:
             - not(attributes["otel.entity.event.type"] == "entity_state")
+        filter/keep-not-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
+              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
+              datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
           logs:
             log_record:
@@ -8192,8 +9341,6 @@ Node collector config should match snapshot when using default values:
               == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/keep-workload-workload-relationships:
           error_mode: ignore
           metrics:
@@ -8201,8 +9348,6 @@ Node collector config should match snapshot when using default values:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
               == ""
-            metric:
-            - name != "k8s.istio_request_bytes_sum"
         filter/receiver:
           metrics:
             metric:
@@ -8225,6 +9370,11 @@ Node collector config should match snapshot when using default values:
           metrics:
             metric:
             - IsMatch(name , ".*_temp")
+        filter/zero-delta-values:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -8314,6 +9464,7 @@ Node collector config should match snapshot when using default values:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -8820,6 +9971,16 @@ Node collector config should match snapshot when using default values:
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
+        resource/clean-temporary-attributes:
+          attributes:
+          - action: delete
+            key: istio
+          - action: delete
+            key: tcp
+          - action: delete
+            key: http
+          - action: delete
+            key: grpc
         resource/container:
           attributes:
           - action: insert
@@ -8994,9 +10155,9 @@ Node collector config should match snapshot when using default values:
           - statements:
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"])
               where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"],
-              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*$") and not(IsMatch(datapoint.attributes["destination_service"],
-              ".*\\.svc\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"],
-              "^\\d+\\.\\d+\\.\\d+\\.\\d+$"))
+              "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
         transform/istio-metrics:
           metric_statements:
           - statements:
@@ -9007,11 +10168,21 @@ Node collector config should match snapshot when using default values:
               metric.name == "k8s.istio_request_duration_milliseconds_sum"
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
               metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(resource.attributes["istio"], "true")
+        transform/istio-relationship-types:
+          metric_statements:
+          - statements:
+            - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total"
+              or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"]
+              == "tcp"
+            - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "http"
+            - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta"
+              or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"]
+              == "grpc"
         transform/istio-workload-service:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_service_name", "destination_service_namespace", "source_workload_type",
-            "destination_service_type", "dest.sw.server.address.fqdn"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -9024,9 +10195,6 @@ Node collector config should match snapshot when using default values:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
         transform/istio-workload-workload:
           metric_statements:
-          - keep_keys(datapoint.attributes, ["source_workload", "source_workload_namespace",
-            "destination_workload", "destination_workload_namespace", "source_workload_type",
-            "destination_workload_type"])
           - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"])
             where datapoint.attributes["source_workload_type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"])
@@ -9043,12 +10211,6 @@ Node collector config should match snapshot when using default values:
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
         transform/only-relationship-resource-attributes:
           metric_statements:
-          - keep_keys(resource.attributes, ["sw.k8s.cluster.uid", "source.k8s.deployment.name",
-            "source.k8s.statefulset.name", "source.k8s.daemonset.name", "source.k8s.job.name",
-            "source.k8s.cronjob.name", "source.k8s.namespace.name", "dest.k8s.deployment.name",
-            "dest.k8s.statefulset.name", "dest.k8s.daemonset.name", "dest.k8s.job.name",
-            "dest.k8s.cronjob.name", "dest.k8s.service.name", "dest.k8s.namespace.name",
-            "dest.sw.server.address.fqdn"])
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
             where resource.attributes["dest.sw.server.address.fqdn"] != nil
         transform/scope:
@@ -9316,6 +10478,7 @@ Node collector config should match snapshot when using default values:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -9327,6 +10490,7 @@ Node collector config should match snapshot when using default values:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
+            - logdedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -9354,9 +10518,9 @@ Node collector config should match snapshot when using default values:
             - routing/discovered_metrics
           metrics/discovery-istio:
             exporters:
-            - forward/metric-exporter
             - forward/relationship-state-events-workload-workload
             - forward/relationship-state-events-workload-service
+            - forward/not-relationship-state-events
             processors:
             - memory_limiter
             - swok8sworkloadtype/istio
@@ -9370,6 +10534,14 @@ Node collector config should match snapshot when using default values:
             - resource/all
             receivers:
             - routing/discovered_metrics
+          metrics/discovery-istio-clean:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - resource/clean-temporary-attributes
+            receivers:
+            - forward/discovery-istio-metrics-clean
           metrics/discovery-scrape:
             exporters:
             - routing/discovered_metrics
@@ -9401,26 +10573,54 @@ Node collector config should match snapshot when using default values:
             - resource/all
             receivers:
             - receiver_creator/node
-          metrics/relationship-state-events-workload-service-preparation:
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-service-filtering
+          metrics/relationship-state-events-workload-service-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-service-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-service
-          metrics/relationship-state-events-workload-workload-preparation:
+          metrics/relationship-state-events-workload-workload-filtering:
             exporters:
             - solarwindsentity/istio-workload-workload
+            processors:
+            - memory_limiter
+            - filter/zero-delta-values
+            receivers:
+            - forward/istio-workload-workload-filtering
+          metrics/relationship-state-events-workload-workload-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            - forward/istio-workload-workload-filtering
             processors:
             - memory_limiter
             - filter/keep-workload-workload-relationships
             - transform/istio-workload-workload
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
+            - transform/istio-relationship-types
             receivers:
             - forward/relationship-state-events-workload-workload
         telemetry:

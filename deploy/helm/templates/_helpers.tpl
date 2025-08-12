@@ -137,6 +137,7 @@ auth_type: "serviceAccount"
 passthrough: false
 extract:
   metadata:
+    - k8s.pod.name
     - k8s.deployment.name
     - k8s.replicaset.name
     - k8s.daemonset.name
@@ -148,6 +149,11 @@ pod_association:
   - sources:
       - from: resource_attribute
         name: k8s.pod.name
+      - from: resource_attribute
+        name: k8s.namespace.name
+  - sources:
+      - from: resource_attribute
+        name: k8s.pod.ip
       - from: resource_attribute
         name: k8s.namespace.name
 {{- end -}}

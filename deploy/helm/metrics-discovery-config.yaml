@@ -5,6 +5,7 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+      "swi-reporter": "k8s swo-k8s-collector/{{ .Chart.Version }}"
     retry_on_failure:
       enabled: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.enabled }}
       initial_interval: {{ .Values.aws_fargate.metrics.autodiscovery.retry_on_failure.initial_interval }}
@@ -176,8 +177,8 @@ service:
 {{ include "common-discovery-config.pipelines" (tuple . "receiver_creator/discovery" "forward/metric-exporter") | indent 4 }}
 
     metrics:
-      exporters:
-        - otlp
+      receivers:
+        - forward/metric-exporter
       processors:
         - memory_limiter
         - filter/histograms
@@ -191,8 +192,8 @@ service:
         - filter/remove_temporary_metrics
         - transform/scope
         - batch/metrics
-      receivers:
-        - forward/metric-exporter
+      exporters:
+        - otlp
     
   telemetry:
 {{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.enabled }}

@@ -18,6 +18,8 @@
     "clusterroles" "ClusterRole"
     "clusterrolebindings" "ClusterRoleBinding"
     "serviceaccounts" "ServiceAccount"
+    "endpoints" "Endpoints"
+    "endpointslices" "EndpointSlice"
 
 }}
 {{- $arrayOfWatchedResources := keys $resourceMap | sortAlpha }}
@@ -28,6 +30,7 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+      "swi-reporter": "k8s swo-k8s-collector/{{ .Chart.Version }}"
     retry_on_failure:
       enabled: {{ .Values.otel.events.retry_on_failure.enabled }}
       initial_interval: {{ .Values.otel.events.retry_on_failure.initial_interval }}
@@ -41,6 +44,7 @@ exporters:
       storage: file_storage/sending_queue
 {{- end }}
     timeout: {{ .Values.otel.events.timeout }}
+
 extensions:
 {{- if .Values.otel.events.sending_queue.offload_to_disk }}
   file_storage/sending_queue:
@@ -128,12 +132,83 @@ connectors:
             - sw.k8s.cluster.uid
             - k8s.namespace.name
             - k8s.service.name
-        - entity: KubernetesStatefulSet 
+        - entity: KubernetesStatefulSet
           id:
             - sw.k8s.cluster.uid
             - k8s.namespace.name
             - k8s.statefulset.name
 {{- end }}
+  solarwindsentity/serviceendpointsmapping:
+    source_prefix: "source."
+    destination_prefix: "dest."
+    schema:
+      entities:
+        - entity: KubernetesService
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.service.name
+        - entity: KubernetesDaemonSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+        - entity: KubernetesDeployment
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+        - entity: KubernetesStatefulSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+        - entity: KubernetesReplicaSet
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.replicaset.name
+      events:
+        relationships:
+          - type: KubernetesServiceRoutesTo
+            source_entity: KubernetesService
+            destination_entity: KubernetesDaemonSet
+            conditions: []
+            context: "log"
+            attributes: []
+            action: "update"
+          - type: KubernetesServiceRoutesTo
+            source_entity: KubernetesService
+            destination_entity: KubernetesDeployment
+            conditions: []
+            context: "log"
+            attributes: []
+            action: "update"
+          - type: KubernetesServiceRoutesTo
+            source_entity: KubernetesService
+            destination_entity: KubernetesStatefulSet
+            conditions: []
+            context: "log"
+            attributes: []
+            action: "update"
+          - type: KubernetesServiceRoutesTo
+            source_entity: KubernetesService
+            destination_entity: KubernetesReplicaSet
+            conditions: []
+            context: "log"
+            attributes: []
+            action: "update"
+
+  routing/manifests:
+    default_pipelines: [logs/manifests-export]
+    table:
+      - context: resource
+        pipelines:
+          - logs/serviceendpointsmapping
+        condition: |
+          attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
+
+  forward/exportserviceendpointsmapping: {}
 
 processors:
   k8seventgeneration:
@@ -277,8 +352,12 @@ processors:
 {{- range $index, $resourceName := $arrayOfWatchedResources }}
       {{- $resourceKind := get $resourceMap $resourceName }}
       {{- $prefix := lower $resourceKind }}
-            - set(log.attributes["k8s.{{$prefix}}.name"], log.body["metadata"]["name"]) where log.body["kind"] == "{{$resourceKind}}"
+            - set(log.attributes["k8s.{{$prefix}}.name"], log.body["metadata"]["name"]) where log.body["metadata"]["name"] != nil and log.body["kind"] == "{{$resourceKind}}"
 {{- end }}
+            # rename k8s.endpoints.name to k8s.endpoint.name if exists
+            - set(log.attributes["k8s.endpoint.name"], log.attributes["k8s.endpoints.name"]) where log.attributes["k8s.endpoints.name"] != nil
+            - delete_key(log.attributes, "k8s.endpoints.name") where log.attributes["k8s.endpoints.name"] != nil
+
             - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
             - set(log.attributes["k8s.ingress.name"], log.body["metadata"]["name"]) where log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
             - set(log.attributes["sw.k8s.ingress.type"], log.body["kind"]) where log.body["kind"] == "Ingress" or log.body["kind"] == "VirtualService"
@@ -289,6 +368,33 @@ processors:
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
+
+  groupbyattrs/serviceendpointsmapping:
+    keys:
+      - sw.k8s.cluster.uid
+      - sw.k8s.workload.ip
+      - k8s.service.name
+      - k8s.namespace.name
+
+  transform/serviceendpointsmapping-renamepodip:
+    error_mode: ignore
+    log_statements:
+      - statements:
+          - set(resource.attributes["k8s.pod.ip"], resource.attributes["sw.k8s.workload.ip"]) where resource.attributes["sw.k8s.log.type"] == "serviceendpointsmapping" and resource.attributes["sw.k8s.workload.ip"] != nil
+
+  transform/serviceendpointsmapping:
+    error_mode: ignore
+    log_statements:
+      - statements:
+          - set(resource.attributes["source.k8s.service.name"], resource.attributes["k8s.service.name"]) where resource.attributes["k8s.service.name"] != nil
+          - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["k8s.namespace.name"]) where resource.attributes["k8s.namespace.name"] != nil
+          
+          - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["k8s.namespace.name"]) where resource.attributes["k8s.namespace.name"] != nil
+          - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["k8s.deployment.name"]) where resource.attributes["k8s.deployment.name"] != nil
+          - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"]) where resource.attributes["k8s.statefulset.name"] != nil
+          - set(resource.attributes["dest.k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"]) where resource.attributes["k8s.replicaset.name"] != nil
+          - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"]) where resource.attributes["k8s.daemonset.name"] != nil
+
   transform/scope:
     log_statements:
       - statements:
@@ -316,6 +422,8 @@ processors:
       - k8s.clusterrole.name
       - k8s.clusterrolebinding.name
       - k8s.serviceaccount.name
+      - k8s.endpoint.name
+      - k8s.endpointslice.name
 
   resource/events:
     attributes:
@@ -372,6 +480,7 @@ processors:
     detectors: 
       - ec2
       - azure
+      - gcp
     azure:
       # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region, azure.resourcegroup.name
       resource_attributes:
@@ -398,6 +507,23 @@ processors:
           enabled: false
         host.type:
           enabled: false
+    gcp:
+      # keep: cloud.account.id, cloud.platform, cloud.provider, cloud.region
+      resource_attributes:
+        cloud.availability_zone:
+          enabled: false
+        host.id:
+          enabled: false
+        host.name:
+          enabled: false
+        host.type:
+          enabled: false
+        gcp.gce.instance.hostname:
+          enabled: false
+        gcp.gce.instance.name:
+          enabled: false
+        k8s.cluster.name:
+          enabled: false
 {{- else }}
     detectors:     
       - openshift      
@@ -412,6 +538,18 @@ processors:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
   k8sattributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
+
+  logdedup/entitystateevents: 
+    interval: {{ quote .Values.otel.manifests.pull_every }}
+    conditions: 
+      - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
+    include_fields:
+      - attributes.otel.entity.event.type
+      - attributes.otel.entity_relationship.source_entity.id
+      - attributes.otel.entity_relationship.destination_entity.id
+      - attributes.otel.entity_relationship.type
+      - attributes.otel.entity_relationship.source_entity.type
+      - attributes.otel.entity_relationship.destination_entity.type
 
 receivers:
   k8s_events:
@@ -476,8 +614,8 @@ service:
   pipelines:
 {{- if .Values.otel.events.enabled }}
     logs:
-      exporters:
-        - otlp
+      receivers:
+        - k8s_events
       processors:
         - memory_limiter
 {{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "true") }}
@@ -496,71 +634,93 @@ service:
 {{- end }}
         - transform/scope
         - batch
-      receivers:
-        - k8s_events
-{{- end }}
-    logs/manifests:
       exporters:
         - otlp
+{{- end }}
+
+    logs/manifests:
+      receivers:
+        - swok8sobjects
       processors:
         - memory_limiter
         - transform/manifest
         - groupbyattrs/manifest
         - transform/set_labels_and_annotations_for_entities
+{{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
+        - filter/k8s_collector_config_include
+{{- end }}
         - transform/extract_resource_attrs_from_manifests
         - transform/stringify_body
         - resource/manifest
         - resourcedetection/providers
-        - k8sattributes
         - k8seventgeneration
-{{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
-        - filter/k8s_collector_config_include
-{{- end }}
+        - groupbyattrs/serviceendpointsmapping
+        - transform/serviceendpointsmapping-renamepodip
+        - k8sattributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
-{{- end }}  
+{{- end }}
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
+      exporters:
+        - routing/manifests
+
+    logs/serviceendpointsmapping:
+      receivers:
+        - routing/manifests
+      processors:
+        - memory_limiter
+        - transform/serviceendpointsmapping
+      exporters:
+        - solarwindsentity/serviceendpointsmapping
+
+    logs/manifests-export:
+      receivers:
+        - routing/manifests
+        - solarwindsentity/serviceendpointsmapping
+      processors:
+        - memory_limiter
+        - logdedup/entitystateevents
         - transform/scope
         - batch
-      receivers:
-        - swok8sobjects
-    
+      exporters:
+        - otlp
+
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
     logs/manifests-keepalive:
-      exporters:
-        - solarwindsentity/keepalive
+      receivers:
+        - swok8sobjects/keepalive
       processors:
         - memory_limiter
         - transform/manifest
         - groupbyattrs/manifest
-        - resource/manifest
-        - k8sattributes
-        - k8seventgeneration
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
         - filter/k8s_collector_config_include
 {{- end }}
+        - resource/manifest
+        - k8sattributes
+        - k8seventgeneration
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
-{{- end }}  
+{{- end }}
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
-      receivers:
-        - swok8sobjects/keepalive
+      exporters:
+        - solarwindsentity/keepalive
 
     logs/stateevents:
-      exporters:
-        - otlp
+      receivers:
+        - solarwindsentity/keepalive
       processors:
         - memory_limiter
         - transform/scope
         - batch
-      receivers:
-        - solarwindsentity/keepalive
+      exporters:
+        - otlp
 {{- end }}
-        
+
   telemetry:
 {{- if .Values.otel.events.telemetry.logs.enabled }}
     logs:
