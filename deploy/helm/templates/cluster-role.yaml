@@ -105,6 +105,7 @@ rules:
       - get
       - list
       - watch
+{{- if or (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1beta2") }}
   - apiGroups:
       - "kustomize.toolkit.fluxcd.io"
     resources:
@@ -113,6 +114,7 @@ rules:
       - get
       - list
       - watch
+{{- end }}
   - nonResourceURLs:
       - /metrics
     verbs:
