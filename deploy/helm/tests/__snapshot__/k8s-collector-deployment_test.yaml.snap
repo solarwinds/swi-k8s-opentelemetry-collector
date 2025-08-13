@@ -3,13 +3,13 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
     containers:
       - args:
           - --log-console
-          - --log-level=warning
+          - --log-level=error
         image: solarwinds/opentelemetry-ebpf-k8s-watcher:v0.10.3
         imagePullPolicy: IfNotPresent
         name: k8s-watcher
       - args:
           - --config-file=/etc/network-explorer/config.yaml
-          - --warning
+          - --error
         env:
           - name: EBPF_NET_CLUSTER_NAME
             value: <CLUSTER_NAME>
