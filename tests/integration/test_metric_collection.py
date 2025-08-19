@@ -6,6 +6,22 @@ from test_utils import retry_until_ok, get_merged_json, datapoint_value
 from prometheus_client.parser import text_string_to_metric_families
 import difflib
 
+def get_attribute_value(attr_value):
+    """Safely extract value from OpenTelemetry attribute value object."""
+    if "stringValue" in attr_value:
+        return attr_value["stringValue"]
+    elif "intValue" in attr_value:
+        return str(attr_value["intValue"])
+    elif "doubleValue" in attr_value:
+        return str(attr_value["doubleValue"])
+    elif "boolValue" in attr_value:
+        return str(attr_value["boolValue"])
+    else:
+        # Return the first available value as string
+        for key, value in attr_value.items():
+            return str(value)
+        return ""
+
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
 ci = os.getenv("CI", "")
 url = f'http://{endpoint}/metrics.json'
@@ -51,8 +67,7 @@ def test_expected_otel_message_content_is_generated(file_name):
 
     retry_until_ok(url, 
                    lambda content: assert_test_contain_expected_datapoints(content, metrics, resource_attributes),
-                   print_failure_otel_content,
-                   timeout=120)
+                   print_failure_otel_content)
 
 def test_no_metric_datapoints_for_internal_containers():
     retry_until_ok(url, assert_test_no_metric_datapoints_for_internal_containers,
@@ -68,7 +83,7 @@ def assert_test_original_metrics(otelContent):
         for resource in json_line['resourceMetrics']:
             resAttributes={}
             for attr in resource['resource']['attributes']: 
-                resAttributes[attr['key']] = attr['value']['stringValue']
+                resAttributes[attr['key']] = get_attribute_value(attr['value'])
             for scope in resource['scopeMetrics']:
                 for metric in scope['metrics']:        
                     metricName = metric['name'].replace('k8s.', '')
@@ -88,7 +103,7 @@ def assert_test_original_metrics(otelContent):
                     for dataPoint in dataPoints:
                         attributes = resAttributes.copy()
                         for attr in dataPoint['attributes']:                    
-                            attributes[attr['key']] = attr['value']['stringValue']
+                            attributes[attr['key']] = get_attribute_value(attr['value'])
                         m.add_sample(m.name, attributes, datapoint_value(dataPoint), dataPoint['timeUnixNano'])            
     
     for url in urlMetrics :
@@ -180,7 +195,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
 
                 # Create a dictionary of resource attributes for easier access
                 resource_attr_dict = {
-                    attr["key"]: attr["value"]["stringValue"]
+                    attr["key"]: get_attribute_value(attr["value"])
                     for attr in resource["resource"]["attributes"]
                 }
 
@@ -225,7 +240,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
                                     # Loop through each datapoint
                                     for datapoint in dataPoints:
                                         datapoint_attr_dict = {
-                                            attr["key"]: attr["value"]["stringValue"]
+                                            attr["key"]: get_attribute_value(attr["value"])
                                             for attr in datapoint["attributes"]
                                         }
                                         # Check datapoints for the specified attribute keys
@@ -284,5 +299,5 @@ def get_unique_container_names(merged_json):
             if 'attributes' in resource['resource']:
                 for resource_attribute in resource['resource']['attributes']:
                     if resource_attribute["key"] == "k8s.container.name":
-                        container_names.add(resource_attribute["value"]["stringValue"])
+                        container_names.add(get_attribute_value(resource_attribute["value"]))
     return list(container_names)

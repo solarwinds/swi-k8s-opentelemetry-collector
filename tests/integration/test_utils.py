@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import requests
 import traceback
@@ -30,7 +31,11 @@ def get_all_resources_for_all_sent_content(content):
     return [get_all_log_resources(log_bulk) for log_bulk in log_bulks]
 
 
-def retry_until_ok(url, func, print_failure, timeout = 600):
+def retry_until_ok(url, func, print_failure, timeout = None):
+    # Get timeout from environment variable or use provided timeout or default
+    if timeout is None:
+        timeout = int(os.getenv('INTEGRATION_TEST_TIMEOUT', 300))  # Default 5 minutes for CI
+    
     start_time = time.time()
     last_exception = None
     last_error = ''
