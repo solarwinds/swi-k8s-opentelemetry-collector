@@ -113,6 +113,12 @@ processors:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 
+  filter/beyla-dedup:
+    metrics:
+      datapoint:
+        # Remove response direction flows to keep only request direction flows for TCP deduplication
+        - 'metric.name == "beyla.network.flow.bytes" and attributes["direction"] != nil and attributes["direction"] == "response"'
+
   swok8sworkloadtype/beyla:
     workload_mappings:
       - name_attr: k8s.src.owner.name
@@ -233,21 +239,6 @@ processors:
       - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
 
       - set(resource.attributes["beyla"], "true")
-
-  filter/beyla-dedup:
-    metrics:
-      datapoint:
-        # Strategy 1: Remove all server-side HTTP/gRPC/RPC metrics to prevent reverse relationships
-        #- 'metric.name == "http.server.request.duration" or metric.name == "http.server.request.body.size" or metric.name == "http.server.response.body.size" or metric.name == "rpc.server.duration"'
-        
-        # Strategy 2: For TCP flows specifically, deduplicate bidirectional flows
-        # Option A: Use lexicographic ordering
-        #- 'metric.name == "beyla.network.flow.bytes" and attributes["sw.k8s.src.workload.name"] != nil and attributes["sw.k8s.dst.workload.name"] != nil and attributes["sw.k8s.src.workload.name"] >= attributes["sw.k8s.dst.workload.name"]'
-        
-        # Option B: Use connection direction (if Beyla provides this attribute)
-        # Remove response direction flows to keep only request direction flows
-        # First check if direction attribute exists, then check its value
-        - 'metric.name == "beyla.network.flow.bytes" and attributes["direction"] != nil and attributes["direction"] == "response"'
 
   transform/beyla-relationship-types:
     metric_statements:
