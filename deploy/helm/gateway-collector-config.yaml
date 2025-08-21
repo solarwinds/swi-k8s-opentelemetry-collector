@@ -237,10 +237,15 @@ processors:
   filter/beyla-dedup:
     metrics:
       datapoint:
-        # Prevent bidirectional relationships by only keeping relationships where source name < destination name (lexicographic order)
-        # This ensures each pair of communicating workloads only creates one relationship direction
-        # Specifically targets beyla.network.flow.bytes which creates bidirectional TCP flows
-        - 'attributes["sw.k8s.src.workload.name"] != nil and attributes["sw.k8s.dst.workload.name"] != nil and attributes["sw.k8s.src.workload.name"] >= attributes["sw.k8s.dst.workload.name"]'
+        # Strategy 1: Remove all server-side HTTP/gRPC/RPC metrics to prevent reverse relationships
+        - 'metric.name == "http.server.request.duration" or metric.name == "http.server.request.body.size" or metric.name == "http.server.response.body.size" or metric.name == "rpc.server.duration"'
+        
+        # Strategy 2: For TCP flows specifically, deduplicate bidirectional flows
+        # Option A: Use lexicographic ordering (current approach)
+        - 'metric.name == "beyla.network.flow.bytes" and attributes["sw.k8s.src.workload.name"] != nil and attributes["sw.k8s.dst.workload.name"] != nil and attributes["sw.k8s.src.workload.name"] >= attributes["sw.k8s.dst.workload.name"]'
+        
+        # Option B: Use connection direction (if Beyla provides this attribute)
+        - 'metric.name == "beyla.network.flow.bytes" and attributes["direction"] == "response"'
 
   transform/beyla-relationship-types:
     metric_statements:
@@ -283,11 +288,7 @@ connectors:
           name == "http.client.request.duration" or
           name == "http.client.request.body.size" or
           name == "http.client.response.body.size" or
-          name == "http.server.request.duration" or 
-          name == "http.server.request.body.size" or
-          name == "http.server.response.body.size" or
           name == "rpc.client.duration" or 
-          name == "rpc.server.duration" or 
           name == "beyla.network.flow.bytes"
 
   solarwindsentity/beyla-relationships:
