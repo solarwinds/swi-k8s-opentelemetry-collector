@@ -125,8 +125,11 @@ processors:
           - deployments
           - daemonsets
           - statefulsets
+          - services
           - jobs
+          - cronjobs
           - pods
+          - nodes
       - name_attr: k8s.dst.owner.name
         namespace_attr: k8s.dst.namespace
         workload_type_attr: sw.k8s.dst.workload.type
@@ -139,7 +142,9 @@ processors:
           - statefulsets
           - services
           - jobs
+          - cronjobs
           - pods
+          - nodes
       - name_attr: resource.k8s.owner.name
         namespace_attr: resource.k8s.namespace.name
         workload_type_attr: resource.sw.k8s.workload.type
@@ -150,8 +155,11 @@ processors:
           - deployments
           - daemonsets
           - statefulsets
+          - services
           - jobs
+          - cronjobs
           - pods
+          - nodes
       - address_attr: server.address
         namespace_attr: k8s.namespace.name
         workload_type_attr: sw.k8s.dst.workload.type
@@ -229,7 +237,7 @@ processors:
   transform/beyla-relationship-types:
     metric_statements:
       - set(resource.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
-      - set(resource.attributes["http"], "true") where metric.name == "http.client.request.body.size"
+      - set(resource.attributes["http"], "true") where (metric.name == "http.client.request.body.size" or metric.name == "http.client.response.body.size")
       - set(resource.attributes["grpc"], "true") where metric.name == "rpc.client.duration"
 
 
@@ -266,7 +274,12 @@ connectors:
         condition: |
           name == "http.client.request.duration" or
           name == "http.client.request.body.size" or
+          name == "http.client.response.body.size" or
+          name == "http.server.request.duration" or 
+          name == "http.server.request.body.size" or
+          name == "http.server.response.body.size" or
           name == "rpc.client.duration" or 
+          name == "rpc.server.duration" or 
           name == "beyla.network.flow.bytes"
 
   solarwindsentity/beyla-relationships:
