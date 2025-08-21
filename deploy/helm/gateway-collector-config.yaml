@@ -234,6 +234,14 @@ processors:
 
       - set(resource.attributes["beyla"], "true")
 
+  filter/beyla-dedup:
+    metrics:
+      datapoint:
+        # Prevent bidirectional relationships by only keeping relationships where source name < destination name (lexicographic order)
+        # This ensures each pair of communicating workloads only creates one relationship direction
+        # Specifically targets beyla.network.flow.bytes which creates bidirectional TCP flows
+        - 'attributes["sw.k8s.src.workload.name"] != nil and attributes["sw.k8s.dst.workload.name"] != nil and attributes["sw.k8s.src.workload.name"] >= attributes["sw.k8s.dst.workload.name"]'
+
   transform/beyla-relationship-types:
     metric_statements:
       - set(resource.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
@@ -621,6 +629,7 @@ service:
         - memory_limiter
         - swok8sworkloadtype/beyla
         - transform/beyla-fqdn-attribute
+        - filter/beyla-dedup
         - groupbyattrs/beyla-entity-ids
         - transform/beyla-entity-ids
         - transform/beyla-relationship-types
