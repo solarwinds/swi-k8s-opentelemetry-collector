@@ -241,11 +241,13 @@ processors:
         - 'metric.name == "http.server.request.duration" or metric.name == "http.server.request.body.size" or metric.name == "http.server.response.body.size" or metric.name == "rpc.server.duration"'
         
         # Strategy 2: For TCP flows specifically, deduplicate bidirectional flows
-        # Option A: Use lexicographic ordering (current approach)
+        # Option A: Use lexicographic ordering
         - 'metric.name == "beyla.network.flow.bytes" and attributes["sw.k8s.src.workload.name"] != nil and attributes["sw.k8s.dst.workload.name"] != nil and attributes["sw.k8s.src.workload.name"] >= attributes["sw.k8s.dst.workload.name"]'
         
         # Option B: Use connection direction (if Beyla provides this attribute)
-        - 'metric.name == "beyla.network.flow.bytes" and attributes["direction"] == "response"'
+        # Remove response direction flows to keep only request direction flows
+        # First check if direction attribute exists, then check its value
+        - 'metric.name == "beyla.network.flow.bytes" and attributes["direction"] != nil and attributes["direction"] == "response"'
 
   transform/beyla-relationship-types:
     metric_statements:
