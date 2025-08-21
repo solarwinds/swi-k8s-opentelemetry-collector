@@ -238,11 +238,11 @@ processors:
     metrics:
       datapoint:
         # Strategy 1: Remove all server-side HTTP/gRPC/RPC metrics to prevent reverse relationships
-        - 'metric.name == "http.server.request.duration" or metric.name == "http.server.request.body.size" or metric.name == "http.server.response.body.size" or metric.name == "rpc.server.duration"'
+        #- 'metric.name == "http.server.request.duration" or metric.name == "http.server.request.body.size" or metric.name == "http.server.response.body.size" or metric.name == "rpc.server.duration"'
         
         # Strategy 2: For TCP flows specifically, deduplicate bidirectional flows
         # Option A: Use lexicographic ordering
-        - 'metric.name == "beyla.network.flow.bytes" and attributes["sw.k8s.src.workload.name"] != nil and attributes["sw.k8s.dst.workload.name"] != nil and attributes["sw.k8s.src.workload.name"] >= attributes["sw.k8s.dst.workload.name"]'
+        #- 'metric.name == "beyla.network.flow.bytes" and attributes["sw.k8s.src.workload.name"] != nil and attributes["sw.k8s.dst.workload.name"] != nil and attributes["sw.k8s.src.workload.name"] >= attributes["sw.k8s.dst.workload.name"]'
         
         # Option B: Use connection direction (if Beyla provides this attribute)
         # Remove response direction flows to keep only request direction flows
