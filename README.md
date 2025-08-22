@@ -20,6 +20,7 @@ Walk through `Add a Kubernetes cluster` in [SolarWinds Observability](https://do
 ## Contibutions
 
 Development documentation: [development.md](doc/development.md)
+Test
 
 ## License
 
