@@ -132,10 +132,9 @@ profiles:
     build:
       artifacts:
         - image: swi-k8s-opentelemetry-collector
-          # Path to cloned https://github.com/solarwinds/solarwinds-otel-collector.git repo
-          context: ../solarwinds-otel-collector
+          context: ../solarwinds-otel-collector-releases
           docker:
-            dockerfile: build/docker/Dockerfile.k8s
+            dockerfile: build/docker/Dockerfile.local
     patches:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/otel.image.repository
