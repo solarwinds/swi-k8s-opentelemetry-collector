@@ -158,7 +158,7 @@ otel:
         telemetry:
           logs:
             enabled: true
-            level: "info"
+            level: "error"
           metrics:
             enabled: true
             address: 0.0.0.0:8888
@@ -271,6 +271,10 @@ otel:
 
       # How often the metrics are scraped from Prometheus
       scrape_interval: 60s
+
+      # Maximum staleness for cumulativetodelta processor. If not specified, defaults to thrice the scrape_interval
+      # This determines how long state entries will live past the time they were last seen
+      max_staleness: ""
 
     # Time to wait per individual attempt to send data to SWO
     timeout: 15s
@@ -397,7 +401,7 @@ otel:
     telemetry:
       logs:
         enabled: true
-        level: "info"
+        level: "error"
       metrics:
         enabled: true
         address: 0.0.0.0:8888
@@ -512,7 +516,7 @@ otel:
     telemetry:
       logs:
         enabled: true
-        level: "info"
+        level: "error"
       metrics:
         enabled: true
         address: 0.0.0.0:8888
@@ -653,7 +657,7 @@ otel:
     telemetry:
       logs:
         enabled: true
-        level: "info"
+        level: "error"
       metrics:
         enabled: true
         address: 0.0.0.0:8888
@@ -826,7 +830,7 @@ otel:
     telemetry:
       logs:
         enabled: true
-        level: "info"
+        level: "error"
       metrics:
         enabled: true
         address: 0.0.0.0:8888
@@ -1092,19 +1096,19 @@ aws_fargate:
       telemetry:
         logs:
           enabled: true
-          level: "info"
+          level: "error"
         metrics:
           enabled: true
           address: 0.0.0.0:8888
 
 ebpfNetworkMonitoring:
-  enabled: true
+  enabled: false
   kernelCollector:
     enabled: true
 
     telemetry:
       logs:
-        level: "warning"
+        level: "error"
 
     image:
       repository: "solarwinds/opentelemetry-ebpf-kernel-collector"
@@ -1129,7 +1133,7 @@ ebpfNetworkMonitoring:
 
     telemetry:
       logs:
-        level: "warning"
+        level: "error"
 
     watcher:
       image:
@@ -1162,7 +1166,7 @@ ebpfNetworkMonitoring:
 
     telemetry:
       logs:
-        level: "warning"
+        level: "error"
       metrics:
         enabled: false
 
@@ -1209,7 +1213,7 @@ operator:
         tag: ""
       python:
         repository: "solarwinds/autoinstrumentation-python"
-        tag: "4.2.0"
+        tag: "4.3.0"
       dotnet:
         repository: ""
         tag: ""
@@ -1253,7 +1257,7 @@ waitJobs:
       pullPolicy: IfNotPresent
   
 beyla:
-  enabled: false
+  enabled: true
 
   image:
     repository: "grafana/beyla"

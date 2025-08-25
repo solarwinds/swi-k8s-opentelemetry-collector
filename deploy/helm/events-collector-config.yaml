@@ -22,6 +22,9 @@
     "endpointslices" "EndpointSlice"
 
 }}
+{{- if or (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1beta2") }}
+{{- $_ := set $resourceMap "kustomizations" "Kustomization" }}
+{{- end }}
 {{- $arrayOfWatchedResources := keys $resourceMap | sortAlpha }}
 exporters:
   otlp:
@@ -424,6 +427,9 @@ processors:
       - k8s.serviceaccount.name
       - k8s.endpoint.name
       - k8s.endpointslice.name
+{{- if or (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1beta2") }}
+      - k8s.kustomization.name
+{{- end }}
 
   resource/events:
     attributes:

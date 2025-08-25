@@ -64,9 +64,8 @@ By default it will deploy `SWO K8s Collector` with features that are enabled by 
 
 - `operator` - include certmanager, operator and all the features that are related to it (discovery_collector, CRDs)
 - `auto-instrumentation` - include OTEL Demo services and enable auto-instrumentation. It requires `operator` to be enabled
-- `beyla` - include beyla 
 - `no-logs` - exclude log collection
-- `no-ebpf` - exclude opentelemetry-network
+- `no-beyla` - exclude beyla
 - `no-metrics` - exclude metrics collection
 - `no-events` - exclude events collection
 - `no-tests` - exclude integration tests
@@ -238,8 +237,6 @@ Whenever there is a need to improve the test tooling, eg. the script for scrapin
 ## Performance profiling
 
 The `k8s collector` can be configured to enable performance profiling with `pprof`.
-
-`pprof` documentation: https://github.com/google/pprof/blob/main/doc/README.md
 
 ### Prerequisites
 
