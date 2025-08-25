@@ -92,6 +92,7 @@ jobs:
       - name: Copy image to Kind cluster
         run: |
           kind load docker-image $(jq -r '.builds[] | select(.imageName=="integration-test") | .tag' /tmp/tags.json)
+          kind load docker-image $(jq -r '.builds[] | select(.imageName=="test-communicator") | .tag' /tmp/tags.json)
 
       - name: Setup kubetail
         run: |
