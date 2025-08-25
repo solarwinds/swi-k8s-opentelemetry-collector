@@ -6,6 +6,8 @@ metadata:
     app: test-pod
   annotations:
     test-annotation: "test-value"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
 spec:
   containers:
   - name: test-container
@@ -197,6 +199,23 @@ metadata:
 provisioner: kubernetes.io/no-provisioner
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-pod-service
+  labels:
+    app: test-pod
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-pod
+  ports:
+  - name: metrics
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
 ---
 apiVersion: v1
 kind: Service
