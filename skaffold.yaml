@@ -76,10 +76,6 @@ deploy:
               filter:
                 log_record:
                   - resource.attributes["k8s.namespace.name"] == "{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}"
-            gateway:
-              telemetry:
-                logs:
-                  level: debug
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
       - name: monitoring

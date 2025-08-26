@@ -158,9 +158,6 @@ type DataResponse struct {
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	Service       string                 `protobuf:"bytes,2,opt,name=service,proto3" json:"service,omitempty"`
 	Timestamp     string                 `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Items         []string               `protobuf:"bytes,4,rep,name=items,proto3" json:"items,omitempty"`
-	Count         int32                  `protobuf:"varint,5,opt,name=count,proto3" json:"count,omitempty"`
-	Active        bool                   `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -214,27 +211,6 @@ func (x *DataResponse) GetTimestamp() string {
 		return x.Timestamp
 	}
 	return ""
-}
-
-func (x *DataResponse) GetItems() []string {
-	if x != nil {
-		return x.Items
-	}
-	return nil
-}
-
-func (x *DataResponse) GetCount() int32 {
-	if x != nil {
-		return x.Count
-	}
-	return 0
-}
-
-func (x *DataResponse) GetActive() bool {
-	if x != nil {
-		return x.Active
-	}
-	return false
 }
 
 type TargetRequest struct {
@@ -367,14 +343,11 @@ const file_testcommunicator_proto_rawDesc = "" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
 	"\aservice\x18\x02 \x01(\tR\aservice\x12\x1c\n" +
 	"\ttimestamp\x18\x03 \x01(\tR\ttimestamp\"\r\n" +
-	"\vDataRequest\"\xa4\x01\n" +
+	"\vDataRequest\"`\n" +
 	"\fDataResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x18\n" +
 	"\aservice\x18\x02 \x01(\tR\aservice\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\tR\ttimestamp\x12\x14\n" +
-	"\x05items\x18\x04 \x03(\tR\x05items\x12\x14\n" +
-	"\x05count\x18\x05 \x01(\x05R\x05count\x12\x16\n" +
-	"\x06active\x18\x06 \x01(\bR\x06active\"\x0f\n" +
+	"\ttimestamp\x18\x03 \x01(\tR\ttimestamp\"\x0f\n" +
 	"\rTargetRequest\"\xcd\x01\n" +
 	"\x0eTargetResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x18\n" +

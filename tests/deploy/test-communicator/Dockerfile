@@ -1,5 +1,5 @@
 # Multi-stage build for efficient image size
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -20,7 +20,7 @@ COPY proto/ ./proto/
 COPY main.go .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o test-communicator .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o test-communicator .
 
 # Final stage - use distroless for security and small size
 FROM gcr.io/distroless/static-debian11:nonroot

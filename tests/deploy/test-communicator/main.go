@@ -63,9 +63,6 @@ func (s *testCommunicatorServer) GetData(ctx context.Context, req *pb.DataReques
 		Message:   "Data retrieved successfully via gRPC",
 		Service:   s.serviceName,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
-		Items:     []string{"item1", "item2", "item3"},
-		Count:     3,
-		Active:    true,
 	}, nil
 }
 
@@ -84,15 +81,13 @@ type HealthResponse struct {
 }
 
 type DataResponse struct {
-	Message   string                 `json:"message"`
-	Service   string                 `json:"service"`
-	Timestamp string                 `json:"timestamp"`
-	Data      map[string]interface{} `json:"data"`
+	Message   string `json:"message"`
+	Service   string `json:"service"`
+	Timestamp string `json:"timestamp"`
 }
 
 type UserResponse struct {
 	ID      string `json:"id"`
-	Name    string `json:"name"`
 	Service string `json:"service"`
 	Created string `json:"created"`
 }
@@ -170,11 +165,6 @@ func (a *App) dataHandler(w http.ResponseWriter, r *http.Request) {
 		Message:   "Data retrieved successfully",
 		Service:   a.config.ServiceName,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
-		Data: map[string]interface{}{
-			"items":  []string{"item1", "item2", "item3"},
-			"count":  3,
-			"active": true,
-		},
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -187,7 +177,6 @@ func (a *App) userHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := UserResponse{
 		ID:      userID,
-		Name:    fmt.Sprintf("User-%s", userID),
 		Service: a.config.ServiceName,
 		Created: time.Now().UTC().Format(time.RFC3339),
 	}
