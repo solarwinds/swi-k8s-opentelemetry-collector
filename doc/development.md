@@ -238,8 +238,6 @@ Whenever there is a need to improve the test tooling, eg. the script for scrapin
 
 The `k8s collector` can be configured to enable performance profiling with `pprof`.
 
-`pprof` documentation: https://github.com/google/pprof/blob/main/doc/README.md
-
 ### Prerequisites
 
 - `pprof` - to analyze the profiles
