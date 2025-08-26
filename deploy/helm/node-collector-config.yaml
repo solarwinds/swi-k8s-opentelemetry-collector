@@ -5,7 +5,7 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
-      "swi-reporter": "swo-k8s-collector/{{ .Chart.Version }} k8s-monitoring"
+      "swi-reporter": "k8s-monitoring swo-k8s-collector/{{ .Chart.Version }}"
     retry_on_failure:
       enabled: {{ .Values.otel.node_collector.retry_on_failure.enabled }}
       initial_interval: {{ .Values.otel.node_collector.retry_on_failure.initial_interval }}
