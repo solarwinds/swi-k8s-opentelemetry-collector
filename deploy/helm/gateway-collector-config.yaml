@@ -113,6 +113,12 @@ processors:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 
+  filter/beyla-dedup-tcp:
+    metrics:
+      datapoint:
+        # Remove response direction flows to keep only request direction flows for TCP deduplication
+        - 'metric.name == "beyla.network.flow.bytes" and attributes["direction"] != nil and attributes["direction"] == "response"'
+
   swok8sworkloadtype/beyla:
     workload_mappings:
       - name_attr: k8s.src.owner.name
@@ -265,12 +271,13 @@ receivers:
 
 connectors:
   forward/metrics_common: {}
+  forward/beyla_network_entities_and_relationships: {}
   routing/metrics:
     default_pipelines: [metrics]
     table:
       - context: metric
         pipelines:
-          - metrics/beyla-network-entities-and-relationships
+          - metrics/beyla-metrics
         condition: |
           name == "http.client.request.duration" or
           name == "http.client.request.body.size" or
@@ -611,10 +618,7 @@ service:
       exporters:
         - otlp
 
-    # Current SWO pipeline cannot process state events and relationships events together,
-    # so we need to split them into two separate pipelines.
-    # TODO - merge 'logs/beyla-stateevents-entities' and 'logs/beyla-stateevents-relationships' into one pipeline when SWO supports it.
-    metrics/beyla-network-entities-and-relationships:
+    metrics/beyla-metrics:
       receivers:
         - routing/metrics
       processors:
@@ -627,6 +631,17 @@ service:
         - resource
       exporters:
         - forward/metrics_common
+        - forward/beyla_network_entities_and_relationships
+    # Current SWO pipeline cannot process state events and relationships events together,
+    # so we need to split them into two separate pipelines.
+    # TODO - merge 'logs/beyla-stateevents-entities' and 'logs/beyla-stateevents-relationships' into one pipeline when SWO supports it.
+    metrics/beyla-network-entities-and-relationships:
+      receivers:
+        - forward/beyla_network_entities_and_relationships
+      processors:
+        - memory_limiter
+        - filter/beyla-dedup-tcp
+      exporters:
         - solarwindsentity/beyla-relationships
         - solarwindsentity/beyla-entities
     logs/beyla-stateevents-entities:
