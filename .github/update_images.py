@@ -172,7 +172,7 @@ class DockerImageUpdater:
         repo_url = repository if repository.startswith(('http://', 'https://')) else f'https://{repository}'
         parsed = urlparse(repo_url)
         hostname = parsed.hostname or ""
-        is_ghcr = hostname == 'ghcr.io' or repository.startswith('ghcr.io/')
+        is_ghcr = hostname == 'ghcr.io'
 
         if hostname in ('docker.io', 'index.docker.io'):
             repository = parsed.path.lstrip('/')
