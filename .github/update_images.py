@@ -17,7 +17,7 @@ from ruamel.yaml import YAML
 
 
 def setup_logging():
-    """Set up structured logging with timestamps."""
+    """Set up logging."""
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
@@ -40,6 +40,9 @@ class DockerImageUpdater:
         
         self.values_file_path = Path("deploy/helm/values.yaml")
         self.chart_file_path = Path("deploy/helm/Chart.yaml")
+        self.tests_dir_path = Path("deploy/helm/tests")
+
+        self.modified_files: List[str] = []
         
         # YAML configuration
         self.yaml = YAML()
@@ -91,13 +94,11 @@ class DockerImageUpdater:
     def get_ghcr_tags(self, repository: str) -> List[str]:
         """Fetch tags from GitHub Container Registry."""
         try:
-            # Parse the repository string as a URL to properly extract the hostname
+            # Parse the repository string as a URL to extract the hostname
             repo_url = repository if repository.startswith(('http://', 'https://')) else f'https://{repository}'
             parsed_url = urlparse(repo_url)
             
-            # Check if the hostname is exactly 'ghcr.io'
             if parsed_url.hostname == 'ghcr.io':
-                # Remove the leading slash and extract the repository path
                 repo_path = parsed_url.path.lstrip('/')
             else:
                 repo_path = repository
@@ -152,7 +153,7 @@ class DockerImageUpdater:
             return []
 
     def _get_github_release_tags(self, owner: str, repo_name: str) -> List[str]:
-        """Get tags from GitHub releases as fallback."""
+        """Get tags from GitHub releases."""
         try:
             releases_repo = self.github.get_repo(f"{owner}/{repo_name}")
             releases = releases_repo.get_releases()
@@ -166,31 +167,20 @@ class DockerImageUpdater:
 
     def get_latest_version(self, repository: str, current_version: str = "") -> Optional[str]:
         """Get the latest semantic version for a Docker image."""
-        clean_repo = repository.strip()
-        
-        # Parse the repository string as a URL to properly extract the hostname
-        repo_url = clean_repo if clean_repo.startswith(('http://', 'https://')) else f'https://{clean_repo}'
-        parsed_url = urlparse(repo_url)
-        hostname = parsed_url.hostname
-        
-        # Handle Docker Hub aliases by normalizing them
-        if hostname in ['docker.io', 'index.docker.io']:
-            clean_repo = parsed_url.path.lstrip('/')
-        elif hostname == 'ghcr.io':
-            clean_repo = parsed_url.path.lstrip('/')
-        
-        # Determine which registry API to use based on hostname
-        if hostname == 'ghcr.io':
+        repository = repository.strip()
+
+        repo_url = repository if repository.startswith(('http://', 'https://')) else f'https://{repository}'
+        parsed = urlparse(repo_url)
+        hostname = parsed.hostname or ""
+        is_ghcr = hostname == 'ghcr.io' or repository.startswith('ghcr.io/')
+
+        if hostname in ('docker.io', 'index.docker.io'):
+            repository = parsed.path.lstrip('/')
+
+        if is_ghcr:
             tags = self.get_ghcr_tags(repository)
-        elif hostname in ['docker.io', 'index.docker.io', None]:
-            # None hostname means it's likely a Docker Hub repository without explicit hostname
-            tags = self.get_docker_hub_tags(clean_repo)
-        elif hostname in ['gcr.io', 'quay.io']:
-            # For other registries, fallback to Docker Hub API format (may not always work)
-            tags = self.get_docker_hub_tags(clean_repo)
         else:
-            # Default fallback for unknown registries
-            tags = self.get_docker_hub_tags(clean_repo)
+            tags = self.get_docker_hub_tags(repository)
             
         if not tags:
             self.logger.warning(f"No tags found for {repository}")
@@ -292,6 +282,7 @@ class DockerImageUpdater:
         if updates:
             with open(self.values_file_path, 'w') as f:
                 self.yaml.dump(yaml_data, f)
+            self.modified_files.append(str(self.values_file_path))
                 
         return updates
 
@@ -310,7 +301,7 @@ class DockerImageUpdater:
             # Handle standard semantic versions
             version_parts = old_version.split('.')
             if len(version_parts) >= 3:
-                patch_part = version_parts[2].split('-')[0]  # Handle pre-release suffixes
+                patch_part = version_parts[2].split('-')[0]
                 if patch_part.isdigit():
                     new_patch = str(int(patch_part) + 1)
                     return f"{version_parts[0]}.{version_parts[1]}.{new_patch}"
@@ -321,7 +312,7 @@ class DockerImageUpdater:
         return old_version  # Return original if parsing fails
 
     def update_chart_version(self, updates: List[Dict[str, Any]]) -> bool:
-        """Update Chart.yaml version and appVersion minimally."""
+        """Update Chart.yaml version and appVersion."""
         if not updates or not self.chart_file_path.exists():
             return False
             
@@ -367,6 +358,7 @@ class DockerImageUpdater:
             if content != original_content:
                 with open(self.chart_file_path, 'w') as f:
                     f.write(content)
+                self.modified_files.append(str(self.chart_file_path))
                     
             return True
             
@@ -374,8 +366,46 @@ class DockerImageUpdater:
             self.logger.error(f"Failed to update Chart.yaml: {e}")
             return False
 
+    def update_unittest_expected_images(self, updates: List[Dict[str, Any]]) -> List[str]:
+        """Update expected image tags in Helm unit tests."""
+        if not updates:
+            return []
+
+        replacements: List[Dict[str, str]] = []
+        for update in updates:
+            repo = update.get('repository')
+            old_tag = update.get('old_tag')
+            new_tag = update.get('new_tag')
+            if not repo or not old_tag or not new_tag:
+                continue
+            replacements.append({
+                'old': f"{repo}:{old_tag}",
+                'new': f"{repo}:{new_tag}"
+            })
+
+        changed_files: List[str] = []
+        files: List[Path] = []
+
+        files.extend(self.tests_dir_path.rglob('*.yaml'))
+        for test_file in sorted(set(files)):
+            with open(test_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            new_content = content
+            for replacement in replacements:
+                if replacement['old'] in new_content:
+                    new_content = new_content.replace(replacement['old'], replacement['new'])
+            if new_content != content:
+                with open(test_file, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                self.modified_files.append(str(test_file))
+                changed_files.append(str(test_file))
+                self.logger.info(f"Updated unit tests in {test_file}")
+
+
+        return changed_files
+
     def create_or_update_branch(self, updates: List[Dict[str, Any]]) -> bool:
-        """Create or update the update branch with changes."""
+        """Create or update the branch with changes."""
         if not updates:
             return False
             
@@ -416,39 +446,29 @@ class DockerImageUpdater:
             branch_ref = self.repo.get_git_ref(f"heads/{self.branch_name}")
             base_commit = self.repo.get_git_commit(branch_ref.object.sha)
             
-            # Get current tree
-            current_tree = base_commit.tree
-            
             # Prepare updated files
             tree_elements = []
+            for file_path in sorted(set(self.modified_files)):
+                if not Path(file_path).exists():
+                    continue
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    file_content = f.read()
+                tree_elements.append(InputGitTreeElement(
+                    path=file_path,
+                    mode='100644',
+                    type='blob',
+                    content=file_content
+                ))
             
-            if self.values_file_path.exists():
-                with open(self.values_file_path, 'r', encoding='utf-8') as f:
-                    values_content = f.read()
-                tree_elements.append(InputGitTreeElement(
-                    path=str(self.values_file_path),
-                    mode='100644',
-                    type='blob',
-                    content=values_content
-                ))
-                
-            if self.chart_file_path.exists():
-                with open(self.chart_file_path, 'r', encoding='utf-8') as f:
-                    chart_content = f.read()
-                tree_elements.append(InputGitTreeElement(
-                    path=str(self.chart_file_path),
-                    mode='100644',
-                    type='blob',
-                    content=chart_content
-                ))
-                
-            # Create new tree based on current tree
+            if not tree_elements:
+                self.logger.info("No file content changes detected to commit")
+                return True
+            
+            current_tree = base_commit.tree
             new_tree = self.repo.create_git_tree(tree_elements, base_tree=current_tree)
             
-            # Create commit
             commit = self.repo.create_git_commit(commit_message, new_tree, [base_commit])
             
-            # Update branch reference
             branch_ref.edit(sha=commit.sha)
             
             self.logger.info(f"Committed changes to {self.branch_name}")
@@ -481,6 +501,12 @@ class DockerImageUpdater:
             for update in updates:
                 body_parts.append(f"- **{update['repository']}**: `{update['old_tag']}` → `{update['new_tag']}`")
             
+            modified_tests = [p for p in self.modified_files if p.startswith('deploy/helm/tests/')]
+            if modified_tests:
+                body_parts.append("\n## Updated Unit Tests")
+                for tf in modified_tests:
+                    body_parts.append(f"- `{tf}`")
+            
             body = "\n".join(body_parts)
             
             if existing_pr:
@@ -501,23 +527,6 @@ class DockerImageUpdater:
             self.logger.error(f"Failed to create/update PR: {e}")
             return None
 
-    def save_changes_log(self, updates: List[Dict[str, Any]]):
-        """Save changes to JSON file for debugging."""
-        log_data = {
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'updates': updates,
-            'summary': {
-                'total_updates': len(updates),
-                'repositories_updated': len(set(u['repository'] for u in updates))
-            }
-        }
-        
-        filename = f"changes_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(filename, 'w') as f:
-            json.dump(log_data, f, indent=2)
-            
-        self.logger.info(f"Saved changes log to {filename}")
-
     def run(self) -> bool:
         """Main execution method."""
         self.logger.info("Starting Docker Image Updater")
@@ -532,7 +541,7 @@ class DockerImageUpdater:
             self.logger.info(f"Found {len(updates)} image updates")
             
             self.update_chart_version(updates)
-            self.save_changes_log(updates)
+            self.update_unittest_expected_images(updates)
                 
             if not self.create_or_update_branch(updates):
                 return False
