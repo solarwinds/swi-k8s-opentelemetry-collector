@@ -210,6 +210,11 @@ Custom events filter with new syntax:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -331,6 +336,7 @@ Custom events filter with new syntax:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -872,6 +878,8 @@ Custom events filter with new syntax:
             - transform/set_labels_and_annotations_for_entities
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -1145,6 +1153,11 @@ Custom events filter with old syntax:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -1266,6 +1279,7 @@ Custom events filter with old syntax:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -1807,6 +1821,8 @@ Custom events filter with old syntax:
             - transform/set_labels_and_annotations_for_entities
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -2073,6 +2089,11 @@ Events config should match snapshot when using default values:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -2194,6 +2215,7 @@ Events config should match snapshot when using default values:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -2734,6 +2756,8 @@ Events config should match snapshot when using default values:
             - transform/set_labels_and_annotations_for_entities
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -2928,6 +2952,11 @@ Events config should not contain manifest collection pipeline when disabled:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -3049,6 +3078,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -3424,6 +3454,8 @@ Events config should not contain manifest collection pipeline when disabled:
             - filter/k8s_collector_config_include
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
