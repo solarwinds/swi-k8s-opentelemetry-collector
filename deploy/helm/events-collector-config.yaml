@@ -25,6 +25,9 @@
 {{- if or (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1beta2") }}
 {{- $_ := set $resourceMap "kustomizations" "Kustomization" }}
 {{- end }}
+{{- if or (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1beta2") }}
+{{- $_ := set $resourceMap "gitrepositories" "GitRepository" }}
+{{- end }}
 {{- $arrayOfWatchedResources := keys $resourceMap | sortAlpha }}
 exporters:
   otlp:
@@ -140,6 +143,16 @@ connectors:
             - sw.k8s.cluster.uid
             - k8s.namespace.name
             - k8s.statefulset.name
+        - entity: KubernetesGitRepository
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.gitrepository.name
+        - entity: KubernetesKustomization
+          id:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.kustomization.name
 {{- end }}
   solarwindsentity/serviceendpointsmapping:
     source_prefix: "source."
@@ -267,6 +280,8 @@ processors:
           - set(resource.attributes["k8s.job.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Job"
           - set(resource.attributes["k8s.cronjob.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "CronJob"
           - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Node"
+          - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "GitRepository"
+          - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Kustomization"
           - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"]) where log.attributes["k8s.namespace.name"] != nil
           - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"] != nil
 
@@ -430,6 +445,9 @@ processors:
 {{- if or (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "kustomize.toolkit.fluxcd.io/v1beta2") }}
       - k8s.kustomization.name
 {{- end }}
+{{- if or (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1beta2") }}
+      - k8s.gitrepository.name
+{{- end }}
 
   resource/events:
     attributes:
@@ -571,6 +589,9 @@ receivers:
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
 {{- end }}
+{{- if or (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1beta2") }}
+{{- $arrayOfWatchedResources = append $arrayOfWatchedResources "gitrepositories" }}
+{{- end }}
 {{- range $index, $resource := $arrayOfWatchedResources }}
       - name: {{ $resource }}
         mode: pull
@@ -589,6 +610,9 @@ receivers:
 {{- if and .Values.otel.events.enabled .Values.otel.manifests.enabled }}
 {{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
 {{- $arrayOfWatchedResources = append $arrayOfWatchedResources "virtualservices" }}
+{{- end }}
+{{- if or (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1beta2") }}
+{{- $arrayOfWatchedResources = append $arrayOfWatchedResources "gitrepositories" }}
 {{- end }}
 {{- range $index, $resource := $arrayOfWatchedResources }}
       - name: {{ $resource }}
