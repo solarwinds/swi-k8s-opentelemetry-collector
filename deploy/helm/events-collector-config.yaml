@@ -248,8 +248,12 @@ processors:
       log_record:
 {{- include "namespacesFilter" . | nindent 8 }}      
 {{- end }}
-
-
+  groupbyattrs/workloadstatus:
+    keys:
+      - sw.k8s.deployment.status
+      - sw.k8s.statefulset.status
+      - sw.k8s.daemonset.status
+  swok8sworkloadstatus:
   transform/severity:
     log_statements:
       - statements:
@@ -681,6 +685,8 @@ service:
 {{- end }}
         - transform/extract_resource_attrs_from_manifests
         - transform/stringify_body
+        - swok8sworkloadstatus
+        - groupbyattrs/workloadstatus
         - resource/manifest
         - resourcedetection/providers
         - k8seventgeneration
