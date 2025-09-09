@@ -366,7 +366,7 @@ Node collector config for windows nodes should match snapshot when using default
           actions:
           - action: delete
             key: temp
-            pattern: (.*_temp$)|(^\$.*)
+            pattern: (.*__swo_temp$)|(^\$.*)
           include:
             match_type: regexp
             metric_names:
@@ -433,8 +433,8 @@ Node collector config for windows nodes should match snapshot when using default
             metrics:
             - k8s.istio_request_bytes.rate
             - k8s.istio_response_bytes.rate
-            - k8s.istio_request_duration_milliseconds_sum_temp
-            - k8s.istio_request_duration_milliseconds_count_temp
+            - k8s.istio_request_duration_milliseconds_sum__swo_temp
+            - k8s.istio_request_duration_milliseconds_count__swo_temp
             - k8s.istio_requests.rate
             - k8s.istio_tcp_sent_bytes.rate
             - k8s.istio_tcp_received_bytes.rate
@@ -477,8 +477,8 @@ Node collector config for windows nodes should match snapshot when using default
           metrics:
           - k8s.istio_request_bytes.rate
           - k8s.istio_response_bytes.rate
-          - k8s.istio_request_duration_milliseconds_sum_temp
-          - k8s.istio_request_duration_milliseconds_count_temp
+          - k8s.istio_request_duration_milliseconds_sum__swo_temp
+          - k8s.istio_request_duration_milliseconds_count__swo_temp
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
@@ -541,7 +541,7 @@ Node collector config for windows nodes should match snapshot when using default
         filter/remove_temporary_metrics:
           metrics:
             metric:
-            - IsMatch(name , ".*_temp")
+            - IsMatch(name , ".*__swo_temp$")
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -643,8 +643,8 @@ Node collector config for windows nodes should match snapshot when using default
           spike_limit_mib: 300
         metricsgeneration/istio-metrics:
           rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
             name: k8s.istio_request_duration_milliseconds.rate
             operation: divide
             type: calculate
@@ -684,16 +684,16 @@ Node collector config for windows nodes should match snapshot when using default
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
-            new_name: k8s.container_fs_reads_total_temp
+            new_name: k8s.container_fs_reads_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_total
-            new_name: k8s.container_fs_writes_total_temp
+            new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+            include: (k8s.container_fs_reads_total__swo_temp|k8s.container_fs_writes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.iops
             operations:
@@ -706,16 +706,16 @@ Node collector config for windows nodes should match snapshot when using default
             submatch_case: lower
           - action: insert
             include: k8s.container_fs_reads_bytes_total
-            new_name: k8s.container_fs_reads_bytes_total_temp
+            new_name: k8s.container_fs_reads_bytes_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_bytes_total
-            new_name: k8s.container_fs_writes_bytes_total_temp
+            new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+            include: (k8s.container_fs_reads_bytes_total__swo_temp|k8s.container_fs_writes_bytes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.throughput
             operations:
@@ -917,12 +917,12 @@ Node collector config for windows nodes should match snapshot when using default
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.pod.fs.reads.rate_temp
+            new_name: k8s.pod.fs.reads.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.pod.fs.writes.rate_temp
+            new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+            include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
             operations:
@@ -935,12 +935,12 @@ Node collector config for windows nodes should match snapshot when using default
             submatch_case: lower
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.pod.fs.reads.bytes.rate_temp
+            new_name: k8s.pod.fs.reads.bytes.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.pod.fs.writes.bytes.rate_temp
+            new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+            include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
             operations:
@@ -1050,7 +1050,7 @@ Node collector config for windows nodes should match snapshot when using default
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.node.fs.reads.rate_temp
+            new_name: k8s.node.fs.reads.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -1058,7 +1058,7 @@ Node collector config for windows nodes should match snapshot when using default
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.node.fs.writes.rate_temp
+            new_name: k8s.node.fs.writes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -1066,7 +1066,7 @@ Node collector config for windows nodes should match snapshot when using default
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.node.fs.reads.bytes.rate_temp
+            new_name: k8s.node.fs.reads.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -1074,14 +1074,14 @@ Node collector config for windows nodes should match snapshot when using default
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.node.fs.writes.bytes.rate_temp
+            new_name: k8s.node.fs.writes.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
               label_set:
               - k8s.node.name
           - action: combine
-            include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+            include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
             operations:
@@ -1091,7 +1091,7 @@ Node collector config for windows nodes should match snapshot when using default
               - k8s.node.name
             submatch_case: lower
           - action: combine
-            include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+            include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
             operations:
@@ -1316,10 +1316,10 @@ Node collector config for windows nodes should match snapshot when using default
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
-            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where
-              metric.name == "k8s.istio_request_duration_milliseconds_sum"
-            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
-              metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum__swo_temp")
+              where metric.name == "k8s.istio_request_duration_milliseconds_sum"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp")
+              where metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
         transform/istio-relationship-types:
           metric_statements:
@@ -2137,7 +2137,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
           actions:
           - action: delete
             key: temp
-            pattern: (.*_temp$)|(^\$.*)
+            pattern: (.*__swo_temp$)|(^\$.*)
           include:
             match_type: regexp
             metric_names:
@@ -2204,8 +2204,8 @@ Node collector config for windows nodes should match snapshot when using legacy 
             metrics:
             - k8s.istio_request_bytes.rate
             - k8s.istio_response_bytes.rate
-            - k8s.istio_request_duration_milliseconds_sum_temp
-            - k8s.istio_request_duration_milliseconds_count_temp
+            - k8s.istio_request_duration_milliseconds_sum__swo_temp
+            - k8s.istio_request_duration_milliseconds_count__swo_temp
             - k8s.istio_requests.rate
             - k8s.istio_tcp_sent_bytes.rate
             - k8s.istio_tcp_received_bytes.rate
@@ -2248,8 +2248,8 @@ Node collector config for windows nodes should match snapshot when using legacy 
           metrics:
           - k8s.istio_request_bytes.rate
           - k8s.istio_response_bytes.rate
-          - k8s.istio_request_duration_milliseconds_sum_temp
-          - k8s.istio_request_duration_milliseconds_count_temp
+          - k8s.istio_request_duration_milliseconds_sum__swo_temp
+          - k8s.istio_request_duration_milliseconds_count__swo_temp
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
@@ -2319,7 +2319,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
         filter/remove_temporary_metrics:
           metrics:
             metric:
-            - IsMatch(name , ".*_temp")
+            - IsMatch(name , ".*__swo_temp$")
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -2421,8 +2421,8 @@ Node collector config for windows nodes should match snapshot when using legacy 
           spike_limit_mib: 300
         metricsgeneration/istio-metrics:
           rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
             name: k8s.istio_request_duration_milliseconds.rate
             operation: divide
             type: calculate
@@ -2462,16 +2462,16 @@ Node collector config for windows nodes should match snapshot when using legacy 
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
-            new_name: k8s.container_fs_reads_total_temp
+            new_name: k8s.container_fs_reads_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_total
-            new_name: k8s.container_fs_writes_total_temp
+            new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+            include: (k8s.container_fs_reads_total__swo_temp|k8s.container_fs_writes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.iops
             operations:
@@ -2484,16 +2484,16 @@ Node collector config for windows nodes should match snapshot when using legacy 
             submatch_case: lower
           - action: insert
             include: k8s.container_fs_reads_bytes_total
-            new_name: k8s.container_fs_reads_bytes_total_temp
+            new_name: k8s.container_fs_reads_bytes_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_bytes_total
-            new_name: k8s.container_fs_writes_bytes_total_temp
+            new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+            include: (k8s.container_fs_reads_bytes_total__swo_temp|k8s.container_fs_writes_bytes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.throughput
             operations:
@@ -2695,12 +2695,12 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.pod.fs.reads.rate_temp
+            new_name: k8s.pod.fs.reads.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.pod.fs.writes.rate_temp
+            new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+            include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
             operations:
@@ -2713,12 +2713,12 @@ Node collector config for windows nodes should match snapshot when using legacy 
             submatch_case: lower
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.pod.fs.reads.bytes.rate_temp
+            new_name: k8s.pod.fs.reads.bytes.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.pod.fs.writes.bytes.rate_temp
+            new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+            include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
             operations:
@@ -2828,7 +2828,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.node.fs.reads.rate_temp
+            new_name: k8s.node.fs.reads.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -2836,7 +2836,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.node.fs.writes.rate_temp
+            new_name: k8s.node.fs.writes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -2844,7 +2844,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.node.fs.reads.bytes.rate_temp
+            new_name: k8s.node.fs.reads.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -2852,14 +2852,14 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.node.fs.writes.bytes.rate_temp
+            new_name: k8s.node.fs.writes.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
               label_set:
               - k8s.node.name
           - action: combine
-            include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+            include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
             operations:
@@ -2869,7 +2869,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               - k8s.node.name
             submatch_case: lower
           - action: combine
-            include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+            include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
             operations:
@@ -3094,10 +3094,10 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
-            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where
-              metric.name == "k8s.istio_request_duration_milliseconds_sum"
-            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
-              metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum__swo_temp")
+              where metric.name == "k8s.istio_request_duration_milliseconds_sum"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp")
+              where metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
         transform/istio-relationship-types:
           metric_statements:
