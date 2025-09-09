@@ -280,10 +280,15 @@ processors:
 
   transform/beyla-relationship-types:
     metric_statements:
-      - set(resource.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
-      - set(resource.attributes["http"], "true") where (metric.name == "http.client.request.body.size" or metric.name == "http.client.response.body.size")
-      - set(resource.attributes["grpc"], "true") where metric.name == "rpc.client.duration"
+      - set(datapoint.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
+      - set(datapoint.attributes["http"], "true") where IsMatch(metric.name, "^http\\.")
+      - set(datapoint.attributes["grpc"], "true") where IsMatch(metric.name, "^rpc\\.")
 
+  groupbyattrs/beyla-relationship-types:
+    keys:
+      - tcp
+      - http
+      - grpc
 
   groupbyattrs/beyla-entity-ids:
     keys:
@@ -686,6 +691,7 @@ service:
         - groupbyattrs/beyla-entity-ids
         - transform/beyla-entity-ids
         - transform/beyla-relationship-types
+        - groupbyattrs/beyla-relationship-types
         - groupbyattrs/beyla-entity-ids-after-transform
         - resource
       exporters:

@@ -457,6 +457,11 @@ Gateway config should match snapshot when using default values:
           - dest.k8s.node.name
           - dest.k8s.pod.name
           - dest.k8s.namespace.name
+        groupbyattrs/beyla-relationship-types:
+          keys:
+          - tcp
+          - http
+          - grpc
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -711,10 +716,9 @@ Gateway config should match snapshot when using default values:
           - keep_matching_keys(resource.attributes, "^(sw\\.k8s\\.cluster\\.uid)|(source\\..*)|(dest\\..*)|(beyla)|(tcp)|(http)|(grpc)$")
         transform/beyla-relationship-types:
           metric_statements:
-          - set(resource.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
-          - set(resource.attributes["http"], "true") where (metric.name == "http.client.request.body.size"
-            or metric.name == "http.client.response.body.size")
-          - set(resource.attributes["grpc"], "true") where metric.name == "rpc.client.duration"
+          - set(datapoint.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
+          - set(datapoint.attributes["http"], "true") where IsMatch(metric.name, "^http\\.")
+          - set(datapoint.attributes["grpc"], "true") where IsMatch(metric.name, "^rpc\\.")
         transform/scope:
           log_statements:
           - statements:
@@ -789,6 +793,7 @@ Gateway config should match snapshot when using default values:
             - groupbyattrs/beyla-entity-ids
             - transform/beyla-entity-ids
             - transform/beyla-relationship-types
+            - groupbyattrs/beyla-relationship-types
             - groupbyattrs/beyla-entity-ids-after-transform
             - resource
             receivers:
