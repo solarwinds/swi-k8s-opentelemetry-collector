@@ -39,11 +39,11 @@ transform/unify_node_attribute:
 {{- define "common-config.metricstransform-preprocessing-cadvisor" -}}
 - include: k8s.container_fs_reads_total
   action: insert
-  new_name: k8s.container_fs_reads_total_temp
+  new_name: k8s.container_fs_reads_total__swo_temp
 - include: k8s.container_fs_writes_total
   action: insert
-  new_name: k8s.container_fs_writes_total_temp
-- include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+  new_name: k8s.container_fs_writes_total__swo_temp
+- include: (k8s.container_fs_reads_total__swo_temp|k8s.container_fs_writes_total__swo_temp)
   match_type: regexp
   action: combine
   submatch_case: lower
@@ -56,11 +56,11 @@ transform/unify_node_attribute:
 
 - include: k8s.container_fs_reads_bytes_total
   action: insert
-  new_name: k8s.container_fs_reads_bytes_total_temp
+  new_name: k8s.container_fs_reads_bytes_total__swo_temp
 - include: k8s.container_fs_writes_bytes_total
   action: insert
-  new_name: k8s.container_fs_writes_bytes_total_temp
-- include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+  new_name: k8s.container_fs_writes_bytes_total__swo_temp
+- include: (k8s.container_fs_reads_bytes_total__swo_temp|k8s.container_fs_writes_bytes_total__swo_temp)
   match_type: regexp
   action: combine
   submatch_case: lower
@@ -190,11 +190,11 @@ transform/unify_node_attribute:
   new_name: k8s.pod.fs.writes.bytes.rate
 - include: k8s.pod.fs.reads.rate
   action: insert
-  new_name: k8s.pod.fs.reads.rate_temp
+  new_name: k8s.pod.fs.reads.rate__swo_temp
 - include: k8s.pod.fs.writes.rate
   action: insert
-  new_name: k8s.pod.fs.writes.rate_temp
-- include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+  new_name: k8s.pod.fs.writes.rate__swo_temp
+- include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
   match_type: regexp
   action: combine
   submatch_case: lower
@@ -205,11 +205,11 @@ transform/unify_node_attribute:
   new_name: k8s.pod.fs.iops
 - include: k8s.pod.fs.reads.bytes.rate
   action: insert
-  new_name: k8s.pod.fs.reads.bytes.rate_temp
+  new_name: k8s.pod.fs.reads.bytes.rate__swo_temp
 - include: k8s.pod.fs.writes.bytes.rate
   action: insert
-  new_name: k8s.pod.fs.writes.bytes.rate_temp
-- include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+  new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
+- include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
   match_type: regexp
   action: combine
   submatch_case: lower
@@ -296,29 +296,29 @@ transform/unify_node_attribute:
     - action: aggregate_labels
       label_set: [k8s.node.name]
       aggregation_type: sum
-  new_name: k8s.node.fs.reads.rate_temp
+  new_name: k8s.node.fs.reads.rate__swo_temp
 - include: k8s.pod.fs.writes.rate
   action: insert
   operations:
     - action: aggregate_labels
       label_set: [k8s.node.name]
       aggregation_type: sum
-  new_name: k8s.node.fs.writes.rate_temp
+  new_name: k8s.node.fs.writes.rate__swo_temp
 - include: k8s.pod.fs.reads.bytes.rate
   action: insert
   operations:
     - action: aggregate_labels
       label_set: [k8s.node.name]
       aggregation_type: sum
-  new_name: k8s.node.fs.reads.bytes.rate_temp
+  new_name: k8s.node.fs.reads.bytes.rate__swo_temp
 - include: k8s.pod.fs.writes.bytes.rate
   action: insert
   operations:
     - action: aggregate_labels
       label_set: [k8s.node.name]
       aggregation_type: sum
-  new_name: k8s.node.fs.writes.bytes.rate_temp
-- include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+  new_name: k8s.node.fs.writes.bytes.rate__swo_temp
+- include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
   match_type: regexp
   action: combine
   submatch_case: lower
@@ -327,7 +327,7 @@ transform/unify_node_attribute:
       label_set:  [k8s.node.name]
       aggregation_type: sum
   new_name: k8s.node.fs.iops
-- include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+- include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
   match_type: regexp
   action: combine
   submatch_case: lower
@@ -364,7 +364,7 @@ attributes/remove_temp:
       - .*
   actions:
     - key: temp
-      pattern: (.*_temp$)|(^\$.*) # attributes starting with $ are result of `combine` operations
+      pattern: (.*__swo_temp$)|(^\$.*) # attributes starting with $ are result of `combine` operations
       action: delete
 {{- end }}
 
@@ -620,5 +620,5 @@ resource/metrics:
 filter/remove_temporary_metrics:
   metrics:
     metric:            
-      - 'IsMatch(name , ".*_temp")'
+      - 'IsMatch(name , ".*__swo_temp$")'
 {{- end }}

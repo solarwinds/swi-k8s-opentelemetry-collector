@@ -84,6 +84,16 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+            - entity: KubernetesGitRepository
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.gitrepository.name
+            - entity: KubernetesKustomization
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.kustomization.name
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -357,6 +367,10 @@ Custom events filter with new syntax:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
@@ -1024,6 +1038,16 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+            - entity: KubernetesGitRepository
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.gitrepository.name
+            - entity: KubernetesKustomization
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.kustomization.name
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -1300,6 +1324,10 @@ Custom events filter with old syntax:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
@@ -1967,6 +1995,16 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+            - entity: KubernetesGitRepository
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.gitrepository.name
+            - entity: KubernetesKustomization
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.kustomization.name
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -2236,6 +2274,10 @@ Events config should match snapshot when using default values:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
@@ -3099,6 +3141,10 @@ Events config should not contain manifest collection pipeline when disabled:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
