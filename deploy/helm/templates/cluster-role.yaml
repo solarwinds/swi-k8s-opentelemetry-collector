@@ -115,6 +115,16 @@ rules:
       - list
       - watch
 {{- end }}
+{{- if or (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1") (.Capabilities.APIVersions.Has "source.toolkit.fluxcd.io/v1beta2") }}
+  - apiGroups:
+      - "source.toolkit.fluxcd.io"
+    resources:
+      - gitrepositories
+    verbs:
+      - get
+      - list
+      - watch
+{{- end }}
   - nonResourceURLs:
       - /metrics
     verbs:

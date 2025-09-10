@@ -116,8 +116,8 @@ cumulativetodelta/istio-metrics:
     metrics:
       - k8s.istio_request_bytes.rate
       - k8s.istio_response_bytes.rate
-      - k8s.istio_request_duration_milliseconds_sum_temp
-      - k8s.istio_request_duration_milliseconds_count_temp
+      - k8s.istio_request_duration_milliseconds_sum__swo_temp
+      - k8s.istio_request_duration_milliseconds_count__swo_temp
       - k8s.istio_requests.rate
       - k8s.istio_tcp_sent_bytes.rate
       - k8s.istio_tcp_received_bytes.rate
@@ -132,8 +132,8 @@ deltatorate/istio-metrics:
   metrics:
     - k8s.istio_request_bytes.rate
     - k8s.istio_response_bytes.rate
-    - k8s.istio_request_duration_milliseconds_sum_temp
-    - k8s.istio_request_duration_milliseconds_count_temp
+    - k8s.istio_request_duration_milliseconds_sum__swo_temp
+    - k8s.istio_request_duration_milliseconds_count__swo_temp
     - k8s.istio_requests.rate
     - k8s.istio_tcp_sent_bytes.rate
     - k8s.istio_tcp_received_bytes.rate
@@ -142,8 +142,8 @@ metricsgeneration/istio-metrics:
   rules:
     - name: k8s.istio_request_duration_milliseconds.rate
       type: calculate
-      metric1: k8s.istio_request_duration_milliseconds_sum_temp
-      metric2: k8s.istio_request_duration_milliseconds_count_temp
+      metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+      metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
       operation: divide
 
 transform/istio-metrics:
@@ -151,8 +151,8 @@ transform/istio-metrics:
     - statements:
         - extract_sum_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
         - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
-        - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
-        - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
+        - set(metric.name, "k8s.istio_request_duration_milliseconds_sum__swo_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
+        - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
         - set(resource.attributes["istio"], "true")
 
 transform/istio-metric-datapoints:

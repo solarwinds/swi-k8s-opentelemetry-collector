@@ -5,7 +5,7 @@ exporters:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
-      "swi-reporter": "k8s swo-k8s-collector/{{ .Chart.Version }}"
+      "swi-reporter": "k8s-monitoring swo-k8s-collector/{{ .Chart.Version }}"
     retry_on_failure:
       enabled: {{ .Values.otel.metrics.retry_on_failure.enabled }}
       initial_interval: {{ .Values.otel.metrics.retry_on_failure.initial_interval }}
@@ -239,21 +239,21 @@ processors:
       - include: k8s.kube_pod_container_resource_limits
         experimental_match_labels: { "resource": "cpu" }
         action: insert
-        new_name: k8s.container.spec.cpu.limit_temp
+        new_name: k8s.container.spec.cpu.limit__swo_temp
       - include: k8s.kube_pod_init_container_resource_limits
         experimental_match_labels: { "resource": "cpu" }
         action: insert
-        new_name: k8s.initcontainer.spec.cpu.limit_temp
+        new_name: k8s.initcontainer.spec.cpu.limit__swo_temp
 
       - include: k8s.kube_pod_container_resource_requests
         experimental_match_labels: { "resource": "cpu" }
         action: insert
-        new_name: k8s.container.spec.cpu.requests_temp
+        new_name: k8s.container.spec.cpu.requests__swo_temp
       - include: k8s.kube_pod_init_container_resource_requests
         experimental_match_labels: { "resource": "cpu" }
         action: insert
-        new_name: k8s.initcontainer.spec.cpu.requests_temp
-      - include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
+        new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
+      - include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
         match_type: regexp
         action: combine
         new_name: k8s.container.spec.cpu.requests
@@ -261,12 +261,12 @@ processors:
       - include: k8s.kube_pod_container_resource_requests
         experimental_match_labels: { "resource": "memory" }
         action: insert
-        new_name: k8s.container.spec.memory.requests_temp
+        new_name: k8s.container.spec.memory.requests__swo_temp
       - include: k8s.kube_pod_init_container_resource_requests
         experimental_match_labels: { "resource": "memory" }
         action: insert
-        new_name: k8s.initcontainer.spec.memory.requests_temp
-      - include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
+        new_name: k8s.initcontainer.spec.memory.requests__swo_temp
+      - include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
         match_type: regexp
         action: combine
         new_name: k8s.container.spec.memory.requests
@@ -275,33 +275,33 @@ processors:
         action: insert
         match_type: regexp
         experimental_match_labels: { "resource": "memory" }
-        new_name: k8s.container.spec.memory.limit_temp
+        new_name: k8s.container.spec.memory.limit__swo_temp
       - include: k8s.kube_pod_init_container_resource_limits
         action: insert
         match_type: regexp
         experimental_match_labels: { "resource": "memory" }
-        new_name: k8s.initcontainer.spec.memory.limit_temp
+        new_name: k8s.initcontainer.spec.memory.limit__swo_temp
 
       # Pod resource metrics
-      - include: k8s.container.spec.cpu.limit_temp
+      - include: k8s.container.spec.cpu.limit__swo_temp
         action: insert
         new_name: k8s.pod.spec.cpu.limit
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
-      - include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+      - include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
         match_type: regexp
         action: combine
         new_name: k8s.container.spec.cpu.limit
-      - include: k8s.container.spec.memory.limit_temp
+      - include: k8s.container.spec.memory.limit__swo_temp
         action: insert
         new_name: k8s.pod.spec.memory.limit
         operations:
           - action: aggregate_labels
             label_set: [pod, namespace, k8s.node.name]
             aggregation_type: sum
-      - include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+      - include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
         match_type: regexp
         action: combine
         new_name: k8s.container.spec.memory.limit
@@ -406,7 +406,7 @@ processors:
       - include: k8s.kube_pod_status_phase
         experimental_match_labels: { "phase": "Running" }
         action: insert
-        new_name: k8s.pod.status.phase.running_temp
+        new_name: k8s.pod.status.phase.running__swo_temp
       
       # Cluster metrics
       - include: k8s.kube_pod_info
@@ -457,7 +457,7 @@ processors:
             # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
             label_set: [dummy_label_workaround]
             aggregation_type: sum
-      - include: k8s.pod.status.phase.running_temp
+      - include: k8s.pod.status.phase.running__swo_temp
         action: insert
         new_name: k8s.cluster.pods.running
         operations:
@@ -511,17 +511,17 @@ processors:
             aggregation_type: sum
       - include: k8s.kubernetes_build_info
         action: update
-        new_name: k8s.kubernetes_build_info_temp
+        new_name: k8s.kubernetes_build_info__swo_temp
       # Prometheus metrics
       - include: k8s.apiserver_request_total
         action: insert
         match_type: regexp
         # Alternative to (?!5\d\d|429) - Go regex does not support negative lookahead
         experimental_match_labels: { "code": '^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$' }
-        new_name: apiserver_request_not_failed_temp
-      - include: apiserver_request_not_failed_temp
+        new_name: apiserver_request_not_failed__swo_temp
+      - include: apiserver_request_not_failed__swo_temp
         action: update
-        new_name: apiserver_request_not_failed_temp
+        new_name: apiserver_request_not_failed__swo_temp
         operations:
           - action: aggregate_labels
             # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
@@ -529,7 +529,7 @@ processors:
             aggregation_type: sum
       - include: k8s.apiserver_request_total
         action: insert
-        new_name: apiserver_request_total_temp
+        new_name: apiserver_request_total__swo_temp
         operations:
           - action: aggregate_labels
             # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
@@ -576,8 +576,8 @@ processors:
     include:
       metrics:
         {{- include "common-config.cumulativetorate-cadvisor" . | nindent 8 }}
-        - apiserver_request_not_failed_temp
-        - apiserver_request_total_temp
+        - apiserver_request_not_failed__swo_temp
+        - apiserver_request_total__swo_temp
       match_type: strict
 
   deltatorate:
@@ -589,8 +589,8 @@ processors:
       - name: k8s.apiserver.request.successrate
         unit: Percent
         type: calculate
-        metric1: apiserver_request_not_failed_temp
-        metric2: apiserver_request_total_temp
+        metric1: apiserver_request_not_failed__swo_temp
+        metric2: apiserver_request_total__swo_temp
         operation: percent
   
   groupbyattrs/node:

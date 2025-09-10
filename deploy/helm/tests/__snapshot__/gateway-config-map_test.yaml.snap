@@ -2,6 +2,8 @@ Gateway config should match snapshot when using default values:
   1: |
     gateway.config: |
       connectors:
+        forward/beyla-relationships: {}
+        forward/beyla_network_entities_and_relationships: {}
         forward/metrics_common: {}
         routing/metrics:
           default_pipelines:
@@ -14,7 +16,7 @@ Gateway config should match snapshot when using default values:
               \nname == \"beyla.network.flow.bytes\"\n"
             context: metric
             pipelines:
-            - metrics/beyla-network-entities-and-relationships
+            - metrics/beyla-metrics
         solarwindsentity/beyla-entities:
           schema:
             entities:
@@ -388,7 +390,7 @@ Gateway config should match snapshot when using default values:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
-            swi-reporter: k8s swo-k8s-collector/1.0.0
+            swi-reporter: k8s-monitoring swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -413,6 +415,11 @@ Gateway config should match snapshot when using default values:
           send_batch_max_size: 1024
           send_batch_size: 1024
           timeout: 1s
+        filter/beyla-dedup-tcp:
+          metrics:
+            datapoint:
+            - metric.name == "beyla.network.flow.bytes" and attributes["direction"] != nil
+              and attributes["direction"] == "response"
         filter/histograms:
           metrics:
             metric:
@@ -423,8 +430,8 @@ Gateway config should match snapshot when using default values:
             - IsMatch(name, "^ebpf_net.*$")
         groupbyattrs/beyla-entity-ids:
           keys:
-          - sw.k8s.dst.sw.server.address.fqdn
-          - sw.k8s.src.sw.server.address.fqdn
+          - dest.sw.server.address.fqdn
+          - source.sw.server.address.fqdn
           - sw.server.address.fqdn
           - sw.k8s.dst.workload.type
           - sw.k8s.dst.workload.name
@@ -432,6 +439,29 @@ Gateway config should match snapshot when using default values:
           - sw.k8s.src.workload.type
           - sw.k8s.src.workload.name
           - sw.k8s.src.workload.namespace
+        groupbyattrs/beyla-entity-ids-after-transform:
+          keys:
+          - source.k8s.deployment.name
+          - source.k8s.statefulset.name
+          - source.k8s.daemonset.name
+          - source.k8s.service.name
+          - source.k8s.job.name
+          - source.k8s.node.name
+          - source.k8s.pod.name
+          - source.k8s.namespace.name
+          - dest.k8s.deployment.name
+          - dest.k8s.statefulset.name
+          - dest.k8s.daemonset.name
+          - dest.k8s.service.name
+          - dest.k8s.job.name
+          - dest.k8s.node.name
+          - dest.k8s.pod.name
+          - dest.k8s.namespace.name
+        groupbyattrs/beyla-relationship-types:
+          keys:
+          - tcp
+          - http
+          - grpc
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -540,8 +570,14 @@ Gateway config should match snapshot when using default values:
             workload_type_attr: resource.sw.k8s.workload.type
           - address_attr: server.address
             expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
             - services
+            - jobs
+            - cronjobs
             - pods
+            - nodes
             namespace_attr: k8s.namespace.name
             prefer_owner_for_pods: true
             workload_name_attr: sw.k8s.dst.workload.name
@@ -549,8 +585,14 @@ Gateway config should match snapshot when using default values:
             workload_type_attr: sw.k8s.dst.workload.type
           - address_attr: client.address
             expected_types:
+            - deployments
+            - daemonsets
+            - statefulsets
             - services
+            - jobs
+            - cronjobs
             - pods
+            - nodes
             namespace_attr: k8s.namespace.name
             prefer_owner_for_pods: true
             workload_name_attr: sw.k8s.src.workload.name
@@ -558,124 +600,125 @@ Gateway config should match snapshot when using default values:
             workload_type_attr: sw.k8s.src.workload.type
         transform/beyla-entity-ids:
           metric_statements:
-          - set(resource.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.src.workload.name"])
-            where resource.attributes["sw.k8s.src.workload.type"] == "Deployment" and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.src.workload.name"])
-            where resource.attributes["sw.k8s.src.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.src.workload.name"])
-            where resource.attributes["sw.k8s.src.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.src.workload.name"])
-            where resource.attributes["sw.k8s.src.workload.type"] == "Service" and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.src.workload.name"])
-            where resource.attributes["sw.k8s.src.workload.type"] == "Job" and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.src.workload.name"])
-            where resource.attributes["sw.k8s.src.workload.type"] == "Node" and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.src.workload.name"])
-            where resource.attributes["sw.k8s.src.workload.type"] == "Pod" and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.src.workload.namespace"])
-            where resource.attributes["sw.k8s.src.workload.namespace"] != nil
-          - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.dst.workload.name"])
-            where resource.attributes["sw.k8s.dst.workload.type"] == "Deployment" and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.dst.workload.name"])
-            where resource.attributes["sw.k8s.dst.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.dst.workload.name"])
-            where resource.attributes["sw.k8s.dst.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.dst.workload.name"])
-            where resource.attributes["sw.k8s.dst.workload.type"] == "Service" and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.dst.workload.name"])
-            where resource.attributes["sw.k8s.dst.workload.type"] == "Job" and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.dst.workload.name"])
-            where resource.attributes["sw.k8s.dst.workload.type"] == "Node" and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.dst.workload.name"])
-            where resource.attributes["sw.k8s.dst.workload.type"] == "Pod" and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.dst.workload.namespace"])
-            where resource.attributes["sw.k8s.dst.workload.namespace"] != nil
-          - set(resource.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-          - set(resource.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-          - set(resource.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-          - set(resource.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-          - set(resource.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-          - set(resource.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-          - set(resource.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.dst.workload.name"] != nil
-          - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"])
-            where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.dst.workload.name"]
-            != nil
-          - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Deployment" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-          - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "StatefulSet" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-          - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "DaemonSet" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-          - set(resource.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Service" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-          - set(resource.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Job" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-          - set(resource.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Node" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-          - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"])
-            where resource.attributes["sw.k8s.workload.type"] == "Pod" and resource.attributes["sw.k8s.workload.name"]
-            != nil and resource.attributes["sw.k8s.src.workload.name"] != nil
-          - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"])
-            where resource.attributes["sw.k8s.workload.namespace"] != nil and resource.attributes["sw.k8s.src.workload.name"]
-            != nil
-          - set(resource.attributes["beyla"], "true")
+          - conditions:
+            - resource.attributes["sw.k8s.src.workload.name"] != nil
+            statements:
+            - set(resource.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.src.workload.name"])
+              where resource.attributes["sw.k8s.src.workload.type"] == "Deployment"
+            - set(resource.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.src.workload.name"])
+              where resource.attributes["sw.k8s.src.workload.type"] == "StatefulSet"
+            - set(resource.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.src.workload.name"])
+              where resource.attributes["sw.k8s.src.workload.type"] == "DaemonSet"
+            - set(resource.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.src.workload.name"])
+              where resource.attributes["sw.k8s.src.workload.type"] == "Service"
+            - set(resource.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.src.workload.name"])
+              where resource.attributes["sw.k8s.src.workload.type"] == "Job"
+            - set(resource.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.src.workload.name"])
+              where resource.attributes["sw.k8s.src.workload.type"] == "Node"
+            - set(resource.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.src.workload.name"])
+              where resource.attributes["sw.k8s.src.workload.type"] == "Pod"
+          - statements:
+            - set(resource.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.src.workload.namespace"])
+              where resource.attributes["sw.k8s.src.workload.namespace"] != nil
+          - conditions:
+            - resource.attributes["sw.k8s.dst.workload.name"] != nil
+            statements:
+            - set(resource.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.dst.workload.name"])
+              where resource.attributes["sw.k8s.dst.workload.type"] == "Deployment"
+            - set(resource.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.dst.workload.name"])
+              where resource.attributes["sw.k8s.dst.workload.type"] == "StatefulSet"
+            - set(resource.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.dst.workload.name"])
+              where resource.attributes["sw.k8s.dst.workload.type"] == "DaemonSet"
+            - set(resource.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.dst.workload.name"])
+              where resource.attributes["sw.k8s.dst.workload.type"] == "Service"
+            - set(resource.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.dst.workload.name"])
+              where resource.attributes["sw.k8s.dst.workload.type"] == "Job"
+            - set(resource.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.dst.workload.name"])
+              where resource.attributes["sw.k8s.dst.workload.type"] == "Node"
+            - set(resource.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.dst.workload.name"])
+              where resource.attributes["sw.k8s.dst.workload.type"] == "Pod"
+          - statements:
+            - set(resource.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.dst.workload.namespace"])
+              where resource.attributes["sw.k8s.dst.workload.namespace"] != nil
+          - conditions:
+            - resource.attributes["sw.k8s.src.workload.name"] == nil and resource.attributes["sw.k8s.workload.name"]
+              != nil and (IsMatch(metric.name, "^(http\\.client\\.)|(rpc\\.client\\.)")
+              or (metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"]
+              == "request"))
+            statements:
+            - set(datapoint.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Deployment"
+            - set(datapoint.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "StatefulSet"
+            - set(datapoint.attributes["source.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "DaemonSet"
+            - set(datapoint.attributes["source.k8s.service.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Service"
+            - set(datapoint.attributes["source.k8s.job.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Job"
+            - set(datapoint.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Node"
+            - set(datapoint.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Pod"
+          - statements:
+            - set(datapoint.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"])
+              where resource.attributes["source.k8s.namespace.name"] == nil and resource.attributes["sw.k8s.workload.namespace"]
+              != nil and (IsMatch(metric.name, "^(http\\.client\\.)|(rpc\\.client\\.)")
+              or metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"]
+              == "request")
+          - conditions:
+            - resource.attributes["sw.k8s.dst.workload.name"] == nil and resource.attributes["sw.k8s.workload.name"]
+              != nil and (IsMatch(metric.name, "^(http\\.server\\.)|(rpc\\.server\\.)")
+              or (metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"]
+              == "response"))
+            statements:
+            - set(datapoint.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Deployment"
+            - set(datapoint.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "StatefulSet"
+            - set(datapoint.attributes["dest.k8s.daemonset.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "DaemonSet"
+            - set(datapoint.attributes["dest.k8s.service.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Service"
+            - set(datapoint.attributes["dest.k8s.job.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Job"
+            - set(datapoint.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Node"
+            - set(datapoint.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"])
+              where resource.attributes["sw.k8s.workload.type"] == "Pod"
+          - statements:
+            - set(datapoint.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"])
+              where resource.attributes["dest.k8s.namespace.name"] == nil and resource.attributes["sw.k8s.workload.namespace"]
+              != nil and (IsMatch(metric.name, "^(http\\.server\\.)|(rpc\\.server\\.)")
+              or metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"]
+              == "response")
+          - statements:
+            - set(resource.attributes["beyla"], "true")
         transform/beyla-fqdn-attribute:
           metric_statements:
           - statements:
-            - set(datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"], datapoint.attributes["dst.address"])
+            - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["dst.address"])
               where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.dst.workload.type"]
               == nil and IsMatch(datapoint.attributes["dst.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
               and not(IsMatch(datapoint.attributes["dst.address"], ".*\\.cluster\\.local$"))
               and not(IsMatch(datapoint.attributes["dst.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
-            - set(datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"], datapoint.attributes["src.address"])
+            - set(datapoint.attributes["source.sw.server.address.fqdn"], datapoint.attributes["src.address"])
               where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.src.workload.type"]
               == nil and IsMatch(datapoint.attributes["src.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
               and not(IsMatch(datapoint.attributes["src.address"], ".*\\.cluster\\.local$"))
               and not(IsMatch(datapoint.attributes["src.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
-            - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"])
-              where datapoint.attributes["sw.k8s.dst.sw.server.address.fqdn"] != nil
-            - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"])
-              where datapoint.attributes["sw.k8s.src.sw.server.address.fqdn"] != nil
+            - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["dest.sw.server.address.fqdn"])
+              where datapoint.attributes["dest.sw.server.address.fqdn"] != nil
+            - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["source.sw.server.address.fqdn"])
+              where datapoint.attributes["source.sw.server.address.fqdn"] != nil
+        transform/beyla-keep-only-entity-relation-attributes:
+          metric_statements:
+          - keep_matching_keys(resource.attributes, "^(sw\\.k8s\\.cluster\\.uid)|(source\\..*)|(dest\\..*)|(beyla)|(tcp)|(http)|(grpc)$")
         transform/beyla-relationship-types:
           metric_statements:
-          - set(resource.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
-          - set(resource.attributes["http"], "true") where (metric.name == "http.client.request.body.size"
-            or metric.name == "http.client.response.body.size")
-          - set(resource.attributes["grpc"], "true") where metric.name == "rpc.client.duration"
+          - set(datapoint.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
+          - set(datapoint.attributes["http"], "true") where IsMatch(metric.name, "^http\\.")
+          - set(datapoint.attributes["grpc"], "true") where IsMatch(metric.name, "^rpc\\.")
         transform/scope:
           log_statements:
           - statements:
@@ -739,11 +782,10 @@ Gateway config should match snapshot when using default values:
             - filter/histograms
             receivers:
             - routing/metrics
-          metrics/beyla-network-entities-and-relationships:
+          metrics/beyla-metrics:
             exporters:
             - forward/metrics_common
-            - solarwindsentity/beyla-relationships
-            - solarwindsentity/beyla-entities
+            - forward/beyla_network_entities_and_relationships
             processors:
             - memory_limiter
             - swok8sworkloadtype/beyla
@@ -751,9 +793,27 @@ Gateway config should match snapshot when using default values:
             - groupbyattrs/beyla-entity-ids
             - transform/beyla-entity-ids
             - transform/beyla-relationship-types
+            - groupbyattrs/beyla-relationship-types
+            - groupbyattrs/beyla-entity-ids-after-transform
             - resource
             receivers:
             - routing/metrics
+          metrics/beyla-network-entities-and-relationships:
+            exporters:
+            - forward/beyla-relationships
+            - solarwindsentity/beyla-entities
+            processors:
+            - memory_limiter
+            - filter/beyla-dedup-tcp
+            receivers:
+            - forward/beyla_network_entities_and_relationships
+          metrics/beyla-stateevents-relationships-filter-attributes:
+            exporters:
+            - solarwindsentity/beyla-relationships
+            processors:
+            - transform/beyla-keep-only-entity-relation-attributes
+            receivers:
+            - forward/beyla-relationships
           metrics/common_in:
             exporters:
             - routing/metrics

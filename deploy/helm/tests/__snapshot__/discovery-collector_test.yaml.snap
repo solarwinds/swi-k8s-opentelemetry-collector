@@ -352,7 +352,7 @@ Discovery collector spec should match snapshot when using default values:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
-            swi-reporter: k8s swo-k8s-collector/1.0.0
+            swi-reporter: k8s-monitoring swo-k8s-collector/1.0.0
           retry_on_failure:
             enabled: true
             initial_interval: 10s
@@ -383,8 +383,8 @@ Discovery collector spec should match snapshot when using default values:
             metrics:
               - k8s.istio_request_bytes.rate
               - k8s.istio_response_bytes.rate
-              - k8s.istio_request_duration_milliseconds_sum_temp
-              - k8s.istio_request_duration_milliseconds_count_temp
+              - k8s.istio_request_duration_milliseconds_sum__swo_temp
+              - k8s.istio_request_duration_milliseconds_count__swo_temp
               - k8s.istio_requests.rate
               - k8s.istio_tcp_sent_bytes.rate
               - k8s.istio_tcp_received_bytes.rate
@@ -398,8 +398,8 @@ Discovery collector spec should match snapshot when using default values:
           metrics:
             - k8s.istio_request_bytes.rate
             - k8s.istio_response_bytes.rate
-            - k8s.istio_request_duration_milliseconds_sum_temp
-            - k8s.istio_request_duration_milliseconds_count_temp
+            - k8s.istio_request_duration_milliseconds_sum__swo_temp
+            - k8s.istio_request_duration_milliseconds_count__swo_temp
             - k8s.istio_requests.rate
             - k8s.istio_tcp_sent_bytes.rate
             - k8s.istio_tcp_received_bytes.rate
@@ -433,7 +433,7 @@ Discovery collector spec should match snapshot when using default values:
         filter/remove_temporary_metrics:
           metrics:
             metric:
-              - IsMatch(name , ".*_temp")
+              - IsMatch(name , ".*__swo_temp$")
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -484,8 +484,8 @@ Discovery collector spec should match snapshot when using default values:
           spike_limit_mib: 300
         metricsgeneration/istio-metrics:
           rules:
-            - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-              metric2: k8s.istio_request_duration_milliseconds_count_temp
+            - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+              metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
               name: k8s.istio_request_duration_milliseconds.rate
               operation: divide
               type: calculate
@@ -581,8 +581,8 @@ Discovery collector spec should match snapshot when using default values:
             - statements:
                 - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
                 - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
-                - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "k8s.istio_request_duration_milliseconds_sum"
-                - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "k8s.istio_request_duration_milliseconds_count"
+                - set(metric.name, "k8s.istio_request_duration_milliseconds_sum__swo_temp") where metric.name == "k8s.istio_request_duration_milliseconds_sum"
+                - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp") where metric.name == "k8s.istio_request_duration_milliseconds_count"
                 - set(resource.attributes["istio"], "true")
         transform/istio-relationship-types:
           metric_statements:
