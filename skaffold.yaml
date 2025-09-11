@@ -226,11 +226,13 @@ profiles:
                   value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
                 - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
                   value: cumulative
-  - name: no-beyla
+  - name: beyla
+    activation:
+      - env: CI=true
     patches:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/beyla.enabled
-        value: false
+        value: true
   - name: no-logs
     patches:
       - op: add
