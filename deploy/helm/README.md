@@ -295,6 +295,8 @@ Configuration:
 
     Set `otel.metrics.autodiscovery.discovery_collector.enabled=true` in `values.yaml`.
 
+    > **Note for GitOps users**: If you are using GitOps tools like FluxCD or ArgoCD, it is recommended to install the OpenTelemetry Operator separately from this chart. In that case, you should also set `otel.metrics.autodiscovery.discovery_collector.installWithHelmHooks=false` in `values.yaml`. GitOps tools may not correctly reconcile resources that are installed as Helm hooks.
+
 5. Configure the right selectors for Prometheus CRDs
 
     By default, all CRDs that do not have the `sw.ignore=true` label are discovered. This can be overridden by the following configuration in `values.yaml`:
