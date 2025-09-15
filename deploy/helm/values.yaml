@@ -94,6 +94,10 @@ otel:
       # Discovery collector is responsible for discovering and scraping based on Prometheus CRDs - ServiceMonitors, PodMonitors and ScrapeConfigs
       discovery_collector:
         enabled: false
+        
+        # Controls whether discovery collector and related resources are installed with Helm hooks.
+        # IMPORTANT: Set to 'false' when using GitOps tools like FluxCD or ArgoCD, as they may not
+        # correctly reconcile resources that are installed as Helm hooks.
         installWithHelmHooks: true
 
 
@@ -1190,6 +1194,9 @@ prometheusCRDs:
   install: false
 
 autoinstrumentation:
+  # Controls whether autoinstrumentation resources are installed with Helm hooks.
+  # IMPORTANT: Set to 'false' when using GitOps tools like FluxCD or ArgoCD, as they may not
+  # correctly reconcile resources that are installed as Helm hooks.
   installWithHelmHooks: true
   installDefaultCR: false
 
