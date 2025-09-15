@@ -6,8 +6,10 @@ metadata:
   labels:
 {{ include "common.labels" . | indent 4 }}
   annotations:
+  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.installWithHelmHooks }}
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "3"
+  {{- end }}
 {{ include "common.annotations" . | indent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
