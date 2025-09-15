@@ -50,7 +50,7 @@ spec:
       containers:
       - name: test-container
         image: busybox
-        command: ["sh", "-c", "echo 'test_metric_from_deployment{service_name=\"ad\"} 1' > /custom_metrics; httpd -f -p 8081 -h /; sleep infinity"]
+        command: ["sh", "-c", "echo 'test_temp_metric_from_deployment{service_name=\"ad\"} 1' > /custom_metrics; httpd -f -p 8081 -h /; sleep infinity"]
         ports:
         - containerPort: 8081
 ---
@@ -233,4 +233,935 @@ spec:
     protocol: TCP
     port: 80
     targetPort: http-web-svc
+---
+# HTTP Test Applications (4 instances)
+# Test communicator 1 - HTTP - Uses OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME environment variables
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-http-1
+  labels:
+    app: test-communicator-http-1
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-http-1
+  template:
+    metadata:
+      labels:
+        app: test-communicator-http-1
+        component: test-communicator
+        protocol: http
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-http-1"
+        - name: PORT
+          value: "8080"
+        - name: PROTOCOL
+          value: "http"
+        - name: TARGET_URL
+          value: "http://test-communicator-http-2-service:8081"
+        - name: OTEL_SERVICE_NAME
+          value: "test-communicator-http-1-otel-service"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=test-communicator-http-1-resource,service.namespace=test-namespace"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-http-1-service
+  labels:
+    app: test-communicator-http-1
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-http-1
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+# Test communicator 2 - HTTP - Uses pod annotations for service identification
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-http-2
+  labels:
+    app: test-communicator-http-2
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-http-2
+  template:
+    metadata:
+      labels:
+        app: test-communicator-http-2
+        component: test-communicator
+        protocol: http
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+        resource.opentelemetry.io/service.name: "test-communicator-http-2-annotated-service"
+        resource.opentelemetry.io/service.namespace: "test-annotated-namespace"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 8081
+          name: http
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-http-2"
+        - name: PORT
+          value: "8081"
+        - name: PROTOCOL
+          value: "http"
+        - name: TARGET_URL
+          value: "http://test-communicator-http-3-service:8082"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-http-2-service
+  labels:
+    app: test-communicator-http-2
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-http-2
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8081
+    targetPort: 8081
+  type: ClusterIP
+---
+# Test communicator 3 - HTTP - Uses pod labels for service identification
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-http-3
+  labels:
+    app: test-communicator-http-3
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-http-3
+  template:
+    metadata:
+      labels:
+        app: test-communicator-http-3
+        component: test-communicator
+        protocol: http
+        app.kubernetes.io/name: "test-communicator-http-3-labeled-service"
+        app.kubernetes.io/part-of: "test-labeled-namespace"
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 8082
+          name: http
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-http-3"
+        - name: PORT
+          value: "8082"
+        - name: PROTOCOL
+          value: "http"
+        - name: TARGET_URL
+          value: "http://test-communicator-http-4-service:8083"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-http-3-service
+  labels:
+    app: test-communicator-http-3
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-http-3
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8082
+    targetPort: 8082
+  type: ClusterIP
+---
+# Test communicator 4 - HTTP - No special service identification (fallback to workload metadata)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-http-4
+  labels:
+    app: test-communicator-http-4
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-http-4
+  template:
+    metadata:
+      labels:
+        app: test-communicator-http-4
+        component: test-communicator
+        protocol: http
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 8083
+          name: http
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-http-4"
+        - name: PORT
+          value: "8083"
+        - name: PROTOCOL
+          value: "http"
+        - name: TARGET_URL
+          value: "http://test-communicator-http-1-service:8080"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8083
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8083
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-http-4-service
+  labels:
+    app: test-communicator-http-4
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-http-4
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8083
+    targetPort: 8083
+  type: ClusterIP
+---
+# gRPC Test Applications (4 instances)
+# Test communicator 1 - gRPC - Uses OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME environment variables
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-grpc-1
+  labels:
+    app: test-communicator-grpc-1
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-grpc-1
+  template:
+    metadata:
+      labels:
+        app: test-communicator-grpc-1
+        component: test-communicator
+        protocol: grpc
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 9080
+          name: grpc
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-grpc-1"
+        - name: PORT
+          value: "9080"
+        - name: PROTOCOL
+          value: "grpc"
+        - name: TARGET_HOST
+          value: "test-communicator-grpc-2-service"
+        - name: TARGET_PORT
+          value: "9081"
+        - name: OTEL_SERVICE_NAME
+          value: "test-communicator-grpc-1-otel-service"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=test-communicator-grpc-1-resource,service.namespace=test-namespace"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-grpc-1-service
+  labels:
+    app: test-communicator-grpc-1
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-grpc-1
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: 9080
+    targetPort: 9080
+  type: ClusterIP
+---
+# Test communicator 2 - gRPC - Uses pod annotations for service identification
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-grpc-2
+  labels:
+    app: test-communicator-grpc-2
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-grpc-2
+  template:
+    metadata:
+      labels:
+        app: test-communicator-grpc-2
+        component: test-communicator
+        protocol: grpc
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+        resource.opentelemetry.io/service.name: "test-communicator-grpc-2-annotated-service"
+        resource.opentelemetry.io/service.namespace: "test-annotated-namespace"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 9081
+          name: grpc
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-grpc-2"
+        - name: PORT
+          value: "9081"
+        - name: PROTOCOL
+          value: "grpc"
+        - name: TARGET_HOST
+          value: "test-communicator-grpc-3-service"
+        - name: TARGET_PORT
+          value: "9082"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-grpc-2-service
+  labels:
+    app: test-communicator-grpc-2
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-grpc-2
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: 9081
+    targetPort: 9081
+  type: ClusterIP
+---
+# Test communicator 3 - gRPC - Uses pod labels for service identification
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-grpc-3
+  labels:
+    app: test-communicator-grpc-3
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-grpc-3
+  template:
+    metadata:
+      labels:
+        app: test-communicator-grpc-3
+        component: test-communicator
+        protocol: grpc
+        app.kubernetes.io/name: "test-communicator-grpc-3-labeled-service"
+        app.kubernetes.io/part-of: "test-labeled-namespace"
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 9082
+          name: grpc
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-grpc-3"
+        - name: PORT
+          value: "9082"
+        - name: PROTOCOL
+          value: "grpc"
+        - name: TARGET_HOST
+          value: "test-communicator-grpc-4-service"
+        - name: TARGET_PORT
+          value: "9083"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-grpc-3-service
+  labels:
+    app: test-communicator-grpc-3
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-grpc-3
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: 9082
+    targetPort: 9082
+  type: ClusterIP
+---
+# Test communicator 4 - gRPC - No special service identification (fallback to workload metadata)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-grpc-4
+  labels:
+    app: test-communicator-grpc-4
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-grpc-4
+  template:
+    metadata:
+      labels:
+        app: test-communicator-grpc-4
+        component: test-communicator
+        protocol: grpc
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 9083
+          name: grpc
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-grpc-4"
+        - name: PORT
+          value: "9083"
+        - name: PROTOCOL
+          value: "grpc"
+        - name: TARGET_HOST
+          value: "test-communicator-grpc-1-service"
+        - name: TARGET_PORT
+          value: "9080"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-grpc-4-service
+  labels:
+    app: test-communicator-grpc-4
+    component: test-communicator
+    protocol: grpc
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-grpc-4
+  ports:
+  - name: grpc
+    protocol: TCP
+    port: 9083
+    targetPort: 9083
+  type: ClusterIP
+---
+# TCP Test Applications (4 instances)
+# Test communicator 1 - TCP - Uses OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME environment variables
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-tcp-1
+  labels:
+    app: test-communicator-tcp-1
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-tcp-1
+  template:
+    metadata:
+      labels:
+        app: test-communicator-tcp-1
+        component: test-communicator
+        protocol: tcp
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 7080
+          name: tcp
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-tcp-1"
+        - name: PORT
+          value: "7080"
+        - name: PROTOCOL
+          value: "tcp"
+        - name: TARGET_HOST
+          value: "test-communicator-tcp-2-service"
+        - name: TARGET_PORT
+          value: "7081"
+        - name: OTEL_SERVICE_NAME
+          value: "test-communicator-tcp-1-otel-service"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=test-communicator-tcp-1-resource,service.namespace=test-namespace"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-tcp-1-service
+  labels:
+    app: test-communicator-tcp-1
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-tcp-1
+  ports:
+  - name: tcp
+    protocol: TCP
+    port: 7080
+    targetPort: 7080
+  type: ClusterIP
+---
+# Test communicator 2 - TCP - Uses pod annotations for service identification
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-tcp-2
+  labels:
+    app: test-communicator-tcp-2
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-tcp-2
+  template:
+    metadata:
+      labels:
+        app: test-communicator-tcp-2
+        component: test-communicator
+        protocol: tcp
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+        resource.opentelemetry.io/service.name: "test-communicator-tcp-2-annotated-service"
+        resource.opentelemetry.io/service.namespace: "test-annotated-namespace"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 7081
+          name: tcp
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-tcp-2"
+        - name: PORT
+          value: "7081"
+        - name: PROTOCOL
+          value: "tcp"
+        - name: TARGET_HOST
+          value: "test-communicator-tcp-3-service"
+        - name: TARGET_PORT
+          value: "7082"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-tcp-2-service
+  labels:
+    app: test-communicator-tcp-2
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-tcp-2
+  ports:
+  - name: tcp
+    protocol: TCP
+    port: 7081
+    targetPort: 7081
+  type: ClusterIP
+---
+# Test communicator 3 - TCP - Uses pod labels for service identification
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-tcp-3
+  labels:
+    app: test-communicator-tcp-3
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-tcp-3
+  template:
+    metadata:
+      labels:
+        app: test-communicator-tcp-3
+        component: test-communicator
+        protocol: tcp
+        app.kubernetes.io/name: "test-communicator-tcp-3-labeled-service"
+        app.kubernetes.io/part-of: "test-labeled-namespace"
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 7082
+          name: tcp
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-tcp-3"
+        - name: PORT
+          value: "7082"
+        - name: PROTOCOL
+          value: "tcp"
+        - name: TARGET_HOST
+          value: "test-communicator-tcp-4-service"
+        - name: TARGET_PORT
+          value: "7083"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-tcp-3-service
+  labels:
+    app: test-communicator-tcp-3
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-tcp-3
+  ports:
+  - name: tcp
+    protocol: TCP
+    port: 7082
+    targetPort: 7082
+  type: ClusterIP
+---
+# Test communicator 4 - TCP - No special service identification (fallback to workload metadata)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-tcp-4
+  labels:
+    app: test-communicator-tcp-4
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+    instrumentation.opentelemetry.io/inject-beyla: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-tcp-4
+  template:
+    metadata:
+      labels:
+        app: test-communicator-tcp-4
+        component: test-communicator
+        protocol: tcp
+      annotations:
+        test-annotation: "test-value"
+        instrumentation.opentelemetry.io/inject-beyla: "true"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 7083
+          name: tcp
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-tcp-4"
+        - name: PORT
+          value: "7083"
+        - name: PROTOCOL
+          value: "tcp"
+        - name: TARGET_HOST
+          value: "test-communicator-tcp-1-service"
+        - name: TARGET_PORT
+          value: "7080"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-tcp-4-service
+  labels:
+    app: test-communicator-tcp-4
+    component: test-communicator
+    protocol: tcp
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-tcp-4
+  ports:
+  - name: tcp
+    protocol: TCP
+    port: 7083
+    targetPort: 7083
+  type: ClusterIP
 
