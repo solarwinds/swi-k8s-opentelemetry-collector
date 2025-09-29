@@ -435,9 +435,9 @@
                                 }
                             },
                             "additionalProperties": false
-                        },
-                        "additionalProperties": false
-                    }
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
             "if": {
@@ -1005,20 +1005,16 @@
                                                     "$ref": "#/definitions/k8sTolerations"
                                                 },
                                                 "serviceMonitorSelector": {
-                                                    "type": "object",
-                                                    "additionalProperties": true
+                                                    "type": "object"
                                                 },
                                                 "podMonitorSelector": {
-                                                    "type": "object",
-                                                    "additionalProperties": true
+                                                    "type": "object"
                                                 },
                                                 "probeSelector": {
-                                                    "type": "object",
-                                                    "additionalProperties": true
+                                                    "type": "object"
                                                 },
                                                 "scrapeConfigSelector": {
-                                                    "type": "object",
-                                                    "additionalProperties": true
+                                                    "type": "object"
                                                 }
                                             },
                                             "additionalProperties": false
@@ -1054,8 +1050,7 @@
                                             "$ref": "#/definitions/k8sTolerations"
                                         },
                                         "autoscaler": {
-                                            "type": "object",
-                                            "additionalProperties": true
+                                            "type": "object"
                                         }
                                     },
                                     "additionalProperties": false
@@ -1624,14 +1619,12 @@
             "properties": {
                 "enabled": {
                     "type": "boolean"
-                },
-                "additionalProperties": true
+                }
             }
         },
         "opentelemetry-operator": {
             "description": "This field is provided for backward compatibility with older Helm versions or custom distributions. Prefer using 'operator' field.",
-            "type": "object",
-            "additionalProperties": true
+            "type": "object"
         },
         "certmanager": {
             "description": "cert-manager is a Kubernetes addon to automate the management and issuance of TLS certificates from various issuing sources.",
@@ -1639,14 +1632,12 @@
             "properties": {
                 "enabled": {
                     "type": "boolean"
-                },
-                "additionalProperties": true
+                }
             }
         },
         "cert-manager": {
             "description": "This field is included to support backward compatibility with older Helm versions or custom distributions. Prefer using 'certmanager' field.",
-            "type": "object",
-            "additionalProperties": true
+            "type": "object"
         },
         "prometheusCRDs": {
             "description": "Allows installation of Promethues CRDs to the cluster.",
@@ -1654,9 +1645,9 @@
             "properties": {
                 "install": {
                     "type": "boolean"
-                },
-                "additionalProperties": false
-            }
+                }
+            },
+            "additionalProperties": false
         },
         "autoinstrumentation": {
             "description": "Adds default Instrumentation custom resource.",
@@ -1667,9 +1658,9 @@
                 },
                 "installDefaultCR": {
                     "type": "boolean"
-                },
-                "additionalProperties": false
-            }
+                }
+            },
+            "additionalProperties": false
         },
         "waitJobs": {
             "description": "Configuration for available wait jobs.",
@@ -1680,9 +1671,9 @@
                 },
                 "certmanager": {
                     "$ref": "#/definitions/waitJobConfig"
-                },
-                "additionalProperties": false
-            }
+                }
+            },
+            "additionalProperties": false
         },
         "beyla": {
             "description": "If enabled, deploys beyla to the cluster.",
@@ -1706,8 +1697,18 @@
                 "tolerations": {
                     "$ref": "#/definitions/k8sTolerations"
                 },
-                "additionalProperties": false
-            }
+                "extraCapabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "config": {
+                    "description": "Beyla configuration overrides.",
+                    "type": "object"
+                }
+            },
+            "additionalProperties": false
         },
         "diagnostics": {
             "description": "Section for diagnostics configuration.",
@@ -1722,12 +1723,12 @@
                         },
                         "port": {
                             "$ref": "#/definitions/port"
-                        },
-                        "additionalProperties": false
-                    }
-                },
-                "additionalProperties": false
-            }
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
         }
     },
     "required": [
