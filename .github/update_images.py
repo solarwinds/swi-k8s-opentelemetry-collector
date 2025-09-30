@@ -2,11 +2,9 @@
 
 import os
 import re
-import json
 import logging
 import sys
 import traceback
-from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 from urllib.parse import urlparse
@@ -37,10 +35,13 @@ class DockerImageUpdater:
         self.timeout = 30
         self.branch_name = "update-docker-images"
         
+        # List of images not to update
+        self.ignored_images = [
+            "grafana/beyla"
+        ]
         
         self.values_file_path = Path("deploy/helm/values.yaml")
         self.chart_file_path = Path("deploy/helm/Chart.yaml")
-        self.tests_dir_path = Path("deploy/helm/tests")
 
         self.modified_files: List[str] = []
         
@@ -265,6 +266,10 @@ class DockerImageUpdater:
                 self.logger.debug(f"Skipping {repository} with placeholder tag: {current_tag}")
                 continue
                 
+            if repository in self.ignored_images:
+                self.logger.info(f"Skipping ignored image: {repository}")
+                continue
+                
             self.logger.info(f"Checking {repository}:{current_tag}")
             latest_tag = self.get_latest_version(repository, current_tag)
             
@@ -366,44 +371,6 @@ class DockerImageUpdater:
             self.logger.error(f"Failed to update Chart.yaml: {e}")
             return False
 
-    def update_unittest_expected_images(self, updates: List[Dict[str, Any]]) -> List[str]:
-        """Update expected image tags in Helm unit tests."""
-        if not updates:
-            return []
-
-        replacements: List[Dict[str, str]] = []
-        for update in updates:
-            repo = update.get('repository')
-            old_tag = update.get('old_tag')
-            new_tag = update.get('new_tag')
-            if not repo or not old_tag or not new_tag:
-                continue
-            replacements.append({
-                'old': f"{repo}:{old_tag}",
-                'new': f"{repo}:{new_tag}"
-            })
-
-        changed_files: List[str] = []
-        files: List[Path] = []
-
-        files.extend(self.tests_dir_path.rglob('*.yaml'))
-        for test_file in sorted(set(files)):
-            with open(test_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-            new_content = content
-            for replacement in replacements:
-                if replacement['old'] in new_content:
-                    new_content = new_content.replace(replacement['old'], replacement['new'])
-            if new_content != content:
-                with open(test_file, 'w', encoding='utf-8') as f:
-                    f.write(new_content)
-                self.modified_files.append(str(test_file))
-                changed_files.append(str(test_file))
-                self.logger.info(f"Updated unit tests in {test_file}")
-
-
-        return changed_files
-
     def create_or_update_branch(self, updates: List[Dict[str, Any]]) -> bool:
         """Create or update the branch with changes."""
         if not updates:
@@ -501,12 +468,6 @@ class DockerImageUpdater:
             for update in updates:
                 body_parts.append(f"- **{update['repository']}**: `{update['old_tag']}` → `{update['new_tag']}`")
             
-            modified_tests = [p for p in self.modified_files if p.startswith('deploy/helm/tests/')]
-            if modified_tests:
-                body_parts.append("\n## Updated Unit Tests")
-                for tf in modified_tests:
-                    body_parts.append(f"- `{tf}`")
-            
             body = "\n".join(body_parts)
             
             if existing_pr:
@@ -541,7 +502,6 @@ class DockerImageUpdater:
             self.logger.info(f"Found {len(updates)} image updates")
             
             self.update_chart_version(updates)
-            self.update_unittest_expected_images(updates)
                 
             if not self.create_or_update_branch(updates):
                 return False
