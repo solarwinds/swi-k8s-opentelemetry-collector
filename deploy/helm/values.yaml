@@ -45,7 +45,7 @@ otel:
 
     busy_box:
       repository: "busybox"
-      tag: "1.36.1"
+      tag: "1.37.0"
       pullPolicy: IfNotPresent
 
   node_collector:
@@ -94,11 +94,6 @@ otel:
       # Discovery collector is responsible for discovering and scraping based on Prometheus CRDs - ServiceMonitors, PodMonitors and ScrapeConfigs
       discovery_collector:
         enabled: false
-        
-        # Controls whether discovery collector and related resources are installed with Helm hooks.
-        # IMPORTANT: Set to 'false' when using GitOps tools like FluxCD or ArgoCD, as they may not
-        # correctly reconcile resources that are installed as Helm hooks.
-        installWithHelmHooks: true
 
         targetAllocator:
           nodeSelector: {}
@@ -167,7 +162,7 @@ otel:
           metrics:
             enabled: true
             address: 0.0.0.0:8888
-            
+
         # Memory limiter configuration. The memory limiter is used to prevent out of memory situations on the collector.
         # see https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/memorylimiterprocessor for configuration reference
         memory_limiter:
@@ -332,7 +327,6 @@ otel:
         #   - 10.240.0.33:2379
         #   - 10.240.0.34:2379
         static_endpoints: []
-      
 
     # This filter is applied after metric processing, it is the place where metrics could be filtered out
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor for configuration reference
@@ -731,7 +725,7 @@ otel:
     enabled: true
 
     # Persistend storage for k8sobjects receiver
-    persistent_storage: 
+    persistent_storage:
       enabled: false
       # Storage class for the PVC
       storageClassName: ""
@@ -783,7 +777,6 @@ otel:
 
     # Affinity for the gateway collector pod
     affinity: {}
-    
     # Autoscaler configuration for the gateway collector
     autoscaler:
       minReplicas: 1
@@ -839,7 +832,7 @@ otel:
       metrics:
         enabled: true
         address: 0.0.0.0:8888
-    
+
     # Prefix that will be added to all metrics
     prefix: "k8s."
 
@@ -872,7 +865,7 @@ autoupdate:
 
   image:
     repository: "alpine/k8s"
-    tag: "1.30.12"
+    tag: "1.34.1"
     pullPolicy: IfNotPresent
 
 # Set labels to every deployed resource
@@ -1001,7 +994,7 @@ swoagent:
   enabled: false
   image:
     repository: solarwinds/swo-agent
-    tag: "v2.10.212"
+    tag: "v2.10.304"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -1107,7 +1100,7 @@ aws_fargate:
           address: 0.0.0.0:8888
 
 ebpfNetworkMonitoring:
-  enabled: true
+  enabled: false
   kernelCollector:
     enabled: true
 
@@ -1195,17 +1188,12 @@ prometheusCRDs:
 autoinstrumentation:
   installDefaultCR: false
 
-  # Controls whether autoinstrumentation resources are installed with Helm hooks.
-  # IMPORTANT: Set to 'false' when using GitOps tools like FluxCD or ArgoCD, as they may not
-  # correctly reconcile resources that are installed as Helm hooks.
-  installWithHelmHooks: true
-
 operator:
   enabled: false
   manager:
     image:
       repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
-      tag: "0.131.0"
+      tag: "v0.136.0"
     targetAllocatorImage:
       repository: ""
       tag: ""
@@ -1217,7 +1205,7 @@ operator:
       # Currently only Java and Python supported, other languages are TBD
       java:
         repository: "solarwinds/autoinstrumentation-java"
-        tag: "2.15.0"
+        tag: "3.0.2"
       nodejs:
         repository: ""
         tag: ""
@@ -1254,7 +1242,7 @@ waitJobs:
 
     image:
       repository: "alpine/k8s"
-      tag: "1.30.12"
+      tag: "1.34.1"
       pullPolicy: IfNotPresent
 
   # is valid only if `certmanager.enable=true`, otherwise is ignored
@@ -1263,11 +1251,11 @@ waitJobs:
 
     image:
       repository: "alpine/k8s"
-      tag: "1.30.12"
+      tag: "1.34.1"
       pullPolicy: IfNotPresent
-  
+
 beyla:
-  enabled: false
+  enabled: true
 
   image:
     repository: "grafana/beyla"
