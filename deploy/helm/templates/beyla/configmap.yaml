@@ -23,7 +23,7 @@ data:
     {{- end }}
     {{- if not .Values.beyla.config.ebpf }}
     ebpf:
-      enable_context_propagation: true
+      context_propagation: all
     {{- end }}
     {{- if not .Values.beyla.config.process }}
     process:
@@ -35,10 +35,10 @@ data:
     {{- end }}
     {{- if not .Values.beyla.config.discovery }}
     discovery:
-      services:
-        - k8s_namespace: .*
-      exclude_services:
-        - exe_path: ".*otelcol.*|.*beyla.*"
+      instrument:
+        - k8s_namespace: "*"
+      exclude_instrument:
+        - exe_path: "{*otelcol*|*beyla*}"
     {{- end }}
     {{- if not .Values.beyla.config.log_level }}
     log_level: info
