@@ -697,6 +697,13 @@ Gateway config should match snapshot when using default values:
         transform/beyla-fqdn-attribute:
           metric_statements:
           - statements:
+            - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["server.address"])
+              where IsMatch(metric.name, "^http\\.client\\.") and datapoint.attributes["sw.k8s.dst.workload.type"]
+              == nil and IsMatch(datapoint.attributes["server.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
+              and not(IsMatch(datapoint.attributes["server.address"], ".*\\.cluster\\.local$"))
+              and not(IsMatch(datapoint.attributes["server.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+            - replace_pattern(datapoint.attributes["dest.sw.server.address.fqdn"], "^(https?://)?([^/:]+)(:\\d+)?$",
+              "$$2") where datapoint.attributes["dest.sw.server.address.fqdn"] != nil
             - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["dst.address"])
               where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.dst.workload.type"]
               == nil and IsMatch(datapoint.attributes["dst.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$")
