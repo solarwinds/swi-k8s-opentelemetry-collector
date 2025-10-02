@@ -1321,6 +1321,29 @@ Node collector config for windows nodes should match snapshot when using default
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp")
               where metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
+        transform/istio-parse-service-fqdn:
+          error_mode: ignore
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(datapoint.attributes["destination_service_name"], datapoint.attributes["destination_service"])
+              where (datapoint.attributes["destination_service_name"] == nil or datapoint.attributes["destination_service_name"]
+              == "") and IsMatch(datapoint.attributes["destination_service"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+            - replace_pattern(datapoint.attributes["destination_service_name"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\.([a-zA-Z0-9][-a-zA-Z0-9]*)\\.svc\\.cluster\\.local.*$",
+              "$$1") where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+            - set(datapoint.attributes["destination_service_namespace"], datapoint.attributes["destination_service"])
+              where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and (datapoint.attributes["destination_service_namespace"]
+              == nil or datapoint.attributes["destination_service_namespace"] == "")
+            - replace_pattern(datapoint.attributes["destination_service_namespace"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\.([a-zA-Z0-9][-a-zA-Z0-9]*)\\.svc\\.cluster\\.local.*$",
+              "$$2") where datapoint.attributes["destination_service_namespace"] != nil
+              and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+            - set(datapoint.attributes["destination_service_type"], "Service") where (datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["destination_service_type"] == "") and datapoint.attributes["destination_service_name"]
+              != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
+              and datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
         transform/istio-relationship-types:
           metric_statements:
           - statements:
@@ -3099,6 +3122,29 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp")
               where metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
+        transform/istio-parse-service-fqdn:
+          error_mode: ignore
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(datapoint.attributes["destination_service_name"], datapoint.attributes["destination_service"])
+              where (datapoint.attributes["destination_service_name"] == nil or datapoint.attributes["destination_service_name"]
+              == "") and IsMatch(datapoint.attributes["destination_service"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+            - replace_pattern(datapoint.attributes["destination_service_name"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\.([a-zA-Z0-9][-a-zA-Z0-9]*)\\.svc\\.cluster\\.local.*$",
+              "$$1") where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+            - set(datapoint.attributes["destination_service_namespace"], datapoint.attributes["destination_service"])
+              where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and (datapoint.attributes["destination_service_namespace"]
+              == nil or datapoint.attributes["destination_service_namespace"] == "")
+            - replace_pattern(datapoint.attributes["destination_service_namespace"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\.([a-zA-Z0-9][-a-zA-Z0-9]*)\\.svc\\.cluster\\.local.*$",
+              "$$2") where datapoint.attributes["destination_service_namespace"] != nil
+              and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+            - set(datapoint.attributes["destination_service_type"], "Service") where (datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["destination_service_type"] == "") and datapoint.attributes["destination_service_name"]
+              != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
+              and datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
         transform/istio-relationship-types:
           metric_statements:
           - statements:

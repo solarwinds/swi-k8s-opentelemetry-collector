@@ -160,6 +160,17 @@ transform/istio-metric-datapoints:
     - statements:
         - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
 
+transform/istio-parse-service-fqdn:
+  error_mode: ignore
+  metric_statements:
+    - context: datapoint
+      statements:
+        - set(datapoint.attributes["destination_service_name"], datapoint.attributes["destination_service"]) where (datapoint.attributes["destination_service_name"] == nil or datapoint.attributes["destination_service_name"] == "") and IsMatch(datapoint.attributes["destination_service"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+        - replace_pattern(datapoint.attributes["destination_service_name"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\.([a-zA-Z0-9][-a-zA-Z0-9]*)\\.svc\\.cluster\\.local.*$", "$$1") where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+        - set(datapoint.attributes["destination_service_namespace"], datapoint.attributes["destination_service"]) where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and (datapoint.attributes["destination_service_namespace"] == nil or datapoint.attributes["destination_service_namespace"] == "")
+        - replace_pattern(datapoint.attributes["destination_service_namespace"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\.([a-zA-Z0-9][-a-zA-Z0-9]*)\\.svc\\.cluster\\.local.*$", "$$2") where datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*\\.svc\\.cluster\\.local")
+        - set(datapoint.attributes["destination_service_type"], "Service") where (datapoint.attributes["destination_service_type"] == nil or datapoint.attributes["destination_service_type"] == "") and datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
+
 transform/istio-relationship-types:
   metric_statements:
     - statements:
