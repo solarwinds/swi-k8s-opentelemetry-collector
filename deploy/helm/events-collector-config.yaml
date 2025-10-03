@@ -608,6 +608,11 @@ receivers:
 {{- end }}
 {{- end}}
 
+{{- if .Values.discovery.enabled }}
+  swok8sdiscovery:
+    auth_type: serviceAccount
+{{- end }}
+
   swok8sobjects:
     auth_type: serviceAccount
     objects:
@@ -668,6 +673,17 @@ service:
 {{- end }}
         - transform/scope
         - batch
+      exporters:
+        - otlp
+{{- end }}
+
+{{- if .Values.discovery.enabled }}
+    logs/discovery:
+      receivers:
+        - swok8sdiscovery
+      processors:        
+        - resource/events
+        - k8sattributes
       exporters:
         - otlp
 {{- end }}
