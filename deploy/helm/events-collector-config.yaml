@@ -608,6 +608,11 @@ receivers:
 {{- end }}
 {{- end}}
 
+{{- if .Values.discovery.enabled }}
+  swok8sdiscovery:
+    auth_type: serviceAccount
+{{- end }}
+
   swok8sobjects:
     auth_type: serviceAccount
     objects:
@@ -666,6 +671,19 @@ service:
 {{- if and .Values.otel.events.filter (eq (include "isDeprecatedFilterSyntax" .Values.otel.events.filter) "false") }}
         - filter
 {{- end }}
+        - transform/scope
+        - batch
+      exporters:
+        - otlp
+{{- end }}
+
+{{- if .Values.discovery.enabled }}
+    logs/discovery:
+      receivers:
+        - swok8sdiscovery
+      processors:      
+        - memory_limiter  
+        - resource/events
         - transform/scope
         - batch
       exporters:
