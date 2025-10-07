@@ -689,6 +689,8 @@ Custom events filter with new syntax:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          auth_type: serviceAccount
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -882,6 +884,16 @@ Custom events filter with new syntax:
             - batch
             receivers:
             - k8s_events
+          logs/discovery:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - resource/events
+            - transform/scope
+            - batch
+            receivers:
+            - swok8sdiscovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -1646,6 +1658,8 @@ Custom events filter with old syntax:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          auth_type: serviceAccount
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -1839,6 +1853,16 @@ Custom events filter with old syntax:
             - batch
             receivers:
             - k8s_events
+          logs/discovery:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - resource/events
+            - transform/scope
+            - batch
+            receivers:
+            - swok8sdiscovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -2596,6 +2620,8 @@ Events config should match snapshot when using default values:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          auth_type: serviceAccount
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -2788,6 +2814,16 @@ Events config should match snapshot when using default values:
             - batch
             receivers:
             - k8s_events
+          logs/discovery:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - resource/events
+            - transform/scope
+            - batch
+            receivers:
+            - swok8sdiscovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -3463,6 +3499,8 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          auth_type: serviceAccount
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -3489,6 +3527,16 @@ Events config should not contain manifest collection pipeline when disabled:
             - batch
             receivers:
             - k8s_events
+          logs/discovery:
+            exporters:
+            - otlp
+            processors:
+            - memory_limiter
+            - resource/events
+            - transform/scope
+            - batch
+            receivers:
+            - swok8sdiscovery
           logs/manifests:
             exporters:
             - routing/manifests
