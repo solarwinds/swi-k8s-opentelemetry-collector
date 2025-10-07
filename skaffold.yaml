@@ -61,21 +61,28 @@ deploy:
                         metrics_path: "/custom_metrics"
                         endpoint_port: 8081
                 prefix: ""
+              telemetry:
+                logs:
+                  level: info
             events:
               sending_queue:
                 offload_to_disk: true
+              telemetry:
+                logs:
+                  level: info
             manifests:
               pull_every: 1m
               persistent_storage:
                 enabled: false
-              keepalive_events:
-                pull_every: 10s
             logs:
               # journal on Docker Desktop is not supported
               journal: false
               filter:
                 log_record:
                   - resource.attributes["k8s.namespace.name"] == "{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}"
+              telemetry:
+                logs:
+                  level: info
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
       - name: monitoring
@@ -231,13 +238,11 @@ profiles:
                   value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
                 - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
                   value: cumulative
-  - name: beyla
-    activation:
-      - env: CI=true
+  - name: no-beyla
     patches:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/beyla.enabled
-        value: true
+        value: false
   - name: no-logs
     patches:
       - op: add

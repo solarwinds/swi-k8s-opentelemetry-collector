@@ -681,9 +681,11 @@ service:
     logs/discovery:
       receivers:
         - swok8sdiscovery
-      processors:        
+      processors:      
+        - memory_limiter  
         - resource/events
-        - k8sattributes
+        - transform/scope
+        - batch
       exporters:
         - otlp
 {{- end }}
