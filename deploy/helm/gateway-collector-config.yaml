@@ -205,7 +205,7 @@ processors:
     metric_statements:
       - statements:
           # The logic of what shapes of addresses are considered FQDNs should match 'transform/istio-metric-datapoints'.
-          - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["server.address"]) where IsMatch(metric.name, "^http\\.client\\.") and datapoint.attributes["sw.k8s.dst.workload.type"] == nil and IsMatch(datapoint.attributes["server.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["server.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["server.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+          - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["server.address"]) where IsMatch(metric.name, "^http\\.client\\.") and datapoint.attributes["sw.k8s.dst.workload.type"] == nil and IsMatch(datapoint.attributes["server.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["server.address"], ".*\\.cluster\\.local\\.?$")) and not(IsMatch(datapoint.attributes["server.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
           # Replace port in FQDN if present (PublicNetworkLocation entity must not include port)
           - replace_pattern(datapoint.attributes["dest.sw.server.address.fqdn"], "^(https?://)?([^/:]+)(:\\d+)?$", "$$2") where datapoint.attributes["dest.sw.server.address.fqdn"] != nil
           # Beyla prefers filling 'client.address' attributes with OTEL Service name (or name + k8s namespace) instead of an actual FQDN, when possible. This makes this value useless for us because they would create fake FQDNs.
