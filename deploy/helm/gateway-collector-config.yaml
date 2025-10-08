@@ -113,12 +113,6 @@ processors:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 
-  filter/beyla-dedup-tcp:
-    metrics:
-      datapoint:
-        # Remove response direction flows to keep only request direction flows for TCP deduplication
-        - 'metric.name == "beyla.network.flow.bytes" and attributes["direction"] != nil and attributes["direction"] == "response"'
-
   transform/beyla-keep-only-entity-relation-attributes:
     metric_statements:
       - keep_matching_keys(resource.attributes, "^(sw\\.k8s\\.cluster\\.uid)|(source\\..*)|(dest\\..*)|(beyla)|(tcp)|(http)|(grpc)$")
@@ -333,14 +327,13 @@ receivers:
 
 connectors:
   forward/metrics_common: {}
-  forward/beyla_network_entities_and_relationships: {}
   forward/beyla-relationships: {}
   routing/metrics:
     default_pipelines: [metrics]
     table:
       - context: metric
         pipelines:
-          - metrics/beyla-metrics
+          - metrics/beyla-network-entities-and-relationships
         condition: |
           name == "http.client.request.duration" or
           name == "http.client.request.body.size" or
@@ -681,7 +674,10 @@ service:
       exporters:
         - otlp
 
-    metrics/beyla-metrics:
+    # Current SWO pipeline cannot process state events and relationships events together,
+    # so we need to split them into two separate pipelines.
+    # TODO - merge 'logs/beyla-stateevents-entities' and 'logs/beyla-stateevents-relationships' into one pipeline when SWO supports it.
+    metrics/beyla-network-entities-and-relationships:
       receivers:
         - routing/metrics
       processors:
@@ -696,18 +692,7 @@ service:
         - resource
       exporters:
         - forward/metrics_common
-        - forward/beyla_network_entities_and_relationships
-    # Current SWO pipeline cannot process state events and relationships events together,
-    # so we need to split them into two separate pipelines.
-    # TODO - merge 'logs/beyla-stateevents-entities' and 'logs/beyla-stateevents-relationships' into one pipeline when SWO supports it.
-    metrics/beyla-network-entities-and-relationships:
-      receivers:
-        - forward/beyla_network_entities_and_relationships
-      processors:
-        - memory_limiter
-        - filter/beyla-dedup-tcp
-      exporters:
-        - forward/beyla-relationships
+        - solarwindsentity/beyla-relationships
         - solarwindsentity/beyla-entities
     metrics/beyla-stateevents-relationships-filter-attributes:
       receivers:
