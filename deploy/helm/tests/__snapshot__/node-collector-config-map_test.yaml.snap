@@ -519,7 +519,8 @@ Custom logs filter with new syntax:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/logs:
           logs:
             log_record:
@@ -2331,7 +2332,8 @@ Custom logs filter with old syntax:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/logs:
           logs:
             include:
@@ -4227,7 +4229,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/receiver:
           metrics:
             metric:
@@ -5971,7 +5974,8 @@ Node collector config should match snapshot when fargate is enabled:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/receiver:
           metrics:
             metric:
@@ -7691,7 +7695,8 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/receiver:
           metrics:
             metric:
@@ -9347,7 +9352,8 @@ Node collector config should match snapshot when using default values:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/receiver:
           metrics:
             metric:
