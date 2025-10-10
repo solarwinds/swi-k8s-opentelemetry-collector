@@ -519,7 +519,8 @@ Node collector config for windows nodes should match snapshot when using default
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/receiver:
           metrics:
             metric:
@@ -2290,7 +2291,8 @@ Node collector config for windows nodes should match snapshot when using legacy 
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
               == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == ""
+              == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
         filter/logs:
           logs:
             include:

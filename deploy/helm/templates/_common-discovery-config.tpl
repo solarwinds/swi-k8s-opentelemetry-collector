@@ -207,7 +207,7 @@ filter/keep-workload-workload-relationships:
   error_mode: ignore
   metrics:
     datapoint:
-      - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == ""
+      - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"] and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
 
 filter/keep-workload-service-relationships:
   error_mode: ignore
