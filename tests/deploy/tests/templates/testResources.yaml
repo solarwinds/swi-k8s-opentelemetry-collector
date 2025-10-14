@@ -1164,4 +1164,52 @@ spec:
     port: 7083
     targetPort: 7083
   type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-caller-solarwinds
+  labels:
+    app: external-caller-solarwinds
+    component: external-caller
+    test-type: beyla-external-connections
+  annotations:
+    test-annotation: "test-value"
+    beyla.grafana.com/instrument: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: external-caller-solarwinds
+  template:
+    metadata:
+      labels:
+        app: external-caller-solarwinds
+    spec:
+      containers:
+      - name: external-caller
+        image: test-communicator
+        env:
+        - name: TARGET_URL
+          value: "https://solarwinds.com"
+        - name: PORT
+          value: "8080"
+        - name: PROTOCOL
+          value: "http"
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+
 
