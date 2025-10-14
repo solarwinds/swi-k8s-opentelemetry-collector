@@ -207,7 +207,7 @@ filter/keep-workload-workload-relationships:
   error_mode: ignore
   metrics:
     datapoint:
-      - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or (datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"] and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"])
+      - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == ""
 
 filter/keep-workload-service-relationships:
   error_mode: ignore
@@ -227,6 +227,12 @@ filter/zero-delta-values:
   metrics:
     datapoint:
       - 'IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0'
+
+filter/self-loop-relationships:
+  error_mode: ignore
+  metrics:
+    datapoint:
+      - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"] and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
 
 transform/istio-workload-workload:
   metric_statements:
@@ -602,6 +608,7 @@ metrics/relationship-state-events-workload-workload-filtering:
   processors:
     - memory_limiter
     - filter/zero-delta-values
+    - filter/self-loop-relationships
   exporters:
     - solarwindsentity/istio-workload-workload
 
