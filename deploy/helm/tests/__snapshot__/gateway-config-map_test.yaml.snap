@@ -3,7 +3,6 @@ Gateway config should match snapshot when using default values:
     gateway.config: |
       connectors:
         forward/beyla-relationships: {}
-        forward/beyla_network_entities_and_relationships: {}
         forward/metrics_common: {}
         routing/metrics:
           default_pipelines:
@@ -16,7 +15,7 @@ Gateway config should match snapshot when using default values:
               \nname == \"beyla.network.flow.bytes\"\n"
             context: metric
             pipelines:
-            - metrics/beyla-metrics
+            - metrics/beyla-network-entities-and-relationships
         solarwindsentity/beyla-entities:
           schema:
             entities:
@@ -415,11 +414,6 @@ Gateway config should match snapshot when using default values:
           send_batch_max_size: 1024
           send_batch_size: 1024
           timeout: 1s
-        filter/beyla-dedup-tcp:
-          metrics:
-            datapoint:
-            - metric.name == "beyla.network.flow.bytes" and attributes["direction"] != nil
-              and attributes["direction"] == "response"
         filter/histograms:
           metrics:
             metric:
@@ -789,10 +783,11 @@ Gateway config should match snapshot when using default values:
             - filter/histograms
             receivers:
             - routing/metrics
-          metrics/beyla-metrics:
+          metrics/beyla-network-entities-and-relationships:
             exporters:
             - forward/metrics_common
-            - forward/beyla_network_entities_and_relationships
+            - forward/beyla-relationships
+            - solarwindsentity/beyla-entities
             processors:
             - memory_limiter
             - swok8sworkloadtype/beyla
@@ -805,15 +800,6 @@ Gateway config should match snapshot when using default values:
             - resource
             receivers:
             - routing/metrics
-          metrics/beyla-network-entities-and-relationships:
-            exporters:
-            - forward/beyla-relationships
-            - solarwindsentity/beyla-entities
-            processors:
-            - memory_limiter
-            - filter/beyla-dedup-tcp
-            receivers:
-            - forward/beyla_network_entities_and_relationships
           metrics/beyla-stateevents-relationships-filter-attributes:
             exporters:
             - solarwindsentity/beyla-relationships
