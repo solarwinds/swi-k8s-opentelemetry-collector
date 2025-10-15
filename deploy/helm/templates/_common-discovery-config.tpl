@@ -243,7 +243,7 @@ filter/self-loop-relationships:
   error_mode: ignore
   metrics:
     datapoint:
-      - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"] and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"] and datapoint.attributes["source_workload"] != nil
+      - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"] and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
 
 transform/istio-workload-workload:
   metric_statements:
