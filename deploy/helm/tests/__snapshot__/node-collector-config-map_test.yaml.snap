@@ -546,6 +546,12 @@ Custom logs filter with new syntax:
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -1809,6 +1815,7 @@ Custom logs filter with new syntax:
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
@@ -2385,6 +2392,12 @@ Custom logs filter with old syntax:
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -3729,6 +3742,7 @@ Custom logs filter with old syntax:
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
@@ -4298,6 +4312,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -5500,6 +5520,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
@@ -6066,6 +6087,12 @@ Node collector config should match snapshot when fargate is enabled:
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -7250,6 +7277,7 @@ Node collector config should match snapshot when fargate is enabled:
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
@@ -7810,6 +7838,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -8921,6 +8955,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
@@ -9490,6 +9525,12 @@ Node collector config should match snapshot when using default values:
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -10752,6 +10793,7 @@ Node collector config should match snapshot when using default values:
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
