@@ -317,6 +317,33 @@ processors:
       - dest.k8s.pod.name
       - dest.k8s.namespace.name
 
+  filter/beyla-self-loop-relationships:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        # filter self-loops by checking if source and dest workload names match in the same namespace
+        # beyla-entity-ids processor uses datapoints attributes as a fallback, so we'll also check it here
+        - |
+          (
+            (resource.attributes["source.k8s.deployment.name"] == resource.attributes["dest.k8s.deployment.name"] and resource.attributes["source.k8s.deployment.name"] != nil) or
+            (resource.attributes["source.k8s.statefulset.name"] == resource.attributes["dest.k8s.statefulset.name"] and resource.attributes["source.k8s.statefulset.name"] != nil) or
+            (resource.attributes["source.k8s.daemonset.name"] == resource.attributes["dest.k8s.daemonset.name"] and resource.attributes["source.k8s.daemonset.name"] != nil) or
+            (resource.attributes["source.k8s.service.name"] == resource.attributes["dest.k8s.service.name"] and resource.attributes["source.k8s.service.name"] != nil) or
+            (resource.attributes["source.k8s.job.name"] == resource.attributes["dest.k8s.job.name"] and resource.attributes["source.k8s.job.name"] != nil) or
+            (resource.attributes["source.k8s.pod.name"] == resource.attributes["dest.k8s.pod.name"] and resource.attributes["source.k8s.pod.name"] != nil) or
+            (resource.attributes["source.k8s.node.name"] == resource.attributes["dest.k8s.node.name"] and resource.attributes["source.k8s.node.name"] != nil) or
+            (datapoint.attributes["source.k8s.deployment.name"] == datapoint.attributes["dest.k8s.deployment.name"] and datapoint.attributes["source.k8s.deployment.name"] != nil) or
+            (datapoint.attributes["source.k8s.statefulset.name"] == datapoint.attributes["dest.k8s.statefulset.name"] and datapoint.attributes["source.k8s.statefulset.name"] != nil) or
+            (datapoint.attributes["source.k8s.daemonset.name"] == datapoint.attributes["dest.k8s.daemonset.name"] and datapoint.attributes["source.k8s.daemonset.name"] != nil) or
+            (datapoint.attributes["source.k8s.service.name"] == datapoint.attributes["dest.k8s.service.name"] and datapoint.attributes["source.k8s.service.name"] != nil) or
+            (datapoint.attributes["source.k8s.job.name"] == datapoint.attributes["dest.k8s.job.name"] and datapoint.attributes["source.k8s.job.name"] != nil) or
+            (datapoint.attributes["source.k8s.pod.name"] == datapoint.attributes["dest.k8s.pod.name"] and datapoint.attributes["source.k8s.pod.name"] != nil) or
+            (datapoint.attributes["source.k8s.node.name"] == datapoint.attributes["dest.k8s.node.name"] and datapoint.attributes["source.k8s.node.name"] != nil)
+          ) and (
+            resource.attributes["source.k8s.namespace.name"] == resource.attributes["dest.k8s.namespace.name"] or
+            datapoint.attributes["source.k8s.namespace.name"] == datapoint.attributes["dest.k8s.namespace.name"]
+          )
+
   logdedup/solarwindsentity: {}
 
 receivers:
@@ -701,6 +728,7 @@ service:
         - forward/beyla-relationships
       processors:
         - transform/beyla-keep-only-entity-relation-attributes
+        - filter/beyla-self-loop-relationships
       exporters:
         - solarwindsentity/beyla-relationships
     logs/beyla-stateevents-entities:
