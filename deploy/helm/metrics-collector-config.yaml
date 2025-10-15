@@ -170,7 +170,7 @@ processors:
   metricstransform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
-      - include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
+      - include: ^(trivy_|kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
         match_type: regexp
         action: update
         new_name: k8s.$${1}$${2}
@@ -803,6 +803,39 @@ processors:
           name == "kube_configmap_created"
           )
 
+  filter/trivy-operator-metrics:
+    metrics:
+      metric:
+        - |
+          not(
+          name == "trivy_image_vulnerabilities" or
+          name == "trivy_image_exposedsecrets"
+          )
+
+  transform/trivy-operator-metrics:
+    metric_statements:
+        - statements:
+            - delete_matching_keys(resource.attributes, "k8s\\..*")
+            - set(resource.attributes["sw.k8s.agent.manifest.version"], "${MANIFEST_VERSION}")
+            - set(resource.attributes["sw.k8s.agent.app.version"], "${APP_VERSION}")
+            - set(resource.attributes["sw.k8s.cluster.uid"], "${CLUSTER_UID}")
+            - set(resource.attributes["k8s.cluster.name"], "${CLUSTER_NAME}")
+
+            - set(datapoint.attributes["k8s.namespace.name"], datapoint.attributes["namespace"])
+            - set(datapoint.attributes["k8s.pod.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "Pod"
+            - set(datapoint.attributes["k8s.statefulset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "StatefulSet"
+            - set(datapoint.attributes["k8s.daemonset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "DaemonSet"
+            - set(datapoint.attributes["k8s.replicaset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "ReplicaSet"
+
+  groupbyattrs/trivy-operator-metrics:
+    keys:
+    - k8s.namespace.name
+    - k8s.pod.name
+    - k8s.statefulset.name
+    - k8s.daemonset.name
+    - k8s.replicaset.name
+    - severity
+
   filter/prometheus-node-metrics:
     metrics:
       metric:
@@ -901,6 +934,25 @@ receivers:
           static_configs:
             - targets:
                 - ${KUBE_STATE_METRICS_URL}
+
+  prometheus/trivy-operator-metrics:
+    config:
+      scrape_configs:
+        - job_name: trivy-operator
+          honor_timestamps: false
+          scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+          scrape_timeout: 10s
+          metrics_path: /metrics
+          kubernetes_sd_configs:
+          - role: endpoints
+          relabel_configs:
+          - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_name]
+            regex: trivy-operator
+            action: keep
+          - source_labels: [__address__]
+            target_label: scrape_job
+            replacement: "trivy-operator"
+
   prometheus/node-metrics:
     config:
       scrape_configs:
@@ -1092,6 +1144,19 @@ service:
         - filter/prometheus-node-metrics
       exporters:
         - forward/prometheus
+
+    metrics/trivy-operator-metrics:
+      receivers:
+        - prometheus/trivy-operator-metrics
+      processors:
+        - memory_limiter
+        - filter/trivy-operator-metrics
+        - transform/trivy-operator-metrics
+        - metricstransform/rename
+        - groupbyattrs/trivy-operator-metrics
+      exporters:
+        - forward/metric-exporter
+
     metrics/prometheus:
       receivers:
         - forward/prometheus
