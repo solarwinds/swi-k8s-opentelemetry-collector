@@ -812,20 +812,28 @@ processors:
           name == "trivy_image_exposedsecrets"
           )
 
-  transform/trivy-operator-metrics:
+  transform/trivy-operator-metrics-attributes:
     metric_statements:
-        - statements:
-            - delete_matching_keys(resource.attributes, "k8s\\..*")
-            - set(resource.attributes["sw.k8s.agent.manifest.version"], "${MANIFEST_VERSION}")
-            - set(resource.attributes["sw.k8s.agent.app.version"], "${APP_VERSION}")
-            - set(resource.attributes["sw.k8s.cluster.uid"], "${CLUSTER_UID}")
-            - set(resource.attributes["k8s.cluster.name"], "${CLUSTER_NAME}")
+      - statements:
+          - delete_matching_keys(resource.attributes, "k8s\\..*")
+          - set(resource.attributes["sw.k8s.agent.manifest.version"], "${MANIFEST_VERSION}")
+          - set(resource.attributes["sw.k8s.agent.app.version"], "${APP_VERSION}")
+          - set(resource.attributes["sw.k8s.cluster.uid"], "${CLUSTER_UID}")
+          - set(resource.attributes["k8s.cluster.name"], "${CLUSTER_NAME}")
 
-            - set(datapoint.attributes["k8s.namespace.name"], datapoint.attributes["namespace"])
-            - set(datapoint.attributes["k8s.pod.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "Pod"
-            - set(datapoint.attributes["k8s.statefulset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "StatefulSet"
-            - set(datapoint.attributes["k8s.daemonset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "DaemonSet"
-            - set(datapoint.attributes["k8s.replicaset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "ReplicaSet"
+          - set(datapoint.attributes["k8s.namespace.name"], datapoint.attributes["namespace"])
+          - set(datapoint.attributes["k8s.pod.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "Pod"
+          - set(datapoint.attributes["k8s.statefulset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "StatefulSet"
+          - set(datapoint.attributes["k8s.daemonset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "DaemonSet"
+          - set(datapoint.attributes["k8s.replicaset.name"], datapoint.attributes["resource_name"]) where datapoint.attributes["resource_kind"] == "ReplicaSet"
+
+  transform/trivy-operator-metrics-split:
+    error_mode: ignore
+    metric_statements:
+      - context: metric
+        statements:
+          # adds severity to metric name
+          - set(name, Format("%s_%s", [name, ToLowerCase(resource.attributes["severity"])])) where resource.attributes["severity"] != nil
 
   groupbyattrs/trivy-operator-metrics:
     keys:
@@ -835,6 +843,17 @@ processors:
     - k8s.daemonset.name
     - k8s.replicaset.name
     - severity
+      
+  metricstransform/trivy-operator-metrics-aggregation:
+    transforms:
+      - include: ^k8s.trivy_.*$
+        match_type: regexp
+        action: update
+        operations:
+          - action: aggregate_labels
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
+            aggregation_type: sum
 
   filter/prometheus-node-metrics:
     metrics:
@@ -1151,9 +1170,11 @@ service:
       processors:
         - memory_limiter
         - filter/trivy-operator-metrics
-        - transform/trivy-operator-metrics
+        - transform/trivy-operator-metrics-attributes
         - metricstransform/rename
         - groupbyattrs/trivy-operator-metrics
+        - metricstransform/trivy-operator-metrics-aggregation
+        - transform/trivy-operator-metrics-split
       exporters:
         - forward/metric-exporter
 
