@@ -1,0 +1,16 @@
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" (tuple . "-discovery-collector-config") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/component: discovery-collector
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+{{ include "common.annotations" . | indent 4 }}
+data:
+  discovery-collector.config: |
+{{ tpl (.Files.Get "discovery-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
+{{- end }}

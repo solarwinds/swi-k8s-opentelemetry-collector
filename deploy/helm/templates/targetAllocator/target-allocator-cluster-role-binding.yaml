@@ -1,0 +1,17 @@
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "common.fullname" (tuple . "-target-allocator") }}
+  labels:
+    app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+    {{- include "common.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "common.fullname" (tuple . "-target-allocator") }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "common.fullname" .}}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

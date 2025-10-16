@@ -1,0 +1,156 @@
+exporters:
+  otlp:
+    endpoint: ${OTEL_ENVOY_ADDRESS}
+    tls:
+      insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+    headers:
+      "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
+      "swi-reporter": "k8s-monitoring swo-k8s-collector/{{ .Chart.Version }}"
+    retry_on_failure:
+      enabled: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.enabled }}
+      initial_interval: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.initial_interval }}
+      max_interval: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.max_interval }}
+      max_elapsed_time: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.max_elapsed_time }}
+    sending_queue:
+      enabled: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.enabled }}
+      num_consumers: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.num_consumers }}
+      queue_size: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.queue_size }}
+    timeout: {{ .Values.otel.metrics.autodiscovery.discovery_collector.timeout }}
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+{{- if .Values.diagnostics.profiling.enabled }}
+  pprof:
+    endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
+{{- end }}
+
+processors:
+  k8sattributes:
+{{ include "common.k8s-instrumentation" . | indent 4 }}
+
+  memory_limiter:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.memory_limiter | indent 4 }}
+
+  transform/scope:
+    metric_statements:
+      - statements:
+        - set(scope.name, "")
+        - set(scope.version, "")
+ 
+  groupbyattrs/common-all:
+    keys:
+      - k8s.container.name
+      - k8s.namespace.name
+      - k8s.pod.name
+      - k8s.pod.uid
+      - k8s.node.name
+      - host.name
+      - service.name
+  
+  resource/all:
+    attributes:
+      # Collector and Manifest version
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+
+      # Cluster
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+
+{{- if .Values.otel.metrics.filter }}
+  filter/metrics:
+    metrics:
+{{ toYaml .Values.otel.metrics.filter | indent 6 }}
+{{- end }}
+
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces:
+    metrics:
+      metric:
+{{- include "namespacesFilter" . | nindent 8 }}      
+{{- end }}
+
+  batch/metrics:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.batch | indent 4 }}
+
+{{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
+
+  filter/histograms:
+    metrics:
+      metric:
+        - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds")'
+
+{{ include "common-discovery-config.processors" . | indent 2 }}
+
+connectors:
+  forward/metric-exporter: {}
+
+{{ include "common-discovery-config.connectors" . | indent 2 }}
+
+receivers:
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: {{ .Values.otel.metrics.prometheus.scrape_interval }}
+          static_configs:
+            - targets: ['0.0.0.0:8888']
+    target_allocator:
+      endpoint: http://{{ include "common.fullname" (tuple . "-target-allocator") }}:80
+      interval: 30s
+      collector_id: "${POD_NAME}"
+
+service:
+  extensions:
+    - health_check
+{{- if .Values.diagnostics.profiling.enabled }}
+    - pprof
+{{- end }}
+  pipelines:
+
+{{ include "common-discovery-config.pipelines" (tuple . "prometheus" "forward/metric-exporter") | indent 4 }}
+
+    metrics:
+      receivers:
+        - forward/metric-exporter
+      processors:
+        - memory_limiter
+        - filter/histograms
+        - k8sattributes
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}             
+{{- if .Values.otel.metrics.filter }}
+        - filter/metrics
+{{- end }}
+        - filter/remove_temporary_metrics
+        - transform/scope
+        - batch/metrics
+      exporters:
+        - otlp
+    
+  telemetry:
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.enabled }}
+    logs:
+      level: {{ .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.level }}
+{{- end }}
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.enabled }}
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: {{ (split ":" .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address)._0 | quote }}
+                port: {{ (split ":" .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address)._1 }}
+{{- end }}

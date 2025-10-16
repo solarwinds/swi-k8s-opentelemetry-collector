@@ -1,0 +1,276 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for Target Allocator
+templates:
+  - targetAllocator/target-allocator-deployment.yaml
+  - targetAllocator/target-allocator-service.yaml
+  - targetAllocator/target-allocator-config-map.yaml
+  - targetAllocator/target-allocator-cluster-role.yaml
+  - targetAllocator/target-allocator-cluster-role-binding.yaml
+chart:
+  appVersion: 1.0.0
+  version: 1.0.0
+release:
+  name: swi-k8s-opentelemetry-collector
+  namespace: test-namespace
+tests:
+  # Deployment Tests
+  - it: Target Allocator deployment should be created when discovery collector is enabled
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: metadata.name
+          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+
+  - it: Target Allocator deployment should not be created when discovery collector is disabled
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Target Allocator deployment should have correct image
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+        targetAllocator:
+          image:
+            repository: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator
+            tag: "0.116.0"
+            pullPolicy: IfNotPresent
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator:0.116.0
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+
+  - it: Target Allocator deployment should have helm hooks when enabled
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+        installWithHelmHooks: true
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "2"
+
+  - it: Target Allocator deployment should not have helm hooks when disabled
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+        installWithHelmHooks: false
+    asserts:
+      - notExists:
+          path: metadata.annotations["helm.sh/hook"]
+
+  - it: Target Allocator deployment should have correct selector
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.selector.matchLabels.app
+          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+
+  - it: Target Allocator deployment should have default node affinity
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - exists:
+          path: spec.template.spec.affinity.nodeAffinity
+      - contains:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions
+          content:
+            key: kubernetes.io/arch
+            operator: In
+            values:
+              - amd64
+              - arm64
+
+  - it: Target Allocator deployment spec should match snapshot
+    template: targetAllocator/target-allocator-deployment.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec
+
+  # Service Tests
+  - it: Target Allocator service should be created when discovery collector is enabled
+    template: targetAllocator/target-allocator-service.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Service
+      - matchRegex:
+          path: metadata.name
+          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+
+  - it: Target Allocator service should expose correct ports
+    template: targetAllocator/target-allocator-service.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8080
+      - equal:
+          path: spec.ports[0].protocol
+          value: TCP
+
+  - it: Target Allocator service should have correct selector
+    template: targetAllocator/target-allocator-service.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.selector.app
+          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+
+  # ConfigMap Tests
+  - it: Target Allocator config should be created when discovery collector is enabled
+    template: targetAllocator/target-allocator-config-map.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: metadata.name
+          pattern: ^swi-k8s-.*-target-allocator-config$
+
+  - it: Target Allocator config should have correct allocation strategy
+    template: targetAllocator/target-allocator-config-map.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: data["targetallocator.yaml"]
+          pattern: "allocation_strategy: consistent-hashing"
+
+  - it: Target Allocator config should have prometheus_cr enabled
+    template: targetAllocator/target-allocator-config-map.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: data["targetallocator.yaml"]
+          pattern: "prometheus_cr:\\s+enabled: true"
+
+  - it: Target Allocator config should have correct collector selector
+    template: targetAllocator/target-allocator-config-map.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: data["targetallocator.yaml"]
+          pattern: "app.kubernetes.io/component: discovery-collector"
+
+  # ClusterRole Tests
+  - it: Target Allocator cluster role should be created when discovery collector is enabled
+    template: targetAllocator/target-allocator-cluster-role.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - isKind:
+          of: ClusterRole
+      - matchRegex:
+          path: metadata.name
+          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+
+  - it: Target Allocator cluster role should have permissions for Prometheus CRDs
+    template: targetAllocator/target-allocator-cluster-role.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - contains:
+          path: rules[0].resources
+          content: servicemonitors
+      - contains:
+          path: rules[0].resources
+          content: podmonitors
+      - contains:
+          path: rules[0].resources
+          content: probes
+      - contains:
+          path: rules[0].resources
+          content: scrapeconfigs
+
+  # ClusterRoleBinding Tests
+  - it: Target Allocator cluster role binding should be created when discovery collector is enabled
+    template: targetAllocator/target-allocator-cluster-role-binding.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+      - matchRegex:
+          path: metadata.name
+          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+
+  - it: Target Allocator cluster role binding should reference correct role and service account
+    template: targetAllocator/target-allocator-cluster-role-binding.yaml
+    set:
+      otel.metrics.enabled: true
+      otel.metrics.autodiscovery.discovery_collector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: roleRef.name
+          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+      - matchRegex:
+          path: subjects[0].name
+          pattern: ^swi-k8s-opentelemetry.*-collector$
+      - equal:
+          path: subjects[0].namespace
+          value: test-namespace
