@@ -1,911 +1,140 @@
 Discovery collector spec should match snapshot when using default values:
   1: |
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-                - key: eks.amazonaws.com/compute-type
-                  operator: NotIn
-                  values:
-                    - fargate
-                - key: kubernetes.io/arch
-                  operator: In
-                  values:
-                    - amd64
-                    - arm64
-                - key: kubernetes.io/os
-                  operator: In
-                  values:
-                    - linux
-    autoscaler:
-      maxReplicas: 5
-      minReplicas: 1
-      targetCPUUtilization: 80
-      targetMemoryUtilization: 80
-    config:
-      connectors:
-        forward/discovery-istio-metrics-clean: {}
-        forward/istio-workload-service-filtering: {}
-        forward/istio-workload-workload-filtering: {}
-        forward/metric-exporter: {}
-        forward/not-relationship-state-events: {}
-        forward/relationship-state-events-workload-service: {}
-        forward/relationship-state-events-workload-workload: {}
-        routing/discovered_metrics:
-          default_pipelines:
-            - metrics/discovery-custom
-          table:
-            - condition: |
-                IsMatch(name, "k8s.istio_")
-              context: metric
-              pipelines:
-                - metrics/discovery-istio
-        solarwindsentity/istio-workload-service:
-          destination_prefix: dest.
-          schema:
-            entities:
-              - entity: KubernetesDeployment
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.deployment.name
-              - entity: KubernetesStatefulSet
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.statefulset.name
-              - entity: KubernetesDaemonSet
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.daemonset.name
-              - entity: KubernetesJob
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.job.name
-              - entity: KubernetesCronJob
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.cronjob.name
-              - entity: KubernetesService
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.service.name
-              - entity: PublicNetworkLocation
-                id:
-                  - sw.server.address.fqdn
-            events:
-              entities:
-                - action: update
-                  context: metric
-                  entity: PublicNetworkLocation
-              relationships:
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesService
-                  source_entity: KubernetesDeployment
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: PublicNetworkLocation
-                  source_entity: KubernetesDeployment
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesService
-                  source_entity: KubernetesStatefulSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: PublicNetworkLocation
-                  source_entity: KubernetesStatefulSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesService
-                  source_entity: KubernetesDaemonSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: PublicNetworkLocation
-                  source_entity: KubernetesDaemonSet
-                  type: KubernetesCommunicatesWith
-          source_prefix: source.
-        solarwindsentity/istio-workload-workload:
-          destination_prefix: dest.
-          schema:
-            entities:
-              - entity: KubernetesDeployment
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.deployment.name
-              - entity: KubernetesStatefulSet
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.statefulset.name
-              - entity: KubernetesDaemonSet
-                id:
-                  - sw.k8s.cluster.uid
-                  - k8s.namespace.name
-                  - k8s.daemonset.name
-            events:
-              relationships:
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesDeployment
-                  source_entity: KubernetesDeployment
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesStatefulSet
-                  source_entity: KubernetesDeployment
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesDaemonSet
-                  source_entity: KubernetesDeployment
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesDeployment
-                  source_entity: KubernetesStatefulSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesStatefulSet
-                  source_entity: KubernetesStatefulSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesDaemonSet
-                  source_entity: KubernetesStatefulSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesDeployment
-                  source_entity: KubernetesDaemonSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesStatefulSet
-                  source_entity: KubernetesDaemonSet
-                  type: KubernetesCommunicatesWith
-                - action: update
-                  attributes:
-                    - istio
-                    - tcp
-                    - http
-                    - grpc
-                  conditions:
-                    - metric.name == "k8s.istio_request_bytes.delta"
-                    - metric.name == "k8s.istio_response_bytes.delta"
-                    - metric.name == "k8s.istio_requests.delta"
-                    - metric.name == "k8s.istio_tcp_sent_bytes.delta"
-                    - metric.name == "k8s.istio_tcp_received_bytes.delta"
-                  context: metric
-                  destination_entity: KubernetesDaemonSet
-                  source_entity: KubernetesDaemonSet
-                  type: KubernetesCommunicatesWith
-          source_prefix: source.
-      exporters:
-        otlp:
-          endpoint: ${OTEL_ENVOY_ADDRESS}
-          headers:
-            Authorization: Bearer ${SOLARWINDS_API_TOKEN}
-            swi-reporter: k8s-monitoring swo-k8s-collector/1.0.0
-          retry_on_failure:
-            enabled: true
-            initial_interval: 10s
-            max_elapsed_time: 300s
-            max_interval: 30s
-          sending_queue:
-            enabled: true
-            num_consumers: 20
-            queue_size: 1000
-          timeout: 15s
-          tls:
-            insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
-      extensions:
-        health_check:
-          endpoint: 0.0.0.0:13133
-      processors:
-        batch/metrics:
-          send_batch_max_size: 512
-          send_batch_size: 512
-          timeout: 1s
-        batch/stateevents:
-          send_batch_max_size: 1024
-          send_batch_size: 1024
-          timeout: 1s
-        cumulativetodelta/istio-metrics:
-          include:
-            match_type: strict
-            metrics:
-              - k8s.istio_request_bytes.rate
-              - k8s.istio_response_bytes.rate
-              - k8s.istio_request_duration_milliseconds_sum__swo_temp
-              - k8s.istio_request_duration_milliseconds_count__swo_temp
-              - k8s.istio_requests.rate
-              - k8s.istio_tcp_sent_bytes.rate
-              - k8s.istio_tcp_received_bytes.rate
-              - k8s.istio_request_bytes.delta
-              - k8s.istio_response_bytes.delta
-              - k8s.istio_requests.delta
-              - k8s.istio_tcp_sent_bytes.delta
-              - k8s.istio_tcp_received_bytes.delta
-          max_staleness: 180s
-        deltatorate/istio-metrics:
-          metrics:
-            - k8s.istio_request_bytes.rate
-            - k8s.istio_response_bytes.rate
-            - k8s.istio_request_duration_milliseconds_sum__swo_temp
-            - k8s.istio_request_duration_milliseconds_count__swo_temp
-            - k8s.istio_requests.rate
-            - k8s.istio_tcp_sent_bytes.rate
-            - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-              - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")
-        filter/keep-entity-state-events:
-          logs:
-            log_record:
-              - not(attributes["otel.entity.event.type"] == "entity_state")
-        filter/keep-not-relationships:
-          error_mode: ignore
-          metrics:
-            datapoint:
-              - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
-        filter/keep-relationship-state-events:
-          logs:
-            log_record:
-              - not(attributes["otel.entity.event.type"] == "entity_relationship_state")
-        filter/keep-workload-service-relationships:
-          error_mode: ignore
-          metrics:
-            datapoint:
-              - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
-        filter/keep-workload-workload-relationships:
-          error_mode: ignore
-          metrics:
-            datapoint:
-              - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == ""
-        filter/remove_temporary_metrics:
-          metrics:
-            metric:
-              - IsMatch(name , ".*__swo_temp$")
-        filter/self-loop-relationships:
-          error_mode: ignore
-          metrics:
-            datapoint:
-              - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"] and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
-        filter/zero-delta-values:
-          error_mode: ignore
-          metrics:
-            datapoint:
-              - IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0
-        groupbyattrs/common-all:
-          keys:
-            - k8s.container.name
-            - k8s.namespace.name
-            - k8s.pod.name
-            - k8s.pod.uid
-            - host.name
-            - service.name
-        groupbyattrs/istio-relationships:
-          keys:
-            - sw.k8s.cluster.uid
-            - source.k8s.deployment.name
-            - source.k8s.statefulset.name
-            - source.k8s.daemonset.name
-            - source.k8s.namespace.name
-            - dest.k8s.deployment.name
-            - dest.k8s.statefulset.name
-            - dest.k8s.daemonset.name
-            - dest.k8s.namespace.name
-            - dest.k8s.service.name
-            - dest.sw.server.address.fqdn
-        k8sattributes:
-          auth_type: serviceAccount
-          extract:
-            metadata:
-              - k8s.deployment.name
-              - k8s.replicaset.name
-              - k8s.daemonset.name
-              - k8s.job.name
-              - k8s.cronjob.name
-              - k8s.statefulset.name
-          passthrough: false
-          pod_association:
-            - sources:
-                - from: resource_attribute
-                  name: k8s.pod.name
-                - from: resource_attribute
-                  name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
-        memory_limiter:
-          check_interval: 1s
-          limit_mib: 800
-          spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-            - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-              metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-              name: k8s.istio_request_duration_milliseconds.rate
-              operation: divide
-              type: calculate
-        metricstransform/istio-metrics:
-          transforms:
-            - action: insert
-              include: k8s.istio_request_bytes_sum
-              new_name: k8s.istio_request_bytes.rate
-            - action: insert
-              include: k8s.istio_response_bytes_sum
-              new_name: k8s.istio_response_bytes.rate
-            - action: insert
-              include: k8s.istio_requests_total
-              new_name: k8s.istio_requests.rate
-            - action: insert
-              include: k8s.istio_tcp_sent_bytes_total
-              new_name: k8s.istio_tcp_sent_bytes.rate
-            - action: insert
-              include: k8s.istio_tcp_received_bytes_total
-              new_name: k8s.istio_tcp_received_bytes.rate
-            - action: insert
-              include: k8s.istio_request_bytes.rate
-              new_name: k8s.istio_request_bytes.delta
-            - action: insert
-              include: k8s.istio_response_bytes.rate
-              new_name: k8s.istio_response_bytes.delta
-            - action: insert
-              include: k8s.istio_requests.rate
-              new_name: k8s.istio_requests.delta
-            - action: insert
-              include: k8s.istio_tcp_sent_bytes.rate
-              new_name: k8s.istio_tcp_sent_bytes.delta
-            - action: insert
-              include: k8s.istio_tcp_received_bytes.rate
-              new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/rename/discovery:
-          transforms:
-            - action: update
-              include: ^(.*)$$
-              match_type: regexp
-              new_name: k8s.$${1}
-        resource/all:
-          attributes:
-            - action: insert
-              key: sw.k8s.agent.manifest.version
-              value: ${MANIFEST_VERSION}
-            - action: insert
-              key: sw.k8s.agent.app.version
-              value: ${APP_VERSION}
-            - action: insert
-              key: sw.k8s.cluster.uid
-              value: ${CLUSTER_UID}
-            - action: insert
-              key: k8s.cluster.name
-              value: ${CLUSTER_NAME}
-        resource/clean-temporary-attributes:
-          attributes:
-            - action: delete
-              key: istio
-            - action: delete
-              key: tcp
-            - action: delete
-              key: http
-            - action: delete
-              key: grpc
-        swok8sworkloadtype/istio:
-          workload_mappings:
-            - expected_types:
-                - deployments
-                - daemonsets
-                - statefulsets
-              name_attr: source_workload
-              namespace_attr: source_workload_namespace
-              workload_type_attr: source_workload_type
-            - expected_types:
-                - deployments
-                - daemonsets
-                - statefulsets
-              name_attr: destination_workload
-              namespace_attr: destination_workload_namespace
-              workload_type_attr: destination_workload_type
-            - expected_types:
-                - services
-              name_attr: destination_service_name
-              namespace_attr: destination_service_namespace
-              workload_type_attr: destination_service_type
-        transform/istio-metric-datapoints:
-          metric_statements:
-            - statements:
-                - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "k8s.istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
-        transform/istio-metrics:
-          metric_statements:
-            - statements:
-                - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
-                - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
-                - set(metric.name, "k8s.istio_request_duration_milliseconds_sum__swo_temp") where metric.name == "k8s.istio_request_duration_milliseconds_sum"
-                - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp") where metric.name == "k8s.istio_request_duration_milliseconds_count"
-                - set(resource.attributes["istio"], "true")
-        transform/istio-parse-service-fqdn:
-          error_mode: ignore
-          metric_statements:
-            - context: datapoint
-              statements:
-                - set(datapoint.attributes["destination_service_name"], datapoint.attributes["destination_service"]) where IsMatch(datapoint.attributes["destination_service"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*(\\.(svc|svc\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*))?(:\\d+)?$") and datapoint.attributes["destination_service_name"] == "PassthroughCluster"
-                - replace_pattern(datapoint.attributes["destination_service_name"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\..*$", "$$1") where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.")
-                - set(datapoint.attributes["destination_service_namespace"], datapoint.attributes["destination_service"]) where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and datapoint.attributes["destination_service_namespace"] == "unknown"
-                - replace_pattern(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.([a-zA-Z0-9][-a-zA-Z0-9]*)(\\..*)?$", "$$1") where datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*")
-                - set(datapoint.attributes["destination_service_type"], "Service") where (datapoint.attributes["destination_service_type"] == nil or datapoint.attributes["destination_service_type"] == "") and datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
-        transform/istio-relationship-types:
-          metric_statements:
-            - statements:
-                - set(resource.attributes["tcp"], "true") where (metric.name == "k8s.istio_tcp_sent_bytes_total" or metric.name == "k8s.istio_tcp_received_bytes_total") and datapoint.attributes["request_protocol"] == "tcp"
-                - set(resource.attributes["http"], "true") where (metric.name == "k8s.istio_request_bytes.delta" or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"] == "http"
-                - set(resource.attributes["grpc"], "true") where (metric.name == "k8s.istio_request_bytes.delta" or metric.name == "k8s.istio_response_bytes.delta") and datapoint.attributes["request_protocol"] == "grpc"
-        transform/istio-workload-service:
-          metric_statements:
-            - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
-            - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
-            - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
-            - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
-            - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"]) where datapoint.attributes["destination_service_type"] == "Service"
-            - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_service_namespace"])
-        transform/istio-workload-workload:
-          metric_statements:
-            - set(datapoint.attributes["source.k8s.deployment.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "Deployment"
-            - set(datapoint.attributes["source.k8s.statefulset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "StatefulSet"
-            - set(datapoint.attributes["source.k8s.daemonset.name"], datapoint.attributes["source_workload"]) where datapoint.attributes["source_workload_type"] == "DaemonSet"
-            - set(datapoint.attributes["source.k8s.namespace.name"], datapoint.attributes["source_workload_namespace"])
-            - set(datapoint.attributes["dest.k8s.deployment.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "Deployment"
-            - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "StatefulSet"
-            - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "DaemonSet"
-            - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
-        transform/only-relationship-resource-attributes:
-          metric_statements:
-            - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"]) where resource.attributes["dest.sw.server.address.fqdn"] != nil
-        transform/scope:
-          log_statements:
-            - statements:
-                - set(scope.name, "")
-                - set(scope.version, "")
-          metric_statements:
-            - statements:
-                - set(scope.name, "")
-                - set(scope.version, "")
-      receivers:
-        prometheus:
-          config:
-            scrape_configs:
-              - job_name: otel-collector
-                metric_relabel_configs:
-                  - action: replace
-                    regex: (.+)
-                    replacement: $1
-                    source_labels:
-                      - service_name
-                    target_label: job
-                  - action: labeldrop
-                    regex: ^service_name$
-                scrape_interval: 60s
-                static_configs:
-                  - targets:
-                      - 0.0.0.0:8888
-      service:
-        extensions:
-          - health_check
-        pipelines:
-          logs/stateevents-entities:
-            exporters:
-              - otlp
-            processors:
-              - memory_limiter
-              - filter/keep-entity-state-events
-              - transform/scope
-              - logdedup/solarwindsentity
-              - batch/stateevents
-            receivers:
-              - solarwindsentity/istio-workload-workload
-              - solarwindsentity/istio-workload-service
-          logs/stateevents-relationships:
-            exporters:
-              - otlp
-            processors:
-              - memory_limiter
-              - filter/keep-relationship-state-events
-              - transform/scope
-              - logdedup/solarwindsentity
-              - batch/stateevents
-            receivers:
-              - solarwindsentity/istio-workload-workload
-              - solarwindsentity/istio-workload-service
-          metrics:
-            exporters:
-              - otlp
-            processors:
-              - memory_limiter
-              - filter/histograms
-              - k8sattributes
-              - filter/remove_temporary_metrics
-              - transform/scope
-              - batch/metrics
-            receivers:
-              - forward/metric-exporter
-          metrics/discovery-custom:
-            exporters:
-              - forward/metric-exporter
-            processors:
-              - memory_limiter
-              - groupbyattrs/common-all
-              - resource/all
-            receivers:
-              - routing/discovered_metrics
-          metrics/discovery-istio:
-            exporters:
-              - forward/relationship-state-events-workload-workload
-              - forward/relationship-state-events-workload-service
-              - forward/not-relationship-state-events
-            processors:
-              - memory_limiter
-              - transform/istio-parse-service-fqdn
-              - swok8sworkloadtype/istio
-              - transform/istio-metrics
-              - transform/istio-metric-datapoints
-              - metricstransform/istio-metrics
-              - cumulativetodelta/istio-metrics
-              - deltatorate/istio-metrics
-              - metricsgeneration/istio-metrics
-              - groupbyattrs/common-all
-              - resource/all
-            receivers:
-              - routing/discovered_metrics
-          metrics/discovery-istio-clean:
-            exporters:
-              - forward/metric-exporter
-            processors:
-              - memory_limiter
-              - resource/clean-temporary-attributes
-            receivers:
-              - forward/discovery-istio-metrics-clean
-          metrics/discovery-scrape:
-            exporters:
-              - routing/discovered_metrics
-            processors:
-              - memory_limiter
-              - metricstransform/rename/discovery
-            receivers:
-              - prometheus
-          metrics/not-relationship-state-events-preparation:
-            exporters:
-              - forward/discovery-istio-metrics-clean
-            processors:
-              - memory_limiter
-              - filter/keep-not-relationships
-            receivers:
-              - forward/not-relationship-state-events
-          metrics/relationship-state-events-workload-service-filtering:
-            exporters:
-              - solarwindsentity/istio-workload-service
-            processors:
-              - memory_limiter
-              - filter/zero-delta-values
-            receivers:
-              - forward/istio-workload-service-filtering
-          metrics/relationship-state-events-workload-service-preparation:
-            exporters:
-              - forward/discovery-istio-metrics-clean
-              - forward/istio-workload-service-filtering
-            processors:
-              - memory_limiter
-              - filter/keep-workload-service-relationships
-              - transform/istio-workload-service
-              - groupbyattrs/istio-relationships
-              - transform/only-relationship-resource-attributes
-              - transform/istio-relationship-types
-            receivers:
-              - forward/relationship-state-events-workload-service
-          metrics/relationship-state-events-workload-workload-filtering:
-            exporters:
-              - solarwindsentity/istio-workload-workload
-            processors:
-              - memory_limiter
-              - filter/zero-delta-values
-              - filter/self-loop-relationships
-            receivers:
-              - forward/istio-workload-workload-filtering
-          metrics/relationship-state-events-workload-workload-preparation:
-            exporters:
-              - forward/discovery-istio-metrics-clean
-              - forward/istio-workload-workload-filtering
-            processors:
-              - memory_limiter
-              - filter/keep-workload-workload-relationships
-              - transform/istio-workload-workload
-              - groupbyattrs/istio-relationships
-              - transform/only-relationship-resource-attributes
-              - transform/istio-relationship-types
-            receivers:
-              - forward/relationship-state-events-workload-workload
-        telemetry:
-          logs:
-            level: error
-          metrics:
-            readers:
-              - pull:
-                  exporter:
-                    prometheus:
-                      host: 0.0.0.0
-                      port: 8888
-    env:
-      - name: POD_NAME
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.name
-      - name: POD_NAMESPACE
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.namespace
-      - name: SOLARWINDS_API_TOKEN
-        valueFrom:
-          secretKeyRef:
-            key: SOLARWINDS_API_TOKEN
-            name: solarwinds-api-token
-            optional: true
-      - name: GOMEMLIMIT
-        valueFrom:
-          resourceFieldRef:
-            resource: limits.memory
-    envFrom:
-      - configMapRef:
-          name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
-    image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
-    imagePullPolicy: IfNotPresent
-    initContainers:
-      - command:
-          - /connection-check
-          - --endpoint=$(OTEL_ENVOY_ADDRESS)
-          - --apitoken=$(SOLARWINDS_API_TOKEN)
-          - --clusteruid=$(CLUSTER_UID)
-          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
-        env:
-          - name: SOLARWINDS_API_TOKEN
-            valueFrom:
-              secretKeyRef:
-                key: SOLARWINDS_API_TOKEN
-                name: solarwinds-api-token
-                optional: true
-        envFrom:
-          - configMapRef:
-              name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
-        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
-        imagePullPolicy: IfNotPresent
-        name: otel-endpoint-check
-    mode: statefulset
-    resources:
-      limits:
-        memory: 1Gi
-      requests:
-        memory: 50Mi
-    securityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - ALL
-      readOnlyRootFilesystem: true
-      seccompProfile:
-        type: RuntimeDefault
-    serviceAccount: swi-k8s-opentelemetry-collector-swo-k8s-collector
-    targetAllocator:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/arch
-                    operator: In
-                    values:
-                      - amd64
-                      - arm64
-                  - key: kubernetes.io/os
-                    operator: In
-                    values:
-                      - linux
-      enabled: true
-      prometheusCR:
-        enabled: true
-        podMonitorSelector:
-          matchExpressions:
-            - key: sw.ignore
-              operator: NotIn
-              values:
-                - "true"
-        probeSelector:
-          matchExpressions:
-            - key: sw.ignore
-              operator: NotIn
-              values:
-                - "true"
-        scrapeConfigSelector:
-          matchExpressions:
-            - key: sw.ignore
-              operator: NotIn
-              values:
-                - "true"
-        scrapeInterval: 60s
-        serviceMonitorSelector:
-          matchExpressions:
-            - key: sw.ignore
-              operator: NotIn
-              values:
-                - "true"
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
-        readOnlyRootFilesystem: true
-        seccompProfile:
-          type: RuntimeDefault
-      serviceAccount: swi-k8s-opentelemetry-collector-swo-k8s-collector
+    replicas: 1
+    selector:
+      matchLabels:
+        app: swi-k8s-opentelemetry-swo-k8s-collector-discovery-collector
+        app.kubernetes.io/component: discovery-collector
+    serviceName: swi-k8s-opentelemetry-swo-k8s-collector-discovery-collector
+    template:
+      metadata:
+        annotations:
+          checksum/config: 89d49a36afad98d82eb095ea8365e4b253454af0862caf489efcd5ea3108c668
+          checksum/config_common_env: fdc322999d28b7cb217d0c0f4dced2cbb422bf9cc20aff17bc84868743c2cf30
+          checksum/values: 95f06f92c273bd7826e83186de946f499611a1ef4e244ab0cc4a7099a4a6fa72
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8888"
+          prometheus.io/scheme: http
+          prometheus.io/scrape: "true"
+          swo.cloud.solarwinds.com/cluster-uid: <CLUSTER_NAME>
+        labels:
+          app: swi-k8s-opentelemetry-swo-k8s-collector-discovery-collector
+          app.kubernetes.io/component: discovery-collector
+          app.kubernetes.io/instance: swi-k8s-opentelemetry-collector-swo-k8s-collector
+          app.kubernetes.io/managed-by: swi-k8s-opentelemetry-collector
+          app.kubernetes.io/name: swo-k8s-collector
+          app.kubernetes.io/part-of: swo-k8s-collector
+          app.kubernetes.io/version: 1.0.0
+          helm.sh/chart: swo-k8s-collector-1.0.0
+      spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: eks.amazonaws.com/compute-type
+                      operator: NotIn
+                      values:
+                        - fargate
+                    - key: kubernetes.io/arch
+                      operator: In
+                      values:
+                        - amd64
+                        - arm64
+                    - key: kubernetes.io/os
+                      operator: In
+                      values:
+                        - linux
+        containers:
+          - command:
+              - /solarwinds-otel-collector
+              - --config=/conf/discovery-collector.yaml
+            env:
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    apiVersion: v1
+                    fieldPath: metadata.name
+              - name: MY_POD_IP
+                valueFrom:
+                  fieldRef:
+                    apiVersion: v1
+                    fieldPath: status.podIP
+              - name: SOLARWINDS_API_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    key: SOLARWINDS_API_TOKEN
+                    name: solarwinds-api-token
+                    optional: true
+              - name: GOMEMLIMIT
+                valueFrom:
+                  resourceFieldRef:
+                    resource: limits.memory
+            envFrom:
+              - configMapRef:
+                  name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
+            image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
+            imagePullPolicy: IfNotPresent
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 13133
+            name: discovery-collector
+            ports:
+              - containerPort: 8888
+                name: http
+                protocol: TCP
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 13133
+            resources:
+              limits:
+                memory: 1Gi
+              requests:
+                memory: 50Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 10001
+              seccompProfile:
+                type: RuntimeDefault
+            volumeMounts:
+              - mountPath: /conf
+                name: opentelemetry-collector-configmap
+                readOnly: true
+        initContainers:
+          - command:
+              - /connection-check
+              - --endpoint=$(OTEL_ENVOY_ADDRESS)
+              - --apitoken=$(SOLARWINDS_API_TOKEN)
+              - --clusteruid=$(CLUSTER_UID)
+              - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+            env:
+              - name: SOLARWINDS_API_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    key: SOLARWINDS_API_TOKEN
+                    name: solarwinds-api-token
+                    optional: true
+            envFrom:
+              - configMapRef:
+                  name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
+            image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
+            imagePullPolicy: IfNotPresent
+            name: otel-endpoint-check
+        securityContext:
+          fsGroup: 10001
+        serviceAccountName: swi-k8s-opentelemetry-collector-swo-k8s-collector
+        terminationGracePeriodSeconds: 600
+        volumes:
+          - configMap:
+              items:
+                - key: discovery-collector.config
+                  path: discovery-collector.yaml
+              name: swi-k8s-openteleme-swo-k8s-collector-discovery-collector-config
+            name: opentelemetry-collector-configmap

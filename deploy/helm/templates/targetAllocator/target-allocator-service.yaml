@@ -1,0 +1,24 @@
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.fullname" (tuple . "-target-allocator") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+    {{- include "common.labels" . | nindent 4 }}
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.installWithHelmHooks }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "2"
+{{- end }}
+spec:
+  selector:
+    app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+{{- end }}
