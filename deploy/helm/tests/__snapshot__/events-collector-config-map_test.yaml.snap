@@ -472,6 +472,15 @@ Custom events filter with new syntax:
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
+          - conditions:
+            - log.body["kind"] == "VulnerabilityReport"
+            - log.body["kind"] == "ExposedSecretReport"
+            statements:
+            - set(log.attributes[Format("k8s.%s.name",[ToLowerCase(log.body["metadata"]["ownerReferences"][0]["kind"])])],
+              log.body["metadata"]["ownerReferences"][0]["name"]) where Len(log.body["metadata"]["ownerReferences"])
+              > 0
+            - delete_key(log.attributes, "k8s.vulnerabilityreport.name")
+            - delete_key(log.attributes, "k8s.exposedsecretreport.name")
         transform/namespace:
           log_statements:
           - statements:
@@ -1429,6 +1438,15 @@ Custom events filter with old syntax:
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
+          - conditions:
+            - log.body["kind"] == "VulnerabilityReport"
+            - log.body["kind"] == "ExposedSecretReport"
+            statements:
+            - set(log.attributes[Format("k8s.%s.name",[ToLowerCase(log.body["metadata"]["ownerReferences"][0]["kind"])])],
+              log.body["metadata"]["ownerReferences"][0]["name"]) where Len(log.body["metadata"]["ownerReferences"])
+              > 0
+            - delete_key(log.attributes, "k8s.vulnerabilityreport.name")
+            - delete_key(log.attributes, "k8s.exposedsecretreport.name")
         transform/namespace:
           log_statements:
           - statements:
@@ -2379,6 +2397,15 @@ Events config should match snapshot when using default values:
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
+          - conditions:
+            - log.body["kind"] == "VulnerabilityReport"
+            - log.body["kind"] == "ExposedSecretReport"
+            statements:
+            - set(log.attributes[Format("k8s.%s.name",[ToLowerCase(log.body["metadata"]["ownerReferences"][0]["kind"])])],
+              log.body["metadata"]["ownerReferences"][0]["name"]) where Len(log.body["metadata"]["ownerReferences"])
+              > 0
+            - delete_key(log.attributes, "k8s.vulnerabilityreport.name")
+            - delete_key(log.attributes, "k8s.exposedsecretreport.name")
         transform/namespace:
           log_statements:
           - statements:
@@ -3246,6 +3273,15 @@ Events config should not contain manifest collection pipeline when disabled:
             - delete_key(log.attributes, "k8s.resource.name")
             - delete_key(log.attributes, "event.name")
             - delete_key(log.attributes, "event.domain")
+          - conditions:
+            - log.body["kind"] == "VulnerabilityReport"
+            - log.body["kind"] == "ExposedSecretReport"
+            statements:
+            - set(log.attributes[Format("k8s.%s.name",[ToLowerCase(log.body["metadata"]["ownerReferences"][0]["kind"])])],
+              log.body["metadata"]["ownerReferences"][0]["name"]) where Len(log.body["metadata"]["ownerReferences"])
+              > 0
+            - delete_key(log.attributes, "k8s.vulnerabilityreport.name")
+            - delete_key(log.attributes, "k8s.exposedsecretreport.name")
         transform/namespace:
           log_statements:
           - statements:

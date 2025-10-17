@@ -30,6 +30,7 @@ jobs:
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
           helm repo add jetstack https://charts.jetstack.io
+          helm repo add aquasecurity https://aquasecurity.github.io/helm-charts/
 
       - name: Download chart dependencies before linting
         run: helm dependency build deploy/helm
@@ -86,6 +87,7 @@ jobs:
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
           helm repo add jetstack https://charts.jetstack.io
+          helm repo add aquasecurity https://aquasecurity.github.io/helm-charts/
 
       - name: Build
         run: skaffold build -p=ci-helm-e2e --file-output=/tmp/tags.json
@@ -131,6 +133,7 @@ jobs:
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
           helm repo add jetstack https://charts.jetstack.io
           helm repo add solarwinds https://helm.solarwinds.com
+          helm repo add aquasecurity https://aquasecurity.github.io/helm-charts/
           helm repo update
 
       - name: Deploy timeseries-mock-service

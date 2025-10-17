@@ -374,6 +374,14 @@ Metrics config should match snapshot when using default values:
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/trivy-operator-metrics:
+          metrics:
+            metric:
+            - |
+              not(
+              name == "trivy_image_vulnerabilities" or
+              name == "trivy_image_exposedsecrets"
+              )
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -424,6 +432,14 @@ Metrics config should match snapshot when using default values:
           keys:
           - namespace
           - pod
+        groupbyattrs/trivy-operator-metrics:
+          keys:
+          - k8s.namespace.name
+          - k8s.pod.name
+          - k8s.statefulset.name
+          - k8s.daemonset.name
+          - k8s.replicaset.name
+          - severity
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -1325,9 +1341,19 @@ Metrics config should match snapshot when using default values:
         metricstransform/rename:
           transforms:
           - action: update
-            include: ^(kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
+            include: ^(trivy_|kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
+        metricstransform/trivy-operator-metrics-aggregation:
+          transforms:
+          - action: update
+            include: ^k8s.trivy_.*$
+            match_type: regexp
+            operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - dummy_label_workaround
         resource/metrics:
           attributes:
           - action: delete
@@ -1457,6 +1483,24 @@ Metrics config should match snapshot when using default values:
           - statements:
             - set(scope.name, "")
             - set(scope.version, "")
+        transform/trivy-operator-metrics-attributes:
+          metric_statements:
+          - statements:
+            - delete_matching_keys(resource.attributes, "k8s\\..*")
+            - set(resource.attributes["sw.k8s.agent.manifest.version"], "${MANIFEST_VERSION}")
+            - set(resource.attributes["sw.k8s.agent.app.version"], "${APP_VERSION}")
+            - set(resource.attributes["sw.k8s.cluster.uid"], "${CLUSTER_UID}")
+            - set(resource.attributes["k8s.cluster.name"], "${CLUSTER_NAME}")
+            - set(datapoint.attributes["k8s.namespace.name"], datapoint.attributes["namespace"])
+            - set(datapoint.attributes[Format("k8s.%s.name",[ToLowerCase(datapoint.attributes["resource_kind"])])],
+              datapoint.attributes["resource_name"])
+        transform/trivy-operator-metrics-split:
+          error_mode: ignore
+          metric_statements:
+          - context: metric
+            statements:
+            - set(name, Format("%s_%s", [name, ToLowerCase(resource.attributes["severity"])]))
+              where resource.attributes["severity"] != nil
         transform/unify_node_attribute:
           metric_statements:
           - statements:
@@ -1624,6 +1668,25 @@ Metrics config should match snapshot when using default values:
                 - __meta_kubernetes_service_label_app_kubernetes_io_name
               scrape_interval: 60s
               scrape_timeout: 10s
+        prometheus/trivy-operator-metrics:
+          config:
+            scrape_configs:
+            - honor_timestamps: false
+              job_name: trivy-operator
+              kubernetes_sd_configs:
+              - role: endpoints
+              metrics_path: /metrics
+              relabel_configs:
+              - action: keep
+                regex: trivy-operator
+                source_labels:
+                - __meta_kubernetes_service_label_app_kubernetes_io_name
+              - replacement: trivy-operator
+                source_labels:
+                - __address__
+                target_label: scrape_job
+              scrape_interval: 60s
+              scrape_timeout: 10s
       service:
         extensions:
         - health_check
@@ -1693,6 +1756,19 @@ Metrics config should match snapshot when using default values:
             - filter/prometheus-node-metrics
             receivers:
             - prometheus/node-metrics
+          metrics/trivy-operator-metrics:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - filter/trivy-operator-metrics
+            - transform/trivy-operator-metrics-attributes
+            - metricstransform/rename
+            - groupbyattrs/trivy-operator-metrics
+            - metricstransform/trivy-operator-metrics-aggregation
+            - transform/trivy-operator-metrics-split
+            receivers:
+            - prometheus/trivy-operator-metrics
         telemetry:
           logs:
             level: error

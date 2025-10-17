@@ -125,6 +125,17 @@ rules:
       - list
       - watch
 {{- end }}
+{{- if or (.Capabilities.APIVersions.Has "aquasecurity.github.io/v1") (.Capabilities.APIVersions.Has "aquasecurity.github.io/v1alpha1") (index .Values "trivy-operator").enabled }}
+  - apiGroups:
+      - "aquasecurity.github.io"
+    resources:
+      - vulnerabilityreports
+      - exposedsecretreports
+    verbs:
+      - get
+      - list
+      - watch
+{{- end }}
   - nonResourceURLs:
       - /metrics
     verbs:
