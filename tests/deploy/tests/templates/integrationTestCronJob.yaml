@@ -20,5 +20,5 @@ spec:
               image: integration-test
               env:
                 - name: TIMESERIES_MOCK_ENDPOINT
-                  value: timeseries-mock-service.test-namespace.svc.cluster.local:8088
+                  value: {{ printf "timeseries-mock-service.%s.svc.cluster.local:8088" .Release.Namespace | quote }}
           restartPolicy: Never

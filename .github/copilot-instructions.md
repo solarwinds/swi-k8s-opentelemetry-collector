@@ -75,7 +75,3 @@ The SWO K8s Collector consists of five main components, each with specific pipel
 # Coding conventions 
 1. Maintain backward compatibility when updating chart configurations.  
 2. Follow JSON schema validation for Helm values through `values.schema.json`.  
-
-# Testing rules
-- Use Helm unit tests for verifying chart rendering.  
-- Update snapshot tests with `helm unittest -u deploy/helm`.
