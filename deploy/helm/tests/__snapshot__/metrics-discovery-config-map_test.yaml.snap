@@ -424,6 +424,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           metrics:
             metric:
             - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -846,6 +852,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:
