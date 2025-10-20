@@ -1,4 +1,4 @@
-{{- if .Values.beyla.enabled }}
+{{- if .Values.network_topology.enabled }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -30,21 +30,21 @@ spec:
       containers:
         - name: beyla
           image: "{{ include "common.image" (tuple . .Values.beyla (tuple "image" "beyla")) }}"
-          imagePullPolicy: {{ .Values.beyla.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.network_topology.image.pullPolicy }}
           securityContext:
             privileged: true
           ports:
-          {{- if .Values.beyla.config.prometheus_export }}
+          {{- if .Values.network_topology.config.prometheus_export }}
           - name: metrics
-            containerPort: {{ .Values.beyla.config.prometheus_export.port }}
+            containerPort: {{ .Values.network_topology.config.prometheus_export.port }}
             protocol: TCP
           {{- end }}
-          {{- if .Values.beyla.config.internal_metrics }}
+          {{- if .Values.network_topology.config.internal_metrics }}
           - name: int-metrics
-            containerPort: {{ .Values.beyla.config.internal_metrics.prometheus.port }}
+            containerPort: {{ .Values.network_topology.config.internal_metrics.prometheus.port }}
             protocol: TCP
           {{- end }}
-          {{- with .Values.beyla.resources }}
+          {{- with .Values.network_topology.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -65,20 +65,20 @@ spec:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
       {{- end }}
       nodeSelector:
-      {{- if .Values.beyla.nodeSelector }}
-      {{ toYaml .Values.beyla.nodeSelector | nindent 8 }}
+      {{- if .Values.network_topology.nodeSelector }}
+      {{ toYaml .Values.network_topology.nodeSelector | nindent 8 }}
       {{- end }}
         kubernetes.io/os: linux
       tolerations:
-      {{- if .Values.beyla.tolerations }}
-      {{ toYaml .Values.beyla.tolerations | nindent 8 }}
+      {{- if .Values.network_topology.tolerations }}
+      {{ toYaml .Values.network_topology.tolerations | nindent 8 }}
       {{- else }}
         - operator: Exists
           effect: NoSchedule
       {{- end }}
       affinity:
-      {{- if .Values.beyla.affinity }}
-      {{ toYaml .Values.beyla.affinity | nindent 8 }}
+      {{- if .Values.network_topology.affinity }}
+      {{ toYaml .Values.network_topology.affinity | nindent 8 }}
       {{- end }}
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
