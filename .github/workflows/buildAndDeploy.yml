@@ -23,7 +23,7 @@ jobs:
       image_tag: ${{ steps.generate-tag.outputs.value }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: 'recursive'
 
@@ -37,6 +37,7 @@ jobs:
           kubectl_version: v1.32.0
           node_image: kindest/node:v1.32.0
           cluster_name: kind
+          ignore_failed_clean: true
 
       - name: Add dependency chart repos
         run: |
@@ -57,6 +58,7 @@ jobs:
       - name: Copy image to Kind cluster
         run: |
           kind load docker-image $(jq -r '.builds[] | select(.imageName=="integration-test") | .tag' /tmp/tags.json)
+          kind load docker-image $(jq -r '.builds[] | select(.imageName=="test-communicator") | .tag' /tmp/tags.json)
 
       - name: Setup kubetail
         run: |

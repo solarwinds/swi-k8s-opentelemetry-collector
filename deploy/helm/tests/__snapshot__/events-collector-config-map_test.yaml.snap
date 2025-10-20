@@ -84,6 +84,16 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+            - entity: KubernetesGitRepository
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.gitrepository.name
+            - entity: KubernetesKustomization
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.kustomization.name
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -210,6 +220,11 @@ Custom events filter with new syntax:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -331,6 +346,7 @@ Custom events filter with new syntax:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -351,6 +367,10 @@ Custom events filter with new syntax:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
@@ -872,6 +892,8 @@ Custom events filter with new syntax:
             - transform/set_labels_and_annotations_for_entities
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -1016,6 +1038,16 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+            - entity: KubernetesGitRepository
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.gitrepository.name
+            - entity: KubernetesKustomization
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.kustomization.name
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -1145,6 +1177,11 @@ Custom events filter with old syntax:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -1266,6 +1303,7 @@ Custom events filter with old syntax:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -1286,6 +1324,10 @@ Custom events filter with old syntax:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
@@ -1807,6 +1849,8 @@ Custom events filter with old syntax:
             - transform/set_labels_and_annotations_for_entities
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -1951,6 +1995,16 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.statefulset.name
+            - entity: KubernetesGitRepository
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.gitrepository.name
+            - entity: KubernetesKustomization
+              id:
+              - sw.k8s.cluster.uid
+              - k8s.namespace.name
+              - k8s.kustomization.name
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -2073,6 +2127,11 @@ Events config should match snapshot when using default values:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -2194,6 +2253,7 @@ Events config should match snapshot when using default values:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -2214,6 +2274,10 @@ Events config should match snapshot when using default values:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
@@ -2734,6 +2798,8 @@ Events config should match snapshot when using default values:
             - transform/set_labels_and_annotations_for_entities
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -2928,6 +2994,11 @@ Events config should not contain manifest collection pipeline when disabled:
           - sw.k8s.workload.ip
           - k8s.service.name
           - k8s.namespace.name
+        groupbyattrs/workloadstatus:
+          keys:
+          - sw.k8s.deployment.status
+          - sw.k8s.statefulset.status
+          - sw.k8s.daemonset.status
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -3049,6 +3120,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 enabled: false
           override: false
           timeout: 2s
+        swok8sworkloadstatus: null
         transform/entity_attributes:
           log_statements:
           - statements:
@@ -3069,6 +3141,10 @@ Events config should not contain manifest collection pipeline when disabled:
               where resource.attributes["k8s.object.kind"] == "CronJob"
             - set(resource.attributes["k8s.node.name"], resource.attributes["k8s.object.name"])
               where resource.attributes["k8s.object.kind"] == "Node"
+            - set(resource.attributes["k8s.gitrepository.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "GitRepository"
+            - set(resource.attributes["k8s.kustomization.name"], resource.attributes["k8s.object.name"])
+              where resource.attributes["k8s.object.kind"] == "Kustomization"
             - set(resource.attributes["k8s.namespace.name"], log.attributes["k8s.namespace.name"])
               where log.attributes["k8s.namespace.name"] != nil
             - delete_key(log.attributes, "k8s.namespace.name") where log.attributes["k8s.namespace.name"]
@@ -3424,6 +3500,8 @@ Events config should not contain manifest collection pipeline when disabled:
             - filter/k8s_collector_config_include
             - transform/extract_resource_attrs_from_manifests
             - transform/stringify_body
+            - swok8sworkloadstatus
+            - groupbyattrs/workloadstatus
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration

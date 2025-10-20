@@ -116,8 +116,8 @@ cumulativetodelta/istio-metrics:
     metrics:
       - k8s.istio_request_bytes.rate
       - k8s.istio_response_bytes.rate
-      - k8s.istio_request_duration_milliseconds_sum_temp
-      - k8s.istio_request_duration_milliseconds_count_temp
+      - k8s.istio_request_duration_milliseconds_sum__swo_temp
+      - k8s.istio_request_duration_milliseconds_count__swo_temp
       - k8s.istio_requests.rate
       - k8s.istio_tcp_sent_bytes.rate
       - k8s.istio_tcp_received_bytes.rate
@@ -132,8 +132,8 @@ deltatorate/istio-metrics:
   metrics:
     - k8s.istio_request_bytes.rate
     - k8s.istio_response_bytes.rate
-    - k8s.istio_request_duration_milliseconds_sum_temp
-    - k8s.istio_request_duration_milliseconds_count_temp
+    - k8s.istio_request_duration_milliseconds_sum__swo_temp
+    - k8s.istio_request_duration_milliseconds_count__swo_temp
     - k8s.istio_requests.rate
     - k8s.istio_tcp_sent_bytes.rate
     - k8s.istio_tcp_received_bytes.rate
@@ -142,8 +142,8 @@ metricsgeneration/istio-metrics:
   rules:
     - name: k8s.istio_request_duration_milliseconds.rate
       type: calculate
-      metric1: k8s.istio_request_duration_milliseconds_sum_temp
-      metric2: k8s.istio_request_duration_milliseconds_count_temp
+      metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+      metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
       operation: divide
 
 transform/istio-metrics:
@@ -151,14 +151,25 @@ transform/istio-metrics:
     - statements:
         - extract_sum_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes" or metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
         - extract_count_metric(true) where (metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds")
-        - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
-        - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
+        - set(metric.name, "k8s.istio_request_duration_milliseconds_sum__swo_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_sum"
+        - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp") where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_duration_milliseconds_count"
         - set(resource.attributes["istio"], "true")
 
 transform/istio-metric-datapoints:
   metric_statements:
     - statements:
         - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+
+transform/istio-parse-service-fqdn:
+  error_mode: ignore
+  metric_statements:
+    - context: datapoint
+      statements:
+        - set(datapoint.attributes["destination_service_name"], datapoint.attributes["destination_service"]) where IsMatch(datapoint.attributes["destination_service"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*(\\.(svc|svc\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*))?(:\\d+)?$") and datapoint.attributes["destination_service_name"] == "PassthroughCluster"
+        - replace_pattern(datapoint.attributes["destination_service_name"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\..*$", "$$1") where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.")
+        - set(datapoint.attributes["destination_service_namespace"], datapoint.attributes["destination_service"]) where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and datapoint.attributes["destination_service_namespace"] == "unknown"
+        - replace_pattern(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.([a-zA-Z0-9][-a-zA-Z0-9]*)(\\..*)?$", "$$1") where datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*")
+        - set(datapoint.attributes["destination_service_type"], "Service") where (datapoint.attributes["destination_service_type"] == nil or datapoint.attributes["destination_service_type"] == "") and datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
 
 transform/istio-relationship-types:
   metric_statements:
@@ -227,6 +238,12 @@ filter/zero-delta-values:
   metrics:
     datapoint:
       - 'IsMatch(metric.name, ".*\\.delta$") and value_double == 0.0'
+
+filter/self-loop-relationships:
+  error_mode: ignore
+  metrics:
+    datapoint:
+      - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"] and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
 
 transform/istio-workload-workload:
   metric_statements:
@@ -568,6 +585,7 @@ metrics/discovery-istio:
     - routing/discovered_metrics
   processors:
     - memory_limiter
+    - transform/istio-parse-service-fqdn
     - swok8sworkloadtype/istio
     - transform/istio-metrics
     - transform/istio-metric-datapoints
@@ -602,6 +620,7 @@ metrics/relationship-state-events-workload-workload-filtering:
   processors:
     - memory_limiter
     - filter/zero-delta-values
+    - filter/self-loop-relationships
   exporters:
     - solarwindsentity/istio-workload-workload
 

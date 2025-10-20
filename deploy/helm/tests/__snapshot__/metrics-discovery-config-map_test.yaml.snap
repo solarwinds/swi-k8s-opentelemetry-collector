@@ -363,8 +363,8 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             metrics:
             - k8s.istio_request_bytes.rate
             - k8s.istio_response_bytes.rate
-            - k8s.istio_request_duration_milliseconds_sum_temp
-            - k8s.istio_request_duration_milliseconds_count_temp
+            - k8s.istio_request_duration_milliseconds_sum__swo_temp
+            - k8s.istio_request_duration_milliseconds_count__swo_temp
             - k8s.istio_requests.rate
             - k8s.istio_tcp_sent_bytes.rate
             - k8s.istio_tcp_received_bytes.rate
@@ -378,8 +378,8 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           metrics:
           - k8s.istio_request_bytes.rate
           - k8s.istio_response_bytes.rate
-          - k8s.istio_request_duration_milliseconds_sum_temp
-          - k8s.istio_request_duration_milliseconds_count_temp
+          - k8s.istio_request_duration_milliseconds_sum__swo_temp
+          - k8s.istio_request_duration_milliseconds_count__swo_temp
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
@@ -423,7 +423,13 @@ Metrics discovery config should match snapshot when Fargate is enabled:
         filter/remove_temporary_metrics:
           metrics:
             metric:
-            - IsMatch(name , ".*_temp")
+            - IsMatch(name , ".*__swo_temp$")
+        filter/self-loop-relationships:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["source_workload"] == datapoint.attributes["destination_workload"]
+              and datapoint.attributes["source_workload_namespace"] == datapoint.attributes["destination_workload_namespace"]
         filter/zero-delta-values:
           error_mode: ignore
           metrics:
@@ -482,8 +488,8 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           spike_limit_mib: 512
         metricsgeneration/istio-metrics:
           rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum_temp
-            metric2: k8s.istio_request_duration_milliseconds_count_temp
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
             name: k8s.istio_request_duration_milliseconds.rate
             operation: divide
             type: calculate
@@ -584,11 +590,34 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - extract_sum_metric(true) where (metric.name == "k8s.istio_request_bytes" or
               metric.name == "k8s.istio_response_bytes" or metric.name == "k8s.istio_request_duration_milliseconds")
             - extract_count_metric(true) where (metric.name == "k8s.istio_request_duration_milliseconds")
-            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum_temp") where
-              metric.name == "k8s.istio_request_duration_milliseconds_sum"
-            - set(metric.name, "k8s.istio_request_duration_milliseconds_count_temp") where
-              metric.name == "k8s.istio_request_duration_milliseconds_count"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_sum__swo_temp")
+              where metric.name == "k8s.istio_request_duration_milliseconds_sum"
+            - set(metric.name, "k8s.istio_request_duration_milliseconds_count__swo_temp")
+              where metric.name == "k8s.istio_request_duration_milliseconds_count"
             - set(resource.attributes["istio"], "true")
+        transform/istio-parse-service-fqdn:
+          error_mode: ignore
+          metric_statements:
+          - context: datapoint
+            statements:
+            - set(datapoint.attributes["destination_service_name"], datapoint.attributes["destination_service"])
+              where IsMatch(datapoint.attributes["destination_service"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*(\\.(svc|svc\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*))?(:\\d+)?$")
+              and datapoint.attributes["destination_service_name"] == "PassthroughCluster"
+            - replace_pattern(datapoint.attributes["destination_service_name"], "^([a-zA-Z0-9][-a-zA-Z0-9]*)\\..*$",
+              "$$1") where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.")
+            - set(datapoint.attributes["destination_service_namespace"], datapoint.attributes["destination_service"])
+              where datapoint.attributes["destination_service_name"] != nil and IsMatch(datapoint.attributes["destination_service_name"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*$") and datapoint.attributes["destination_service_namespace"]
+              == "unknown"
+            - replace_pattern(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.([a-zA-Z0-9][-a-zA-Z0-9]*)(\\..*)?$",
+              "$$1") where datapoint.attributes["destination_service_namespace"] != nil
+              and IsMatch(datapoint.attributes["destination_service_namespace"], "^[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9]*")
+            - set(datapoint.attributes["destination_service_type"], "Service") where (datapoint.attributes["destination_service_type"]
+              == nil or datapoint.attributes["destination_service_type"] == "") and datapoint.attributes["destination_service_name"]
+              != nil and IsMatch(datapoint.attributes["destination_service_name"], "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
+              and datapoint.attributes["destination_service_namespace"] != nil and IsMatch(datapoint.attributes["destination_service_namespace"],
+              "^[a-zA-Z0-9][-a-zA-Z0-9]*$")
         transform/istio-relationship-types:
           metric_statements:
           - statements:
@@ -760,6 +789,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - forward/not-relationship-state-events
             processors:
             - memory_limiter
+            - transform/istio-parse-service-fqdn
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
@@ -822,6 +852,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             processors:
             - memory_limiter
             - filter/zero-delta-values
+            - filter/self-loop-relationships
             receivers:
             - forward/istio-workload-workload-filtering
           metrics/relationship-state-events-workload-workload-preparation:

@@ -9,6 +9,10 @@ build:
         dockerfile: build/docker/IntegrationTest.Dockerfile
         buildArgs: 
           CI: "{{ .CI }}"
+    - image: test-communicator
+      context: tests/deploy/test-communicator
+      docker:
+        dockerfile: Dockerfile
   local:
     push: false
 deploy:
@@ -129,13 +133,14 @@ portForward:
   localPort: 8080
 profiles:
   - name: build-collector
-    build:
-      artifacts:
-        - image: swi-k8s-opentelemetry-collector
+    patches:
+      - op: add
+        path: /build/artifacts/-
+        value: 
+          image: swi-k8s-opentelemetry-collector
           context: ../solarwinds-otel-collector-releases
           docker:
             dockerfile: build/docker/Dockerfile.local
-    patches:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/otel.image.repository
         value: "swi-k8s-opentelemetry-collector"
@@ -226,11 +231,13 @@ profiles:
                   value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
                 - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
                   value: cumulative
-  - name: no-beyla
+  - name: beyla
+    activation:
+      - env: CI=true
     patches:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/beyla.enabled
-        value: false
+        value: true
   - name: no-logs
     patches:
       - op: add
@@ -253,6 +260,8 @@ profiles:
     patches:
       - op: remove
         path: /deploy/helm/releases/3
+      - op: remove
+        path: /build/artifacts/0
       - op: remove
         path: /build/artifacts/0
   - name: no-prometheus

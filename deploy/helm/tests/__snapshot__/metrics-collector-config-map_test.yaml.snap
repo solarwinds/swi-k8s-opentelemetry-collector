@@ -71,7 +71,7 @@ Metrics config should match snapshot when fargate is enabled:
           actions:
           - action: delete
             key: temp
-            pattern: (.*_temp$)|(^\$.*)
+            pattern: (.*__swo_temp$)|(^\$.*)
           include:
             match_type: regexp
             metric_names:
@@ -193,8 +193,8 @@ Metrics config should match snapshot when fargate is enabled:
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
-            - apiserver_request_not_failed_temp
-            - apiserver_request_total_temp
+            - apiserver_request_not_failed__swo_temp
+            - apiserver_request_total__swo_temp
           max_staleness: 180s
         deltatorate:
           metrics:
@@ -231,7 +231,7 @@ Metrics config should match snapshot when fargate is enabled:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not( name == "k8s.apiserver_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
               or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
-              )
+              or name == "k8s.istio_request_duration_milliseconds" )
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -373,7 +373,7 @@ Metrics config should match snapshot when fargate is enabled:
         filter/remove_temporary_metrics:
           metrics:
             metric:
-            - IsMatch(name , ".*_temp")
+            - IsMatch(name , ".*__swo_temp$")
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -454,8 +454,8 @@ Metrics config should match snapshot when fargate is enabled:
           spike_limit_mib: 512
         metricsgeneration/cluster:
           rules:
-          - metric1: apiserver_request_not_failed_temp
-            metric2: apiserver_request_total_temp
+          - metric1: apiserver_request_not_failed__swo_temp
+            metric2: apiserver_request_total__swo_temp
             name: k8s.apiserver.request.successrate
             operation: percent
             type: calculate
@@ -543,16 +543,16 @@ Metrics config should match snapshot when fargate is enabled:
               new_label: sw.k8s.persistentvolumeclaim.status
           - action: insert
             include: k8s.container_fs_reads_total
-            new_name: k8s.container_fs_reads_total_temp
+            new_name: k8s.container_fs_reads_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_total
-            new_name: k8s.container_fs_writes_total_temp
+            new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+            include: (k8s.container_fs_reads_total__swo_temp|k8s.container_fs_writes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.iops
             operations:
@@ -565,16 +565,16 @@ Metrics config should match snapshot when fargate is enabled:
             submatch_case: lower
           - action: insert
             include: k8s.container_fs_reads_bytes_total
-            new_name: k8s.container_fs_reads_bytes_total_temp
+            new_name: k8s.container_fs_reads_bytes_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_bytes_total
-            new_name: k8s.container_fs_writes_bytes_total_temp
+            new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+            include: (k8s.container_fs_reads_bytes_total__swo_temp|k8s.container_fs_writes_bytes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.throughput
             operations:
@@ -776,12 +776,12 @@ Metrics config should match snapshot when fargate is enabled:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.pod.fs.reads.rate_temp
+            new_name: k8s.pod.fs.reads.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.pod.fs.writes.rate_temp
+            new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+            include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
             operations:
@@ -794,12 +794,12 @@ Metrics config should match snapshot when fargate is enabled:
             submatch_case: lower
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.pod.fs.reads.bytes.rate_temp
+            new_name: k8s.pod.fs.reads.bytes.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.pod.fs.writes.bytes.rate_temp
+            new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+            include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
             operations:
@@ -909,7 +909,7 @@ Metrics config should match snapshot when fargate is enabled:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.node.fs.reads.rate_temp
+            new_name: k8s.node.fs.reads.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -917,7 +917,7 @@ Metrics config should match snapshot when fargate is enabled:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.node.fs.writes.rate_temp
+            new_name: k8s.node.fs.writes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -925,7 +925,7 @@ Metrics config should match snapshot when fargate is enabled:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.node.fs.reads.bytes.rate_temp
+            new_name: k8s.node.fs.reads.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -933,14 +933,14 @@ Metrics config should match snapshot when fargate is enabled:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.node.fs.writes.bytes.rate_temp
+            new_name: k8s.node.fs.writes.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
               label_set:
               - k8s.node.name
           - action: combine
-            include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+            include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
             operations:
@@ -950,7 +950,7 @@ Metrics config should match snapshot when fargate is enabled:
               - k8s.node.name
             submatch_case: lower
           - action: combine
-            include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+            include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
             operations:
@@ -977,38 +977,38 @@ Metrics config should match snapshot when fargate is enabled:
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_container_resource_limits
-            new_name: k8s.container.spec.cpu.limit_temp
+            new_name: k8s.container.spec.cpu.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_init_container_resource_limits
-            new_name: k8s.initcontainer.spec.cpu.limit_temp
+            new_name: k8s.initcontainer.spec.cpu.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.cpu.requests_temp
+            new_name: k8s.container.spec.cpu.requests__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.cpu.requests_temp
+            new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
-            include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
+            include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.memory.requests_temp
+            new_name: k8s.container.spec.memory.requests__swo_temp
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.memory.requests_temp
+            new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
-            include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
+            include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
           - action: insert
@@ -1016,15 +1016,15 @@ Metrics config should match snapshot when fargate is enabled:
               resource: memory
             include: k8s.kube_pod_container_resource_limits
             match_type: regexp
-            new_name: k8s.container.spec.memory.limit_temp
+            new_name: k8s.container.spec.memory.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_init_container_resource_limits
             match_type: regexp
-            new_name: k8s.initcontainer.spec.memory.limit_temp
+            new_name: k8s.initcontainer.spec.memory.limit__swo_temp
           - action: insert
-            include: k8s.container.spec.cpu.limit_temp
+            include: k8s.container.spec.cpu.limit__swo_temp
             new_name: k8s.pod.spec.cpu.limit
             operations:
             - action: aggregate_labels
@@ -1034,11 +1034,11 @@ Metrics config should match snapshot when fargate is enabled:
               - namespace
               - k8s.node.name
           - action: combine
-            include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+            include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
           - action: insert
-            include: k8s.container.spec.memory.limit_temp
+            include: k8s.container.spec.memory.limit__swo_temp
             new_name: k8s.pod.spec.memory.limit
             operations:
             - action: aggregate_labels
@@ -1048,7 +1048,7 @@ Metrics config should match snapshot when fargate is enabled:
               - namespace
               - k8s.node.name
           - action: combine
-            include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+            include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
           - action: insert
@@ -1184,7 +1184,7 @@ Metrics config should match snapshot when fargate is enabled:
             experimental_match_labels:
               phase: Running
             include: k8s.kube_pod_status_phase
-            new_name: k8s.pod.status.phase.running_temp
+            new_name: k8s.pod.status.phase.running__swo_temp
           - action: insert
             include: k8s.kube_pod_info
             new_name: k8s.cluster.pods
@@ -1234,7 +1234,7 @@ Metrics config should match snapshot when fargate is enabled:
               label_set:
               - dummy_label_workaround
           - action: insert
-            include: k8s.pod.status.phase.running_temp
+            include: k8s.pod.status.phase.running__swo_temp
             new_name: k8s.cluster.pods.running
             operations:
             - action: aggregate_labels
@@ -1289,16 +1289,16 @@ Metrics config should match snapshot when fargate is enabled:
               - sw.k8s.cluster.version
           - action: update
             include: k8s.kubernetes_build_info
-            new_name: k8s.kubernetes_build_info_temp
+            new_name: k8s.kubernetes_build_info__swo_temp
           - action: insert
             experimental_match_labels:
               code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
             include: k8s.apiserver_request_total
             match_type: regexp
-            new_name: apiserver_request_not_failed_temp
+            new_name: apiserver_request_not_failed__swo_temp
           - action: update
-            include: apiserver_request_not_failed_temp
-            new_name: apiserver_request_not_failed_temp
+            include: apiserver_request_not_failed__swo_temp
+            new_name: apiserver_request_not_failed__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -1306,7 +1306,7 @@ Metrics config should match snapshot when fargate is enabled:
               - dummy_label_workaround
           - action: insert
             include: k8s.apiserver_request_total
-            new_name: apiserver_request_total_temp
+            new_name: apiserver_request_total__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -1776,7 +1776,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           actions:
           - action: delete
             key: temp
-            pattern: (.*_temp$)|(^\$.*)
+            pattern: (.*__swo_temp$)|(^\$.*)
           include:
             match_type: regexp
             metric_names:
@@ -1901,8 +1901,8 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
-            - apiserver_request_not_failed_temp
-            - apiserver_request_total_temp
+            - apiserver_request_not_failed__swo_temp
+            - apiserver_request_total__swo_temp
           max_staleness: 180s
         deltatorate:
           metrics:
@@ -1939,7 +1939,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - type == METRIC_DATA_TYPE_HISTOGRAM and not( name == "k8s.apiserver_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
               or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
-              )
+              or name == "k8s.istio_request_duration_milliseconds" )
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -2081,7 +2081,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
         filter/remove_temporary_metrics:
           metrics:
             metric:
-            - IsMatch(name , ".*_temp")
+            - IsMatch(name , ".*__swo_temp$")
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -2162,8 +2162,8 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           spike_limit_mib: 512
         metricsgeneration/cluster:
           rules:
-          - metric1: apiserver_request_not_failed_temp
-            metric2: apiserver_request_total_temp
+          - metric1: apiserver_request_not_failed__swo_temp
+            metric2: apiserver_request_total__swo_temp
             name: k8s.apiserver.request.successrate
             operation: percent
             type: calculate
@@ -2251,16 +2251,16 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               new_label: sw.k8s.persistentvolumeclaim.status
           - action: insert
             include: k8s.container_fs_reads_total
-            new_name: k8s.container_fs_reads_total_temp
+            new_name: k8s.container_fs_reads_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_total
-            new_name: k8s.container_fs_writes_total_temp
+            new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+            include: (k8s.container_fs_reads_total__swo_temp|k8s.container_fs_writes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.iops
             operations:
@@ -2273,16 +2273,16 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             submatch_case: lower
           - action: insert
             include: k8s.container_fs_reads_bytes_total
-            new_name: k8s.container_fs_reads_bytes_total_temp
+            new_name: k8s.container_fs_reads_bytes_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_bytes_total
-            new_name: k8s.container_fs_writes_bytes_total_temp
+            new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+            include: (k8s.container_fs_reads_bytes_total__swo_temp|k8s.container_fs_writes_bytes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.throughput
             operations:
@@ -2484,12 +2484,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.pod.fs.reads.rate_temp
+            new_name: k8s.pod.fs.reads.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.pod.fs.writes.rate_temp
+            new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+            include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
             operations:
@@ -2502,12 +2502,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             submatch_case: lower
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.pod.fs.reads.bytes.rate_temp
+            new_name: k8s.pod.fs.reads.bytes.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.pod.fs.writes.bytes.rate_temp
+            new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+            include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
             operations:
@@ -2617,7 +2617,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.node.fs.reads.rate_temp
+            new_name: k8s.node.fs.reads.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -2625,7 +2625,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.node.fs.writes.rate_temp
+            new_name: k8s.node.fs.writes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -2633,7 +2633,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.node.fs.reads.bytes.rate_temp
+            new_name: k8s.node.fs.reads.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -2641,14 +2641,14 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.node.fs.writes.bytes.rate_temp
+            new_name: k8s.node.fs.writes.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
               label_set:
               - k8s.node.name
           - action: combine
-            include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+            include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
             operations:
@@ -2658,7 +2658,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - k8s.node.name
             submatch_case: lower
           - action: combine
-            include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+            include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
             operations:
@@ -2685,38 +2685,38 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_container_resource_limits
-            new_name: k8s.container.spec.cpu.limit_temp
+            new_name: k8s.container.spec.cpu.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_init_container_resource_limits
-            new_name: k8s.initcontainer.spec.cpu.limit_temp
+            new_name: k8s.initcontainer.spec.cpu.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.cpu.requests_temp
+            new_name: k8s.container.spec.cpu.requests__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.cpu.requests_temp
+            new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
-            include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
+            include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.memory.requests_temp
+            new_name: k8s.container.spec.memory.requests__swo_temp
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.memory.requests_temp
+            new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
-            include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
+            include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
           - action: insert
@@ -2724,15 +2724,15 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               resource: memory
             include: k8s.kube_pod_container_resource_limits
             match_type: regexp
-            new_name: k8s.container.spec.memory.limit_temp
+            new_name: k8s.container.spec.memory.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_init_container_resource_limits
             match_type: regexp
-            new_name: k8s.initcontainer.spec.memory.limit_temp
+            new_name: k8s.initcontainer.spec.memory.limit__swo_temp
           - action: insert
-            include: k8s.container.spec.cpu.limit_temp
+            include: k8s.container.spec.cpu.limit__swo_temp
             new_name: k8s.pod.spec.cpu.limit
             operations:
             - action: aggregate_labels
@@ -2742,11 +2742,11 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - namespace
               - k8s.node.name
           - action: combine
-            include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+            include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
           - action: insert
-            include: k8s.container.spec.memory.limit_temp
+            include: k8s.container.spec.memory.limit__swo_temp
             new_name: k8s.pod.spec.memory.limit
             operations:
             - action: aggregate_labels
@@ -2756,7 +2756,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - namespace
               - k8s.node.name
           - action: combine
-            include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+            include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
           - action: insert
@@ -2892,7 +2892,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             experimental_match_labels:
               phase: Running
             include: k8s.kube_pod_status_phase
-            new_name: k8s.pod.status.phase.running_temp
+            new_name: k8s.pod.status.phase.running__swo_temp
           - action: insert
             include: k8s.kube_pod_info
             new_name: k8s.cluster.pods
@@ -2942,7 +2942,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               label_set:
               - dummy_label_workaround
           - action: insert
-            include: k8s.pod.status.phase.running_temp
+            include: k8s.pod.status.phase.running__swo_temp
             new_name: k8s.cluster.pods.running
             operations:
             - action: aggregate_labels
@@ -2997,16 +2997,16 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - sw.k8s.cluster.version
           - action: update
             include: k8s.kubernetes_build_info
-            new_name: k8s.kubernetes_build_info_temp
+            new_name: k8s.kubernetes_build_info__swo_temp
           - action: insert
             experimental_match_labels:
               code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
             include: k8s.apiserver_request_total
             match_type: regexp
-            new_name: apiserver_request_not_failed_temp
+            new_name: apiserver_request_not_failed__swo_temp
           - action: update
-            include: apiserver_request_not_failed_temp
-            new_name: apiserver_request_not_failed_temp
+            include: apiserver_request_not_failed__swo_temp
+            new_name: apiserver_request_not_failed__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -3014,7 +3014,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - dummy_label_workaround
           - action: insert
             include: k8s.apiserver_request_total
-            new_name: apiserver_request_total_temp
+            new_name: apiserver_request_total__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -3426,7 +3426,7 @@ Metrics config should match snapshot when using default values:
           actions:
           - action: delete
             key: temp
-            pattern: (.*_temp$)|(^\$.*)
+            pattern: (.*__swo_temp$)|(^\$.*)
           include:
             match_type: regexp
             metric_names:
@@ -3551,8 +3551,8 @@ Metrics config should match snapshot when using default values:
             - k8s.node.network.packets_transmitted
             - k8s.node.network.receive_packets_dropped
             - k8s.node.network.transmit_packets_dropped
-            - apiserver_request_not_failed_temp
-            - apiserver_request_total_temp
+            - apiserver_request_not_failed__swo_temp
+            - apiserver_request_total__swo_temp
           max_staleness: 180s
         deltatorate:
           metrics:
@@ -3589,7 +3589,7 @@ Metrics config should match snapshot when using default values:
             - type == METRIC_DATA_TYPE_HISTOGRAM and not( name == "k8s.apiserver_request_duration_seconds"
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
               or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
-              )
+              or name == "k8s.istio_request_duration_milliseconds" )
         filter/kube-state-metrics:
           metrics:
             metric:
@@ -3731,7 +3731,7 @@ Metrics config should match snapshot when using default values:
         filter/remove_temporary_metrics:
           metrics:
             metric:
-            - IsMatch(name , ".*_temp")
+            - IsMatch(name , ".*__swo_temp$")
         groupbyattrs/all:
           keys:
           - kubelet_version
@@ -3812,8 +3812,8 @@ Metrics config should match snapshot when using default values:
           spike_limit_mib: 512
         metricsgeneration/cluster:
           rules:
-          - metric1: apiserver_request_not_failed_temp
-            metric2: apiserver_request_total_temp
+          - metric1: apiserver_request_not_failed__swo_temp
+            metric2: apiserver_request_total__swo_temp
             name: k8s.apiserver.request.successrate
             operation: percent
             type: calculate
@@ -3901,16 +3901,16 @@ Metrics config should match snapshot when using default values:
               new_label: sw.k8s.persistentvolumeclaim.status
           - action: insert
             include: k8s.container_fs_reads_total
-            new_name: k8s.container_fs_reads_total_temp
+            new_name: k8s.container_fs_reads_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_total
-            new_name: k8s.container_fs_writes_total_temp
+            new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_total_temp|k8s.container_fs_writes_total_temp)
+            include: (k8s.container_fs_reads_total__swo_temp|k8s.container_fs_writes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.iops
             operations:
@@ -3923,16 +3923,16 @@ Metrics config should match snapshot when using default values:
             submatch_case: lower
           - action: insert
             include: k8s.container_fs_reads_bytes_total
-            new_name: k8s.container_fs_reads_bytes_total_temp
+            new_name: k8s.container_fs_reads_bytes_total__swo_temp
           - action: insert
             include: k8s.container_fs_writes_bytes_total
-            new_name: k8s.container_fs_writes_bytes_total_temp
+            new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
             experimental_match_labels:
               container: \S+
               namespace: \S+
               pod: \S+
-            include: (k8s.container_fs_reads_bytes_total_temp|k8s.container_fs_writes_bytes_total_temp)
+            include: (k8s.container_fs_reads_bytes_total__swo_temp|k8s.container_fs_writes_bytes_total__swo_temp)
             match_type: regexp
             new_name: k8s.container.fs.throughput
             operations:
@@ -4134,12 +4134,12 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.pod.fs.reads.rate_temp
+            new_name: k8s.pod.fs.reads.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.pod.fs.writes.rate_temp
+            new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.rate_temp|k8s.pod.fs.writes.rate_temp)
+            include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
             operations:
@@ -4152,12 +4152,12 @@ Metrics config should match snapshot when using default values:
             submatch_case: lower
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.pod.fs.reads.bytes.rate_temp
+            new_name: k8s.pod.fs.reads.bytes.rate__swo_temp
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.pod.fs.writes.bytes.rate_temp
+            new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
-            include: (k8s.pod.fs.reads.bytes.rate_temp|k8s.pod.fs.writes.bytes.rate_temp)
+            include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
             operations:
@@ -4267,7 +4267,7 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.rate
-            new_name: k8s.node.fs.reads.rate_temp
+            new_name: k8s.node.fs.reads.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -4275,7 +4275,7 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.rate
-            new_name: k8s.node.fs.writes.rate_temp
+            new_name: k8s.node.fs.writes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -4283,7 +4283,7 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.reads.bytes.rate
-            new_name: k8s.node.fs.reads.bytes.rate_temp
+            new_name: k8s.node.fs.reads.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -4291,14 +4291,14 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
           - action: insert
             include: k8s.pod.fs.writes.bytes.rate
-            new_name: k8s.node.fs.writes.bytes.rate_temp
+            new_name: k8s.node.fs.writes.bytes.rate__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
               label_set:
               - k8s.node.name
           - action: combine
-            include: (k8s.node.fs.reads.rate_temp|k8s.node.fs.writes.rate_temp)
+            include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
             operations:
@@ -4308,7 +4308,7 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
             submatch_case: lower
           - action: combine
-            include: (k8s.node.fs.reads.bytes.rate_temp|k8s.node.fs.writes.bytes.rate_temp)
+            include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
             operations:
@@ -4335,38 +4335,38 @@ Metrics config should match snapshot when using default values:
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_container_resource_limits
-            new_name: k8s.container.spec.cpu.limit_temp
+            new_name: k8s.container.spec.cpu.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_init_container_resource_limits
-            new_name: k8s.initcontainer.spec.cpu.limit_temp
+            new_name: k8s.initcontainer.spec.cpu.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.cpu.requests_temp
+            new_name: k8s.container.spec.cpu.requests__swo_temp
           - action: insert
             experimental_match_labels:
               resource: cpu
             include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.cpu.requests_temp
+            new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
-            include: (k8s.container.spec.cpu.requests_temp|k8s.initcontainer.spec.cpu.requests_temp)
+            include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_container_resource_requests
-            new_name: k8s.container.spec.memory.requests_temp
+            new_name: k8s.container.spec.memory.requests__swo_temp
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_init_container_resource_requests
-            new_name: k8s.initcontainer.spec.memory.requests_temp
+            new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
-            include: (k8s.container.spec.memory.requests_temp|k8s.initcontainer.spec.memory.requests_temp)
+            include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
           - action: insert
@@ -4374,15 +4374,15 @@ Metrics config should match snapshot when using default values:
               resource: memory
             include: k8s.kube_pod_container_resource_limits
             match_type: regexp
-            new_name: k8s.container.spec.memory.limit_temp
+            new_name: k8s.container.spec.memory.limit__swo_temp
           - action: insert
             experimental_match_labels:
               resource: memory
             include: k8s.kube_pod_init_container_resource_limits
             match_type: regexp
-            new_name: k8s.initcontainer.spec.memory.limit_temp
+            new_name: k8s.initcontainer.spec.memory.limit__swo_temp
           - action: insert
-            include: k8s.container.spec.cpu.limit_temp
+            include: k8s.container.spec.cpu.limit__swo_temp
             new_name: k8s.pod.spec.cpu.limit
             operations:
             - action: aggregate_labels
@@ -4392,11 +4392,11 @@ Metrics config should match snapshot when using default values:
               - namespace
               - k8s.node.name
           - action: combine
-            include: (k8s.container.spec.cpu.limit_temp|k8s.initcontainer.spec.cpu.limit_temp)
+            include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
           - action: insert
-            include: k8s.container.spec.memory.limit_temp
+            include: k8s.container.spec.memory.limit__swo_temp
             new_name: k8s.pod.spec.memory.limit
             operations:
             - action: aggregate_labels
@@ -4406,7 +4406,7 @@ Metrics config should match snapshot when using default values:
               - namespace
               - k8s.node.name
           - action: combine
-            include: (k8s.container.spec.memory.limit_temp|k8s.initcontainer.spec.memory.limit_temp)
+            include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
           - action: insert
@@ -4542,7 +4542,7 @@ Metrics config should match snapshot when using default values:
             experimental_match_labels:
               phase: Running
             include: k8s.kube_pod_status_phase
-            new_name: k8s.pod.status.phase.running_temp
+            new_name: k8s.pod.status.phase.running__swo_temp
           - action: insert
             include: k8s.kube_pod_info
             new_name: k8s.cluster.pods
@@ -4592,7 +4592,7 @@ Metrics config should match snapshot when using default values:
               label_set:
               - dummy_label_workaround
           - action: insert
-            include: k8s.pod.status.phase.running_temp
+            include: k8s.pod.status.phase.running__swo_temp
             new_name: k8s.cluster.pods.running
             operations:
             - action: aggregate_labels
@@ -4647,16 +4647,16 @@ Metrics config should match snapshot when using default values:
               - sw.k8s.cluster.version
           - action: update
             include: k8s.kubernetes_build_info
-            new_name: k8s.kubernetes_build_info_temp
+            new_name: k8s.kubernetes_build_info__swo_temp
           - action: insert
             experimental_match_labels:
               code: ^(([0-3]|[6-9])\d\d)|(4([0-1]|[3-9])\d)|(42[0-8])$
             include: k8s.apiserver_request_total
             match_type: regexp
-            new_name: apiserver_request_not_failed_temp
+            new_name: apiserver_request_not_failed__swo_temp
           - action: update
-            include: apiserver_request_not_failed_temp
-            new_name: apiserver_request_not_failed_temp
+            include: apiserver_request_not_failed__swo_temp
+            new_name: apiserver_request_not_failed__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum
@@ -4664,7 +4664,7 @@ Metrics config should match snapshot when using default values:
               - dummy_label_workaround
           - action: insert
             include: k8s.apiserver_request_total
-            new_name: apiserver_request_total_temp
+            new_name: apiserver_request_total__swo_temp
             operations:
             - action: aggregate_labels
               aggregation_type: sum

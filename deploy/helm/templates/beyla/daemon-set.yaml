@@ -32,22 +32,7 @@ spec:
           image: "{{ include "common.image" (tuple . .Values.beyla (tuple "image" "beyla")) }}"
           imagePullPolicy: {{ .Values.beyla.image.pullPolicy }}
           securityContext:
-            runAsUser: 0
-            readOnlyRootFilesystem: true
-            capabilities:
-              add:
-                - BPF
-                - SYS_PTRACE
-                - NET_RAW
-                - CHECKPOINT_RESTORE
-                - DAC_READ_SEARCH
-                - PERFMON
-                - NET_ADMIN
-              {{- with .Values.beyla.extraCapabilities }}
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              drop:
-                - ALL
+            privileged: true
           ports:
           {{- if .Values.beyla.config.prometheus_export }}
           - name: metrics
