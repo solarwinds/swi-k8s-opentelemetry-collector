@@ -29,7 +29,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: beyla
-          image: "{{ include "common.image" (tuple . .Values.beyla (tuple "image" "beyla")) }}"
+          image: "{{ include "common.image" (tuple . .Values.network_topology (tuple "image" "beyla")) }}"
           imagePullPolicy: {{ .Values.network_topology.image.pullPolicy }}
           securityContext:
             privileged: true
