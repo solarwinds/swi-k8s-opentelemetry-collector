@@ -18,7 +18,7 @@ data:
     prometheus_cr:
       enabled: true
       scrape_interval: {{ .Values.otel.metrics.prometheus.scrape_interval }}
-      serviceMonitorSelector: 
+      service_monitor_selector: 
         {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
 {{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
         {{- else }}
@@ -28,7 +28,7 @@ data:
             values:
             - "true"
         {{- end }}
-      podMonitorSelector: 
+      pod_monitor_selector: 
         {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.podMonitorSelector }}
 {{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.podMonitorSelector | nindent 8 }}
         {{- else }}
@@ -38,7 +38,7 @@ data:
             values:
             - "true"
         {{- end }}
-      probeSelector:
+      probe_selector:
         {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.probeSelector }}
 {{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.probeSelector | nindent 8 }}
         {{- else }}
@@ -48,7 +48,7 @@ data:
             values:
             - "true"
         {{- end }}
-      scrapeConfigSelector:
+      scrape_config_selector:
         {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.scrapeConfigSelector }}
 {{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.scrapeConfigSelector | nindent 8 }}
         {{- else }}
