@@ -54,6 +54,8 @@ deploy:
                 etcd:
                   enabled: false
               autodiscovery:
+                discovery_collector:
+                  enabled: true
                 prometheusEndpoints: 
                   podMonitors:
                     rules:
@@ -120,6 +122,9 @@ deploy:
         namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
+        setValueTemplates:
+          podMonitors:
+            enabled: true
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
@@ -183,16 +188,8 @@ profiles:
         path: /deploy/helm/releases/1/setValueTemplates/certmanager.enabled
         value: true
       - op: add
-        path: /deploy/helm/releases/1/setValueTemplates/otel.metrics.autodiscovery.discovery_collector.enabled
-        value: true
-      - op: add
         path: /deploy/helm/releases/1/setValueTemplates/prometheusCRDs.install
         value: true
-      - op: add
-        path: /deploy/helm/releases/3/setValueTemplates
-        value: 
-          podMonitors:
-            enabled: true
       - op: add
         path: /deploy/helm/hooks
         value:
