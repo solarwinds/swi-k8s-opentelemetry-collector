@@ -19,7 +19,11 @@ def test_logs_generated():
 
 def assert_test_log_found(content):
     raw_bodies = get_all_bodies_for_all_sent_content(content)
-    test_log_found = any(f'{tested_log}' in body for body in raw_bodies)
+    test_log_found = any(
+        f'{tested_log}' in entry
+        for body in raw_bodies
+        for entry in body
+    )
     return test_log_found
 
 def print_failure(content):
