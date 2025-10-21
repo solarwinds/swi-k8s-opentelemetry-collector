@@ -7,6 +7,8 @@ metadata:
   labels:
     app: {{ include "common.fullname" (tuple . "-target-allocator") }}
     {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    {{- include "common.annotations" . | nindent 4 }}
 data:
   targetallocator.yaml: |
     allocation_strategy: consistent-hashing

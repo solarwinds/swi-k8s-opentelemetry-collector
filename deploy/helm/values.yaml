@@ -103,7 +103,7 @@ otel:
         targetAllocator:
           image:
             repository: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator
-            tag: "0.116.0"
+            tag: "0.131.0"
             pullPolicy: IfNotPresent
 
           nodeSelector: {}
@@ -201,7 +201,11 @@ otel:
         #   maxReplicas: 5
         #   targetCPUUtilization: 80
         #   targetMemoryUtilization: 80
-        autoscaler: {}
+        autoscaler:
+          minReplicas: 1
+          maxReplicas: 5
+          targetCPUUtilization: 80
+          targetMemoryUtilization: 80
 
       prometheusEndpoints:
         # Define whether metrics will be discovered and scraped by prometheus annotations
