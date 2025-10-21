@@ -1,140 +1,113 @@
 Discovery collector spec should match snapshot when using default values:
   1: |
-    replicas: 1
-    selector:
-      matchLabels:
-        app: swi-k8s-opentel-swo-k8s-collect-discovery-collector
-        app.kubernetes.io/component: discovery-collector
-    serviceName: swi-k8s-opentelemetry-swo-k8s-collector-discovery-collector
-    template:
-      metadata:
-        annotations:
-          checksum/config: 89d49a36afad98d82eb095ea8365e4b253454af0862caf489efcd5ea3108c668
-          checksum/config_common_env: fdc322999d28b7cb217d0c0f4dced2cbb422bf9cc20aff17bc84868743c2cf30
-          checksum/values: 95f06f92c273bd7826e83186de946f499611a1ef4e244ab0cc4a7099a4a6fa72
-          prometheus.io/path: /metrics
-          prometheus.io/port: "8888"
-          prometheus.io/scheme: http
-          prometheus.io/scrape: "true"
-          swo.cloud.solarwinds.com/cluster-uid: <CLUSTER_NAME>
-        labels:
-          app: swi-k8s-opentel-swo-k8s-collect-discovery-collector
-          app.kubernetes.io/component: discovery-collector
-          app.kubernetes.io/instance: swi-k8s-opentelemetry-collector-swo-k8s-collector
-          app.kubernetes.io/managed-by: swi-k8s-opentelemetry-collector
-          app.kubernetes.io/name: swo-k8s-collector
-          app.kubernetes.io/part-of: swo-k8s-collector
-          app.kubernetes.io/version: 1.0.0
-          helm.sh/chart: swo-k8s-collector-1.0.0
-      spec:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: eks.amazonaws.com/compute-type
-                      operator: NotIn
-                      values:
-                        - fargate
-                    - key: kubernetes.io/arch
-                      operator: In
-                      values:
-                        - amd64
-                        - arm64
-                    - key: kubernetes.io/os
-                      operator: In
-                      values:
-                        - linux
-        containers:
-          - command:
-              - /solarwinds-otel-collector
-              - --config=/conf/discovery-collector.yaml
-            env:
-              - name: POD_NAME
-                valueFrom:
-                  fieldRef:
-                    apiVersion: v1
-                    fieldPath: metadata.name
-              - name: MY_POD_IP
-                valueFrom:
-                  fieldRef:
-                    apiVersion: v1
-                    fieldPath: status.podIP
-              - name: SOLARWINDS_API_TOKEN
-                valueFrom:
-                  secretKeyRef:
-                    key: SOLARWINDS_API_TOKEN
-                    name: solarwinds-api-token
-                    optional: true
-              - name: GOMEMLIMIT
-                valueFrom:
-                  resourceFieldRef:
-                    resource: limits.memory
-            envFrom:
-              - configMapRef:
-                  name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
-            image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
-            imagePullPolicy: IfNotPresent
-            livenessProbe:
-              httpGet:
-                path: /
-                port: 13133
-            name: discovery-collector
-            ports:
-              - containerPort: 8888
-                name: http
-                protocol: TCP
-            readinessProbe:
-              httpGet:
-                path: /
-                port: 13133
-            resources:
-              limits:
-                memory: 1Gi
-              requests:
-                memory: 50Mi
-            securityContext:
-              allowPrivilegeEscalation: false
-              capabilities:
-                drop:
-                  - ALL
-              readOnlyRootFilesystem: true
-              runAsNonRoot: true
-              runAsUser: 10001
-              seccompProfile:
-                type: RuntimeDefault
-            volumeMounts:
-              - mountPath: /conf
-                name: opentelemetry-collector-configmap
-                readOnly: true
-        initContainers:
-          - command:
-              - /connection-check
-              - --endpoint=$(OTEL_ENVOY_ADDRESS)
-              - --apitoken=$(SOLARWINDS_API_TOKEN)
-              - --clusteruid=$(CLUSTER_UID)
-              - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
-            env:
-              - name: SOLARWINDS_API_TOKEN
-                valueFrom:
-                  secretKeyRef:
-                    key: SOLARWINDS_API_TOKEN
-                    name: solarwinds-api-token
-                    optional: true
-            envFrom:
-              - configMapRef:
-                  name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
-            image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
-            imagePullPolicy: IfNotPresent
-            name: otel-endpoint-check
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: eks.amazonaws.com/compute-type
+                  operator: NotIn
+                  values:
+                    - fargate
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+    containers:
+      - command:
+          - /solarwinds-otel-collector
+          - --config=/conf/discovery-collector.yaml
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+          - name: GOMEMLIMIT
+            valueFrom:
+              resourceFieldRef:
+                resource: limits.memory
+        envFrom:
+          - configMapRef:
+              name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 13133
+        name: discovery-collector
+        ports:
+          - containerPort: 8888
+            name: http
+            protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 13133
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            memory: 50Mi
         securityContext:
-          fsGroup: 10001
-        serviceAccountName: swi-k8s-opentelemetry-collector-swo-k8s-collector
-        terminationGracePeriodSeconds: 600
-        volumes:
-          - configMap:
-              items:
-                - key: discovery-collector.config
-                  path: discovery-collector.yaml
-              name: swi-k8s-openteleme-swo-k8s-collector-discovery-collector-config
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+          - mountPath: /conf
             name: opentelemetry-collector-configmap
+            readOnly: true
+    initContainers:
+      - command:
+          - /connection-check
+          - --endpoint=$(OTEL_ENVOY_ADDRESS)
+          - --apitoken=$(SOLARWINDS_API_TOKEN)
+          - --clusteruid=$(CLUSTER_UID)
+          - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+        env:
+          - name: SOLARWINDS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+                optional: true
+        envFrom:
+          - configMapRef:
+              name: swi-k8s-opentelemetry-coll-swo-k8s-collector-common-env
+        image: solarwinds/solarwinds-otel-collector:1.0.0-k8s
+        imagePullPolicy: IfNotPresent
+        name: otel-endpoint-check
+    securityContext:
+      fsGroup: 10001
+    serviceAccountName: swi-k8s-opentelemetry-collector-swo-k8s-collector
+    terminationGracePeriodSeconds: 600
+    volumes:
+      - configMap:
+          items:
+            - key: discovery-collector.config
+              path: discovery-collector.yaml
+          name: swi-k8s-openteleme-swo-k8s-collector-discovery-collector-config
+        name: opentelemetry-collector-configmap
