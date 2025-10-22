@@ -1,4 +1,4 @@
-{{- if .Values.otel.gateway.enabled }}
+{{- if and .Values.otel.gateway.enabled (.Capabilities.APIVersions.Has "metrics.k8s.io/v1beta1") }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
