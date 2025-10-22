@@ -1308,7 +1308,12 @@ diagnostics:
 
 trivy-operator:
   enabled: false
+  nodeSelector:
+    kubernetes.io/os: linux
   targetWorkloads: pod,replicaset,statefulset,daemonset,cronjob,job
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
+  trivyOperator:
+    scanJobNodeSelector:
+      kubernetes.io/os: linux
 
