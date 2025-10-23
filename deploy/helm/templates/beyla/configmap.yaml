@@ -1,6 +1,6 @@
-{{- if .Values.beyla.enabled }}
+{{- if .Values.network_topology.enabled }}
 {{- if not .Values.otel.gateway.enabled }}
-{{- fail "The beyla requires otel.gateway.enabled to be set to true" }}
+{{- fail "The network_topology requires otel.gateway.enabled to be set to true" }}
 {{- end }}
 apiVersion: v1
 kind: ConfigMap
@@ -14,39 +14,39 @@ metadata:
 {{ include "common.annotations" . | indent 4 }}
 data:
   beyla-config.yml: |
-    {{- if not .Values.beyla.config.otel_metrics_export }}
+    {{- if not .Values.network_topology.config.otel_metrics_export }}
     otel_metrics_export:
       endpoint: http://swo-gateway:{{ .Values.otel.gateway.otlp_endpoint.port }}
       protocol: grpc
       interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
       features: ["application", "application_process", "application_service_graph", "network"]
     {{- end }}
-    {{- if not .Values.beyla.config.ebpf }}
+    {{- if not .Values.network_topology.config.ebpf }}
     ebpf:
       context_propagation: all
     {{- end }}
-    {{- if not .Values.beyla.config.process }}
+    {{- if not .Values.network_topology.config.process }}
     process:
       enabled: true
     {{- end }}
-    {{- if not .Values.beyla.config.network }}
+    {{- if not .Values.network_topology.config.network }}
     network:
       enable: true
     {{- end }}
-    {{- if not .Values.beyla.config.discovery }}
+    {{- if not .Values.network_topology.config.discovery }}
     discovery:
       instrument:
         - k8s_namespace: "*"
       exclude_instrument:
         - exe_path: "{*otelcol*|*beyla*}"
     {{- end }}
-    {{- if not .Values.beyla.config.log_level }}
+    {{- if not .Values.network_topology.config.log_level }}
     log_level: info
     {{- end }}
-    {{- if not .Values.beyla.config.open_port }}
+    {{- if not .Values.network_topology.config.open_port }}
     open_port: 80,443,8000-8999
     {{- end }}
-    {{- if not .Values.beyla.config.attributes }}
+    {{- if not .Values.network_topology.config.attributes }}
     attributes:
       kubernetes:
         enable: true
@@ -85,7 +85,7 @@ data:
             - k8s.src.owner.type
             - transport
     {{- end }}
-    {{- if .Values.beyla.config }}
-  {{- toYaml .Values.beyla.config | nindent 4}}
+    {{- if .Values.network_topology.config }}
+  {{- toYaml .Values.network_topology.config | nindent 4}}
     {{- end }}
 {{- end }}
