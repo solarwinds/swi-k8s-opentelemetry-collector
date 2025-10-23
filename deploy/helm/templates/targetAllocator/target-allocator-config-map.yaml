@@ -1,0 +1,66 @@
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" (tuple . "-target-allocator-config") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    {{- include "common.annotations" . | nindent 4 }}
+data:
+  targetallocator.yaml: |
+    allocation_strategy: consistent-hashing
+    collector_namespace: {{ .Release.Namespace }}
+    collector_selector:
+      matchLabels:
+        app.kubernetes.io/component: discovery-collector
+        app.kubernetes.io/instance: {{ template "common.fullname" . }}
+    prometheus_cr:
+      enabled: true
+      scrape_interval: {{ .Values.otel.metrics.prometheus.scrape_interval }}
+      service_monitor_selector: 
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+      pod_monitor_selector: 
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.podMonitorSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.podMonitorSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+      probe_selector:
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.probeSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.probeSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+      scrape_config_selector:
+        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.scrapeConfigSelector }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.scrapeConfigSelector | nindent 8 }}
+        {{- else }}
+        matchExpressions: 
+          - key: sw.ignore
+            operator: NotIn
+            values:
+            - "true"
+        {{- end }}
+    filter_strategy: relabel-config
+    config:
+      scrape_configs: []
+{{- end }}
