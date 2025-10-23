@@ -101,6 +101,11 @@ otel:
         installWithHelmHooks: true
 
         targetAllocator:
+          image:
+            repository: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator
+            tag: "0.131.0"
+            pullPolicy: IfNotPresent
+
           nodeSelector: {}
 
           # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
@@ -190,13 +195,11 @@ otel:
         affinity: {}
 
         # HPA configuration for the discovery collector
-        # For more options see: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspecautoscaler-1
-        # default:
-        #   minReplicas: 1
-        #   maxReplicas: 5
-        #   targetCPUUtilization: 80
-        #   targetMemoryUtilization: 80
-        autoscaler: {}
+        autoscaler:
+          minReplicas: 1
+          maxReplicas: 5
+          targetCPUUtilization: 80
+          targetMemoryUtilization: 80
 
       prometheusEndpoints:
         # Define whether metrics will be discovered and scraped by prometheus annotations

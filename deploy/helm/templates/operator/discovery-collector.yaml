@@ -1,349 +1,175 @@
-{{- if .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
-apiVersion: opentelemetry.io/v1beta1
-kind: OpenTelemetryCollector
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
-  # name is limitted to 41, as `-collector` is autoadded by the operator and statefulset can have maximum 52 characters
-  name: {{ include "common.fullname" (tuple . "-discovery" 41) }} 
+  name: {{ include "common.fullname" (tuple . "-discovery-collector" 51) }}
   namespace: {{ .Release.Namespace }}
   labels:
-{{ include "common.labels" . | indent 4 }}
-  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.installWithHelmHooks }}
+    app.kubernetes.io/name: swo-k8s-collector
+    app.kubernetes.io/component: discovery-collector
+    {{- include "common.labels" . | nindent 4 }}
   annotations:
+    {{- include "common.annotations" . | nindent 4 }}
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.installWithHelmHooks }}
     "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "4"
-  {{- end }}
-spec:
-  mode: statefulset
-  autoscaler:
-    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.autoscaler }}
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.autoscaler | nindent 4 }}
-    {{- else }}
-    minReplicas: 1
-    maxReplicas: 5
-    targetCPUUtilization: 80
-    targetMemoryUtilization: 80
-    {{- end }}
-  targetAllocator:
-    enabled: true
-    serviceAccount: {{ include "common.fullname" . }}
-    prometheusCR:
-      enabled: true
-      scrapeInterval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-      serviceMonitorSelector: 
-        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
-        {{- else }}
-        matchExpressions: 
-          - key: sw.ignore
-            operator: NotIn
-            values:
-            - "true"
-        {{- end }}
-      podMonitorSelector: 
-        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
-        {{- else }}
-        matchExpressions: 
-          - key: sw.ignore
-            operator: NotIn
-            values:
-            - "true"
-        {{- end }}
-      probeSelector: 
-        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
-        {{- else }}
-        matchExpressions: 
-          - key: sw.ignore
-            operator: NotIn
-            values:
-            - "true"
-        {{- end }}
-      scrapeConfigSelector: 
-        {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector }}
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.serviceMonitorSelector | nindent 8 }}
-        {{- else }}
-        matchExpressions: 
-          - key: sw.ignore
-            operator: NotIn
-            values:
-            - "true"
-        {{- end }}
-    securityContext: 
-      readOnlyRootFilesystem: true
-      allowPrivilegeEscalation: false
-      seccompProfile:
-        type: RuntimeDefault
-      capabilities:
-        drop:
-        - ALL
-    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.nodeSelector }}
-    nodeSelector:
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.nodeSelector | nindent 8 }}
-    {{- end }}
-    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.tolerations }}
-    tolerations:
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.tolerations | nindent 8 }}
-    {{- end }}
-    affinity:
-    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.affinity }}
-{{- toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.affinity | nindent 8 }}
-    {{- else }}
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.io/arch
-              operator: In
-              values:
-              - amd64
-              - arm64
-            - key: kubernetes.io/os
-              operator: In
-              values:
-              - linux
-    {{- end }}
-  image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
-  imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
-  serviceAccount: {{ include "common.fullname" . }}
-  securityContext: 
-    readOnlyRootFilesystem: true
-    allowPrivilegeEscalation: false
-    seccompProfile:
-      type: RuntimeDefault
-    capabilities:
-      drop:
-      - ALL
-  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.tolerations }}
-  tolerations:
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.tolerations | nindent 4 }}
-  {{- end }}
-  affinity:
-  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.affinity }}
-{{- toYaml .Values.otel.metrics.autodiscovery.discovery_collector.affinity | nindent 4 }}
-  {{- else }}
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: eks.amazonaws.com/compute-type
-            operator: NotIn
-            values:
-            - fargate
-          - key: kubernetes.io/arch
-            operator: In
-            values:
-            - amd64
-            - arm64
-          - key: kubernetes.io/os
-            operator: In
-            values:
-            - linux
-  {{- end }}
-  {{- if .Values.otel.metrics.autodiscovery.discovery_collector.nodeSelector }}
-  nodeSelector:
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.nodeSelector | nindent 4 }}
-  {{- end }}
-  {{- if include "isSwiEndpointCheckEnabled" . }}
-  initContainers:
-    - name: otel-endpoint-check
-      image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
-      imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
-      command:
-        - /connection-check
-        - --endpoint=$(OTEL_ENVOY_ADDRESS)
-        - --apitoken=$(SOLARWINDS_API_TOKEN)
-        - --clusteruid=$(CLUSTER_UID)
-        - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
-      env:
-        - name: SOLARWINDS_API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: {{ template "common.secret" . }}
-              key: SOLARWINDS_API_TOKEN
-              optional: true
-      envFrom:
-        - configMapRef:
-            name: {{ include "common.fullname" (tuple . "-common-env") }}
-  {{- end }}
-  env:
-    - name: POD_NAME
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.name
-    - name: POD_NAMESPACE
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.namespace
-    - name: SOLARWINDS_API_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: {{ template "common.secret" . }}
-          key: SOLARWINDS_API_TOKEN
-          optional: true
-    - name: GOMEMLIMIT
-      valueFrom:
-        resourceFieldRef:
-          resource: limits.memory
-  envFrom:
-    - configMapRef:
-        name: {{ include "common.fullname" (tuple . "-common-env") }}
-  resources:
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.resources | indent 4 }}
-  config: 
-    receivers:
-      prometheus:
-        config:
-          scrape_configs:
-            - job_name: 'otel-collector'
-              scrape_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-{{ include "common.prometheus.relabelconfigs" . | indent 14 }}
-              static_configs:
-              - targets: [ '0.0.0.0:8888' ]
-    
-    extensions:
-      health_check:
-        endpoint: 0.0.0.0:13133
-
-    connectors:
-      forward/metric-exporter: {}
-
-{{ include "common-discovery-config.connectors" . | indent 6 }}
-
-    processors:
-      memory_limiter:
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.memory_limiter | indent 8 }}
-      
-      filter/histograms:
-        metrics:
-          metric:
-            - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds" or name == "k8s.etcd_disk_backend_commit_duration_seconds")'
-      
-      k8sattributes:
-        auth_type: "serviceAccount"
-        passthrough: false
-        extract:
-          metadata:
-            - k8s.deployment.name
-            - k8s.replicaset.name
-            - k8s.daemonset.name
-            - k8s.job.name
-            - k8s.cronjob.name
-            - k8s.statefulset.name
-        pod_association:
-          - sources:
-              - from: resource_attribute
-                name: k8s.pod.name
-              - from: resource_attribute
-                name: k8s.namespace.name
-      
-      {{- if .Values.otel.metrics.filter }}
-      filter/metrics:
-        metrics:
-{{ toYaml .Values.otel.metrics.filter | indent 10 }}
-      {{- end }}
-
-{{- include "common-config.filter-remove-temporary-metrics" . | nindent 6 }}
-
-      transform/scope:
-        metric_statements:
-          - statements:
-            - set(scope.name, "")
-            - set(scope.version, "")
-        log_statements:
-          - statements:
-            - set(scope.name, "")
-            - set(scope.version, "")
-      
-      batch/metrics:
-{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.batch | indent 8 }}
-
-      groupbyattrs/common-all:
-        keys:
-          - k8s.container.name
-          - k8s.namespace.name
-          - k8s.pod.name
-          - k8s.pod.uid
-          - host.name
-          - service.name
-
-      resource/all:
-        attributes:
-
-          # Collector and Manifest version
-          - key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-            action: insert
-
-          - key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-            action: insert
-
-          # Cluster
-          - key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-            action: insert
-
-          - key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-            action: insert
-
-{{ include "common-discovery-config.processors" . | indent 6 }}
-
-    exporters:
-      otlp:
-        endpoint: ${OTEL_ENVOY_ADDRESS}
-        tls:
-          insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
-        headers:
-          "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
-          "swi-reporter": "k8s-monitoring swo-k8s-collector/{{ .Chart.Version }}"
-        retry_on_failure:
-          enabled: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.enabled }}
-          initial_interval: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.initial_interval }}
-          max_interval: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.max_interval }}
-          max_elapsed_time: {{ .Values.otel.metrics.autodiscovery.discovery_collector.retry_on_failure.max_elapsed_time }}
-        sending_queue:
-          enabled: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.enabled }}
-          num_consumers: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.num_consumers }}
-          queue_size: {{ .Values.otel.metrics.autodiscovery.discovery_collector.sending_queue.queue_size }}
-        timeout: {{ .Values.otel.metrics.autodiscovery.discovery_collector.timeout }}
-
-    service:
-      extensions:
-        - health_check
-      pipelines:
-        metrics:
-          receivers:
-            - forward/metric-exporter
-          processors:
-            - memory_limiter
-            - filter/histograms
-            - k8sattributes
-    {{- if .Values.otel.metrics.filter }}
-            - filter/metrics
-    {{- end }}
-            - filter/remove_temporary_metrics
-            - transform/scope
-            - batch/metrics
-          exporters:
-            - otlp
-
-{{ include "common-discovery-config.pipelines" (tuple . "prometheus" "forward/metric-exporter") | indent 8 }}
-
-      telemetry:
-    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.enabled }}
-        logs:
-          level: {{ .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.level }}
-    {{- end }}
-    {{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.enabled }}
-        metrics:
-          readers:
-            - pull:
-                exporter:
-                  prometheus:
-                    host: {{ (split ":" .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address)._0 | quote }}
-                    port: {{ (split ":" .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address)._1 }}
-    {{- end }}
+    "helm.sh/hook-weight": "3"
 {{- end }}
-  
+spec:
+  serviceName: {{ include "common.fullname" (tuple . "-discovery-collector") }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" (tuple . "-discovery-collector" 51) }}
+      app.kubernetes.io/component: discovery-collector
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ tpl (.Files.Get "discovery-collector-config.yaml") . | sha256sum }}
+        checksum/config_common_env: {{ include (print $.Template.BasePath "/common-env-config-map.yaml") . | sha256sum }}
+        checksum/values: {{ toJson .Values | sha256sum }}
+        {{- include "common.annotations" . | nindent 8 }}
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ (split ":" .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address)._1 | quote }}
+        prometheus.io/path: "/metrics"
+        prometheus.io/scheme: "http"
+{{- end }}
+      labels:
+        app.kubernetes.io/name: swo-k8s-collector
+        app.kubernetes.io/component: discovery-collector
+        {{- include "common.labels" . | nindent 8 }}
+        app: {{ include "common.fullname" (tuple . "-discovery-collector" 51) }}
+        {{- include "common.pod-labels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 600
+      serviceAccountName: {{ include "common.fullname" . }}
+      securityContext:
+        fsGroup: 10001
+      {{- if .Values.otel.metrics.autodiscovery.discovery_collector.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.nodeSelector | indent 8 }}
+      {{- end }}
+      {{- if .Values.otel.metrics.autodiscovery.discovery_collector.tolerations }}
+      tolerations:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.tolerations | indent 8 }}
+      {{- end }}
+      affinity:
+      {{- if .Values.otel.metrics.autodiscovery.discovery_collector.affinity }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.affinity | indent 8 }}
+      {{- else }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: eks.amazonaws.com/compute-type
+                operator: NotIn
+                values:
+                - fargate
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if include "isSwiEndpointCheckEnabled" . }}
+      initContainers:
+        - name: otel-endpoint-check
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          command:
+            - /connection-check
+            - --endpoint=$(OTEL_ENVOY_ADDRESS)
+            - --apitoken=$(SOLARWINDS_API_TOKEN)
+            - --clusteruid=$(CLUSTER_UID)
+            - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+          env:
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "common.secret" . }}
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
+      {{- end }}
+      containers:
+        - name: discovery-collector
+          command:
+            - /solarwinds-otel-collector
+            - --config=/conf/discovery-collector.yaml
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+              - ALL
+          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
+          imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SOLARWINDS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "common.secret" . }}
+                  key: SOLARWINDS_API_TOKEN
+                  optional: true
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.fullname" (tuple . "-common-env") }}
+          ports:
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.enabled }}
+            - name: http
+              containerPort: {{ (split ":" .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.metrics.address)._1 }}
+              protocol: TCP
+{{- end }}
+{{- if .Values.diagnostics.profiling.enabled }}
+            - name: pprof
+              containerPort: {{ .Values.diagnostics.profiling.port }}
+{{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+          resources:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.resources | indent 12 }}
+          volumeMounts:
+            - mountPath: /conf
+              name: opentelemetry-collector-configmap
+              readOnly: true
+      volumes:
+        - name: opentelemetry-collector-configmap
+          configMap:
+            name: {{ include "common.fullname" (tuple . "-discovery-collector-config") }}
+            items:
+              - key: discovery-collector.config
+                path: discovery-collector.yaml
+{{- end }}
