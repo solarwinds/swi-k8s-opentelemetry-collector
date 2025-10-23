@@ -3,14 +3,6 @@ suite: Test for swo-agent-statefulset
 templates:
   - swo-agent-statefulset.yaml
 tests:
-  - it: Image should be correct in default state
-    template: swo-agent-statefulset.yaml
-    set:
-      swoagent.enabled: true
-    asserts:
-    - equal:
-          path: spec.template.spec.containers[0].image
-          value: solarwinds/swo-agent:v2.10.318
   - it: Image should be correct when overriden tag
     template: swo-agent-statefulset.yaml
     set:
@@ -32,3 +24,12 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: azurek8s.azure.io/marketplaceimages/swo-agent:v1.2.3@abcd
+  - it: Image should be correct in default state
+    template: swo-agent-statefulset.yaml
+    set:
+      swoagent.image.tag: "v1.0.0"
+      swoagent.enabled: true
+    asserts:
+    - equal:
+          path: spec.template.spec.containers[0].image
+          value: solarwinds/swo-agent:v1.0.0
