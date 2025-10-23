@@ -12,3 +12,10 @@ tests:
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: Gateway collector should not be generated when it's disabled
+    template: gateway/gateway-deployment.yaml
+    set:
+      otel.gateway.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
