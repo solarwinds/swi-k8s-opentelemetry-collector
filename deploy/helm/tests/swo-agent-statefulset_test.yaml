@@ -3,15 +3,19 @@ suite: Test for swo-agent-statefulset
 templates:
   - swo-agent-statefulset.yaml
 tests:
-  - it: Image should be correct in default state
+  - it: SWO Agent spec should match snapshot when swoagent is enabled
     template: swo-agent-statefulset.yaml
     set:
       swoagent.enabled: true
     asserts:
-    - equal:
-          path: spec.template.spec.containers[0].image
-          value: solarwinds/swo-agent:v2.10.318
-  - it: Image should be correct when overriden tag
+      - matchSnapshot:
+          path: spec.template.spec
+  - it: StatefulSet should not be generated when using default values
+    template: swo-agent-statefulset.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: Image should be correct when overridden tag
     template: swo-agent-statefulset.yaml
     set:
       swoagent.enabled: true
@@ -20,7 +24,7 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: solarwinds/swo-agent:beta1
-  - it: Image should be correct when overriden by azure
+  - it: Image should be correct when overridden by azure
     template: swo-agent-statefulset.yaml
     set:
       swoagent.enabled: true

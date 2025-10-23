@@ -1,0 +1,112 @@
+{{- if and .Values.otel.metrics.enabled .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.fullname" (tuple . "-target-allocator") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    {{- include "common.annotations" . | nindent 4 }}
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.installWithHelmHooks }}
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "2"
+{{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/targetAllocator/target-allocator-config-map.yaml") . | sha256sum }}
+      labels:
+        app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+        {{- include "common.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "common.fullname" .}}
+      automountServiceAccountToken: false
+      {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.nodeSelector | indent 8 }}
+      {{- end }}
+      {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.tolerations }}
+      tolerations:
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.tolerations | indent 8 }}
+      {{- end }}
+      affinity:
+      {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.affinity }}
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.affinity | indent 8 }}
+      {{- else }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      {{- end }}
+      containers:
+        - name: targetallocator
+          image: {{ .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.image.repository }}:{{ .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.image.tag }}
+          imagePullPolicy: {{ .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - name: config-volume
+              mountPath: /conf/
+            - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              name: serviceaccount-token
+              readOnly: true
+          env:
+            - name: OTELCOL_NAMESPACE
+              value: {{ .Release.Namespace }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: 50Mi
+            limits:
+              memory: 500Mi
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "common.fullname" (tuple . "-target-allocator-config") }}
+        - name: serviceaccount-token
+          projected:
+            defaultMode: 0444
+            sources:
+              - serviceAccountToken:
+                  path: token
+              - configMap:
+                  name: kube-root-ca.crt
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+              - downwardAPI:
+                  items:
+                    - path: namespace
+                      fieldRef:
+                        apiVersion: v1
+                        fieldPath: metadata.namespace
+{{- end }}
