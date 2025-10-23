@@ -37,16 +37,27 @@ spec:
 {{- else }}
       serviceAccountName: {{ include "common.fullname" . }}
 {{- end }}
-      nodeSelector:
       {{- if .Values.swoagent.nodeSelector }}
+      nodeSelector:
         {{ toYaml .Values.swoagent.nodeSelector | nindent 8 }}
-      {{- else }}
-        kubernetes.io/arch: amd64
-        kubernetes.io/os: linux
       {{- end }}
-      {{- if .Values.swoagent.affinity }}
       affinity:
+      {{- if .Values.swoagent.affinity }}
         {{- toYaml .Values.swoagent.affinity | nindent 8 }}
+      {{- else }}
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
       {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
