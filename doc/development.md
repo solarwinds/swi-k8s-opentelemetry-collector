@@ -65,7 +65,7 @@ By default it will deploy `SWO K8s Collector` with features that are enabled by 
 - `operator` - include certmanager, operator and all the features that are related to it (discovery_collector, CRDs)
 - `auto-instrumentation` - include OTEL Demo services and enable auto-instrumentation. It requires `operator` to be enabled
 - `no-logs` - exclude log collection
-- `no-beyla` - exclude beyla
+- `no-topology` - exclude network topology
 - `no-metrics` - exclude metrics collection
 - `no-events` - exclude events collection
 - `no-tests` - exclude integration tests

@@ -1226,7 +1226,7 @@ operator:
         tag: ""
       python:
         repository: "solarwinds/autoinstrumentation-python"
-        tag: "5.0.0"
+        tag: "5.1.0"
       dotnet:
         repository: ""
         tag: ""
@@ -1269,12 +1269,12 @@ waitJobs:
       tag: "1.31.13"
       pullPolicy: IfNotPresent
   
-beyla:
+network_topology:
   enabled: true
 
   image:
     repository: "grafana/beyla"
-    tag: "2.7.0"
+    tag: "2.7.4"
     pullPolicy: IfNotPresent
 
   resources:
@@ -1311,7 +1311,12 @@ diagnostics:
 
 trivy-operator:
   enabled: false
+  nodeSelector:
+    kubernetes.io/os: linux
   targetWorkloads: pod,replicaset,statefulset,daemonset,cronjob,job
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
+  trivyOperator:
+    scanJobNodeSelector:
+      kubernetes.io/os: linux
 
