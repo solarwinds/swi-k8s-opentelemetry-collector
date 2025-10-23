@@ -23,14 +23,17 @@ When generating code for this repository:
 - **deploy/helm/** – Helm chart for deploying the collector
   - **templates/** – Kubernetes resource definitions
     - **metrics-deployment.yaml** – MetricsCollector deployment
-    - **metrics-discovery-deployment.yaml** – MetricsDiscovery deployment
+    - **metrics-discovery-deployment.yaml** – MetricsDiscovery deployment (annotation-based)
     - **events-collector-statefulset.yaml** – EventsCollector statefulset
     - **node-collector-daemon-set.yaml** – NodeCollector daemonset (Linux)
     - **node-collector-daemon-set-windows.yaml** – NodeCollector daemonset (Windows)
-    - **gateway/**, **network/**, **beyla/**, **operator/**, **autoupdate/**, **openshift/** – Specialized components
+    - **operator/** – OpenTelemetry operator integration and DiscoveryCollector (CRD-based discovery)
+    - **targetAllocator/** – TargetAllocator deployment for CRD-based Prometheus discovery
+    - **gateway/**, **network/**, **beyla/**, **autoupdate/**, **openshift/** – Specialized components
     - **_helpers.tpl**, **_common-config.tpl**, **_common-discovery-config.tpl** – Reusable template helpers
   - **metrics-collector-config.yaml** – MetricsCollector OTEL pipeline
-  - **metrics-discovery-config.yaml** – MetricsDiscovery OTEL pipeline
+  - **metrics-discovery-config.yaml** – MetricsDiscovery OTEL pipeline (annotation-based)
+  - **discovery-collector-config.yaml** – DiscoveryCollector OTEL pipeline (CRD-based)
   - **events-collector-config.yaml** – EventsCollector OTEL pipeline
   - **gateway-collector-config.yaml** – Gateway OTEL pipeline
   - **node-collector-config.yaml** – NodeCollector OTEL pipeline
@@ -50,7 +53,7 @@ Cluster-level metrics collection with pipelines:
 - `metrics/prometheus-node-metrics`, `metrics/prometheus-server` – Prometheus integrations
 
 ### MetricsDiscovery (Deployment)
-Auto-discovery for annotated pods (AWS Fargate support):
+Annotation-based auto-discovery for pods (AWS Fargate support):
 - `metrics/discovery` – receiver_creator + k8s_observer
 - `metrics` – Process and export discovered metrics
 
@@ -67,6 +70,10 @@ Node-level telemetry collection:
 ### Gateway (Deployment)
 Central aggregation layer:
 - `traces`, `metrics`, `logs` – OTLP receivers for forwarding
+
+### DiscoveryCollector (StatefulSet)
+CRD-based Prometheus discovery (disabled by default):
+- `metrics` – Main export via OTLP
 
 ## Coding Patterns (Observed in Codebase)
 
