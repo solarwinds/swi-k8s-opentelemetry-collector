@@ -1,0 +1,71 @@
+SWO Agent spec should match snapshot when swoagent is enabled:
+  1: |
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+    containers:
+      - env:
+          - name: UAMS_CLIENT_ID_OVERRIDE_SOURCE_NAME
+            valueFrom:
+              configMapKeyRef:
+                key: CLUSTER_UID
+                name: RELEASE-NAME-swo-k8s-collector-common-env
+          - name: SWO_URL
+            value: <OTEL_ENVOY_ADDRESS>
+          - name: UAMS_ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: SOLARWINDS_API_TOKEN
+                name: solarwinds-api-token
+          - name: CLUSTER_UID
+            valueFrom:
+              configMapKeyRef:
+                key: CLUSTER_UID
+                name: RELEASE-NAME-swo-k8s-collector-common-env
+          - name: CLUSTER_NAME
+            valueFrom:
+              configMapKeyRef:
+                key: CLUSTER_NAME
+                name: RELEASE-NAME-swo-k8s-collector-common-env
+          - name: MANIFEST_VERSION
+            valueFrom:
+              configMapKeyRef:
+                key: MANIFEST_VERSION
+                name: RELEASE-NAME-swo-k8s-collector-common-env
+          - name: HTTPS_PROXY
+            valueFrom:
+              configMapKeyRef:
+                key: HTTPS_PROXY
+                name: RELEASE-NAME-swo-k8s-collector-common-env
+                optional: true
+          - name: UAMS_IS_EPHEMERAL
+            value: "true"
+        image: solarwinds/swo-agent:v2.10.333
+        imagePullPolicy: IfNotPresent
+        name: swo-agent
+        resources:
+          limits:
+            memory: 800Mi
+          requests:
+            cpu: 100m
+            memory: 800Mi
+        volumeMounts:
+          - mountPath: /uamsclient/workdir
+            name: uams-client-workdir
+    securityContext: {}
+    serviceAccountName: RELEASE-NAME-swo-k8s-collector
+    volumes:
+      - name: uams-client-workdir
+        persistentVolumeClaim:
+          claimName: RELEASE-NAME-swo-k8s-collector-swo-agent
