@@ -1,4 +1,4 @@
-name: Check Pull Request
+name: Check for Issue number
 permissions:
     contents: read
     pull-requests: read
@@ -8,6 +8,7 @@ on:
         types:
             - opened
             - edited
+            - synchronize
 
     workflow_dispatch:
 
@@ -15,12 +16,21 @@ jobs:
     check_title:
         runs-on: ubuntu-latest
         steps:
-            - name: Require Issue number not to be included in PR title
+            - name: Issue number in PR title
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
               run: |
                   ISSUE_NUMBER=$(echo "$PR_TITLE" | grep -oE '([[:alpha:]]+-[[:digit:]]+)' || echo "")
                   if [ -n "$ISSUE_NUMBER" ]; then
                       echo "::error::Pull Request title must not include an issue number"
+                      exit 1
+                  fi
+            - name: Issue number in branch
+              env:
+                  BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+              run: |
+                  ISSUE_NUMBER=$(echo "$BRANCH_NAME" | grep -oE '([[:alpha:]]+-[[:digit:]]+)' || echo "")
+                  if [ -n "$ISSUE_NUMBER" ]; then
+                      echo "::error::Branch name must not include an issue number"
                       exit 1
                   fi
