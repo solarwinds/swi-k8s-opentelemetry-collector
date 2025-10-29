@@ -75,6 +75,7 @@ By default it will deploy `SWO K8s Collector` with features that are enabled by 
   - `SOLARWINDS_API_TOKEN` - SWO ingestion API token
 - `build-collector` - see [Rebuild `solarwinds otel collector` from sources](#rebuild-solarwinds-otel-collector-from-sources)
 - `push` - push built images to remote docker registry (see [Image Repository Handling](https://skaffold.dev/docs/environment/image-registries/))
+- `export-telemetry-to-files` - export in timeseries-mock to legacy raw file format hosted by nginx 
 
 Example:
 ```
@@ -221,10 +222,14 @@ helm unittest -u deploy/helm
 To enable code completion when writing new tests, install a VS Code extension providing a YAML Language server, like `redhat.vscode-yaml`.
 
 ## Integration tests
-Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
+Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome. 
+
+### Timeseries Mock Storage
+Important part of integration test is storage of telemetry data in ClickHouse. It is deployed as part of `skaffold dev`. In order to manually look at the data stored in the Clickhouse use Copilot Prompt `/query-clickhouse` (e.g. `/query-clickhouse show me what relationship state event types were ingested`). 
 
 ### Prerequisites
 Deploy cluster locally using `skaffold dev`
+
 ### Run tests locally
 * Install all dependencies: `pip install --user -r tests/integration/requirements.txt` 
 * Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration

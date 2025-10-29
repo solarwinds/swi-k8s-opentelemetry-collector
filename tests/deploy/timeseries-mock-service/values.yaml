@@ -1,7 +1,16 @@
 otel:
   port: 9082
-  image: otel/opentelemetry-collector-contrib:0.116.1
+  image: otel/opentelemetry-collector-contrib:0.139.0
 
 fileProvider:
+  # Enable file-based export (deprecated, will be replaced by ClickHouse)
+  enabled: false
+  
   port: 8088
   image: nginx:alpine
+
+clickhouse:
+  # Enable ClickHouse deployment for telemetry storage
+  enabled: true
+  
+  image: clickhouse/clickhouse-server:latest

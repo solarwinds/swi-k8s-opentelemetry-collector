@@ -1,0 +1,19 @@
+{{- if .Values.clickhouse.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+spec:
+  selector:
+    app: clickhouse
+  ports:
+    - name: native
+      port: 9000
+      targetPort: 9000
+      protocol: TCP
+    - name: http
+      port: 8123
+      targetPort: 8123
+      protocol: TCP
+  type: ClusterIP
+{{- end }}

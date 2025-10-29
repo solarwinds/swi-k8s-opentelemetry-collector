@@ -23,6 +23,9 @@ deploy:
         namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
         createNamespace: true
         upgradeOnChange: true
+        setValueTemplates:
+          clickhouse:
+            enabled: true
       - name: '{{ env "TEST_CLUSTER_RELEASE_NAME" | default "sut" }}'
         chartPath: deploy/helm
         namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
@@ -33,6 +36,8 @@ deploy:
             uid: '{{ env "CLUSTER_NAME" | default "cluster-uid-123456789" }}'
           otel:
             endpoint: timeseries-mock-service:9082
+            swi_endpoint_check: 
+              enabled: false
             tls_insecure: true
             # OTEL collector requires the SOLARWINDS_API_TOKEN env variable to be set to some not empty string
             api_token: '{{ env "SOLARWINDS_API_TOKEN" | default "not_set" }}' 
@@ -45,9 +50,9 @@ deploy:
               sending_queue:
                 offload_to_disk: true
               prometheus:
-                scrape_interval: "15s"
+                scrape_interval: "60s"
               kube-state-metrics:
-                scrape_interval: "15s"
+                scrape_interval: "60s"
               control_plane:
                 controller_manager:
                   enabled: false
@@ -129,9 +134,15 @@ deploy:
   kubeContext: docker-desktop
 portForward:
 - resourceType: service
-  resourceName: timeseries-mock-service
+  resourceName: clickhouse
   namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
-  port: 8088
+  port: 9000
+  localPort: 9000
+- resourceType: service
+  resourceName: clickhouse
+  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
+  port: 8123
+  localPort: 8123
 - resourceType: service
   resourceName: prometheus-operated
   namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
@@ -255,7 +266,7 @@ profiles:
   - name: no-tests
     patches:
       - op: remove
-        path: /deploy/helm/releases/3
+        path: /deploy/helm/releases/4
       - op: remove
         path: /build/artifacts/0
       - op: remove
@@ -295,3 +306,15 @@ profiles:
     deploy:
       # `default` is k3s default context name
       kubeContext: default
+  - name: export-telemetry-to-files
+    patches:
+      - op: add
+        path: /deploy/helm/releases/0/setValueTemplates/fileProvider.enabled
+        value: true
+      - op: add
+        path: /portForward/-
+        value:
+          resourceType: service
+          resourceName: timeseries-mock-service
+          namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
+          port: 8088

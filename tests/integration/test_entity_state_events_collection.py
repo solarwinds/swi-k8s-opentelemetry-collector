@@ -1,11 +1,11 @@
 import json
 import os
 
-from test_utils import get_all_bodies_for_all_sent_content, get_all_resources_for_all_sent_content, get_attribute_key_and_value, get_attributes_of_kvmap, has_attribute_with_key_and_value, retry_until_ok, run_shell_command
+from test_utils import get_all_resources_for_clickhouse_logs, get_attribute_key_and_value, get_attributes_of_kvmap, has_attribute_with_key_and_value, retry_until_ok_clickhouse, run_shell_command
+from clickhouse_client import ClickHouseClient
 
-
-endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
-url = f'http://{endpoint}/entitystateevents.json'
+clickhouse_endpoint = os.getenv("CLICKHOUSE_ENDPOINT", "localhost:8123")
+clickhouse_client = ClickHouseClient(clickhouse_endpoint)
 pod_name = 'dummy-entitystateevents-pod'
 container_name = 'dummy-container'
 namespace_name = 'default'
@@ -36,19 +36,23 @@ def teardown_function():
 
 
 def test_entity_state_events_generated():
-    retry_until_ok(url, assert_test_entitystateevents_found, print_failure)
+    retry_until_ok_clickhouse(
+        lambda: clickhouse_client.get_entity_state_events(),
+        assert_test_entitystateevents_found,
+        print_failure
+    )
 
 
-def print_failure(content):
-    raw_bodies = get_all_bodies_for_all_sent_content(content)
+def print_failure(logs_list):
+    raw_resources = get_all_resources_for_clickhouse_logs(logs_list)
     print(f'Failed to find expected container within {pod_name}')
     print('All logs in raw_bodies_dump.txt')
     with open('raw_bodies_dump.txt', 'w') as file:
-        json.dump(raw_bodies, file, indent=4)
+        json.dump(raw_resources, file, indent=4)
 
 
-def assert_test_entitystateevents_found(content):
-    logs = get_all_resources_for_all_sent_content(content)
+def assert_test_entitystateevents_found(logs_list):
+    logs = get_all_resources_for_clickhouse_logs(logs_list)
     for resource_logs in logs:
         for resource in resource_logs:
             scope_logs = resource['scopeLogs']
@@ -104,3 +108,4 @@ def has_id_attributes_for_container(log_record):
         return False
     
     return True
+

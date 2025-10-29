@@ -21,6 +21,21 @@ spec:
         runAsUser: 0
       nodeSelector:
         kubernetes.io/os: linux
+{{- if .Values.clickhouse.enabled }}
+      initContainers:
+        - name: wait-for-clickhouse
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for ClickHouse to be ready..."
+              until wget -q --spider http://clickhouse:8123/ping; do
+                echo "ClickHouse is not ready yet, waiting..."
+                sleep 2
+              done
+              echo "ClickHouse is ready!"
+{{- end }}
       containers:
         - name: opentelemetry-collector
           command:
@@ -41,19 +56,35 @@ spec:
               protocol: TCP
             - name: metrics
               containerPort: 8080
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           livenessProbe:
             httpGet:
               path: /
               port: 13133
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
               port: 13133
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
           volumeMounts:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
+{{- if .Values.fileProvider.enabled }}
             - name: output
               mountPath: /data
+{{- end }}
+{{- if .Values.fileProvider.enabled }}
         - name: file-provider
           image: {{ .Values.fileProvider.image }}
           command: ['sh', '-c', 'touch /usr/share/nginx/html/events.json && touch /usr/share/nginx/html/metrics.json && touch /usr/share/nginx/html/logs.json && touch /usr/share/nginx/html/manifests.json && touch /usr/share/nginx/html/traces.json && touch /usr/share/nginx/html/entitystateevents.json && chmod -R 777 /usr/share/nginx/html && nginx -g "daemon off;"']
@@ -65,6 +96,7 @@ spec:
           ports:
           - name: html
             containerPort: 80
+{{- end }}
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
@@ -72,5 +104,7 @@ spec:
             items:
               - key: relay
                 path: relay.yaml
+{{- if .Values.fileProvider.enabled }}
         - name: output
           emptyDir: {}
+{{- end }}

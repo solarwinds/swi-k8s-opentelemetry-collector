@@ -18,7 +18,10 @@ spec:
           containers:
             - name: integration-test
               image: integration-test
+              imagePullPolicy: IfNotPresent
               env:
                 - name: TIMESERIES_MOCK_ENDPOINT
                   value: {{ printf "timeseries-mock-service.%s.svc.cluster.local:8088" .Release.Namespace | quote }}
+                - name: CLICKHOUSE_ENDPOINT
+                  value: {{ printf "clickhouse.%s.svc.cluster.local:8123" .Release.Namespace | quote }}
           restartPolicy: Never
