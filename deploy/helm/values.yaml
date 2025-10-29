@@ -101,6 +101,11 @@ otel:
         installWithHelmHooks: true
 
         targetAllocator:
+          image:
+            repository: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator
+            tag: "0.131.0"
+            pullPolicy: IfNotPresent
+
           nodeSelector: {}
 
           # See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
@@ -190,13 +195,11 @@ otel:
         affinity: {}
 
         # HPA configuration for the discovery collector
-        # For more options see: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/api/opentelemetrycollectors.md#opentelemetrycollectorspecautoscaler-1
-        # default:
-        #   minReplicas: 1
-        #   maxReplicas: 5
-        #   targetCPUUtilization: 80
-        #   targetMemoryUtilization: 80
-        autoscaler: {}
+        autoscaler:
+          minReplicas: 1
+          maxReplicas: 5
+          targetCPUUtilization: 80
+          targetMemoryUtilization: 80
 
       prometheusEndpoints:
         # Define whether metrics will be discovered and scraped by prometheus annotations
@@ -1001,7 +1004,7 @@ swoagent:
   enabled: false
   image:
     repository: solarwinds/swo-agent
-    tag: "v2.10.318"
+    tag: "v2.10.333"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -1205,7 +1208,7 @@ operator:
   manager:
     image:
       repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
-      tag: "0.131.0"
+      tag: "0.136.0"
     targetAllocatorImage:
       repository: ""
       tag: ""
@@ -1223,7 +1226,7 @@ operator:
         tag: ""
       python:
         repository: "solarwinds/autoinstrumentation-python"
-        tag: "5.0.0"
+        tag: "5.1.0"
       dotnet:
         repository: ""
         tag: ""
@@ -1271,7 +1274,7 @@ network_topology:
 
   image:
     repository: "grafana/beyla"
-    tag: "2.7.0"
+    tag: "2.7.4"
     pullPolicy: IfNotPresent
 
   resources:
