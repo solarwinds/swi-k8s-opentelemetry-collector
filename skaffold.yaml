@@ -117,6 +117,16 @@ deploy:
                   action: replace
                   target_label: __scheme__
                   regex: (.+)
+      # Deploy Loki for log storage in integration tests
+      - name: loki
+        remoteChart: loki
+        namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
+        createNamespace: true
+        repo: https://grafana.github.io/helm-charts
+        version: 6.16.0
+        valuesFiles:
+          - tests/deploy/loki/values.yaml
+        upgradeOnChange: true
       - name: tests
         chartPath: tests/deploy/tests
         namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
@@ -131,6 +141,10 @@ portForward:
   resourceName: timeseries-mock-service
   namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
   port: 8088
+- resourceType: service
+  resourceName: loki
+  namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
+  port: 3100
 - resourceType: service
   resourceName: prometheus-operated
   namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
@@ -254,7 +268,7 @@ profiles:
   - name: no-tests
     patches:
       - op: remove
-        path: /deploy/helm/releases/3
+        path: /deploy/helm/releases/4
       - op: remove
         path: /build/artifacts/0
       - op: remove
