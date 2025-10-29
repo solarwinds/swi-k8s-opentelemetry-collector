@@ -20,7 +20,7 @@ jobs:
               env:
                   PR_TITLE: ${{ github.event.pull_request.title }}
               run: |
-                  ISSUE_NUMBER=$(echo "$PR_TITLE" | grep -oE '([[:alpha:]]+-[[:digit:]]+)' || echo "")
+                  ISSUE_NUMBER=$(echo "$PR_TITLE" | grep -oE '^([[:alpha:]]+-[[:digit:]]+)[-_\:/[:space:]]' || echo "")
                   if [ -n "$ISSUE_NUMBER" ]; then
                       echo "::error::Pull Request title must not include an issue number"
                       exit 1
@@ -29,7 +29,7 @@ jobs:
               env:
                   BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
               run: |
-                  ISSUE_NUMBER=$(echo "$BRANCH_NAME" | grep -oE '([[:alpha:]]+-[[:digit:]]+)' || echo "")
+                  ISSUE_NUMBER=$(echo "$BRANCH_NAME" | grep -oE '^([[:alpha:]]+-[[:digit:]]+)[-_\:/[:space:]]' || echo "")
                   if [ -n "$ISSUE_NUMBER" ]; then
                       echo "::error::Branch name must not include an issue number"
                       exit 1
@@ -57,7 +57,7 @@ jobs:
                       # Skip empty lines (e.g., no commits or merge-only ranges)
                       [ -z "$sha" ] && continue
 
-                      if echo "$subject" | grep -qE '([[:alpha:]]+-[[:digit:]]+)'; then
+                      if echo "$subject" | grep -qE '^([[:alpha:]]+-[[:digit:]]+)[-_\:/[:space:]]'; then
                           echo "::error sha=$sha::Commit must not include issue key. Found in: $subject"
                           bad=1
                       fi
