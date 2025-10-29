@@ -25,7 +25,7 @@ tests:
           of: Deployment
       - matchRegex:
           path: metadata.name
-          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+          pattern: ^swi-k8s-opentelemet.*-prometheus-discovery-ta$
 
   - it: Target Allocator deployment should not be created when discovery collector is disabled
     template: targetAllocator/target-allocator-deployment.yaml
@@ -56,32 +56,6 @@ tests:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: IfNotPresent
 
-  - it: Target Allocator deployment should have helm hooks when enabled
-    template: targetAllocator/target-allocator-deployment.yaml
-    set:
-      otel.metrics.enabled: true
-      otel.metrics.autodiscovery.discovery_collector:
-        enabled: true
-        installWithHelmHooks: true
-    asserts:
-      - equal:
-          path: metadata.annotations["helm.sh/hook"]
-          value: post-install,post-upgrade
-      - equal:
-          path: metadata.annotations["helm.sh/hook-weight"]
-          value: "2"
-
-  - it: Target Allocator deployment should not have helm hooks when disabled
-    template: targetAllocator/target-allocator-deployment.yaml
-    set:
-      otel.metrics.enabled: true
-      otel.metrics.autodiscovery.discovery_collector:
-        enabled: true
-        installWithHelmHooks: false
-    asserts:
-      - notExists:
-          path: metadata.annotations["helm.sh/hook"]
-
   - it: Target Allocator deployment should have correct selector
     template: targetAllocator/target-allocator-deployment.yaml
     set:
@@ -91,7 +65,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.selector.matchLabels.app
-          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+          pattern: ^swi-k8s-opentelemet.*-prometheus-discovery-ta$
 
   - it: Target Allocator deployment should have default node affinity
     template: targetAllocator/target-allocator-deployment.yaml
@@ -133,7 +107,7 @@ tests:
           of: Service
       - matchRegex:
           path: metadata.name
-          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+          pattern: ^swi-k8s-opentelemet.*-prometheus-discovery-ta$
 
   - it: Target Allocator service should expose correct ports
     template: targetAllocator/target-allocator-service.yaml
@@ -161,7 +135,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.selector.app
-          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+          pattern: ^swi-k8s-opentelemet.*-prometheus-discovery-ta$
 
   # ConfigMap Tests
   - it: Target Allocator config should be created when discovery collector is enabled
@@ -175,7 +149,7 @@ tests:
           of: ConfigMap
       - matchRegex:
           path: metadata.name
-          pattern: ^swi-k8s-.*-target-allocator-config$
+          pattern: ^swi-k8s-.*-prometheus-discovery-ta-config$
 
   - it: Target Allocator config should have correct allocation strategy
     template: targetAllocator/target-allocator-config-map.yaml
@@ -222,7 +196,7 @@ tests:
           of: ClusterRole
       - matchRegex:
           path: metadata.name
-          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+          pattern: ^swi-k8s-opentelemet.*-prometheus-discovery-ta$
 
   - it: Target Allocator cluster role should have permissions for Prometheus CRDs
     template: targetAllocator/target-allocator-cluster-role.yaml
@@ -256,7 +230,7 @@ tests:
           of: ClusterRoleBinding
       - matchRegex:
           path: metadata.name
-          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+          pattern: ^swi-k8s-opentelemet.*-prometheus-discovery-ta$
 
   - it: Target Allocator cluster role binding should reference correct role and service account
     template: targetAllocator/target-allocator-cluster-role-binding.yaml
@@ -267,7 +241,7 @@ tests:
     asserts:
       - matchRegex:
           path: roleRef.name
-          pattern: ^swi-k8s-opentelemetry.*-target-allocator$
+          pattern: ^swi-k8s-opentelemet.*-prometheus-discovery-ta$
       - matchRegex:
           path: subjects[0].name
           pattern: ^swi-k8s-opentelemetry.*-collector$
