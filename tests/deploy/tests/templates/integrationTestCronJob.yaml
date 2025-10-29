@@ -18,7 +18,12 @@ spec:
           containers:
             - name: integration-test
               image: integration-test
+              imagePullPolicy: IfNotPresent
               env:
                 - name: TIMESERIES_MOCK_ENDPOINT
                   value: {{ printf "timeseries-mock-service.%s.svc.cluster.local:8088" .Release.Namespace | quote }}
+                - name: USE_LOKI
+                  value: "true"
+                - name: LOKI_ENDPOINT
+                  value: http://loki.{{ .Release.Namespace }}.svc.cluster.local:3100
           restartPolicy: Never

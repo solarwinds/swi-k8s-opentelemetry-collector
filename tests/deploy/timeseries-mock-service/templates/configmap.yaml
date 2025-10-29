@@ -29,6 +29,10 @@ data:
         path: /data/entitystateevents.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
         rotation:
+      otlphttp/loki:
+        endpoint: http://loki.{{ .Release.Namespace }}.svc.cluster.local:3100/otlp
+        tls:
+          insecure: true
       prometheus:
         endpoint: "0.0.0.0:8080"
         namespace: output
@@ -57,6 +61,15 @@ data:
         logs:
           log_record:
             - not(IsMatch(instrumentation_scope.attributes["otel.entity.event_as_log"], "true"))
+      transform/entity_index_label:
+        error_mode: ignore
+        log_statements:
+          - context: log
+            statements:
+              - set(resource.attributes["sw.entity.event"], "true")
+              - set(resource.attributes["otel.entity.event.type"], attributes["otel.entity.event.type"])
+              - set(resource.attributes["otel.entity.type"], attributes["otel.entity.type"])
+              - set(resource.attributes["otel.entity_relationship.type"], attributes["otel.entity_relationship.type"])
     receivers:
       otlp:
         protocols:
@@ -76,6 +89,7 @@ data:
         logs/logs:
           exporters:
           - file/logs
+          - otlphttp/loki
           processors:
           - filter/logs
           receivers:
@@ -83,6 +97,7 @@ data:
         logs/events:
           exporters:
           - file/events
+          - otlphttp/loki
           processors:
           - filter/events
           receivers:
@@ -90,6 +105,7 @@ data:
         logs/manifests:
           exporters:
           - file/manifests
+          - otlphttp/loki
           processors:
           - filter/manifests
           receivers:
@@ -97,8 +113,10 @@ data:
         logs/entitystateevents:
           exporters:
           - file/entitystateevents
+          - otlphttp/loki
           processors:
           - filter/entitystateevents
+          - transform/entity_index_label
           receivers:
           - otlp
         traces:
