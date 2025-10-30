@@ -1220,7 +1220,7 @@ operator:
       # Currently only Java and Python supported, other languages are TBD
       java:
         repository: "solarwinds/autoinstrumentation-java"
-        tag: "2.15.0"
+        tag: "3.0.2"
       nodejs:
         repository: ""
         tag: ""
@@ -1320,3 +1320,9 @@ trivy-operator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
 
+# Configuration for migration jobs that handle upgrades between chart versions
+migrations:
+  # Cleanup job for OpenTelemetryCollector CR of discovery collector when migrating from 4.x.x to 5.x.x chart version
+  # In 5.x.x the discovery collector is no longer managed by OpenTelemetryOperator. To avoid conflicts the old CR has to be removed.
+  cleanup_discovery_collector:
+    enabled: true

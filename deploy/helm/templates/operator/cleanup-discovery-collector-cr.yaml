@@ -1,0 +1,51 @@
+{{- if and (.Capabilities.APIVersions.Has "opentelemetry.io/v1beta1") .Values.otel.metrics.autodiscovery.discovery_collector.enabled .Values.migrations.cleanup_discovery_collector.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cleanup-discovery-collector-cr
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ include "common.fullname" . }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      containers:
+        - name: cleanup-discovery-collector-cr
+          image: "{{ include "common.image" (tuple . .Values.waitJobs.operator (tuple "image" "waitjob_operator")) }}"
+          imagePullPolicy: {{ .Values.waitJobs.operator.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Checking for OpenTelemetryCollector CR of discovery-collector: {{ include "common.fullname" (tuple . "-discovery" 41) }}"
+              
+              # Check if the CR exists
+              if kubectl get opentelemetrycollector {{ include "common.fullname" (tuple . "-discovery" 41) }} -n {{ .Release.Namespace }} --ignore-not-found 2>/dev/null | grep -q "{{ include "common.fullname" (tuple . "-discovery" 41) }}"; then
+                echo "Found OpenTelemetryCollector CR of discovery-collector, deleting..."
+                kubectl delete opentelemetrycollector {{ include "common.fullname" (tuple . "-discovery" 41) }} -n {{ .Release.Namespace }} --ignore-not-found --timeout=60s
+                echo "OpenTelemetryCollector CR of discovery-collector deleted successfully"
+              else
+                echo "OpenTelemetryCollector CR of discovery-collector not found, nothing to cleanup"
+              fi
+              
+              echo "Cleanup completed"
+      restartPolicy: Never
+  activeDeadlineSeconds: 120
+  backoffLimit: 3
+{{- end }}

@@ -136,6 +136,17 @@ rules:
       - list
       - watch
 {{- end }}
+{{- if and (.Capabilities.APIVersions.Has "opentelemetry.io/v1beta1") .Values.otel.metrics.autodiscovery.discovery_collector.enabled .Values.migrations.cleanup_discovery_collector.enabled }}
+  # this capability is only for `cleanup-discovery-collector-cr` job to delete the OpenTelemetryCollector CR when upgrading to 5.0.0+
+  - apiGroups:
+      - "opentelemetry.io"
+    resources:
+      - opentelemetrycollectors
+    verbs:
+      - get
+      - list
+      - delete
+{{- end }}
   - nonResourceURLs:
       - /metrics
     verbs:

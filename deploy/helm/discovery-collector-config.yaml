@@ -106,8 +106,8 @@ receivers:
           static_configs:
             - targets: ['0.0.0.0:8888']
     target_allocator:
-      endpoint: http://{{ include "common.fullname" (tuple . "-target-allocator") }}:80
-      interval: 30s
+      endpoint: http://{{ include "common.fullname" (tuple . "-prometheus-discovery-ta") }}:80
+      interval: {{ .Values.otel.metrics.prometheus.scrape_interval }}
       collector_id: "${POD_NAME}"
 
 service:

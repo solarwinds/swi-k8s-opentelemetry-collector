@@ -6,6 +6,11 @@ on:
     # run at 8am every weekday
     - cron: "0 8 * * 1-5"
 
+permissions:
+    contents: write # to update the chart file
+    id-token: write # needed for signing
+    pull-requests: write # needed to create pull-request
+
 jobs:
   bump-helm-deps:
     runs-on: ubuntu-latest
@@ -15,6 +20,6 @@ jobs:
     - uses: sgibson91/bump-helm-deps-action@main
       with:
         chart_path: deploy/helm/Chart.yaml
-        chart_urls: '{"kube-state-metrics": "https://prometheus-community.github.io/helm-charts/index.yaml", "opentelemetry-operator": "https://open-telemetry.github.io/opentelemetry-helm-charts/index.yaml", "cert-manager": "https://charts.jetstack.io/index.yaml"}'
+        chart_urls: '{"kube-state-metrics": "https://prometheus-community.github.io/helm-charts/index.yaml", "opentelemetry-operator": "https://open-telemetry.github.io/opentelemetry-helm-charts/index.yaml", "cert-manager": "https://charts.jetstack.io/index.yaml", "trivy-operator": "https://aquasecurity.github.io/helm-charts/index.yaml"}'
         dry_run: false
         base_branch: master
