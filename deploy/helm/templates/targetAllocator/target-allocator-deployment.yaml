@@ -2,28 +2,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.fullname" (tuple . "-target-allocator") }}
+  name: {{ include "common.fullname" (tuple . "-prometheus-discovery-ta") }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+    app: {{ include "common.fullname" (tuple . "-prometheus-discovery-ta") }}
     {{- include "common.labels" . | nindent 4 }}
   annotations:
     {{- include "common.annotations" . | nindent 4 }}
-{{- if .Values.otel.metrics.autodiscovery.discovery_collector.installWithHelmHooks }}
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "2"
-{{- end }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+      app: {{ include "common.fullname" (tuple . "-prometheus-discovery-ta") }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/targetAllocator/target-allocator-config-map.yaml") . | sha256sum }}
       labels:
-        app: {{ include "common.fullname" (tuple . "-target-allocator") }}
+        app: {{ include "common.fullname" (tuple . "-prometheus-discovery-ta") }}
         {{- include "common.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "common.fullname" .}}
@@ -91,7 +87,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ include "common.fullname" (tuple . "-target-allocator-config") }}
+            name: {{ include "common.fullname" (tuple . "-prometheus-discovery-ta-config") }}
         - name: serviceaccount-token
           projected:
             defaultMode: 0444
