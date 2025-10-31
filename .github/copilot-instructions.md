@@ -1,23 +1,43 @@
-# Project snapshot
-*Name*: SWO K8s Collector
-*Domain*: Kubernetes monitoring and observability  
-*Key technologies*: OpenTelemetry, Helm, Kubernetes, Python, Prometheus, eBPF
+# GitHub Copilot Instructions for SWO K8s Collector
 
-# Directory layout
+## Priority Guidelines
+
+When generating code for this repository:
+
+1. **Context-Driven Patterns**: Derive all code patterns, structure, and conventions strictly from existing code in this repository
+2. **Technology-Specific Files**: Prioritize patterns and standards defined in `.github/instructions/` directory (python.instructions.md, yaml.instructions.md)
+3. **Architectural Consistency**: Maintain the multi-component OpenTelemetry collector architecture with clear separation between MetricsCollector, MetricsDiscovery, EventsCollector, NodeCollector, and Gateway
+4. **Backward Compatibility**: Never remove or rename existing Helm values without deprecation period; maintain compatibility with existing deployments
+5. **Schema Validation**: All Helm value changes must be reflected in `values.schema.json` with proper types and descriptions
+
+## Project Structure
+
+### Core Technologies
+- **OpenTelemetry**: SolarWinds-built OTEL Collector with custom components
+- **Helm**: Chart-based deployment with extensive templating
+- **Kubernetes**: Multi-component architecture (Deployments, StatefulSets, DaemonSets)
+- **Python**: Integration tests and utility scripts
+- **YAML**: Extensive OTEL pipeline configurations
+
+### Directory Layout
 - **deploy/helm/** – Helm chart for deploying the collector
-  - **templates/metrics-deployment.yaml** – MetricsCollector deployment definition
-  - **templates/metrics-discovery-deployment.yaml** – MetricsDiscovery deployment definition
-  - **templates/events-collector-statefulset.yaml** – EventsCollector statefulset definition
-  - **templates/node-collector-daemon-set.yaml** – NodeCollector daemonset definition
-  - **templates/node-collector-daemon-set-windows.yaml** – NodeCollector Windows daemonset definition
-  - **templates/gateway/** – Gateway collector components
-  - **templates/network/** – eBPF network monitoring components
-  - **templates/beyla/** – Beyla eBPF-based auto-instrumentation
-  - **templates/operator/** – OpenTelemetry operator integration
-  - **templates/autoupdate/** – Components for auto-updating configurations
-  - **templates/openshift/** – OpenShift-specific components
+  - **templates/** – Kubernetes resource definitions
+    - **metrics-deployment.yaml** – MetricsCollector deployment definition
+    - **metrics-discovery-deployment.yaml** – MetricsDiscovery deployment definition
+    - **events-collector-statefulset.yaml** – EventsCollector statefulset definition
+    - **node-collector-daemon-set.yaml** – NodeCollector daemonset definition
+    - **node-collector-daemon-set-windows.yaml** – NodeCollector Windows daemonset definition
+    - **gateway/** – Gateway collector components
+    - **network/** – eBPF network monitoring components
+    - **beyla/** – Beyla eBPF-based auto-instrumentation
+    - **operator/** – OpenTelemetry operator integration and DiscoveryCollector
+    - **targetAllocator/** – TargetAllocator deployment for Prometheus CRD discovery
+    - **autoupdate/** – Components for auto-updating configurations
+    - **openshift/** – OpenShift-specific components
+    - **_helpers.tpl**, **_common-config.tpl**, **_common-discovery-config.tpl** – Reusable template helpers
   - **metrics-collector-config.yaml** – MetricsCollector pipeline configuration
   - **metrics-discovery-config.yaml** – MetricsDiscovery pipeline configuration for discovered metrics
+  - **discovery-collector-config.yaml** – DiscoveryCollector pipeline configuration for CRD-based discovery
   - **events-collector-config.yaml** – EventsCollector pipeline configuration
   - **gateway-collector-config.yaml** – Gateway collector pipeline configuration
   - **node-collector-config.yaml** – NodeCollector pipeline configuration
@@ -27,14 +47,15 @@
   - **collectorPipeline.md** – Description of data flow between components
   - **development.md** – Development guide
   - **exported_metrics.md** – List of metrics exported by the collector
-- **tests/integration/** – Integration tests for verifying telemetry collection  
+- **tests/integration/** – Integration tests for verifying telemetry collection
 - **operator/** – OpenTelemetry operator customization
-- **utils/** – Utility scripts for development and testing  
+- **utils/** – Utility scripts for development and testing
 
-# OTEL Collector Pipelines
-The SWO K8s Collector consists of five main components, each with specific pipelines:
+## OTEL Collector Pipelines
 
-## MetricsCollector Deployment
+The SWO K8s Collector consists of multiple components, each with specific pipelines:
+
+### MetricsCollector Deployment
 - **metrics pipeline**: Main pipeline that exports metrics via OTLP
 - **metrics/kubestatemetrics pipeline**: Collects metrics from the Kube State Metrics service
 - **metrics/otlp pipeline**: Receives metrics via OTLP protocol and forwards them to the main metrics pipeline
@@ -42,15 +63,18 @@ The SWO K8s Collector consists of five main components, each with specific pipel
 - **metrics/prometheus-node-metrics pipeline**: Collects node-level metrics in Prometheus format
 - **metrics/prometheus-server pipeline**: Collects metrics from the Prometheus server
 
-## MetricsDiscovery Deployment
+### MetricsDiscovery Deployment
 - **metrics/discovery pipeline**: Discovers and collects metrics from annotated pods (especially in AWS Fargate) using the receiver_creator and k8s_observer
 - **metrics pipeline**: Processes discovered metrics and exports them via OTLP
 
-## EventsCollector Deployment
+### DiscoveryCollector StatefulSet (disabled by default)
+- **metrics pipeline**: Main pipeline that exports metrics via OTLP from Prometheus receiver with target_allocator
+
+### EventsCollector StatefulSet
 - **logs pipeline**: Collects Kubernetes events (pod creations, deletions, etc.) via the k8s_events receiver
 - **logs/manifests pipeline**: Collects Kubernetes object manifests via the k8sobjects receiver
 
-## NodeCollector DaemonSet
+### NodeCollector DaemonSet
 - **logs pipeline**: Main pipeline for logs that exports them via OTLP
 - **logs/container pipeline**: Collects container logs from files using the filelog receiver
 - **logs/journal pipeline**: Collects system logs from journald
@@ -58,20 +82,100 @@ The SWO K8s Collector consists of five main components, each with specific pipel
 - **metrics/discovery pipeline**: Uses receiver_creator to discover and collect metrics from discoverable endpoints
 - **metrics/node pipeline**: Collects metrics specific to the node using receiver_creator
 
-## Gateway Collector Deployment
+### Gateway Collector Deployment
 - **traces pipeline**: Receives traces via OTLP protocol and exports them
 - **metrics pipeline**: Receives metrics via OTLP protocol and exports them
 - **logs pipeline**: Receives logs via OTLP protocol and exports them
 
-# Component configuration
-- OTEL uses SolarWinds built OTEL Collector
-- Use `github` MCP server to access GitHub related content
-- You will find all the components available in this file https://github.com/solarwinds/solarwinds-otel-collector-releases/blob/main/distributions/k8s/manifest.yaml
-    - Location of component configuration can be infered from the `gomod` line
-    - For example if you find `  - gomod: github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector v0.123.7` you will look for configuration settings into `https://github.com/solarwinds/solarwinds-otel-collector-contrib/tree/main/connector/solarwindsentityconnector`. 
-    - You look first into README.md, if that does not contain configuration sample or example you have to look at the code of the component. 
-- Generally the component is referenced in the configuration typically without receiver/exporter/processor/connector suffix (e.g. in configuration use `solarwindsentity` key instead of `solarwindsentityconnector`)
+## Coding Patterns (Observed in Codebase)
 
-# Coding conventions 
-1. Maintain backward compatibility when updating chart configurations.  
-2. Follow JSON schema validation for Helm values through `values.schema.json`.  
+### Helm Template Conventions
+- **Helper Usage**: Always use `{{ include "common.fullname" . }}` for resource names, never hardcode
+- **Image Resolution**: Use `{{ include "common.image" (tuple . .Values.otel "image") }}` pattern
+- **Labels**: Apply `{{ include "common.labels" . | indent 4 }}` consistently
+- **Annotations**: Include `{{ include "common.annotations" . | indent 4 }}` on all resources
+- **Conditionals**: Use `.Values.component.enabled` checks before rendering optional resources
+- **Indentation**: Match template indentation precisely: `{{ toYaml .Values.config | indent 4 }}`
+
+### OTEL Configuration Patterns
+- **Section Order**: Always follow: exporters → extensions → processors → connectors → receivers → service
+- **Pipeline Naming**: Use descriptive type-prefixed names: `metrics/discovery`, `logs/container`, `traces`
+- **Environment Variables**: Reference via `${VAR_NAME}` in configs (e.g., `${OTEL_ENVOY_ADDRESS}`)
+- **Processor Chains**: Group logically: filtering → transformation → attribute manipulation → batching
+- **Filter Naming**: Descriptive suffixes: `filter/receiver`, `filter/remove_internal`, `filter/keep-entity-state-events`
+- **Include Helpers**: Use `{{ include "common-config.filter-remove-internal" . | nindent 2 }}` for reusable processor blocks
+
+### Python Testing Patterns
+- **Naming**: `test_<feature>_<scenario>` for test functions
+- **Setup/Teardown**: Use `setup_function()` and `teardown_function()` for test lifecycle
+- **Assertions**: Clear helper functions like `assert_test_log_found(content)`, `print_failure(content)`
+- **Retry Logic**: `retry_until_ok(url, func, print_failure, timeout=600)` pattern for eventual consistency
+- **Type Hints**: Use typing module: `def get_all_bodies(log_bulk: dict) -> List[str]:`
+- **Docstrings**: PEP 257 style with parameter and return documentation
+
+### YAML Formatting
+- **Indentation**: 2 spaces for YAML, never tabs
+- **Line Length**: Keep under 120 characters
+- **Key Naming**: camelCase for K8s resources, snake_case for OTEL configs
+- **String Quoting**: Quote ambiguous values (versions, special chars)
+- **Multi-line**: Use block scalars (`|`, `|-`) for readability
+
+## Component Configuration Discovery
+
+When working with OTEL components:
+1. Check https://github.com/solarwinds/solarwinds-otel-collector-releases/blob/main/distributions/k8s/manifest.yaml for available components
+2. Find component path from `gomod` line (e.g., `github.com/solarwinds/solarwinds-otel-collector-contrib/connector/solarwindsentityconnector`)
+3. Navigate to component repo, read README.md for configuration
+4. Reference component without suffix in config (use `solarwindsentity:` not `solarwindsentityconnector:`)
+
+## Code Quality Standards
+
+### Maintainability
+- Small focused helper templates (match patterns in `_helpers.tpl`)
+- Reusable configuration blocks in `_common-config.tpl`
+- Clear comments explaining complex OTTL transformations
+- Descriptive processor and pipeline names
+
+### Testing
+- Integration tests in Python verify actual telemetry collection
+- Test against running mock services (`timeseries-mock-service`)
+- Use `kubectl wait` patterns for pod readiness
+- Collect pod logs on failure for debugging
+
+### Documentation
+- Inline comments for non-obvious OTEL transformations
+- Section headers in YAML configs: `# ===== Receivers Configuration =====`
+- Document regex patterns and complex conditionals
+- Update CHANGELOG.md for breaking changes
+
+## Backward Compatibility Requirements
+
+1. **Never Remove Values**: Deprecate old values, maintain support with warnings
+2. **Schema Validation**: Update `values.schema.json` with all value changes
+3. **Feature Flags**: Use `.Values.feature.enabled` for new functionality
+4. **API Versions**: Support multiple K8s API versions when needed
+5. **Default Behavior**: Preserve existing default behaviors unless explicitly changing
+
+## Adding New Code
+
+- **New Processors**: Add to appropriate config file, create reusable helper in `_common-config.tpl` if used multiple times
+- **New Pipelines**: Follow type-prefix naming convention, document in this file's architecture section
+- **New Templates**: Use helper functions, apply standard labels/annotations
+- **New Values**: Add to `values.yaml` with comments, document in `values.schema.json`, maintain backward compatibility
+- **New Tests**: Follow setup/teardown pattern, use retry logic, create assertion helpers
+
+## Patterns to Avoid
+
+- **Hardcoded Names**: Use `{{ include "common.fullname" . }}` always
+- **Version Assumptions**: Detect from values, don't assume specific K8s versions
+- **Deep Template Nesting**: Refactor complex logic to helper templates
+- **Duplicated Config**: Use include statements for repeated processor blocks
+- **Missing Schema**: Every value must be in `values.schema.json`
+
+## When In Doubt
+
+1. Search for similar existing code in the repository
+2. Check `.github/instructions/` for technology-specific guidance
+3. Mirror the style and structure of surrounding code
+4. Prioritize consistency with existing patterns over external best practices
+5. Test against integration test suite to verify behavior  
