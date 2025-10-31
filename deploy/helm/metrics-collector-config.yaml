@@ -901,6 +901,7 @@ processors:
           name == "certmanager_controller_sync_call_count" or
           name == "certmanager_http_acme_client_request_count"
           )
+{{- if .Values.otel.metrics.filter_histograms }}
   filter/histograms:
     metrics:
       metric:
@@ -915,6 +916,7 @@ processors:
             name == "k8s.coredns_dns_response_size_bytes" or 
             name == "k8s.istio_request_duration_milliseconds"
           )'
+{{- end }}
 
 connectors:
   forward/prometheus: {}
@@ -1225,7 +1227,9 @@ service:
         - forward/metric-exporter
       processors:
         - memory_limiter
+{{- if .Values.otel.metrics.filter_histograms }}
         - filter/histograms
+{{- end }}
         - transform/scope
         - batch
       exporters:
