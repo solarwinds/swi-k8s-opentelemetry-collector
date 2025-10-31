@@ -97,10 +97,12 @@ processors:
 
 {{- include "common-config.filter-remove-temporary-metrics" . | nindent 2 }}
 
+{{- if .Values.otel.metrics.filter_histograms }}
   filter/histograms:
     metrics:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds" or name == "k8s.workqueue_queue_duration_seconds")'
+{{- end }}
 
 {{ include "common-discovery-config.processors" . | indent 2 }}
 
@@ -181,7 +183,9 @@ service:
         - forward/metric-exporter
       processors:
         - memory_limiter
+{{- if .Values.otel.metrics.filter_histograms }}
         - filter/histograms
+{{- end }}
         - k8sattributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
