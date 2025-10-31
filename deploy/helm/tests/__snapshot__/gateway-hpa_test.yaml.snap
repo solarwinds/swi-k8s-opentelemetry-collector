@@ -1,0 +1,21 @@
+Gateway collector's HPA spec should match snapshot when using default values on cluster with Metrics Server:
+  1: |
+    maxReplicas: 1
+    metrics:
+      - resource:
+          name: cpu
+          target:
+            averageUtilization: 80
+            type: Utilization
+        type: Resource
+      - resource:
+          name: memory
+          target:
+            averageUtilization: 80
+            type: Utilization
+        type: Resource
+    minReplicas: 1
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: RELEASE-NAME-swo-k8s-collector-gateway
