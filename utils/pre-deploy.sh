@@ -29,7 +29,9 @@ fi
 
 # Patch the CRD to remove finalizers
 echo "Patching the CRD to remove finalizers"
-kubectl patch crd/opentelemetrycollectors.opentelemetry.io -p '{"metadata":{"finalizers":[]}}' --type=merge
+if kubectl get crd opentelemetrycollectors.opentelemetry.io &> /dev/null; then
+    kubectl patch crd/opentelemetrycollectors.opentelemetry.io -p '{"metadata":{"finalizers":[]}}' --type=merge
+fi
 
 # Delete all resources in the specified namespace
 echo "Deleting all resources in the $NAMESPACE namespace"
@@ -48,7 +50,7 @@ kubectl delete networkpolicies --all -n $NAMESPACE
 echo "Deleting all CRDs from monitoring.coreos.com group"
 crds=$(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="monitoring.coreos.com")]}{.metadata.name}{"\n"}{end}')
 if [ -n "$crds" ]; then
-    kubectl delete crd $crds
+    kubectl delete crd $crds --ignore-not-found
 else
     echo "No CRDs found in monitoring.coreos.com group"
 fi
@@ -57,7 +59,7 @@ fi
 echo "Deleting all CRDs from cert-manager.io group"
 crds=$(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="cert-manager.io")]}{.metadata.name}{"\n"}{end}')
 if [ -n "$crds" ]; then
-    kubectl delete crd $crds
+    kubectl delete crd $crds --ignore-not-found
 else
     echo "No CRDs found in cert-manager.io group"
 fi
@@ -66,7 +68,7 @@ fi
 echo "Deleting all CRDs from acme.cert-manager.io group"
 crds=$(kubectl get crd -o jsonpath='{range .items[?(@.spec.group=="acme.cert-manager.io")]}{.metadata.name}{"\n"}{end}')
 if [ -n "$crds" ]; then
-    kubectl delete crd $crds
+    kubectl delete crd $crds --ignore-not-found
 else
     echo "No CRDs found in acme.cert-manager.io group"
 fi
