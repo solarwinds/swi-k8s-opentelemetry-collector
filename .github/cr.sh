@@ -15,19 +15,19 @@ main() {
     RELEASE_NAME=$(yq -e '.name + "-" + .version' deploy/helm/Chart.yaml)
 
     # Check release type 
-    if [[ "$RELEASE_NAME" == *"alpha"* ]]; then
-        echo "Handling alpha release: $RELEASE_NAME"
-        PREVIOUS_TAG=$(git tag --sort=version:refname | grep alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
-        PRE_RELEASE_CMD="--prerelease  --latest=false"
-        RELEASE="alpha"
+    if [[ "$RELEASE_NAME" =~ (^|[^a-zA-Z])(alpha|beta|rc)([^a-zA-Z]|$) ]]; then
+        echo "Handling pre-release: $RELEASE_NAME"
+        PREVIOUS_TAG=$(git tag --sort=version:refname | grep -E "(alpha|beta|rc)" | grep -B1 "^swo-k8s-collector" | tail -n 1)
+        GH_RELEASE_PARAMS="--prerelease --latest=false"
+        ADD_ANNOTATION_PARAMS=""
     else
         echo "Handling standard release: $RELEASE_NAME"
-        PREVIOUS_TAG=$(git tag --sort=version:refname | grep -v alpha | grep -B1 "^swo-k8s-collector" | tail -n 1)
+        PREVIOUS_TAG=$(git tag --sort=version:refname | grep -vE "(alpha|beta|rc)" | grep -B1 "^swo-k8s-collector" | tail -n 1)
         PRE_RELEASE_CMD=""
-        RELEASE="official"
+        ADD_ANNOTATION_PARAMS="official"
     fi
     
-    .github/add_annotation.sh deploy/helm/Chart.yaml $RELEASE
+    .github/add_annotation.sh deploy/helm/Chart.yaml $ADD_ANNOTATION_PARAMS
 
     echo "Packaging chart ..."
     cr package "deploy/helm"
@@ -41,7 +41,7 @@ main() {
     echo "Release name: $RELEASE_NAME"
     echo "Release file: $RELEASE_FILE"
     echo "Previous tag: $PREVIOUS_TAG"
-    echo "Prerelease opt:  $PRE_RELEASE_CMD"
+    echo "Prerelease opt:  $GH_RELEASE_PARAMS"
     echo "****************************************"
     echo ""
     echo ""
@@ -49,7 +49,7 @@ main() {
     echo 'Releasing chart...'
     gh release create $RELEASE_NAME \
       --title $RELEASE_NAME \
-      $PRE_RELEASE_CMD \
+      $GH_RELEASE_PARAMS \
       --title $RELEASE_NAME \
       --notes-start-tag $PREVIOUS_TAG \
       --generate-notes \
