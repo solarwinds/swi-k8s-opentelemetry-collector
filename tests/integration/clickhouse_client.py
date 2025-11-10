@@ -312,7 +312,7 @@ class ClickHouseClient:
         
         # Build datapoint based on metric type
         datapoint = {
-            'timeUnixNano': str(int(row['TimeUnix'] * 1e9)),
+            'timeUnixNano': str(self._parse_clickhouse_timestamp(row['TimeUnix'])),
             'attributes': metric_attrs
         }
         
