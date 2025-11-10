@@ -67,7 +67,7 @@ main() {
 }
 
 install_chart_releaser() {
-    local version="v1.6.0"
+    local version="v1.8.1"
     local install_dir="$RUNNER_TOOL_CACHE/cr/$version/$(uname -m)"
     if [[ ! -d "$install_dir" ]]; then
         mkdir -p "$install_dir"
