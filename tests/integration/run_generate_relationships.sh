@@ -28,7 +28,7 @@ if ! python3 -c "import clickhouse_connect" 2>/dev/null; then
     echo "clickhouse-connect is not installed."
     echo
     echo "Install it with:"
-    echo "  pip3 install --user -r requirements-relationships.txt"
+    echo "  pip3 install --user -r requirements.txt"
     echo
     echo "Or:"
     echo "  pip3 install --user clickhouse-connect"
