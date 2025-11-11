@@ -119,27 +119,31 @@ Possible issues:
   ```
 
 ### How can you analyze exported telemetry
+When running `skaffold dev`, telemetry data is exported to mock endpoints and stored in ClickHouse for analysis.
 
-#### Metrics
+#### Via ClickHouse
 
-- You can look at `http://localhost:8088/metrics.json` (each line is JSON as bulk sent by OTEL collector)
-- You can also look at local Prometheus which collects all the outputs with metric names prefixed with `output_` at `http://localhost:8080`
+For structured queries of collected telemetry:
 
-#### Logs
+- Open the ClickHouse web UI at `http://localhost:8123/play` for manual SQL queries
+- Use the `/query-clickhouse` Copilot prompt for natural language queries (e.g., `/query-clickhouse show me what relationship state event types were ingested`)
 
-You can look at `http://localhost:8088/logs.json` (each line is JSON as bulk sent by OTEL collector)
+#### Via HTTP endpoints (opt-in feature)
+Enable using `export-telemetry-to-files` skaffold profile: `skaffold dev -p export-telemetry-to-files`
 
-#### Events
+Access the mock service endpoints to view raw JSON exports:
 
-You can look at `http://localhost:8088/events.json` (each line is JSON as bulk sent by OTEL collector)
+- **Metrics**: `http://localhost:8088/metrics.json`
+- **Logs**: `http://localhost:8088/logs.json`
+- **Events**: `http://localhost:8088/events.json`
+- **Manifests**: `http://localhost:8088/manifests.json`
+- **Entity State Events**: `http://localhost:8088/entitystateevents.json`
 
-#### Manifests
+Each line in the JSON files represents a bulk payload sent by the OTEL collector.
 
-You can look at `http://localhost:8088/manifests.json` (each line is JSON as bulk sent by OTEL collector)
+#### Via Prometheus
 
-#### Entity State events
-
-You can look at `http://localhost:8088/entitystateevents.json` (each line is JSON as bulk sent by OTEL collector).
+For metrics specifically, you can view aggregated outputs in the local Prometheus instance at `http://localhost:8080`. All exported metrics appear with the `output_` prefix.
 
 ## Rebuild `solarwinds otel collector` from sources
 To run the collector in a local environment with `solarwinds otel collector` image build from sources, execute:
