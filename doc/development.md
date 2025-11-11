@@ -242,6 +242,25 @@ Deploy cluster locally using `skaffold dev`
 * Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
 * You can run it directly in cluster by manually triggering `integration-test` CronJob
 
+### Generating expected test data
+
+When entity state events or relationships change, you can regenerate the expected JSON files using:
+
+```shell
+cd tests/integration
+./run_generate_relationships.sh
+```
+
+This script:
+- Connects to ClickHouse (via Skaffold port-forward)
+- Automatically discovers all entity and relationship types
+- Generates filtered JSON files in `expected_entitystateevents/`
+- Filters out runtime-generated hashes and non-test entities
+
+Prerequisites:
+- Skaffold must be running (`skaffold dev`)
+- Install dependencies: `pip install -r tests/integration/requirements.txt`
+
 ### Updating utils used for testing
 
 Whenever there is a need to improve the test tooling, eg. the script for scraping test data from a Prometheus (`utils/cleanup_mocked_prometheus_response.py`), or data comparison code, or versions or Python packages, ..., it should always happen in a separate PR. Do not mix changes to the test framework with changes to the k8s collector itself. Otherwise a change to the testing framework might hide an unintentional change to the collector code.
