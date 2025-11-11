@@ -223,9 +223,12 @@ To enable code completion when writing new tests, install a VS Code extension pr
 
 ## Integration tests
 Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome. 
-
 ### Timeseries Mock Storage
-Important part of integration test is storage of telemetry data in ClickHouse. It is deployed as part of `skaffold dev`. In order to manually look at the data stored in the Clickhouse use Copilot Prompt `/query-clickhouse` (e.g. `/query-clickhouse show me what relationship state event types were ingested`). 
+Important part of integration test is storage of telemetry data in ClickHouse. It is deployed as part of `skaffold dev`. 
+
+To query the stored data:
+* Use the ClickHouse web UI at `http://localhost:8123/play` for manual SQL queries
+* Use Copilot Prompt `/query-clickhouse` for natural language queries (e.g. `/query-clickhouse show me what relationship state event types were ingested`) 
 
 ### Prerequisites
 Deploy cluster locally using `skaffold dev`
