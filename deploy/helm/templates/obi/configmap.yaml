@@ -19,15 +19,11 @@ data:
       endpoint: http://swo-gateway:{{ .Values.otel.gateway.otlp_endpoint.port }}
       protocol: grpc
       interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-      features: ["application", "application_process", "application_service_graph", "network"]
+      features: ["application", "application_service_graph", "network"]
     {{- end }}
     {{- if not .Values.network_topology.config.ebpf }}
     ebpf:
       context_propagation: all
-    {{- end }}
-    {{- if not .Values.network_topology.config.process }}
-    process:
-      enabled: true
     {{- end }}
     {{- if not .Values.network_topology.config.network }}
     network:
