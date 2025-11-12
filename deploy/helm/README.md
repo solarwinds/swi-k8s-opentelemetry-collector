@@ -49,7 +49,7 @@ subgraph Kubernetes
         Reducer["eBPF Network - Reducer"]:::deployment
         K8sCollector["eBPF Network - K8s Collector"]:::deployment
         KernelCollector["eBPF Network - Kernel Collector"]:::daemonset
-        Beyla["Beyla"]:::daemonset
+        OBI["OpenTelemetry eBPF Instrumentation"]:::daemonset
         Gateway["OTLP Gateway"]:::deployment
 
         NodeCollector["Node Collector"]:::daemonset
@@ -87,7 +87,7 @@ KubeStateMetrics --> KubeAPI
 
 %% Gateway connections
 Reducer --> |"ingest"| Gateway
-Beyla --> |"ingest"| Gateway
+OBI --> |"ingest"| Gateway
 Gateway --> |"ingest"| SWO_Interface
 
 MetricsCollector --> |"scrape"| KubeStateMetrics

@@ -78,7 +78,7 @@ By default it will deploy `SWO K8s Collector` with features that are enabled by 
 
 Example:
 ```
-skaffold dev -p operator,beyla
+skaffold dev -p operator,obi
 ```
 
 Read more about profiles [here](https://skaffold.dev/docs/environment/profiles/)
