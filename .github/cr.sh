@@ -19,7 +19,7 @@ main() {
         echo "Handling pre-release: $RELEASE_NAME"
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep -E "(alpha|beta|rc)" | grep -B1 "^swo-k8s-collector" | tail -n 1)
         GH_RELEASE_PARAMS="--prerelease --latest=false"
-        ADD_ANNOTATION_PARAMS=""
+        ADD_ANNOTATION_PARAMS="prerelease"
     else
         echo "Handling standard release: $RELEASE_NAME"
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep -vE "(alpha|beta|rc)" | grep -B1 "^swo-k8s-collector" | tail -n 1)
