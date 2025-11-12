@@ -54,6 +54,8 @@ exporters:
       storage: file_storage/sending_queue
 {{- end }}
     timeout: {{ .Values.otel.events.timeout }}
+  debug:
+    verbosity: detailed
 
 extensions:
 {{- if .Values.otel.events.sending_queue.offload_to_disk }}
@@ -734,6 +736,7 @@ service:
         - batch
       exporters:
         - otlp
+        - debug
 
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
     logs/manifests-keepalive:
@@ -767,6 +770,7 @@ service:
         - batch
       exporters:
         - otlp
+        # - debug
 {{- end }}
 
   telemetry:
