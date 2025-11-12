@@ -306,6 +306,10 @@ class DockerImageUpdater:
                 base_version, beta_part = old_version.split('-beta.', 1)
                 if beta_part.isdigit():
                     return f"{base_version}-beta.{int(beta_part) + 1}"
+            elif '-rc.' in old_version:
+                base_version, rc_part = old_version.split('-rc.', 1)
+                if rc_part.isdigit():
+                    return f"{base_version}-rc.{int(rc_part) + 1}"
             
             # Handle standard semantic versions
             version_parts = old_version.split('.')
