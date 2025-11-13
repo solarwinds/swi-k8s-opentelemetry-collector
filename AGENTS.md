@@ -13,13 +13,13 @@ skaffold dev
 
 2. Adjust behaviour with Skaffold profiles. Common combinations:
    - `operator`: install cert-manager, OTEL operator, and discovery collectors.
-   - `auto-instrumentation`: enable Beyla auto-instrumentation (requires `operator`).
+   - `auto-instrumentation`: enable OBI auto-instrumentation (requires `operator`).
    - `no-logs`, `no-metrics`, `no-events`, `no-prometheus`: exclude individual subsystems.
    - `swo`: forward data to SolarWinds Observability. Requires
      `SOLARWINDS_OTEL_ENDPOINT` and `SOLARWINDS_API_TOKEN` in environment or `skaffold.env`.
 
 ```bash
-skaffold dev -p operator,beyla
+skaffold dev -p operator,obi
 ```
 
 3. To redeploy quickly after manifest or values changes, interrupt Skaffold and rerun the
