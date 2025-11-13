@@ -2,10 +2,16 @@ from prometheus_client import Gauge, Metric
 import pytest
 import os
 import json
-from test_utils import retry_until_ok, get_merged_json, datapoint_value, parse_value
+from test_utils import retry_until_ok, retry_until_ok_clickhouse, get_merged_json, get_merged_json_from_clickhouse, datapoint_value, parse_value
 from prometheus_client.parser import text_string_to_metric_families
+from clickhouse_client import ClickHouseClient
 import difflib
 
+# ClickHouse configuration
+clickhouse_endpoint = os.getenv("CLICKHOUSE_ENDPOINT", "localhost:8123")
+clickhouse_client = ClickHouseClient(clickhouse_endpoint)
+
+# Legacy endpoint configuration (kept for compatibility)
 endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
 ci = os.getenv("CI", "")
 url = f'http://{endpoint}/metrics.json'
@@ -21,9 +27,11 @@ def test_expected_metric_names_are_generated():
     with open(os.path.join(os.path.dirname(__file__), 'expected_metric_names.txt'), "r", newline='\n') as file_with_expected_metric_names:
         expected_metric_names = file_with_expected_metric_names.read().splitlines()
 
-    retry_until_ok(url, 
-                   lambda content: assert_metric_names_found(content, expected_metric_names),
-                   lambda content: print_failure_metric_names(content, expected_metric_names))
+    retry_until_ok_clickhouse(
+        lambda: clickhouse_client.get_metrics_otlp(),
+        lambda metrics_list: assert_metric_names_found(metrics_list, expected_metric_names),
+        lambda metrics_list: print_failure_metric_names(metrics_list, expected_metric_names)
+    )
     
 test_cases = [
 ]
@@ -49,14 +57,19 @@ def test_expected_otel_message_content_is_generated(file_name):
     metric_names = [item['name'] for item in metrics]
     print("Checking metrics {} with resource attributes {}".format(metric_names, resource_attributes))
 
-    retry_until_ok(url, 
-                   lambda content: assert_test_contain_expected_datapoints(content, metrics, resource_attributes),
-                   print_failure_otel_content,
-                   timeout=120)
+    retry_until_ok_clickhouse(
+        lambda: clickhouse_client.get_metrics_otlp(),
+        lambda metrics_list: assert_test_contain_expected_datapoints(metrics_list, metrics, resource_attributes),
+        print_failure_otel_content,
+        timeout=120
+    )
 
 def test_no_metric_datapoints_for_internal_containers():
-    retry_until_ok(url, assert_test_no_metric_datapoints_for_internal_containers,
-                   print_failure_internal_containers)
+    retry_until_ok_clickhouse(
+        lambda: clickhouse_client.get_metrics_otlp(),
+        assert_test_no_metric_datapoints_for_internal_containers,
+        print_failure_internal_containers
+    )
 
 def assert_test_original_metrics(otelContent):     
     merged_json = get_merged_json(otelContent)
@@ -135,8 +148,8 @@ def assert_prometheus_metrics(metricsContent, metrics):
     
     return (ok, error)
 
-def assert_metric_names_found(content, expected_metric_names):
-    merged_json = get_merged_json(content)
+def assert_metric_names_found(metrics_list, expected_metric_names):
+    merged_json = get_merged_json_from_clickhouse(metrics_list)
 
     metric_names = get_unique_metric_names(merged_json)
     if len(metric_names) == 0:
@@ -161,12 +174,12 @@ Missing metrics: {missing_metric_names}'
 
     return (metric_matches, error)
 
-def print_failure_metric_names(content, expected_metric_names):
+def print_failure_metric_names(metrics_list, expected_metric_names):
     print(f'Failed to find some of expected metric names')
     print(expected_metric_names)
 
-def assert_test_contain_expected_datapoints(content, metrics, resource_attributes):
-    merged_json = get_merged_json(content)
+def assert_test_contain_expected_datapoints(metrics_list, metrics, resource_attributes):
+    merged_json = get_merged_json_from_clickhouse(metrics_list)
 
     for metric_in_test_case in metrics:
         test_case_passed = False
@@ -252,7 +265,7 @@ def assert_test_contain_expected_datapoints(content, metrics, resource_attribute
 
     return (True, '')
 
-def print_failure_otel_content(content):
+def print_failure_otel_content(metrics_list):
     print(f'Failed to find some metrics in some resource groups')
 
 def get_unique_metric_names(merged_json):
@@ -264,8 +277,8 @@ def get_unique_metric_names(merged_json):
     return result
 
 
-def assert_test_no_metric_datapoints_for_internal_containers(content):
-    merged_json = get_merged_json(content)
+def assert_test_no_metric_datapoints_for_internal_containers(metrics_list):
+    merged_json = get_merged_json_from_clickhouse(metrics_list)
 
     container_names = get_unique_container_names(merged_json)
     if "POD" in container_names:        
@@ -274,7 +287,7 @@ def assert_test_no_metric_datapoints_for_internal_containers(content):
         return (True, '')
 
 
-def print_failure_internal_containers(content):
+def print_failure_internal_containers(metrics_list):
     print(f'Failed to find some of internal pod containers')
 
 def get_unique_container_names(merged_json):

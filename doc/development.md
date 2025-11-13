@@ -75,6 +75,7 @@ By default it will deploy `SWO K8s Collector` with features that are enabled by 
   - `SOLARWINDS_API_TOKEN` - SWO ingestion API token
 - `build-collector` - see [Rebuild `solarwinds otel collector` from sources](#rebuild-solarwinds-otel-collector-from-sources)
 - `push` - push built images to remote docker registry (see [Image Repository Handling](https://skaffold.dev/docs/environment/image-registries/))
+- `export-telemetry-to-files` - export in timeseries-mock to legacy raw file format hosted by nginx 
 
 Example:
 ```
@@ -118,27 +119,31 @@ Possible issues:
   ```
 
 ### How can you analyze exported telemetry
+When running `skaffold dev`, telemetry data is exported to mock endpoints and stored in ClickHouse for analysis.
 
-#### Metrics
+#### Via ClickHouse
 
-- You can look at `http://localhost:8088/metrics.json` (each line is JSON as bulk sent by OTEL collector)
-- You can also look at local Prometheus which collects all the outputs with metric names prefixed with `output_` at `http://localhost:8080`
+For structured queries of collected telemetry:
 
-#### Logs
+- Open the ClickHouse web UI at `http://localhost:8123/play` for manual SQL queries
+- Use the `/query-clickhouse` Copilot prompt for natural language queries (e.g., `/query-clickhouse show me what relationship state event types were ingested`)
 
-You can look at `http://localhost:8088/logs.json` (each line is JSON as bulk sent by OTEL collector)
+#### Via HTTP endpoints (opt-in feature)
+Enable using `export-telemetry-to-files` skaffold profile: `skaffold dev -p export-telemetry-to-files`
 
-#### Events
+Access the mock service endpoints to view raw JSON exports:
 
-You can look at `http://localhost:8088/events.json` (each line is JSON as bulk sent by OTEL collector)
+- **Metrics**: `http://localhost:8088/metrics.json`
+- **Logs**: `http://localhost:8088/logs.json`
+- **Events**: `http://localhost:8088/events.json`
+- **Manifests**: `http://localhost:8088/manifests.json`
+- **Entity State Events**: `http://localhost:8088/entitystateevents.json`
 
-#### Manifests
+Each line in the JSON files represents a bulk payload sent by the OTEL collector.
 
-You can look at `http://localhost:8088/manifests.json` (each line is JSON as bulk sent by OTEL collector)
+#### Via Prometheus
 
-#### Entity State events
-
-You can look at `http://localhost:8088/entitystateevents.json` (each line is JSON as bulk sent by OTEL collector).
+For metrics specifically, you can view aggregated outputs in the local Prometheus instance at `http://localhost:8080`. All exported metrics appear with the `output_` prefix.
 
 ## Rebuild `solarwinds otel collector` from sources
 To run the collector in a local environment with `solarwinds otel collector` image build from sources, execute:
@@ -221,14 +226,40 @@ helm unittest -u deploy/helm
 To enable code completion when writing new tests, install a VS Code extension providing a YAML Language server, like `redhat.vscode-yaml`.
 
 ## Integration tests
-Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome.
+Integration tests are located in `tests/integration` and are supposed to verify if metric processing is delivering expected outcome. 
+### Timeseries Mock Storage
+Important part of integration test is storage of telemetry data in ClickHouse. It is deployed as part of `skaffold dev`. 
+
+To query the stored data:
+* Use the ClickHouse web UI at `http://localhost:8123/play` for manual SQL queries
+* Use Copilot Prompt `/query-clickhouse` for natural language queries (e.g. `/query-clickhouse show me what relationship state event types were ingested`) 
 
 ### Prerequisites
 Deploy cluster locally using `skaffold dev`
+
 ### Run tests locally
 * Install all dependencies: `pip install --user -r tests/integration/requirements.txt` 
 * Can be run in Visual Studio Code by opening individual tests and run `Python: Pytest` debug configuration
 * You can run it directly in cluster by manually triggering `integration-test` CronJob
+
+### Generating expected test data
+
+When entity state events or relationships change, you can regenerate the expected JSON files using:
+
+```shell
+cd tests/integration
+./run_generate_relationships.sh
+```
+
+This script:
+- Connects to ClickHouse (via Skaffold port-forward)
+- Automatically discovers all entity and relationship types
+- Generates filtered JSON files in `expected_entitystateevents/`
+- Filters out runtime-generated hashes and non-test entities
+
+Prerequisites:
+- Skaffold must be running (`skaffold dev`)
+- Install dependencies: `pip install -r tests/integration/requirements.txt`
 
 ### Updating utils used for testing
 
