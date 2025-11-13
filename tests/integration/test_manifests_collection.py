@@ -1,10 +1,11 @@
 import pytest
 import os
 import json
-from test_utils import get_all_bodies_for_all_sent_content, get_all_resources_for_all_sent_content, has_attribute_with_key_and_value, retry_until_ok, run_shell_command
+from test_utils import get_all_bodies_for_clickhouse_logs, get_all_resources_for_clickhouse_logs, has_attribute_with_key_and_value, retry_until_ok_clickhouse, run_shell_command
+from clickhouse_client import ClickHouseClient
 
-endpoint = os.getenv("TIMESERIES_MOCK_ENDPOINT", "localhost:8088")
-url = f'http://{endpoint}/manifests.json'
+clickhouse_endpoint = os.getenv("CLICKHOUSE_ENDPOINT", "localhost:8123")
+clickhouse_client = ClickHouseClient(clickhouse_endpoint)
 pod_name = 'dummy-pod'
 namespace_name = 'default'
 label_key = 'test-label'
@@ -22,37 +23,47 @@ def teardown_function():
 
 
 def test_manifests_generated():
-    retry_until_ok(url, assert_test_manifest_found, print_failure)
+    retry_until_ok_clickhouse(
+        lambda: clickhouse_client.get_logs(),
+        assert_test_manifest_found,
+        print_failure
+    )
 
 
 def test_manifests_have_labels_and_annotations():
-    retry_until_ok(url, assert_test_manifest_label_and_annotation_found,
-                   print_labels_and_annotations_failure)
+    retry_until_ok_clickhouse(
+        lambda: clickhouse_client.get_logs(),
+        assert_test_manifest_label_and_annotation_found,
+        print_labels_and_annotations_failure
+    )
 
 
 def test_manifests_have_labels_and_annotations_unchanged():
-    retry_until_ok(url, assert_test_manifest_label_and_annotation_unchanged,
-                   print_labels_and_annotations_unchanged_failure)
+    retry_until_ok_clickhouse(
+        lambda: clickhouse_client.get_logs(),
+        assert_test_manifest_label_and_annotation_unchanged,
+        print_labels_and_annotations_unchanged_failure
+    )
 
 
-def assert_test_manifest_found(content):
-    raw_bodies = get_all_bodies_for_all_sent_content(content)
+def assert_test_manifest_found(logs_list):
+    raw_bodies = get_all_bodies_for_clickhouse_logs(logs_list)
     for inner_list in raw_bodies:
         for manifest in inner_list:
             if is_correct_manifest(manifest, 'Pod', pod_name, namespace_name):
                 return True
 
 
-def print_failure(content):
-    raw_bodies = get_all_bodies_for_all_sent_content(content)
+def print_failure(logs_list):
+    raw_bodies = get_all_bodies_for_clickhouse_logs(logs_list)
     print(
         f'Failed to find manifest for Pod {pod_name} in Namespace {namespace_name}')
     print('Sent manifests:')
     print(raw_bodies)
 
 
-def assert_test_manifest_label_and_annotation_found(content):
-    resources = get_all_resources_for_all_sent_content(content)
+def assert_test_manifest_label_and_annotation_found(logs_list):
+    resources = get_all_resources_for_clickhouse_logs(logs_list)
     resource = find_resource_with_specific_manifest(
         resources, 'Pod', pod_name, namespace_name)
     print(resource)
@@ -65,16 +76,16 @@ def assert_test_manifest_label_and_annotation_found(content):
         return False
 
 
-def print_labels_and_annotations_failure(content):
-    raw_bodies = get_all_resources_for_all_sent_content(content)
+def print_labels_and_annotations_failure(logs_list):
+    raw_bodies = get_all_resources_for_clickhouse_logs(logs_list)
     print(
         f'Failed to find resource for Pod {pod_name} in Namespace {namespace_name} with correct labels and annotations')
     print('Sent resources:')
     print(raw_bodies)
 
 
-def assert_test_manifest_label_and_annotation_unchanged(content):
-    raw_bodies = get_all_bodies_for_all_sent_content(content)
+def assert_test_manifest_label_and_annotation_unchanged(logs_list):
+    raw_bodies = get_all_bodies_for_clickhouse_logs(logs_list)
     for inner_list in raw_bodies:
         for raw_manifest in inner_list:
             if is_correct_manifest(raw_manifest, 'Pod', pod_name, namespace_name):
@@ -85,8 +96,8 @@ def assert_test_manifest_label_and_annotation_unchanged(content):
     return False
 
 
-def print_labels_and_annotations_unchanged_failure(content):
-    raw_bodies = get_all_bodies_for_all_sent_content(content)
+def print_labels_and_annotations_unchanged_failure(logs_list):
+    raw_bodies = get_all_bodies_for_clickhouse_logs(logs_list)
     print(
         f'Failed to find correct labels and annotations in manifest for Pod {pod_name} in Namespace {namespace_name}')
     print('Sent manifests:')
@@ -110,3 +121,4 @@ def find_resource_with_specific_manifest(raw_resources, kind: str, name: str, na
 def is_correct_manifest(raw_manifest, kind: str, name: str, namespace: str) -> bool:
     parsed_manifest = json.loads(raw_manifest)
     return parsed_manifest['kind'] == kind and parsed_manifest['metadata']['name'] == name and parsed_manifest['metadata']['namespace'] == namespace
+

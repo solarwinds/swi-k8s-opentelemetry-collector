@@ -1,6 +1,7 @@
 FROM python:3.13-alpine3.19
 
-RUN apk add --update --no-cache curl ca-certificates bash
+# gcc musl-dev python3-dev are needed for `clickhouse-connect` python package
+RUN apk add --update --no-cache curl ca-certificates bash gcc musl-dev python3-dev
 
 ARG KUBECTL_VERSION=1.25.2
 # Install kubectl (same version of aws esk)

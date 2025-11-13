@@ -5,6 +5,39 @@ metadata:
 data:
   relay: |
     exporters:
+{{- if .Values.clickhouse.enabled }}
+      clickhouse:
+        endpoint: tcp://clickhouse:9000?dial_timeout=10s
+        database: otel
+        async_insert: true
+        ttl: 5m  # 5 minute retention for dev environment
+        compress: lz4
+        create_schema: true
+        logs_table_name: otel_logs
+        traces_table_name: otel_traces
+        timeout: 10s
+        sending_queue:
+          enabled: true
+          num_consumers: 10
+          queue_size: 1000
+        metrics_tables:
+          gauge: 
+            name: "otel_metrics_gauge"
+          sum: 
+            name: "otel_metrics_sum"
+          summary: 
+            name: "otel_metrics_summary"
+          histogram: 
+            name: "otel_metrics_histogram"
+          exponential_histogram: 
+            name: "otel_metrics_exp_histogram"
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+{{- end }}
+{{- if .Values.fileProvider.enabled }}
       file/logs:
         path: /data/logs.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
@@ -29,6 +62,7 @@ data:
         path: /data/entitystateevents.json
         # empty rotation - workaround for https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/18251
         rotation:
+{{- end }}
       prometheus:
         endpoint: "0.0.0.0:8080"
         namespace: output
@@ -68,42 +102,72 @@ data:
       pipelines:
         metrics:
           exporters:
+{{- if .Values.fileProvider.enabled }}
           - file/metrics
+{{- end }}
           - prometheus
+{{- if .Values.clickhouse.enabled }}
+          - clickhouse
+{{- end }}
           processors:
           receivers:
           - otlp
         logs/logs:
           exporters:
+{{- if .Values.fileProvider.enabled }}
           - file/logs
+{{- end }}
+{{- if .Values.clickhouse.enabled }}
+          - clickhouse
+{{- end }}
           processors:
           - filter/logs
           receivers:
           - otlp
         logs/events:
           exporters:
+{{- if .Values.fileProvider.enabled }}
           - file/events
+{{- end }}
+{{- if .Values.clickhouse.enabled }}
+          - clickhouse
+{{- end }}
           processors:
           - filter/events
           receivers:
           - otlp
         logs/manifests:
           exporters:
+{{- if .Values.fileProvider.enabled }}
           - file/manifests
+{{- end }}
+{{- if .Values.clickhouse.enabled }}
+          - clickhouse
+{{- end }}
           processors:
           - filter/manifests
           receivers:
           - otlp
         logs/entitystateevents:
           exporters:
+{{- if .Values.fileProvider.enabled }}
           - file/entitystateevents
+{{- end }}
+{{- if .Values.clickhouse.enabled }}
+          - clickhouse
+{{- end }}
           processors:
           - filter/entitystateevents
           receivers:
           - otlp
         traces:
           exporters:
+{{- if .Values.fileProvider.enabled }}
           - file/traces
+{{- end }}
+{{- if .Values.clickhouse.enabled }}
+          - clickhouse
+{{- end }}
           processors:
           receivers:
           - otlp

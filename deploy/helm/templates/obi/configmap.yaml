@@ -35,6 +35,8 @@ data:
         - k8s_namespace: "*"
       exclude_instrument:
         - exe_path: "{*otelcol*|*obi*}"
+        - k8s_pod_annotations:
+            sw.ebpf.instrumentation/exclude: "true"
     {{- end }}
     {{- if not .Values.network_topology.config.log_level }}
     log_level: info

@@ -1,0 +1,93 @@
+{{- if .Values.clickhouse.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-config
+data:
+  storage.xml: |
+    <clickhouse>
+      <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
+      <logger>
+        <level>information</level>
+        <console>true</console>
+      </logger>
+
+      <!-- Background work controls -->
+      <background_pool_size>16</background_pool_size>
+      <background_merges_mutations_concurrency_ratio>2.0</background_merges_mutations_concurrency_ratio>
+      
+      <!-- Merge settings to reduce memory pressure -->
+      <merge_max_block_size>8192</merge_max_block_size>
+      <max_bytes_to_merge_at_max_space_in_pool>536870912</max_bytes_to_merge_at_max_space_in_pool>  <!-- 512Mi -->
+      
+      <!-- Parts lifecycle for automatic cleanup (5 minute retention) -->
+      <merge_tree>
+        <ttl_only_drop_parts>1</ttl_only_drop_parts>
+        <parts_to_throw_insert>150</parts_to_throw_insert>
+        <parts_to_delay_insert>100</parts_to_delay_insert>
+      </merge_tree>
+    </clickhouse>
+
+  limits.xml: |
+    <clickhouse>
+      <profiles>
+        <default>
+          <!-- Per-query memory limit (increased for 3Gi total) -->
+          <max_memory_usage>1073741824</max_memory_usage>  <!-- 1Gi per query -->
+
+          <!-- Enable spill to disk for large operations -->
+          <max_bytes_before_external_group_by>536870912</max_bytes_before_external_group_by>  <!-- 512Mi -->
+          <max_bytes_before_external_sort>536870912</max_bytes_before_external_sort>          <!-- 512Mi -->
+
+          <!-- Query optimization -->
+          <enable_http_compression>true</enable_http_compression>
+          <max_threads>4</max_threads>
+          <max_insert_threads>4</max_insert_threads>
+          
+          <!-- Reduce memory for dictionaries and caches -->
+          <max_bytes_in_distinct>268435456</max_bytes_in_distinct>  <!-- 256Mi -->
+          <max_bytes_in_set>268435456</max_bytes_in_set>            <!-- 256Mi -->
+          <max_bytes_in_join>268435456</max_bytes_in_join>          <!-- 256Mi -->
+          
+          <!-- INSERT optimization to reduce memory spikes -->
+          <max_insert_block_size>262144</max_insert_block_size>     <!-- Smaller blocks -->
+          <min_insert_block_size_rows>65536</min_insert_block_size_rows>
+          <min_insert_block_size_bytes>16777216</min_insert_block_size_bytes>  <!-- 16Mi -->
+
+          <allow_experimental_object_type>1</allow_experimental_object_type>
+        </default>
+      </profiles>
+
+      <users>
+        <default>
+          <profile>default</profile>
+          <networks>
+            <ip>::/0</ip>
+          </networks>
+          <password></password>
+          <quota>default</quota>
+        </default>
+      </users>
+
+      <quotas>
+        <default>
+          <interval>
+            <duration>3600</duration>
+            <queries>0</queries>
+            <errors>0</errors>
+            <result_rows>0</result_rows>
+            <read_rows>0</read_rows>
+            <execution_time>0</execution_time>
+          </interval>
+        </default>
+      </quotas>
+
+      <!-- Global memory guardrail (for 3Gi limit) -->
+      <max_server_memory_usage>2576980377</max_server_memory_usage> <!-- ~2.4Gi, leaving headroom -->
+      <max_server_memory_usage_to_ram_ratio>0.8</max_server_memory_usage_to_ram_ratio>
+      
+      <!-- Background operations memory control -->
+      <background_memory_tracker_threshold>0.75</background_memory_tracker_threshold>
+      <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
+    </clickhouse>
+{{- end }}
