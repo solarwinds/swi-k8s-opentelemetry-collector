@@ -525,12 +525,20 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/rename/discovery:
+        metricstransform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
+          - action: update
+            include: ^k8s.(http\..*)$$
+            match_type: regexp
+            new_name: $${1}
+          - action: update
+            include: ^k8s.(rpc\..*)$$
+            match_type: regexp
+            new_name: $${1}
         resource/all:
           attributes:
           - action: insert
@@ -814,7 +822,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/not-relationship-state-events-preparation:
