@@ -832,6 +832,27 @@ processors:
           # adds severity to metric name (metrics are grouped by severity)
           - set(name, Format("%s_%s", [name, ToLowerCase(resource.attributes["severity"])])) where resource.attributes["severity"] != nil
 
+  groupbyattrs/trivy-operator-metrics-by-image:
+    keys:
+    - k8s.namespace.name
+    - k8s.pod.name
+    - k8s.statefulset.name
+    - k8s.daemonset.name
+    - k8s.replicaset.name
+    - severity
+    - image_digest
+
+  metricstransform/trivy-operator-metrics-aggregation-by-image:
+    transforms:
+      - include: ^k8s.trivy_.*$
+        match_type: regexp
+        action: update
+        operations:
+          - action: aggregate_labels
+            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
+            label_set: [dummy_label_workaround]
+            aggregation_type: max
+
   groupbyattrs/trivy-operator-metrics:
     keys:
     - k8s.namespace.name
@@ -1171,6 +1192,8 @@ service:
         - filter/trivy-operator-metrics
         - transform/trivy-operator-metrics-attributes
         - metricstransform/rename
+        - groupbyattrs/trivy-operator-metrics-by-image
+        - metricstransform/trivy-operator-metrics-aggregation-by-image
         - groupbyattrs/trivy-operator-metrics
         - metricstransform/trivy-operator-metrics-aggregation
         - transform/trivy-operator-metrics-split
