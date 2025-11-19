@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "common.fullname" (tuple . "-beyla") }}
+  name: {{ include "common.fullname" (tuple . "-obi") }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}
@@ -11,14 +11,14 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ include "common.fullname" (tuple . "-beyla") }}
+      app: {{ include "common.fullname" (tuple . "-obi") }}
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/beyla/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/obi/configmap.yaml") . | sha256sum }}
 {{ include "common.annotations" . | indent 8 }}
       labels:
-        app: {{ include "common.fullname" (tuple . "-beyla") }}
+        app: {{ include "common.fullname" (tuple . "-obi") }}
 {{ include "common.labels" . | nindent 8 }}
 {{ include "common.pod-labels" . | indent 8 }}
         app.kubernetes.io/component: workload
@@ -28,8 +28,8 @@ spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       containers:
-        - name: beyla
-          image: "{{ include "common.image" (tuple . .Values.network_topology (tuple "image" "beyla")) }}"
+        - name: obi
+          image: "{{ include "common.image" (tuple . .Values.network_topology (tuple "image" "obi")) }}"
           imagePullPolicy: {{ .Values.network_topology.image.pullPolicy }}
           securityContext:
             privileged: true
@@ -49,13 +49,13 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
-            - name: BEYLA_CONFIG_PATH
-              value: "/etc/beyla/config/beyla-config.yml"
+            - name: OTEL_EBPF_CONFIG_PATH
+              value: "/etc/obi/config/obi-config.yml"
             - name: OTEL_EXPORTER_OTLP_INSECURE
               value: "true"
           volumeMounts:
-            - mountPath: /etc/beyla/config
-              name: beyla-config
+            - mountPath: /etc/obi/config
+              name: obi-config
             - name: cgroup
               mountPath: /sys/fs/cgroup
             - name: sec
@@ -89,9 +89,9 @@ spec:
                 values:
                 - fargate
       volumes:
-        - name: beyla-config
+        - name: obi-config
           configMap:
-            name: {{ include "common.fullname" (tuple . "-beyla-config") }}
+            name: {{ include "common.fullname" (tuple . "-obi-config") }}
         - name: sec
           hostPath:
             path: /sys/kernel/security

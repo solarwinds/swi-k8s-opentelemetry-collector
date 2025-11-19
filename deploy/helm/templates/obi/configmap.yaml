@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "common.fullname" (tuple . "-beyla-config") }}
+  name: {{ include "common.fullname" (tuple . "-obi-config") }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "common.labels" . | indent 4 }}
@@ -13,21 +13,17 @@ metadata:
   annotations:
 {{ include "common.annotations" . | indent 4 }}
 data:
-  beyla-config.yml: |
+  obi-config.yml: |
     {{- if not .Values.network_topology.config.otel_metrics_export }}
     otel_metrics_export:
       endpoint: http://swo-gateway:{{ .Values.otel.gateway.otlp_endpoint.port }}
       protocol: grpc
       interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
-      features: ["application", "application_process", "application_service_graph", "network"]
+      features: ["application", "application_service_graph", "network"]
     {{- end }}
     {{- if not .Values.network_topology.config.ebpf }}
     ebpf:
       context_propagation: all
-    {{- end }}
-    {{- if not .Values.network_topology.config.process }}
-    process:
-      enabled: true
     {{- end }}
     {{- if not .Values.network_topology.config.network }}
     network:
@@ -38,7 +34,7 @@ data:
       instrument:
         - k8s_namespace: "*"
       exclude_instrument:
-        - exe_path: "{*otelcol*|*beyla*}"
+        - exe_path: "{*otelcol*|*obi*}"
         - k8s_pod_annotations:
             sw.ebpf.instrumentation/exclude: "true"
     {{- end }}
@@ -74,7 +70,7 @@ data:
             - rpc.grpc.status_code
             - rpc.method
             - rpc.system
-        beyla_*:
+        obi_*:
           include:
             - direction
             - dst.address

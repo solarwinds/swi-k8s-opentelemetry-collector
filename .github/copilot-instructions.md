@@ -29,7 +29,7 @@ When generating code for this repository:
     - **node-collector-daemon-set-windows.yaml** – NodeCollector Windows daemonset definition
     - **gateway/** – Gateway collector components
     - **network/** – eBPF network monitoring components
-    - **beyla/** – Beyla eBPF-based auto-instrumentation
+    - **obi/** – OpenTelemetry eBPF-based auto-instrumentation (OBI)
     - **operator/** – OpenTelemetry operator integration and DiscoveryCollector
     - **targetAllocator/** – TargetAllocator deployment for Prometheus CRD discovery
     - **autoupdate/** – Components for auto-updating configurations
