@@ -17,13 +17,9 @@ filter/keep-relationship-state-events:
     log_record:
       - not(attributes["otel.entity.event.type"] == "entity_relationship_state")
 
-metricstransform/rename/discovery:
+metricstransform/rename-following-otel-semantics/discovery:
   transforms:
-    # add `k8s.` prefix to all metrics
-    - include: ^(.*)$$
-      match_type: regexp
-      action: update
-      new_name: {{ .Values.otel.metrics.autodiscovery.prefix }}$${1}
+{{ include "common-config.metricstransform-rename" .Values.otel.metrics.autodiscovery.prefix | indent 4 }}
 
 {{- if ne .Values.otel.metrics.autodiscovery.prefix "k8s." }}
   # in case the prefix differs from "k8s." we need to copy the required metrics
@@ -572,7 +568,7 @@ metrics/discovery-scrape:
     - filter/metrics-discovery
 {{- end }}
 {{- if $context.Values.otel.metrics.autodiscovery.prefix }}
-    - metricstransform/rename/discovery
+    - metricstransform/rename-following-otel-semantics/discovery
 {{- end }}
 {{- if ne $context.Values.otel.metrics.autodiscovery.prefix "k8s." }}
     - metricstransform/copy-required-metrics

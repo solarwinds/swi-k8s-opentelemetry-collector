@@ -57,11 +57,12 @@ def test_expected_otel_message_content_is_generated(file_name):
     metric_names = [item['name'] for item in metrics]
     print("Checking metrics {} with resource attributes {}".format(metric_names, resource_attributes))
 
+    timeout = int(os.getenv("TEST_TIMEOUT", "10"))
     retry_until_ok_clickhouse(
         lambda: clickhouse_client.get_metrics_otlp(),
         lambda metrics_list: assert_test_contain_expected_datapoints(metrics_list, metrics, resource_attributes),
         print_failure_otel_content,
-        timeout=120
+        timeout=timeout
     )
 
 def test_no_metric_datapoints_for_internal_containers():
@@ -232,6 +233,8 @@ def assert_test_contain_expected_datapoints(metrics_list, metrics, resource_attr
                                         dataPoints = metric['gauge']['dataPoints']
                                     elif 'sum' in metric:
                                         dataPoints = metric['sum']['dataPoints']
+                                    elif 'histogram' in metric:
+                                        dataPoints = metric['histogram']['dataPoints']
                                     else:
                                         raise Exception('unknown data type for metric')
 

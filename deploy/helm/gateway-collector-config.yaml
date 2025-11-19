@@ -43,13 +43,9 @@ processors:
   k8sattributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
-  metricstransform/rename:
+  metricstransform/rename-following-otel-semantics:
     transforms:
-      # add predefined prefix to all proxied metrics
-      - include: ^(.*)$$
-        match_type: regexp
-        action: update
-        new_name: {{ .Values.otel.gateway.prefix }}$${1}
+{{ include "common-config.metricstransform-rename" .Values.otel.gateway.prefix | indent 6 }}
 
   resource:
     attributes:
@@ -662,7 +658,7 @@ service:
         - memory_limiter
         - k8sattributes
 {{- if .Values.otel.gateway.prefix }}
-        - metricstransform/rename
+        - metricstransform/rename-following-otel-semantics
 {{- end }}
         - attributes/clean-attributes-otlp-metrics
         - resource/clean-temporary-attributes
