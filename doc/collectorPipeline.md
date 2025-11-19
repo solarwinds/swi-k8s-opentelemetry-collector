@@ -241,27 +241,27 @@ stateDiagram-v2
       gw_mr3 --> gw_me3 : processors
     }
 
-    gw_metricsBeylaNetworkPipeline: 'metrics/beyla-network-entities-and-relationships' pipeline
-    state gw_metricsBeylaNetworkPipeline {
+    gw_metricsObiNetworkPipeline: 'metrics/obi-network-entities-and-relationships' pipeline
+    state gw_metricsObiNetworkPipeline {
       gw_mr4: 'routing/metrics' connector
       gw_me4a: 'forward/metrics_common' connector
-      gw_me4b: 'solarwindsentity/beyla-relationships' connector
-      gw_me4c: 'solarwindsentity/beyla-entities' connector
+      gw_me4b: 'solarwindsentity/obi-relationships' connector
+      gw_me4c: 'solarwindsentity/obi-entities' connector
       gw_mr4 --> gw_me4a : processors
       gw_mr4 --> gw_me4b : processors
       gw_mr4 --> gw_me4c : processors
     }
 
-    gw_logsBeylaStateEventsEntitiesPipeline: 'logs/beyla-stateevents-entities' pipeline
-    state gw_logsBeylaStateEventsEntitiesPipeline {
-      gw_lr1: 'solarwindsentity/beyla-entities' connector
+    gw_logsObiStateEventsEntitiesPipeline: 'logs/obi-stateevents-entities' pipeline
+    state gw_logsObiStateEventsEntitiesPipeline {
+      gw_lr1: 'solarwindsentity/obi-entities' connector
       gw_le1: 'otlp' exporter
       gw_lr1 --> gw_le1 : processors
     }
 
-    gw_logsBeylaStateEventsRelationshipsPipeline: 'logs/beyla-stateevents-relationships' pipeline
-    state gw_logsBeylaStateEventsRelationshipsPipeline {
-      gw_lr2: 'solarwindsentity/beyla-relationships' connector
+    gw_logsObiStateEventsRelationshipsPipeline: 'logs/obi-stateevents-relationships' pipeline
+    state gw_logsObiStateEventsRelationshipsPipeline {
+      gw_lr2: 'solarwindsentity/obi-relationships' connector
       gw_le2: 'otlp' exporter
       gw_lr2 --> gw_le2 : processors
     }
@@ -281,11 +281,11 @@ stateDiagram-v2
     }
 
     gw_metricsCommonInPipeline --> gw_metricsPipeline
-    gw_metricsCommonInPipeline --> gw_metricsBeylaNetworkPipeline
+    gw_metricsCommonInPipeline --> gw_metricsObiNetworkPipeline
     gw_metricsPipeline --> gw_metricsCommonOutPipeline
-    gw_metricsBeylaNetworkPipeline --> gw_metricsCommonOutPipeline
-    gw_metricsBeylaNetworkPipeline --> gw_logsBeylaStateEventsEntitiesPipeline
-    gw_metricsBeylaNetworkPipeline --> gw_logsBeylaStateEventsRelationshipsPipeline
+    gw_metricsObiNetworkPipeline --> gw_metricsCommonOutPipeline
+    gw_metricsObiNetworkPipeline --> gw_logsObiStateEventsEntitiesPipeline
+    gw_metricsObiNetworkPipeline --> gw_logsObiStateEventsRelationshipsPipeline
   }
 
 %% ──────────────────────────────────────────────────────────────────────────────
@@ -293,11 +293,11 @@ stateDiagram-v2
 %% ──────────────────────────────────────────────────────────────────────────────
   kubestatemetricsDeployment: KubeStateMetrics Deployment
   ebpfreducerDeployment: eBPF Reducer Deployment
-  beylaComponent: Beyla Auto-Instrumentation
+  obiComponent: OpenTelemetry eBPF (OBI) Auto-Instrumentation
 
   kubestatemetricsDeployment --> mc_metricsKubestatemetricsPipeline
   ebpfreducerDeployment --> gw_metricsCommonInPipeline
-  beylaComponent --> gw_metricsCommonInPipeline : traces/metrics
+  obiComponent --> gw_metricsCommonInPipeline : traces/metrics
 
 %% ──────────────────────────────────────────────────────────────────────────────
 %%  NODE COLLECTOR

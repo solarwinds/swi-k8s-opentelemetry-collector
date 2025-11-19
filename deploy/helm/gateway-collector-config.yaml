@@ -73,7 +73,7 @@ processors:
 
   resource/clean-temporary-attributes:
     attributes:      
-      - key: beyla
+      - key: obi
         action: delete
       - key: tcp
         action: delete
@@ -113,11 +113,11 @@ processors:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 
-  transform/beyla-keep-only-entity-relation-attributes:
+  transform/obi-keep-only-entity-relation-attributes:
     metric_statements:
-      - keep_matching_keys(resource.attributes, "^(sw\\.k8s\\.cluster\\.uid)|(source\\..*)|(dest\\..*)|(beyla)|(tcp)|(http)|(grpc)$")
+      - keep_matching_keys(resource.attributes, "^(sw\\.k8s\\.cluster\\.uid)|(source\\..*)|(dest\\..*)|(obi)|(tcp)|(http)|(grpc)$")
 
-  swok8sworkloadtype/beyla:
+  swok8sworkloadtype/obi:
     workload_mappings:
       - name_attr: k8s.src.owner.name
         namespace_attr: k8s.src.namespace
@@ -195,24 +195,24 @@ processors:
           - pods
           - nodes
 
-  transform/beyla-fqdn-attribute:
+  transform/obi-fqdn-attribute:
     metric_statements:
       - statements:
           # The logic of what shapes of addresses are considered FQDNs should match 'transform/istio-metric-datapoints'.
           - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["server.address"]) where IsMatch(metric.name, "^http\\.client\\.") and datapoint.attributes["sw.k8s.dst.workload.type"] == nil and IsMatch(datapoint.attributes["server.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["server.address"], ".*\\.cluster\\.local\\.?$")) and not(IsMatch(datapoint.attributes["server.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
           # Replace port in FQDN if present (PublicNetworkLocation entity must not include port)
           - replace_pattern(datapoint.attributes["dest.sw.server.address.fqdn"], "^(https?://)?([^/:]+)(:\\d+)?$", "$$2") where datapoint.attributes["dest.sw.server.address.fqdn"] != nil
-          # Beyla prefers filling 'client.address' attributes with OTEL Service name (or name + k8s namespace) instead of an actual FQDN, when possible. This makes this value useless for us because they would create fake FQDNs.
+          # OBI prefers filling 'client.address' attributes with OTEL Service name (or name + k8s namespace) instead of an actual FQDN, when possible. This makes this value useless for us because they would create fake FQDNs.
           # - set(datapoint.attributes["source.sw.server.address.fqdn"], datapoint.attributes["client.address"]) where IsMatch(metric.name, "^http\\.server\\.") and datapoint.attributes["sw.k8s.src.workload.type"] == nil and IsMatch(datapoint.attributes["client.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["client.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["client.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
           # While 'dst.address' and 'src.adderess' contain an actual address, in practice they often contain an IP address, which we currently do not want to use as an FQDN.
-          - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["dst.address"]) where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.dst.workload.type"] == nil and IsMatch(datapoint.attributes["dst.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["dst.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["dst.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
-          - set(datapoint.attributes["source.sw.server.address.fqdn"], datapoint.attributes["src.address"]) where IsMatch(metric.name, "^beyla\\.network\\.") and datapoint.attributes["sw.k8s.src.workload.type"] == nil and IsMatch(datapoint.attributes["src.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["src.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["src.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+          - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["dst.address"]) where IsMatch(metric.name, "^obi\\.network\\.") and datapoint.attributes["sw.k8s.dst.workload.type"] == nil and IsMatch(datapoint.attributes["dst.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["dst.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["dst.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+          - set(datapoint.attributes["source.sw.server.address.fqdn"], datapoint.attributes["src.address"]) where IsMatch(metric.name, "^obi\\.network\\.") and datapoint.attributes["sw.k8s.src.workload.type"] == nil and IsMatch(datapoint.attributes["src.address"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["src.address"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["src.address"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
 
           # Temporary, to be removed when solarwindsentityconnector supports creation of entities from attributes with prefixes
           - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["dest.sw.server.address.fqdn"]) where datapoint.attributes["dest.sw.server.address.fqdn"] != nil
           - set(datapoint.attributes["sw.server.address.fqdn"], datapoint.attributes["source.sw.server.address.fqdn"]) where datapoint.attributes["source.sw.server.address.fqdn"] != nil
 
-  transform/beyla-entity-ids:
+  transform/obi-entity-ids:
     metric_statements:
       # source workload detected by the workloadtype processor
       - conditions:
@@ -244,7 +244,7 @@ processors:
 
       # as a fallback for the above, if the "sw.k8s.src.workload.name" was not determined, use the "sw.k8s.workload.name" for source of client metrics
       - conditions:
-          - resource.attributes["sw.k8s.src.workload.name"] == nil and resource.attributes["sw.k8s.workload.name"] != nil and (IsMatch(metric.name, "^(http\\.client\\.)|(rpc\\.client\\.)") or (metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"] == "request"))
+          - resource.attributes["sw.k8s.src.workload.name"] == nil and resource.attributes["sw.k8s.workload.name"] != nil and (IsMatch(metric.name, "^(http\\.client\\.)|(rpc\\.client\\.)") or (metric.name == "obi.network.flow.bytes" and datapoint.attributes["direction"] == "request"))
         statements:
           - set(datapoint.attributes["source.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment"
           - set(datapoint.attributes["source.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet"
@@ -254,11 +254,11 @@ processors:
           - set(datapoint.attributes["source.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node"
           - set(datapoint.attributes["source.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod"
       - statements:
-          - set(datapoint.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["source.k8s.namespace.name"] == nil and resource.attributes["sw.k8s.workload.namespace"] != nil and (IsMatch(metric.name, "^(http\\.client\\.)|(rpc\\.client\\.)") or metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"] == "request")
+          - set(datapoint.attributes["source.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["source.k8s.namespace.name"] == nil and resource.attributes["sw.k8s.workload.namespace"] != nil and (IsMatch(metric.name, "^(http\\.client\\.)|(rpc\\.client\\.)") or metric.name == "obi.network.flow.bytes" and datapoint.attributes["direction"] == "request")
 
       # as a fallback for the above, if the "sw.k8s.dst.workload.name" was not determined, use the "sw.k8s.workload.name" for dest of server metrics
       - conditions:
-          - resource.attributes["sw.k8s.dst.workload.name"] == nil and resource.attributes["sw.k8s.workload.name"] != nil and (IsMatch(metric.name, "^(http\\.server\\.)|(rpc\\.server\\.)") or (metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"] == "response"))
+          - resource.attributes["sw.k8s.dst.workload.name"] == nil and resource.attributes["sw.k8s.workload.name"] != nil and (IsMatch(metric.name, "^(http\\.server\\.)|(rpc\\.server\\.)") or (metric.name == "obi.network.flow.bytes" and datapoint.attributes["direction"] == "response"))
         statements:
           - set(datapoint.attributes["dest.k8s.deployment.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Deployment"
           - set(datapoint.attributes["dest.k8s.statefulset.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "StatefulSet"
@@ -268,25 +268,25 @@ processors:
           - set(datapoint.attributes["dest.k8s.node.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Node"
           - set(datapoint.attributes["dest.k8s.pod.name"], resource.attributes["sw.k8s.workload.name"]) where resource.attributes["sw.k8s.workload.type"] == "Pod"
       - statements:
-          - set(datapoint.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["dest.k8s.namespace.name"] == nil and resource.attributes["sw.k8s.workload.namespace"] != nil and (IsMatch(metric.name, "^(http\\.server\\.)|(rpc\\.server\\.)") or metric.name == "beyla.network.flow.bytes" and datapoint.attributes["direction"] == "response")
+          - set(datapoint.attributes["dest.k8s.namespace.name"], resource.attributes["sw.k8s.workload.namespace"]) where resource.attributes["dest.k8s.namespace.name"] == nil and resource.attributes["sw.k8s.workload.namespace"] != nil and (IsMatch(metric.name, "^(http\\.server\\.)|(rpc\\.server\\.)") or metric.name == "obi.network.flow.bytes" and datapoint.attributes["direction"] == "response")
 
-      # mark all metrics processed by this pipeline as Beyla metrics
+      # mark all metrics processed by this pipeline as OBI metrics
       - statements:
-          - set(resource.attributes["beyla"], "true")
+          - set(resource.attributes["obi"], "true")
 
-  transform/beyla-relationship-types:
+  transform/obi-relationship-types:
     metric_statements:
-      - set(datapoint.attributes["tcp"], "true") where metric.name == "beyla.network.flow.bytes"
+      - set(datapoint.attributes["tcp"], "true") where metric.name == "obi.network.flow.bytes"
       - set(datapoint.attributes["http"], "true") where IsMatch(metric.name, "^http\\.")
       - set(datapoint.attributes["grpc"], "true") where IsMatch(metric.name, "^rpc\\.")
 
-  groupbyattrs/beyla-relationship-types:
+  groupbyattrs/obi-relationship-types:
     keys:
       - tcp
       - http
       - grpc
 
-  groupbyattrs/beyla-entity-ids:
+  groupbyattrs/obi-entity-ids:
     keys:
       - dest.sw.server.address.fqdn
       - source.sw.server.address.fqdn
@@ -298,7 +298,7 @@ processors:
       - sw.k8s.src.workload.name
       - sw.k8s.src.workload.namespace
 
-  groupbyattrs/beyla-entity-ids-after-transform:
+  groupbyattrs/obi-entity-ids-after-transform:
     keys:
       - source.k8s.deployment.name
       - source.k8s.statefulset.name
@@ -317,7 +317,7 @@ processors:
       - dest.k8s.pod.name
       - dest.k8s.namespace.name
 
-  filter/beyla-self-loop-relationships:
+  filter/obi-self-loop-relationships:
     error_mode: ignore
     metrics:
       datapoint:
@@ -347,13 +347,13 @@ receivers:
 
 connectors:
   forward/metrics_common: {}
-  forward/beyla-relationships: {}
+  forward/obi-relationships: {}
   routing/metrics:
     default_pipelines: [metrics]
     table:
       - context: metric
         pipelines:
-          - metrics/beyla-network-entities-and-relationships
+          - metrics/obi-network-entities-and-relationships
         condition: |
           name == "http.client.request.duration" or
           name == "http.client.request.body.size" or
@@ -363,9 +363,9 @@ connectors:
           name == "http.server.response.body.size" or
           name == "rpc.client.duration" or 
           name == "rpc.server.duration" or 
-          name == "beyla.network.flow.bytes"
+          name == "obi.network.flow.bytes"
 
-  solarwindsentity/beyla-relationships:
+  solarwindsentity/obi-relationships:
     source_prefix: "source."
     destination_prefix: "dest."
     schema:
@@ -420,49 +420,49 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDeployment
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           # source KubernetesStatefulSet
           - type: KubernetesCommunicatesWith
@@ -470,49 +470,49 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesStatefulSet
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           # source KubernetesDaemonSet
           - type: KubernetesCommunicatesWith
@@ -520,49 +520,49 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesDaemonSet
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesDaemonSet
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           # source KubernetesJob
           - type: KubernetesCommunicatesWith
@@ -570,52 +570,52 @@ connectors:
             destination_entity: KubernetesService
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: PublicNetworkLocation
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesDeployment
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesStatefulSet
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesJob
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesNode
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
           - type: KubernetesCommunicatesWith
             source_entity: KubernetesJob
             destination_entity: KubernetesPod
             conditions: []
             context: "metric"
-            attributes: [beyla, tcp, http, grpc]
+            attributes: [obi, tcp, http, grpc]
             action: "update"
 
-  solarwindsentity/beyla-entities:
+  solarwindsentity/obi-entities:
     schema:
       entities:
         - entity: PublicNetworkLocation
@@ -696,35 +696,35 @@ service:
 
     # Current SWO pipeline cannot process state events and relationships events together,
     # so we need to split them into two separate pipelines.
-    # TODO - merge 'logs/beyla-stateevents-entities' and 'logs/beyla-stateevents-relationships' into one pipeline when SWO supports it.
-    metrics/beyla-network-entities-and-relationships:
+    # TODO - merge 'logs/obi-stateevents-entities' and 'logs/obi-stateevents-relationships' into one pipeline when SWO supports it.
+    metrics/obi-network-entities-and-relationships:
       receivers:
         - routing/metrics
       processors:
         - memory_limiter
-        - swok8sworkloadtype/beyla
-        - transform/beyla-fqdn-attribute
-        - groupbyattrs/beyla-entity-ids
-        - transform/beyla-entity-ids
-        - transform/beyla-relationship-types
-        - groupbyattrs/beyla-relationship-types
-        - groupbyattrs/beyla-entity-ids-after-transform
+        - swok8sworkloadtype/obi
+        - transform/obi-fqdn-attribute
+        - groupbyattrs/obi-entity-ids
+        - transform/obi-entity-ids
+        - transform/obi-relationship-types
+        - groupbyattrs/obi-relationship-types
+        - groupbyattrs/obi-entity-ids-after-transform
         - resource
       exporters:
         - forward/metrics_common
-        - forward/beyla-relationships
-        - solarwindsentity/beyla-entities
-    metrics/beyla-stateevents-relationships-filter-attributes:
+        - forward/obi-relationships
+        - solarwindsentity/obi-entities
+    metrics/obi-stateevents-relationships-filter-attributes:
       receivers:
-        - forward/beyla-relationships
+        - forward/obi-relationships
       processors:
-        - transform/beyla-keep-only-entity-relation-attributes
-        - filter/beyla-self-loop-relationships
+        - transform/obi-keep-only-entity-relation-attributes
+        - filter/obi-self-loop-relationships
       exporters:
-        - solarwindsentity/beyla-relationships
-    logs/beyla-stateevents-entities:
+        - solarwindsentity/obi-relationships
+    logs/obi-stateevents-entities:
       receivers:
-        - solarwindsentity/beyla-entities
+        - solarwindsentity/obi-entities
       processors:
         - memory_limiter
         - transform/scope
@@ -732,9 +732,9 @@ service:
         - batch
       exporters:
         - otlp
-    logs/beyla-stateevents-relationships:
+    logs/obi-stateevents-relationships:
       receivers:
-        - solarwindsentity/beyla-relationships
+        - solarwindsentity/obi-relationships
       processors:
         - memory_limiter
         - transform/scope
