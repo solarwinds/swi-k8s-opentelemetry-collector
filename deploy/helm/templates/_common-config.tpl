@@ -36,6 +36,25 @@ transform/unify_node_attribute:
         - set(datapoint.attributes["k8s.node.name"], resource.attributes["service.instance.id"]) where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"] == nil
 {{- end }}
 
+{{- define "common-config.metricstransform-rename" -}}
+# add predefined prefix to all proxied metrics
+- include: ^(.*)$$
+  match_type: regexp
+  action: update
+  new_name: {{ . }}$${1}
+{{- if . }}
+# remove prefix from http and rpc metrics
+- include: ^{{ . }}(http\..*)$$
+  match_type: regexp
+  action: update
+  new_name: $${1}
+- include: ^{{ . }}(rpc\..*)$$
+  match_type: regexp
+  action: update
+  new_name: $${1}
+{{- end }}
+{{- end }}
+
 {{- define "common-config.metricstransform-preprocessing-cadvisor" -}}
 - include: k8s.container_fs_reads_total
   action: insert
