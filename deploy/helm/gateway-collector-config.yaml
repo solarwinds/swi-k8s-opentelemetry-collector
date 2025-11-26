@@ -121,11 +121,12 @@ processors:
       metric:
         # metrics from EBPF reducer that are not needed
         - 'IsMatch(name, "^ebpf_net.*$")'
-
+{{- if .Values.otel.metrics.filter_histograms }}
   filter/histograms:
     metrics:
       metric:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
+{{- end }}
 
   transform/obi-keep-only-entity-relation-attributes:
     metric_statements:
@@ -663,7 +664,9 @@ service:
         - routing/metrics
       processors:
         - memory_limiter
+{{- if .Values.otel.metrics.filter_histograms }}
         - filter/histograms
+{{- end }}
 {{- if .Values.ebpfNetworkMonitoring.reducer.telemetry.metrics.enabled }}
         - filter/otlp-metrics
 {{- end }}
