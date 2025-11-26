@@ -278,6 +278,27 @@ class ClickHouseClient:
             sum_query += f"\nWHERE {where_clause}"
         sum_query += "\nORDER BY TimeUnix DESC"
         
+        # Query histogram metrics
+        histogram_query = """
+        SELECT 
+            TimeUnix,
+            ResourceAttributes,
+            ScopeAttributes,
+            MetricName,
+            Attributes,
+            Count,
+            Sum,
+            BucketCounts,
+            ExplicitBounds,
+            Min,
+            Max,
+            AggregationTemporality
+        FROM otel.otel_metrics_histogram
+        """
+        if where_clause:
+            histogram_query += f"\nWHERE {where_clause}"
+        histogram_query += "\nORDER BY TimeUnix DESC"
+        
         try:
             # Fetch gauge metrics
             gauge_rows = self.query(gauge_query)
@@ -288,6 +309,11 @@ class ClickHouseClient:
             sum_rows = self.query(sum_query)
             for row in sum_rows:
                 all_metrics.append(self._convert_metric_row_to_otlp(row, 'sum'))
+            
+            # Fetch histogram metrics
+            histogram_rows = self.query(histogram_query)
+            for row in histogram_rows:
+                all_metrics.append(self._convert_metric_row_to_otlp(row, 'histogram'))
                 
         except Exception as e:
             print(f"Error fetching metrics from ClickHouse: {e}")
@@ -316,14 +342,24 @@ class ClickHouseClient:
             'attributes': metric_attrs
         }
         
-        # Add value based on type
-        value = row.get('Value', 0)
-        if isinstance(value, float):
-            datapoint['asDouble'] = value
-        elif isinstance(value, int):
-            datapoint['asInt'] = value
+        if metric_type == 'histogram':
+            datapoint['count'] = row.get('Count', 0)
+            datapoint['sum'] = row.get('Sum', 0.0)
+            datapoint['bucketCounts'] = row.get('BucketCounts', [])
+            datapoint['explicitBounds'] = row.get('ExplicitBounds', [])
+            if 'Min' in row:
+                datapoint['min'] = row['Min']
+            if 'Max' in row:
+                datapoint['max'] = row['Max']
         else:
-            datapoint['asDouble'] = float(value)
+            # Add value based on type
+            value = row.get('Value', 0)
+            if isinstance(value, float):
+                datapoint['asDouble'] = value
+            elif isinstance(value, int):
+                datapoint['asInt'] = value
+            else:
+                datapoint['asDouble'] = float(value)
         
         # Build metric structure
         metric = {
@@ -336,6 +372,10 @@ class ClickHouseClient:
         # Add sum-specific fields
         if metric_type == 'sum' and 'IsMonotonic' in row:
             metric[metric_type]['isMonotonic'] = row.get('IsMonotonic', False)
+            metric[metric_type]['aggregationTemporality'] = row.get('AggregationTemporality', 2)
+            
+        # Add histogram-specific fields
+        if metric_type == 'histogram':
             metric[metric_type]['aggregationTemporality'] = row.get('AggregationTemporality', 2)
         
         return {

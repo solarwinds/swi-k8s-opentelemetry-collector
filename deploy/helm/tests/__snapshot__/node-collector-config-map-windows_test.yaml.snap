@@ -1120,18 +1120,34 @@ Node collector config for windows nodes should match snapshot when using default
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename:
+        metricstransform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
-        metricstransform/rename/discovery:
+          - action: update
+            include: ^k8s.(http\..*)$$
+            match_type: regexp
+            new_name: $${1}
+          - action: update
+            include: ^k8s.(rpc\..*)$$
+            match_type: regexp
+            new_name: $${1}
+        metricstransform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
+          - action: update
+            include: ^k8s.(http\..*)$$
+            match_type: regexp
+            new_name: $${1}
+          - action: update
+            include: ^k8s.(rpc\..*)$$
+            match_type: regexp
+            new_name: $${1}
         resource/all:
           attributes:
           - action: insert
@@ -1713,7 +1729,7 @@ Node collector config for windows nodes should match snapshot when using default
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -1726,7 +1742,7 @@ Node collector config for windows nodes should match snapshot when using default
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename
+            - metricstransform/rename-following-otel-semantics
             - metricstransform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
@@ -2929,18 +2945,34 @@ Node collector config for windows nodes should match snapshot when using legacy 
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename:
+        metricstransform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
-        metricstransform/rename/discovery:
+          - action: update
+            include: ^k8s.(http\..*)$$
+            match_type: regexp
+            new_name: $${1}
+          - action: update
+            include: ^k8s.(rpc\..*)$$
+            match_type: regexp
+            new_name: $${1}
+        metricstransform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
+          - action: update
+            include: ^k8s.(http\..*)$$
+            match_type: regexp
+            new_name: $${1}
+          - action: update
+            include: ^k8s.(rpc\..*)$$
+            match_type: regexp
+            new_name: $${1}
         resource/all:
           attributes:
           - action: insert
@@ -3604,7 +3636,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename/discovery
+            - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -3617,7 +3649,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename
+            - metricstransform/rename-following-otel-semantics
             - metricstransform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp

@@ -501,12 +501,20 @@ Gateway config should match snapshot when using default values:
           check_interval: 1s
           limit_percentage: 80
           spike_limit_percentage: 25
-        metricstransform/rename:
+        metricstransform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
             match_type: regexp
             new_name: k8s.$${1}
+          - action: update
+            include: ^k8s.(http\..*)$$
+            match_type: regexp
+            new_name: $${1}
+          - action: update
+            include: ^k8s.(rpc\..*)$$
+            match_type: regexp
+            new_name: $${1}
         resource:
           attributes:
           - action: insert
@@ -531,6 +539,24 @@ Gateway config should match snapshot when using default values:
             key: http
           - action: delete
             key: grpc
+          - action: delete
+            key: sw.k8s.dst.workload.name
+          - action: delete
+            key: sw.k8s.dst.workload.namespace
+          - action: delete
+            key: sw.k8s.dst.workload.type
+          - action: delete
+            key: sw.k8s.src.workload.name
+          - action: delete
+            key: sw.k8s.src.workload.namespace
+          - action: delete
+            key: sw.k8s.src.workload.type
+          - action: delete
+            key: sw.k8s.workload.name
+          - action: delete
+            key: sw.k8s.workload.namespace
+          - action: delete
+            key: sw.k8s.workload.type
         swok8sworkloadtype/obi:
           workload_mappings:
           - expected_types:
@@ -812,7 +838,7 @@ Gateway config should match snapshot when using default values:
             processors:
             - memory_limiter
             - k8sattributes
-            - metricstransform/rename
+            - metricstransform/rename-following-otel-semantics
             - attributes/clean-attributes-otlp-metrics
             - resource/clean-temporary-attributes
             - resource
