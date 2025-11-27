@@ -1195,6 +1195,9 @@ service:
         - groupbyattrs/trivy-operator-metrics-by-image
         - metricstransform/trivy-operator-metrics-aggregation-by-image
         - groupbyattrs/trivy-operator-metrics
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}
         - metricstransform/trivy-operator-metrics-aggregation
         - transform/trivy-operator-metrics-split
       exporters:
