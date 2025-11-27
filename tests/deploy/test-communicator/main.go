@@ -420,7 +420,13 @@ func (a *App) makeHTTPTargetRequest() {
 		return
 	}
 
-	log.Printf("Periodic HTTP request successful - Status: %d, Response: %s", resp.StatusCode, string(body))
+	bodyPreview := string(body)
+	truncatedInfo := ""
+	if len(bodyPreview) > 100 {
+		bodyPreview = bodyPreview[:100] + "..."
+		truncatedInfo = " (truncated)"
+	}
+	log.Printf("Periodic HTTP request successful - Status: %d, Response%s: %s", resp.StatusCode, truncatedInfo, bodyPreview)
 }
 
 func (a *App) makeGRPCTargetRequest() {
