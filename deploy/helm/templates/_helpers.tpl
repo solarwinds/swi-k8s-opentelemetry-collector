@@ -145,6 +145,8 @@ extract:
     - k8s.cronjob.name
     - k8s.statefulset.name
     - k8s.node.name
+    - container.image.name
+    - container.image.tag
 pod_association:
   - sources:
       - from: resource_attribute
