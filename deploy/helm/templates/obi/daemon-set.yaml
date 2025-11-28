@@ -32,7 +32,21 @@ spec:
           image: "{{ include "common.image" (tuple . .Values.network_topology (tuple "image" "obi")) }}"
           imagePullPolicy: {{ .Values.network_topology.image.pullPolicy }}
           securityContext:
-            privileged: true
+            runAsUser: 0
+            readOnlyRootFilesystem: true
+            capabilities:
+              add:
+                - BPF
+                - PERFMON
+                - DAC_READ_SEARCH
+                - CHECKPOINT_RESTORE
+                - NET_RAW
+                - NET_ADMIN
+                - SYS_PTRACE
+                - SYS_ADMIN
+                - SYS_RESOURCE
+              drop:
+                - ALL
           ports:
           {{- if .Values.network_topology.config.prometheus_export }}
           - name: metrics
