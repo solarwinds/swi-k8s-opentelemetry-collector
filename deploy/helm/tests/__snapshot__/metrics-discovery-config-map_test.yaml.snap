@@ -383,11 +383,6 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds")
         filter/keep-entity-state-events:
           logs:
             log_record:
@@ -774,7 +769,6 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - otlp
             processors:
             - memory_limiter
-            - filter/histograms
             - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope

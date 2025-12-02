@@ -482,12 +482,6 @@ Custom logs filter with new syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
-              or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/keep-entity-state-events:
           logs:
             log_record:
@@ -1722,7 +1716,6 @@ Custom logs filter with new syntax:
             - otlp
             processors:
             - memory_limiter
-            - filter/histograms
             - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
@@ -2341,12 +2334,6 @@ Custom logs filter with old syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
-              or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/keep-entity-state-events:
           logs:
             log_record:
@@ -3665,7 +3652,6 @@ Custom logs filter with old syntax:
             - otlp
             processors:
             - memory_limiter
-            - filter/histograms
             - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
@@ -4284,12 +4270,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
-              or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/keep-entity-state-events:
           logs:
             log_record:
@@ -5459,7 +5439,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - otlp
             processors:
             - memory_limiter
-            - filter/histograms
             - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
@@ -6075,12 +6054,6 @@ Node collector config should match snapshot when fargate is enabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
-              or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/keep-entity-state-events:
           logs:
             log_record:
@@ -7255,7 +7228,6 @@ Node collector config should match snapshot when fargate is enabled:
             - otlp
             processors:
             - memory_limiter
-            - filter/histograms
             - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
@@ -7842,12 +7814,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
-              or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/keep-entity-state-events:
           logs:
             log_record:
@@ -9545,12 +9511,6 @@ Node collector config should match snapshot when using default values:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
-        filter/histograms:
-          metrics:
-            metric:
-            - type == METRIC_DATA_TYPE_HISTOGRAM and not(name == "k8s.rest_client_request_duration_seconds"
-              or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.etcd_disk_wal_fsync_duration_seconds"
-              or name == "k8s.etcd_disk_backend_commit_duration_seconds")
         filter/keep-entity-state-events:
           logs:
             log_record:
@@ -10780,7 +10740,6 @@ Node collector config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
-            - filter/histograms
             - k8sattributes
             - filter/remove_temporary_metrics
             - transform/scope
