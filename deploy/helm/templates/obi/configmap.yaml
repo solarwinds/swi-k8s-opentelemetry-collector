@@ -32,11 +32,28 @@ data:
     {{- if not .Values.network_topology.config.discovery }}
     discovery:
       instrument:
+      {{- if or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) }}
+        {{- range .Values.cluster.filter.include_namespaces }}
+        - k8s_namespace: {{ quote . }}
+        {{- end }}
+        {{- range .Values.cluster.filter.include_namespaces_regex }}
+        - k8s_namespace: {{ quote . }}
+        {{- end }}
+      {{- else }}
         - k8s_namespace: "*"
+      {{- end }}
       exclude_instrument:
         - exe_path: "{*otelcol*|*obi*}"
         - k8s_pod_annotations:
             sw.ebpf.instrumentation/exclude: "true"
+      {{- if or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) }}
+        {{- range .Values.cluster.filter.exclude_namespaces }}
+        - k8s_namespace: {{ quote . }}
+        {{- end }}
+        {{- range .Values.cluster.filter.exclude_namespaces_regex }}
+        - k8s_namespace: {{ quote . }}
+        {{- end }}
+      {{- end }}
     {{- end }}
     {{- if not .Values.network_topology.config.log_level }}
     log_level: info
