@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for obi-configmap
+templates:
+  - obi/configmap.yaml
+tests:
+  - it: ConfigMap spec should match snapshot when network_topology is enabled
+    template: obi/configmap.yaml
+    set:
+      network_topology.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: ConfigMap should not be generated when network_topology is disabled
+    template: obi/configmap.yaml
+    set:
+      network_topology.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

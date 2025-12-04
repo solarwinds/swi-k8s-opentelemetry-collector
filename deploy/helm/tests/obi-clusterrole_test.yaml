@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for obi-clusterrole
+templates:
+  - obi/cluster-role.yaml
+  - obi/cluster-role-binding.yaml
+tests:
+  - it: ClusterRole should not be generated when network_topology is enabled
+    template: obi/cluster-role.yaml
+    set:
+      network_topology.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: ClusterRole should not be generated when network_topology is disabled
+    template: obi/cluster-role.yaml
+    set:
+      network_topology.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: ClusterRoleBinding should not be generated when network_topology is enabled
+    template: obi/cluster-role-binding.yaml
+    set:
+      network_topology.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: ClusterRoleBinding should not be generated when network_topology is disabled
+    template: obi/cluster-role-binding.yaml
+    set:
+      network_topology.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

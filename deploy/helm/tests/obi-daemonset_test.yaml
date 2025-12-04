@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for obi-daemonset
+templates:
+  - obi/daemon-set.yaml
+  - obi/configmap.yaml
+tests:
+  - it: DaemonSet spec should match snapshot when network_topology is enabled
+    template: obi/daemon-set.yaml
+    set:
+      network_topology.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec.template.spec
+  - it: DaemonSet should not be generated when network_topology is disabled
+    template: obi/daemon-set.yaml
+    set:
+      network_topology.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
