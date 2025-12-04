@@ -1325,6 +1325,16 @@ trivy-operator:
   targetWorkloads: pod,replicaset,statefulset,daemonset,cronjob,job
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
+    
+    # Resources for scan job containers
+    resources:
+      requests:
+        cpu: 100m
+        memory: 100M
+      limits:
+        cpu: 500m
+        memory: 500M
+
   trivyOperator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
