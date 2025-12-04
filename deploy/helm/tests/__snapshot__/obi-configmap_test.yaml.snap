@@ -1,0 +1,58 @@
+ConfigMap spec should match snapshot when network_topology is enabled:
+  1: |
+    obi-config.yml: |-
+      otel_metrics_export:
+        endpoint: http://swo-gateway:4317
+        protocol: grpc
+        interval: "60s"
+        features: ["application", "application_service_graph", "network"]
+      ebpf:
+        context_propagation: all
+      network:
+        enable: true
+      discovery:
+        instrument:
+          - k8s_namespace: "*"
+        exclude_instrument:
+          - exe_path: "{*otelcol*|*obi*}"
+          - k8s_pod_annotations:
+              sw.ebpf.instrumentation/exclude: "true"
+      log_level: info
+      open_port: 80,443,8000-8999
+      attributes:
+        kubernetes:
+          enable: true
+        select:
+          http_*:
+            include:
+              - http.request.method
+              - http.response.status_code
+              - service.name
+              - service.namespace
+              - target.instance
+              - server.address
+              - client.address
+          rpc_*:
+            include:
+              - http.request.method
+              - http.response.status_code
+              - service.name
+              - service.namespace
+              - target.instance
+              - server.address
+              - client.address
+              - rpc.grpc.status_code
+              - rpc.method
+              - rpc.system
+          obi_*:
+            include:
+              - direction
+              - dst.address
+              - k8s.dst.namespace
+              - k8s.dst.owner.name
+              - k8s.dst.owner.type
+              - src.address
+              - k8s.src.namespace
+              - k8s.src.owner.name
+              - k8s.src.owner.type
+              - transport
