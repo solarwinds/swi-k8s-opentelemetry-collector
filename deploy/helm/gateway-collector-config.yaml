@@ -128,6 +128,14 @@ processors:
         - 'type == METRIC_DATA_TYPE_HISTOGRAM'
 {{- end }}
 
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces-relationships:
+    error_mode: ignore
+    metrics:
+      datapoint:
+{{- include "namespacesFilterRelationships" . | nindent 8 }}
+{{- end }}
+
   transform/obi-keep-only-entity-relation-attributes:
     metric_statements:
       - keep_matching_keys(resource.attributes, "^(sw\\.k8s\\.cluster\\.uid)|(source\\..*)|(dest\\..*)|(obi)|(tcp)|(http)|(grpc)$")
@@ -726,6 +734,9 @@ service:
         - transform/obi-relationship-types
         - groupbyattrs/obi-relationship-types
         - groupbyattrs/obi-entity-ids-after-transform
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces-relationships
+{{- end }}
         - resource
       exporters:
         - forward/metrics_common
