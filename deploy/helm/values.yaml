@@ -1328,6 +1328,27 @@ trivy-operator:
   trivyOperator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
+  operator:
+    # Currently on Image Vulnerability Scanning is supported, other fearures are TBD
+    vulnerabilityScannerEnabled: true
+
+    # Disabled features 
+    configAuditScannerEnabled: false
+    rbacAssessmentScannerEnabled: false
+    infraAssessmentScannerEnabled: false
+    clusterComplianceEnabled: false
+    exposedSecretScannerEnabled: false
+
+    # Access to global secrets and service account tokens
+    accessGlobalSecretsAndServiceAccount: false
+
+    # Map of namespace:secrets, secrets are comma separated
+    # This setting is to be used to authenticate in private registries if accessGlobalSecretsAndServiceAccount is set to false
+    # see https://github.com/aquasecurity/trivy-operator/tree/main/deploy/helm for configuration reference
+    privateRegistryScanSecretsNames: {}
+
+    # Another option of providing access to private registries is to use managed registries, which will involve modifying the operator's service account
+    # See https://aquasecurity.github.io/trivy-operator/v0.29.0/docs/vulnerability-scanning/managed-registries/ for configuration steps
 
 # Configuration for migration jobs that handle upgrades between chart versions
 migrations:
