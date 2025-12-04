@@ -46,6 +46,9 @@ data:
         - exe_path: "{*otelcol*|*obi*}"
         - k8s_pod_annotations:
             sw.ebpf.instrumentation/exclude: "true"
+      {{- if or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) }}
+        - k8s_namespace: "*"
+      {{- end }}
       {{- if or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) }}
         {{- range .Values.cluster.filter.exclude_namespaces }}
         - k8s_namespace: {{ quote . }}
