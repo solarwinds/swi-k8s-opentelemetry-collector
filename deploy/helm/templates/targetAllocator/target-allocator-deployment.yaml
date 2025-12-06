@@ -80,10 +80,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
-            requests:
-              memory: 50Mi
-            limits:
-              memory: 500Mi
+{{ toYaml .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.resources | indent 12 }}
       volumes:
         - name: config-volume
           configMap:

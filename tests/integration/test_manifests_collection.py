@@ -90,7 +90,10 @@ def assert_test_manifest_label_and_annotation_unchanged(logs_list):
         for raw_manifest in inner_list:
             if is_correct_manifest(raw_manifest, 'Pod', pod_name, namespace_name):
                 parsed_manifest = json.loads(raw_manifest)
-                if parsed_manifest['metadata']['annotations'][annotation_key] == annotation_value and parsed_manifest['metadata']['labels'][label_key] == label_value:
+                metadata = parsed_manifest.get('metadata', {})
+                annotations = metadata.get('annotations', {})
+                labels = metadata.get('labels', {})
+                if annotations.get(annotation_key) == annotation_value and labels.get(label_key) == label_value:
                     return True
     print("Expected labels and annotations were not found")
     return False
@@ -119,6 +122,13 @@ def find_resource_with_specific_manifest(raw_resources, kind: str, name: str, na
 
 
 def is_correct_manifest(raw_manifest, kind: str, name: str, namespace: str) -> bool:
-    parsed_manifest = json.loads(raw_manifest)
-    return parsed_manifest['kind'] == kind and parsed_manifest['metadata']['name'] == name and parsed_manifest['metadata']['namespace'] == namespace
+    try:
+        parsed_manifest = json.loads(raw_manifest)
+    except (json.JSONDecodeError, TypeError):
+        return False
+
+    if not isinstance(parsed_manifest, dict):
+        return False
+
+    return parsed_manifest.get('kind') == kind and parsed_manifest.get('metadata', {}).get('name') == name and parsed_manifest.get('metadata', {}).get('namespace') == namespace
 

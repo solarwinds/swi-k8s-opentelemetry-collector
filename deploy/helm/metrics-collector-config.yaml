@@ -1198,6 +1198,9 @@ service:
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}
+{{- if .Values.otel.metrics.filter }}
+        - filter
+{{- end }}
         - metricstransform/trivy-operator-metrics-aggregation
         - transform/trivy-operator-metrics-split
       exporters:
