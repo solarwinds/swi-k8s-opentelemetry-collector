@@ -13,7 +13,6 @@ main() {
     rm -rf .cr-index
     mkdir -p .cr-index
     RELEASE_NAME=$(yq -e '.name + "-" + .version' deploy/helm/Chart.yaml)
-    GH_RELEASE_PARAMS=""
 
     # Check release type 
     if [[ "$RELEASE_NAME" =~ (^|[^a-zA-Z])(alpha|beta|rc)([^a-zA-Z]|$) ]]; then
