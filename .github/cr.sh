@@ -13,7 +13,6 @@ main() {
     rm -rf .cr-index
     mkdir -p .cr-index
     RELEASE_NAME=$(yq -e '.name + "-" + .version' deploy/helm/Chart.yaml)
-    GH_RELEASE_PARAMS=""
 
     # Check release type 
     if [[ "$RELEASE_NAME" =~ (^|[^a-zA-Z])(alpha|beta|rc)([^a-zA-Z]|$) ]]; then
@@ -24,7 +23,7 @@ main() {
     else
         echo "Handling standard release: $RELEASE_NAME"
         PREVIOUS_TAG=$(git tag --sort=version:refname | grep -vE "(alpha|beta|rc)" | grep -B1 "^swo-k8s-collector" | tail -n 1)
-        PRE_RELEASE_CMD=""
+        GH_RELEASE_PARAMS=""
         ADD_ANNOTATION_PARAMS="official"
     fi
     
