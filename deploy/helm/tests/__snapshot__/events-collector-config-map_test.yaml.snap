@@ -3,6 +3,15 @@ Custom events filter with new syntax:
     events.config: |-
       connectors:
         forward/exportserviceendpointsmapping: {}
+        routing/bypass-keepalive-for-entitystateevents:
+          default_pipelines:
+          - logs/solarwindsentity-keepalive
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "entitystateevent"
+            context: resource
+            pipelines:
+            - logs/stateevents
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -20,12 +29,6 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.configmap.name
-            - entity: KubernetesContainer
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.pod.name
-              - k8s.container.name
             - entity: KubernetesCronJob
               id:
               - sw.k8s.cluster.uid
@@ -94,6 +97,53 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.kustomization.name
+            events:
+              entities:
+              - action: update
+                context: log
+                entity: KubernetesConfigMap
+              - action: update
+                context: log
+                entity: KubernetesCronJob
+              - action: update
+                context: log
+                entity: KubernetesDaemonSet
+              - action: update
+                context: log
+                entity: KubernetesDeployment
+              - action: update
+                context: log
+                entity: KubernetesIngress
+              - action: update
+                context: log
+                entity: KubernetesJob
+              - action: update
+                context: log
+                entity: KubernetesNode
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolume
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolumeClaim
+              - action: update
+                context: log
+                entity: KubernetesPod
+              - action: update
+                context: log
+                entity: KubernetesReplicaSet
+              - action: update
+                context: log
+                entity: KubernetesService
+              - action: update
+                context: log
+                entity: KubernetesStatefulSet
+              - action: update
+                context: log
+                entity: KubernetesGitRepository
+              - action: update
+                context: log
+                entity: KubernetesKustomization
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -924,7 +974,7 @@ Custom events filter with new syntax:
             - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
-            - solarwindsentity/keepalive
+            - routing/bypass-keepalive-for-entitystateevents
             processors:
             - memory_limiter
             - transform/manifest
@@ -942,6 +992,11 @@ Custom events filter with new syntax:
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
+          logs/solarwindsentity-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            receivers:
+            - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
             - otlp
@@ -950,6 +1005,7 @@ Custom events filter with new syntax:
             - transform/scope
             - batch
             receivers:
+            - routing/bypass-keepalive-for-entitystateevents
             - solarwindsentity/keepalive
         telemetry:
           logs:
@@ -966,6 +1022,15 @@ Custom events filter with old syntax:
     events.config: |-
       connectors:
         forward/exportserviceendpointsmapping: {}
+        routing/bypass-keepalive-for-entitystateevents:
+          default_pipelines:
+          - logs/solarwindsentity-keepalive
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "entitystateevent"
+            context: resource
+            pipelines:
+            - logs/stateevents
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -983,12 +1048,6 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.configmap.name
-            - entity: KubernetesContainer
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.pod.name
-              - k8s.container.name
             - entity: KubernetesCronJob
               id:
               - sw.k8s.cluster.uid
@@ -1057,6 +1116,53 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.kustomization.name
+            events:
+              entities:
+              - action: update
+                context: log
+                entity: KubernetesConfigMap
+              - action: update
+                context: log
+                entity: KubernetesCronJob
+              - action: update
+                context: log
+                entity: KubernetesDaemonSet
+              - action: update
+                context: log
+                entity: KubernetesDeployment
+              - action: update
+                context: log
+                entity: KubernetesIngress
+              - action: update
+                context: log
+                entity: KubernetesJob
+              - action: update
+                context: log
+                entity: KubernetesNode
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolume
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolumeClaim
+              - action: update
+                context: log
+                entity: KubernetesPod
+              - action: update
+                context: log
+                entity: KubernetesReplicaSet
+              - action: update
+                context: log
+                entity: KubernetesService
+              - action: update
+                context: log
+                entity: KubernetesStatefulSet
+              - action: update
+                context: log
+                entity: KubernetesGitRepository
+              - action: update
+                context: log
+                entity: KubernetesKustomization
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -1890,7 +1996,7 @@ Custom events filter with old syntax:
             - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
-            - solarwindsentity/keepalive
+            - routing/bypass-keepalive-for-entitystateevents
             processors:
             - memory_limiter
             - transform/manifest
@@ -1908,6 +2014,11 @@ Custom events filter with old syntax:
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
+          logs/solarwindsentity-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            receivers:
+            - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
             - otlp
@@ -1916,6 +2027,7 @@ Custom events filter with old syntax:
             - transform/scope
             - batch
             receivers:
+            - routing/bypass-keepalive-for-entitystateevents
             - solarwindsentity/keepalive
         telemetry:
           logs:
@@ -1932,6 +2044,15 @@ Events config should match snapshot when using default values:
     events.config: |-
       connectors:
         forward/exportserviceendpointsmapping: {}
+        routing/bypass-keepalive-for-entitystateevents:
+          default_pipelines:
+          - logs/solarwindsentity-keepalive
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "entitystateevent"
+            context: resource
+            pipelines:
+            - logs/stateevents
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -1949,12 +2070,6 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.configmap.name
-            - entity: KubernetesContainer
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.pod.name
-              - k8s.container.name
             - entity: KubernetesCronJob
               id:
               - sw.k8s.cluster.uid
@@ -2023,6 +2138,53 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.kustomization.name
+            events:
+              entities:
+              - action: update
+                context: log
+                entity: KubernetesConfigMap
+              - action: update
+                context: log
+                entity: KubernetesCronJob
+              - action: update
+                context: log
+                entity: KubernetesDaemonSet
+              - action: update
+                context: log
+                entity: KubernetesDeployment
+              - action: update
+                context: log
+                entity: KubernetesIngress
+              - action: update
+                context: log
+                entity: KubernetesJob
+              - action: update
+                context: log
+                entity: KubernetesNode
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolume
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolumeClaim
+              - action: update
+                context: log
+                entity: KubernetesPod
+              - action: update
+                context: log
+                entity: KubernetesReplicaSet
+              - action: update
+                context: log
+                entity: KubernetesService
+              - action: update
+                context: log
+                entity: KubernetesStatefulSet
+              - action: update
+                context: log
+                entity: KubernetesGitRepository
+              - action: update
+                context: log
+                entity: KubernetesKustomization
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -2848,7 +3010,7 @@ Events config should match snapshot when using default values:
             - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
-            - solarwindsentity/keepalive
+            - routing/bypass-keepalive-for-entitystateevents
             processors:
             - memory_limiter
             - transform/manifest
@@ -2866,6 +3028,11 @@ Events config should match snapshot when using default values:
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
+          logs/solarwindsentity-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            receivers:
+            - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
             - otlp
@@ -2874,6 +3041,7 @@ Events config should match snapshot when using default values:
             - transform/scope
             - batch
             receivers:
+            - routing/bypass-keepalive-for-entitystateevents
             - solarwindsentity/keepalive
         telemetry:
           logs:
