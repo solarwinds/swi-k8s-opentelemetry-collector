@@ -279,8 +279,6 @@ connectors:
         condition: |
           attributes["sw.k8s.log.type"] == "serviceendpointsmapping"
 
-  forward/exportserviceendpointsmapping: {}
-
 processors:
   k8seventgeneration:
   memory_limiter:
@@ -630,17 +628,12 @@ processors:
   k8sattributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
+{{- $defaultKeepAliveDedupInterval := "5m" }}
+{{- $customKeepAliveDedupIntervalIsGreater := include "durationGt" (tuple .Values.otel.manifests.pull_every $defaultKeepAliveDedupInterval) }}
   logdedup/entitystateevents: 
-    interval: {{ quote .Values.otel.manifests.pull_every }}
-    conditions: 
+    interval: {{ (eq $customKeepAliveDedupIntervalIsGreater "true") | ternary $defaultKeepAliveDedupInterval .Values.otel.manifests.pull_every }}
+    conditions:
       - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-    include_fields:
-      - attributes.otel.entity.event.type
-      - attributes.otel.entity_relationship.source_entity.id
-      - attributes.otel.entity_relationship.destination_entity.id
-      - attributes.otel.entity_relationship.type
-      - attributes.otel.entity_relationship.source_entity.type
-      - attributes.otel.entity_relationship.destination_entity.type
 
 receivers:
   k8s_events:
