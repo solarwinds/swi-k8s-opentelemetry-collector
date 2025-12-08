@@ -2,7 +2,6 @@ Custom events filter with new syntax:
   1: |
     events.config: |-
       connectors:
-        forward/exportserviceendpointsmapping: {}
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -253,14 +252,7 @@ Custom events filter with new syntax:
         logdedup/entitystateevents:
           conditions:
           - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          include_fields:
-          - attributes.otel.entity.event.type
-          - attributes.otel.entity_relationship.source_entity.id
-          - attributes.otel.entity_relationship.destination_entity.id
-          - attributes.otel.entity_relationship.type
-          - attributes.otel.entity_relationship.source_entity.type
-          - attributes.otel.entity_relationship.destination_entity.type
-          interval: 60m
+          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -965,7 +957,6 @@ Custom events filter with old syntax:
   1: |
     events.config: |-
       connectors:
-        forward/exportserviceendpointsmapping: {}
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -1219,14 +1210,7 @@ Custom events filter with old syntax:
         logdedup/entitystateevents:
           conditions:
           - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          include_fields:
-          - attributes.otel.entity.event.type
-          - attributes.otel.entity_relationship.source_entity.id
-          - attributes.otel.entity_relationship.destination_entity.id
-          - attributes.otel.entity_relationship.type
-          - attributes.otel.entity_relationship.source_entity.type
-          - attributes.otel.entity_relationship.destination_entity.type
-          interval: 60m
+          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1931,7 +1915,6 @@ Events config should match snapshot when using default values:
   1: |
     events.config: |-
       connectors:
-        forward/exportserviceendpointsmapping: {}
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -2178,14 +2161,7 @@ Events config should match snapshot when using default values:
         logdedup/entitystateevents:
           conditions:
           - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          include_fields:
-          - attributes.otel.entity.event.type
-          - attributes.otel.entity_relationship.source_entity.id
-          - attributes.otel.entity_relationship.destination_entity.id
-          - attributes.otel.entity_relationship.type
-          - attributes.otel.entity_relationship.source_entity.type
-          - attributes.otel.entity_relationship.destination_entity.type
-          interval: 60m
+          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -2889,7 +2865,6 @@ Events config should not contain manifest collection pipeline when disabled:
   1: |
     events.config: |-
       connectors:
-        forward/exportserviceendpointsmapping: {}
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -3054,14 +3029,7 @@ Events config should not contain manifest collection pipeline when disabled:
         logdedup/entitystateevents:
           conditions:
           - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          include_fields:
-          - attributes.otel.entity.event.type
-          - attributes.otel.entity_relationship.source_entity.id
-          - attributes.otel.entity_relationship.destination_entity.id
-          - attributes.otel.entity_relationship.type
-          - attributes.otel.entity_relationship.source_entity.type
-          - attributes.otel.entity_relationship.destination_entity.type
-          interval: 60m
+          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800

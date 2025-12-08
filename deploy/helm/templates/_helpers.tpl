@@ -158,6 +158,28 @@ pod_association:
         name: k8s.namespace.name
 {{- end -}}
 
+
+{{/*
+Compare two duration strings (e.g., "5m", "2h", "30s").
+Returns "true" if durationA > durationB, else "false".
+
+Usage:
+{{ include "durationGt" (tuple $durationA $durationB) }}
+*/}}
+{{- define "durationGt" -}}
+{{ $durationA := index . 0 -}}
+{{ $durationB := index . 1 -}}
+
+{{- $now := now -}}
+{{- $timeA := $now | mustDateModify (print "-" (trimAll "\"" $durationA)) | unixEpoch -}}
+{{- $timeB := $now | mustDateModify (print "-" (trimAll "\"" $durationB)) | unixEpoch -}}
+{{- if (lt $timeA $timeB) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
 {{/*
 common.image - Helper template to determine the image path based on various conditions.
 
