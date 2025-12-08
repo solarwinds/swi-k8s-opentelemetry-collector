@@ -198,7 +198,17 @@ connectors:
           - entity: "KubernetesKustomization"
             context: "log"
             action: "update"
+
+  routing/bypass-keepalive-for-entitystateevents:
+    default_pipelines: [logs/solarwindsentity-keepalive]
+    table:
+      - context: resource
+        pipelines:
+          - logs/stateevents
+        condition: |
+          attributes["sw.k8s.log.type"] == "entitystateevent"
 {{- end }}
+
   solarwindsentity/serviceendpointsmapping:
     source_prefix: "source."
     destination_prefix: "dest."
@@ -797,10 +807,17 @@ service:
         - filter/manifests
 {{- end }}
       exporters:
+        - routing/bypass-keepalive-for-entitystateevents
+
+    logs/solarwindsentity-keepalive:
+      receivers:
+        - routing/bypass-keepalive-for-entitystateevents
+      exporters:
         - solarwindsentity/keepalive
 
     logs/stateevents:
       receivers:
+        - routing/bypass-keepalive-for-entitystateevents
         - solarwindsentity/keepalive
       processors:
         - memory_limiter
