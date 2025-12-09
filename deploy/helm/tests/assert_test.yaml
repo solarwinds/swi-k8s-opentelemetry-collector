@@ -38,3 +38,10 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: Deployment of the OpenTelemetry Operator is enabled but cert-manager was not detected in your cluster. The operator's admission webhooks require valid certificates to function properly. Please set `certmanager.enabled` to `true` or follow the operator's documentation (https://opentelemetry.io/docs/platforms/kubernetes/helm/operator/#configuration) to ensure proper certificate management.
+  - it: should fail when network_topology.enabled is true but otel.gateway.enabled is false
+    set:
+      network_topology.enabled: true
+      otel.gateway.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: The network topology feature requires `otel.gateway.enabled` to be set to `true`.
