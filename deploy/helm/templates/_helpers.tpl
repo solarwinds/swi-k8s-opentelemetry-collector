@@ -407,6 +407,43 @@ Usage:
 {{- end -}}
 
 {{/*
+Returns namespace filters for relationship metrics (OBI and Istio)
+Only filters when BOTH source AND destination should be filtered
+It preserves relationships where at least one end is in a monitored namespace
+
+Usage:
+{{- include "namespacesFilterRelationships" . | nindent 8 }}
+*/}}
+{{- define "namespacesFilterRelationships" -}}
+{{- range .Values.cluster.filter.exclude_namespaces }}
+- resource.attributes["source.k8s.namespace.name"] == "{{ . }}" and resource.attributes["dest.k8s.namespace.name"] == "{{ . }}"
+{{- end }}
+{{- range .Values.cluster.filter.exclude_namespaces_regex }}
+- IsMatch(resource.attributes["source.k8s.namespace.name"], "{{ . }}") and IsMatch(resource.attributes["dest.k8s.namespace.name"], "{{ . }}")
+{{- end }}
+# include namespaces have to be merged to one condition with ORs and ANDs
+{{- if or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
+{{- $srcConditions := list }}
+{{- $dstConditions := list }}
+{{- range .Values.cluster.filter.include_namespaces }}
+  {{- $value := . }}
+  {{- $srcConditions = append $srcConditions (printf `resource.attributes["source.k8s.namespace.name"] == "%s"` $value) }}
+  {{- $dstConditions = append $dstConditions (printf `resource.attributes["dest.k8s.namespace.name"] == "%s"` $value) }}
+{{- end }}
+{{- range .Values.cluster.filter.include_namespaces_regex }}
+  {{- $value := . }}
+  {{- $srcConditions = append $srcConditions (printf `IsMatch(resource.attributes["source.k8s.namespace.name"], "%s")` $value) }}
+  {{- $dstConditions = append $dstConditions (printf `IsMatch(resource.attributes["dest.k8s.namespace.name"], "%s")` $value) }}
+{{- end }}
+{{- $srcConditions = append $srcConditions `resource.attributes["source.k8s.namespace.name"] == nil` }}
+{{- $dstConditions = append $dstConditions `resource.attributes["dest.k8s.namespace.name"] == nil` }}
+{{- $srcJoined := join " or " $srcConditions }}
+{{- $dstJoined := join " or " $dstConditions }}
+- not({{ $srcJoined }}) and not({{ $dstJoined }})
+{{- end -}}
+{{- end -}}
+
+{{/*
 Calculate max_staleness for cumulativetodelta processor
 If max_staleness is explicitly set, use it. Otherwise, default to thrice the scrape_interval
 Input should be the Values object with prometheus configuration
