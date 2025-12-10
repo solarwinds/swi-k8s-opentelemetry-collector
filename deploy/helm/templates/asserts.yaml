@@ -35,3 +35,9 @@
 {{ fail "Deployment of the OpenTelemetry Operator is enabled but cert-manager was not detected in your cluster. The operator's admission webhooks require valid certificates to function properly. Please set `certmanager.enabled` to `true` or follow the operator's documentation (https://opentelemetry.io/docs/platforms/kubernetes/helm/operator/#configuration) to ensure proper certificate management." }}
 {{- end -}}
 {{- end -}}
+
+{{- if .Values.network_topology.enabled }}
+{{- if not .Values.otel.gateway.enabled }}
+{{- fail "The network topology feature requires `otel.gateway.enabled` to be set to `true`." }}
+{{- end }}
+{{- end }}

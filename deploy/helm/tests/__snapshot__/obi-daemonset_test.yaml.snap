@@ -1,0 +1,70 @@
+DaemonSet spec should match snapshot when network_topology is enabled:
+  1: |
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: eks.amazonaws.com/compute-type
+                  operator: NotIn
+                  values:
+                    - fargate
+    containers:
+      - env:
+          - name: OTEL_EBPF_CONFIG_PATH
+            value: /etc/obi/config/obi-config.yml
+          - name: OTEL_EXPORTER_OTLP_INSECURE
+            value: "true"
+        image: ghcr.io/open-telemetry/opentelemetry-ebpf-instrumentation/ebpf-instrument:v0.3.0
+        imagePullPolicy: IfNotPresent
+        name: obi
+        ports: null
+        resources:
+          limits:
+            cpu: 500m
+            memory: 768Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          capabilities:
+            add:
+              - BPF
+              - PERFMON
+              - DAC_READ_SEARCH
+              - CHECKPOINT_RESTORE
+              - NET_RAW
+              - NET_ADMIN
+              - SYS_PTRACE
+              - SYS_ADMIN
+              - SYS_RESOURCE
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+        volumeMounts:
+          - mountPath: /etc/obi/config
+            name: obi-config
+          - mountPath: /sys/fs/cgroup
+            name: cgroup
+          - mountPath: /sys/kernel/security
+            name: sec
+    dnsPolicy: ClusterFirstWithHostNet
+    hostNetwork: true
+    hostPID: true
+    nodeSelector:
+      kubernetes.io/os: linux
+    serviceAccountName: RELEASE-NAME-swo-k8s-collector
+    tolerations:
+      - effect: NoSchedule
+        operator: Exists
+    volumes:
+      - configMap:
+          name: RELEASE-NAME-swo-k8s-collector-obi-config
+        name: obi-config
+      - hostPath:
+          path: /sys/kernel/security
+        name: sec
+      - hostPath:
+          path: /sys/fs/cgroup
+        name: cgroup
