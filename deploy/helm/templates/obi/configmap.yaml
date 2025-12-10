@@ -46,7 +46,7 @@ data:
       {{- if (not (empty .Values.cluster.filter.include_namespaces))}}
         - k8s_namespace: "*"
       {{- end }}
-      {{- if or (not (empty .Values.cluster.filter.exclude_namespaces)) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) }}
+      {{- if (not (empty .Values.cluster.filter.exclude_namespaces))}}
         {{- range .Values.cluster.filter.exclude_namespaces }}
         - k8s_namespace: {{ quote . }}
         {{- end }}
