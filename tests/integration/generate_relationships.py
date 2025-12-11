@@ -168,7 +168,25 @@ def get_entity_filter_key(entity_type: str) -> str:
 
 
 def should_include_entity(entity_id: Dict[str, str], entity_type: str) -> bool:
-    """Filters entities to include only test fixtures without runtime-generated hashes."""
+    """Filters entities to include only test fixtures without runtime-generated hashes.
+    
+    Special case: VulnerabilityDetail entities are filtered to include only CVE-2023-5752
+    for deterministic test assertions (this CVE is linked to the python:3.9-alpine image).
+    """
+    # VulnerabilityDetail: only include CVE-2023-5752 for testing (linked to python image)
+    if entity_type == 'VulnerabilityDetail':
+        return entity_id.get('vulnerability.id') == 'CVE-2023-5752'
+    
+    # KubernetesContainerImage: only include python image for vulnerability testing
+    if entity_type == 'KubernetesContainerImage':
+        image_name = entity_id.get('container.image.name', '')
+        return image_name == 'index.docker.io/library/python'
+    
+    # PublicNetworkLocation: only include solarwinds.com for testing
+    if entity_type == 'PublicNetworkLocation':
+        fqdn = entity_id.get('sw.server.address.fqdn', '')
+        return fqdn == 'solarwinds.com'
+    
     filter_key = get_entity_filter_key(entity_type)
     
     if filter_key is None:
@@ -189,11 +207,40 @@ def filter_cluster_uid(entity_id: Dict[str, str]) -> Dict[str, str]:
     return {k: v for k, v in entity_id.items() if k != CLUSTER_UID_KEY}
 
 
+def infer_entity_type_from_id(entity_id: Dict[str, str]) -> str:
+    """Infer entity type from entity ID keys when type field is empty.
+    
+    This handles legacy data where entity type fields may not be populated.
+    """
+    id_keys = set(entity_id.keys())
+    
+    # VulnerabilityDetail: has vulnerability.id
+    if 'vulnerability.id' in id_keys:
+        return 'VulnerabilityDetail'
+    
+    # KubernetesContainerImage: has container.image.* keys
+    if any(k.startswith('container.image.') for k in id_keys):
+        return 'KubernetesContainerImage'
+    
+    # Kubernetes workloads: have k8s.<type>.name keys
+    for key in id_keys:
+        if key.startswith('k8s.') and key.endswith('.name') and key != 'k8s.namespace.name':
+            # Extract workload type from key (e.g., k8s.deployment.name -> Deployment)
+            workload_type = key.replace('k8s.', '').replace('.name', '')
+            return f'Kubernetes{workload_type.capitalize()}'
+    
+    return ''
+
+
 def convert_entity_id_to_list(entity_id: Dict[str, str]) -> List[Dict[str, str]]:
-    return [
-        {"key": key, "value": value}
-        for key, value in sorted(entity_id.items())
-    ]
+    result = []
+    for key, value in sorted(entity_id.items()):
+        # Skip digest value (too brittle, changes frequently)
+        if key == 'oci.manifest.digest':
+            result.append({"key": key})
+        else:
+            result.append({"key": key, "value": value})
+    return result
 
 
 def create_output_structure(events: List[Dict]) -> Dict:
@@ -226,7 +273,8 @@ def generate_entity_file(client, entity_type: str, output_dir: str) -> int:
     SELECT 
         LogAttributes['otel.entity.event.type'] as event_type,
         LogAttributes['otel.entity.type'] as entity_type,
-        LogAttributes['otel.entity.id'] as entity_id
+        LogAttributes['otel.entity.id'] as entity_id,
+        LogAttributes as log_attributes
     FROM otel.otel_logs
     WHERE ScopeAttributes['otel.entity.event_as_log'] = 'true'
     AND LogAttributes['otel.entity.event.type'] = 'entity_state'
@@ -241,7 +289,8 @@ def generate_entity_file(client, entity_type: str, output_dir: str) -> int:
         events_data.append({
             'event_type': row[0],
             'entity_type': row[1],
-            'entity_id': row[2]
+            'entity_id': row[2],
+            'log_attributes': row[3]
         })
     
     print(f"[entity_{to_snake_case(entity_type)}] Fetched {len(events_data)} events", file=sys.stderr)
@@ -261,11 +310,48 @@ def generate_entity_file(client, entity_type: str, output_dir: str) -> int:
         if entity_key not in seen_ids:
             seen_ids.add(entity_key)
             
+            # Extract relevant attributes based on entity type
+            attributes = []
+            if event['entity_type'] == 'VulnerabilityDetail':
+                # Extract vulnerability-specific attributes from otel.entity.attributes
+                log_attrs = event.get('log_attributes', {})
+                entity_attrs_raw = log_attrs.get('otel.entity.attributes')
+                
+                if entity_attrs_raw:
+                    # Parse if it's a JSON string, otherwise use as dict
+                    if isinstance(entity_attrs_raw, str):
+                        entity_attrs = json.loads(entity_attrs_raw)
+                    else:
+                        entity_attrs = entity_attrs_raw
+                    
+                    # Extract key attributes for assertions
+                    for key in ['vulnerability.severity', 'vulnerability.enumeration', 'vulnerability.description', 
+                                'vulnerability.score.base', 'vulnerability.reference']:
+                        if key in entity_attrs:
+                            attributes.append({"key": key, "value": entity_attrs[key]})
+            
+            elif event['entity_type'] == 'KubernetesContainerImage':
+                # Extract image-specific attributes from otel.entity.attributes
+                log_attrs = event.get('log_attributes', {})
+                entity_attrs_raw = log_attrs.get('otel.entity.attributes')
+                
+                if entity_attrs_raw:
+                    # Parse if it's a JSON string, otherwise use as dict
+                    if isinstance(entity_attrs_raw, str):
+                        entity_attrs = json.loads(entity_attrs_raw)
+                    else:
+                        entity_attrs = entity_attrs_raw
+                    
+                    # Extract container.image.tags attribute
+                    if 'container.image.tags' in entity_attrs:
+                        attributes.append({"key": "container.image.tags", "value": entity_attrs['container.image.tags']})
+
+            
             unique_events.append({
                 "otel.entity.event.type": event['event_type'],
                 "otel.entity.type": event['entity_type'],
                 "otel.entity.id": convert_entity_id_to_list(entity_id_filtered),
-                "otel.entity.attributes": []
+                "otel.entity.attributes": attributes
             })
     
     unique_events.sort(key=lambda e: json.dumps(e["otel.entity.id"], sort_keys=True))
@@ -294,7 +380,8 @@ def generate_relationship_file(client, relationship_type: str, output_dir: str) 
         LogAttributes['otel.entity_relationship.source_entity.type'] as source_type,
         LogAttributes['otel.entity_relationship.source_entity.id'] as source_id,
         LogAttributes['otel.entity_relationship.destination_entity.type'] as dest_type,
-        LogAttributes['otel.entity_relationship.destination_entity.id'] as dest_id
+        LogAttributes['otel.entity_relationship.destination_entity.id'] as dest_id,
+        LogAttributes as log_attributes
     FROM otel.otel_logs
     WHERE ScopeAttributes['otel.entity.event_as_log'] = 'true'
     AND LogAttributes['otel.entity.event.type'] = 'entity_relationship_state'
@@ -306,13 +393,21 @@ def generate_relationship_file(client, relationship_type: str, output_dir: str) 
     
     relationships_data = []
     for row in result.result_rows:
+        source_id_parsed = parse_entity_id(row[3])
+        dest_id_parsed = parse_entity_id(row[5])
+        
+        # Infer types if they're empty
+        source_type = row[2] if row[2] else infer_entity_type_from_id(source_id_parsed)
+        dest_type = row[4] if row[4] else infer_entity_type_from_id(dest_id_parsed)
+        
         relationships_data.append({
             'event_type': row[0],
             'relationship_type': row[1],
-            'source_type': row[2],
+            'source_type': source_type,
             'source_id': row[3],
-            'dest_type': row[4],
-            'dest_id': row[5]
+            'dest_type': dest_type,
+            'dest_id': row[5],
+            'log_attributes': row[6]
         })
     
     print(f"[relationship_{to_snake_case(relationship_type)}] Fetched {len(relationships_data)} relationships", file=sys.stderr)
@@ -327,11 +422,6 @@ def generate_relationship_file(client, relationship_type: str, output_dir: str) 
         source_name = get_workload_name(source_id)
         dest_name = get_workload_name(dest_id)
         
-        if not (source_name and source_name.startswith(TEST_PREFIX)):
-            continue
-        if not (dest_name and dest_name.startswith(TEST_PREFIX)):
-            continue
-        
         # KubernetesServiceRoutesTo: exclude relationships to entities with runtime hashes
         if relationship_type == 'KubernetesServiceRoutesTo':
             if rel['dest_type'] in ['KubernetesPod', 'KubernetesReplicaSet']:
@@ -340,6 +430,26 @@ def generate_relationship_file(client, relationship_type: str, output_dir: str) 
             if rel['source_type'] in ['KubernetesPod', 'KubernetesReplicaSet']:
                 if has_runtime_generated_hash(source_id, rel['source_type']):
                     continue
+        
+        # KubernetesResourceUsesImage: only include test-pod relationships for deterministic tests
+        if relationship_type == 'KubernetesResourceUsesImage':
+            pod_name = source_id.get(POD_NAME_KEY)
+            if pod_name != 'test-pod':
+                continue
+        
+        # VulnerabilityFinding: filter by destination (image) and source (CVE)
+        # For VulnerabilityFinding: source=VulnerabilityDetail, destination=KubernetesContainerImage
+        # Only include CVE-2023-5752 for deterministic tests
+        if relationship_type == 'VulnerabilityFinding':
+            # Check if destination is a python image (used by test-pod)
+            image_name = dest_id.get('container.image.name', '')
+            cve_id = source_id.get('vulnerability.id', '')
+            if 'python' not in image_name.lower() or cve_id != 'CVE-2023-5752':
+                continue
+        else:
+            # All other relationships must have source entities starting with test- prefix
+            if not (source_name and source_name.startswith(TEST_PREFIX)):
+                continue
         
         source_id_filtered = filter_cluster_uid(source_id)
         dest_id_filtered = filter_cluster_uid(dest_id)
@@ -351,19 +461,70 @@ def generate_relationship_file(client, relationship_type: str, output_dir: str) 
         if rel_key not in seen_relationships:
             seen_relationships.add(rel_key)
             
-            unique_events.append({
+            # Extract relevant attributes based on relationship type
+            attributes = []
+            
+            # KubernetesResourceUsesImage: extract imageTag from relationship attributes
+            if relationship_type == 'KubernetesResourceUsesImage':
+                log_attrs = rel.get('log_attributes', {})
+                rel_attrs_raw = log_attrs.get('otel.entity_relationship.attributes')
+                
+                if rel_attrs_raw:
+                    # Parse if it's a JSON string, otherwise use as dict
+                    if isinstance(rel_attrs_raw, str):
+                        rel_attrs = json.loads(rel_attrs_raw)
+                    else:
+                        rel_attrs = rel_attrs_raw
+                    
+                    # Extract imageTag attribute
+                    if 'imageTag' in rel_attrs:
+                        attributes.append({"key": "imageTag", "value": rel_attrs['imageTag']})
+            
+            # VulnerabilityFinding: extract scanner metadata from relationship attributes
+            if relationship_type == 'VulnerabilityFinding':
+                log_attrs = rel.get('log_attributes', {})
+                rel_attrs_raw = log_attrs.get('otel.entity_relationship.attributes')
+                
+                if rel_attrs_raw:
+                    # Parse if it's a JSON string, otherwise use as dict
+                    if isinstance(rel_attrs_raw, str):
+                        rel_attrs = json.loads(rel_attrs_raw)
+                    else:
+                        rel_attrs = rel_attrs_raw
+                    
+                    # Extract scanner attributes in sorted order for consistency
+                    # Skip scannerVersion value (too brittle)
+                    for key in sorted(rel_attrs.keys()):
+                        if key == 'scannerVersion':
+                            attributes.append({"key": key})
+                        else:
+                            attributes.append({"key": key, "value": rel_attrs[key]})
+            
+            relationship_event = {
                 "otel.entity.event.type": rel['event_type'],
                 "otel.entity_relationship.type": rel['relationship_type'],
-                "otel.entity_relationship.source_entity.type": rel['source_type'],
                 "otel.entity_relationship.source_entity.id": convert_entity_id_to_list(source_id_filtered),
-                "otel.entity_relationship.destination_entity.type": rel['dest_type'],
                 "otel.entity_relationship.destination_entity.id": convert_entity_id_to_list(dest_id_filtered)
-            })
+            }
+            
+            # Add entity types only if they exist
+            # Note: k8seventgenerationprocessor doesn't emit entity types for VulnerabilityFinding
+            if relationship_type != 'VulnerabilityFinding':
+                if rel['source_type']:
+                    relationship_event["otel.entity_relationship.source_entity.type"] = rel['source_type']
+                if rel['dest_type']:
+                    relationship_event["otel.entity_relationship.destination_entity.type"] = rel['dest_type']
+            
+            # Only add attributes key if there are attributes to include
+            if attributes:
+                relationship_event["otel.entity_relationship.attributes"] = attributes
+            
+            unique_events.append(relationship_event)
     
     unique_events.sort(key=lambda e: (
-        e["otel.entity_relationship.source_entity.type"],
+        e.get("otel.entity_relationship.source_entity.type", ""),
         json.dumps(e["otel.entity_relationship.source_entity.id"], sort_keys=True),
-        e["otel.entity_relationship.destination_entity.type"],
+        e.get("otel.entity_relationship.destination_entity.type", ""),
         json.dumps(e["otel.entity_relationship.destination_entity.id"], sort_keys=True)
     ))
     
