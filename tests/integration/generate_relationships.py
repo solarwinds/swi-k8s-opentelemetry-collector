@@ -40,6 +40,7 @@ TEST_PREFIX = 'test-'
 CLUSTER_UID_KEY = 'sw.k8s.cluster.uid'
 POD_NAME_KEY = 'k8s.pod.name'
 REPLICASET_NAME_KEY = 'k8s.replicaset.name'
+JOB_NAME_KEY = 'k8s.job.name'
 
 # Kubernetes workload name keys in priority order
 K8S_WORKLOAD_KEYS = [
@@ -56,6 +57,8 @@ K8S_WORKLOAD_KEYS = [
 POD_HASH_LENGTH = 5
 REPLICASET_HASH_MIN_LENGTH = 8
 REPLICASET_HASH_MAX_LENGTH = 10
+JOB_HASH_MIN_LENGTH = 8
+JOB_HASH_MAX_LENGTH = 10
 
 
 def parse_entity_id(entity_id_str: str) -> Dict[str, str]:
@@ -113,6 +116,22 @@ def _check_replicaset_hash_pattern(replicaset_name: str) -> bool:
     return (REPLICASET_HASH_MIN_LENGTH <= hash_length <= REPLICASET_HASH_MAX_LENGTH 
             and last_part.isalnum())
 
+def _check_job_hash_pattern(job_name: str) -> bool:
+    """Returns True if Job name matches: <base>-<hash> pattern. Usually,
+    the hash is a timestamp, but not always.
+    
+    This identifies Jobs created by CronJobs, which get
+    runtime-generated names that change when the CronJob is triggered.
+    """
+    parts = job_name.split('-')
+    if len(parts) < 2:
+        return False
+
+    last_part = parts[-1]
+    hash_length = len(last_part)
+    return (JOB_HASH_MIN_LENGTH <= hash_length <= JOB_HASH_MAX_LENGTH
+            and last_part.isdecimal())
+
 
 def has_runtime_generated_hash(entity_id: Dict[str, str], entity_type: str) -> bool:
     """Detects entities with runtime-generated hashes that change on each deploy."""
@@ -125,6 +144,11 @@ def has_runtime_generated_hash(entity_id: Dict[str, str], entity_type: str) -> b
         replicaset_name = entity_id.get(REPLICASET_NAME_KEY)
         if replicaset_name:
             return _check_replicaset_hash_pattern(replicaset_name)
+        
+    elif entity_type == 'KubernetesJob':
+        job_name = entity_id.get(JOB_NAME_KEY)
+        if job_name:
+            return _check_job_hash_pattern(job_name)
     
     return False
 
@@ -155,7 +179,7 @@ def discover_relationship_types(client) -> List[str]:
     return [row[0] for row in result.result_rows if row[0]]
 
 
-def get_entity_filter_key(entity_type: str) -> str:
+def get_entity_filter_key(entity_type: str) -> str | None:
     """Returns k8s.<workloadtype>.name for Kubernetes entities, None otherwise."""
     if not entity_type.startswith('Kubernetes'):
         return None

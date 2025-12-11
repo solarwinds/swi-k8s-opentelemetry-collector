@@ -1,7 +1,4 @@
 {{- if .Values.network_topology.enabled }}
-{{- if not .Values.otel.gateway.enabled }}
-{{- fail "The network_topology requires otel.gateway.enabled to be set to true" }}
-{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -32,11 +29,25 @@ data:
     {{- if not .Values.network_topology.config.discovery }}
     discovery:
       instrument:
+      {{- if (not (empty .Values.cluster.filter.include_namespaces))}}
+        {{- range .Values.cluster.filter.include_namespaces }}
+        - k8s_namespace: {{ quote . }}
+        {{- end }}
+      {{- else }}
         - k8s_namespace: "*"
+      {{- end }}
       exclude_instrument:
         - exe_path: "{*otelcol*|*obi*}"
         - k8s_pod_annotations:
             sw.ebpf.instrumentation/exclude: "true"
+      {{- if (not (empty .Values.cluster.filter.include_namespaces))}}
+        - k8s_namespace: "*"
+      {{- end }}
+      {{- if (not (empty .Values.cluster.filter.exclude_namespaces))}}
+        {{- range .Values.cluster.filter.exclude_namespaces }}
+        - k8s_namespace: {{ quote . }}
+        {{- end }}
+      {{- end }}
     {{- end }}
     {{- if not .Values.network_topology.config.log_level }}
     log_level: info

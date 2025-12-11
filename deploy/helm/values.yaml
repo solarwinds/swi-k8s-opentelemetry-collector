@@ -1229,13 +1229,13 @@ operator:
       # Currently only Java and Python supported, other languages are TBD
       java:
         repository: "solarwinds/autoinstrumentation-java"
-        tag: "3.1.0"
+        tag: "3.1.1"
       nodejs:
         repository: ""
         tag: ""
       python:
         repository: "solarwinds/autoinstrumentation-python"
-        tag: "5.1.0"
+        tag: "5.2.0"
       dotnet:
         repository: ""
         tag: ""
@@ -1325,9 +1325,40 @@ trivy-operator:
   targetWorkloads: pod,replicaset,statefulset,daemonset,cronjob,job
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
+    
+    # Resources for scan job containers
+    resources:
+      requests:
+        cpu: 100m
+        memory: 100Mi
+      limits:
+        cpu: 500m
+        memory: 500Mi
+
   trivyOperator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
+  operator:
+    # Currently only Image Vulnerability Scanning is supported, other features are TBD
+    vulnerabilityScannerEnabled: true
+
+    # Disabled features 
+    configAuditScannerEnabled: false
+    rbacAssessmentScannerEnabled: false
+    infraAssessmentScannerEnabled: false
+    clusterComplianceEnabled: false
+    exposedSecretScannerEnabled: false
+
+    # Access to global secrets and service account tokens is disabled by default
+    accessGlobalSecretsAndServiceAccount: false
+
+    # Map of namespace:secrets, secrets are comma separated
+    # This setting is to be used to authenticate in private registries if accessGlobalSecretsAndServiceAccount is set to false
+    # see https://github.com/aquasecurity/trivy-operator/tree/main/deploy/helm for configuration reference
+    privateRegistryScanSecretsNames: {}
+
+    # Another option of providing access to private registries is to use managed registries, which will involve modifying the operator's service account
+    # See https://aquasecurity.github.io/trivy-operator/v0.29.0/docs/vulnerability-scanning/managed-registries/ for configuration steps
 
 # Configuration for migration jobs that handle upgrades between chart versions
 migrations:
