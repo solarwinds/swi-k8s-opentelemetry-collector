@@ -1,3 +1,28 @@
+"""Integration tests for entity state events.
+
+This test suite validates that the SWO K8s Collector correctly generates and exports
+entity state events to ClickHouse. Tests cover various Kubernetes entity types including
+workloads (Deployments, StatefulSets, DaemonSets), container images, and vulnerability entities.
+
+Vulnerability Entity Testing:
+    Tests validate the generation of VulnerabilityDetail entities and VulnerabilityFinding
+    relationships from Trivy VulnerabilityReport manifests. The test suite uses CVE-2023-5752
+    as a stable reference CVE found in the python:3.9-alpine test image.
+    
+    Covered vulnerability entities:
+    - VulnerabilityDetail: Canonical representation of CVE vulnerabilities
+    - KubernetesContainerImage: Container image entities referenced by vulnerabilities
+    - VulnerabilityFinding: Relationships linking vulnerabilities to container images
+
+Test Data:
+    Expected entity state events are defined in JSON files under expected_entitystateevents/.
+    These files can be regenerated using generate_relationships.py after deploying with
+    'skaffold dev' and waiting for entity events to be exported to ClickHouse.
+
+Retry Logic:
+    Tests use eventual consistency with 60 retry attempts (3 second intervals, 180s timeout)
+    to account for Trivy scan timing and collector pipeline processing delays.
+"""
 import json
 import os
 import time
@@ -74,7 +99,10 @@ def _kv_pairs_match(actual_kvlist: Dict, expected_pairs: List[Dict]) -> bool:
         expected_value = pair.get("value")
         if key not in actual_map:
             return False
-        if expected_value is not None and actual_map[key] != expected_value:
+        # If expected has no "value" field, just verify the key exists (ignore actual value)
+        if expected_value is None:
+            continue
+        if actual_map[key] != expected_value:
             return False
 
     return True
