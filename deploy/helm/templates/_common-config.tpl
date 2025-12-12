@@ -8,6 +8,8 @@ filter/receiver:
       - 'name == "scrape_samples_scraped"'
       - 'name == "scrape_series_added"'
       - 'name == "up"'
+      - 'name == "ALERTS"'
+      - 'name == "ALERTS_FOR_STATE"'
 {{- end }}
 
 {{- define "common-config.filter-remove-internal" -}}
