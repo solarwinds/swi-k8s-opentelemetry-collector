@@ -10,6 +10,13 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Gateway config should not exist when it's disabled
+    template: gateway/gateway-config-map.yaml
+    set:
+      otel.gateway.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
   - it: Pprof should not be in the configuration by default
     template: gateway/gateway-config-map.yaml
     asserts:
