@@ -326,7 +326,7 @@ processors:
   transform/entity_attributes:
     log_statements:
       - statements:
-          # do not create/update endities from events
+          # do not create/update entities from events
           - set(resource.attributes["sw.entity.noupdate"], "true")
 
           - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Pod"
@@ -370,6 +370,18 @@ processors:
           - log.body["kind"] == "Service"
         statements:
           - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"]) where log.body["spec"]["type"] != nil
+
+  transform/remove_deployed_by_collector_label_if_from_different_namespace:
+    error_mode: ignore
+    log_statements:
+      - conditions:
+          - resource.attributes["sw.k8s.log.type"] == "entitystateevent"
+            and log.attributes["otel.entity.attributes"] != nil
+            and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"] == true
+            and log.attributes["otel.entity.id"] != nil
+            and log.attributes["otel.entity.id"]["k8s.namespace.name"] != "{{ .Release.Namespace }}"
+        statements:
+          - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
@@ -746,6 +758,7 @@ service:
         - resource/manifest
         - resourcedetection/providers
         - k8seventgeneration
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
         - groupbyattrs/serviceendpointsmapping
         - transform/serviceendpointsmapping-renamepodip
         - k8sattributes
@@ -793,6 +806,7 @@ service:
         - resource/manifest
         - k8sattributes
         - k8seventgeneration
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}
