@@ -527,6 +527,16 @@ Custom events filter with new syntax:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -948,6 +958,7 @@ Custom events filter with new syntax:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
@@ -974,6 +985,7 @@ Custom events filter with new syntax:
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -1541,6 +1553,16 @@ Custom events filter with old syntax:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -1962,6 +1984,7 @@ Custom events filter with old syntax:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
@@ -1988,6 +2011,7 @@ Custom events filter with old syntax:
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -2548,6 +2572,16 @@ Events config should match snapshot when using default values:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -2968,6 +3002,7 @@ Events config should match snapshot when using default values:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
@@ -2994,6 +3029,7 @@ Events config should match snapshot when using default values:
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -3422,6 +3458,16 @@ Events config should not contain manifest collection pipeline when disabled:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -3677,6 +3723,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
