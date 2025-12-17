@@ -1003,6 +1003,9 @@ kube-state-metrics:
     - kube_endpoint_address
     - kube_configmap_created
 
+  podLabels:
+    swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
+
 # DEPRECATED: Node exporter is deployed only in case opencost section is enabled. Otherwise this section can be ignored.
 # prometheus-node-exporter:
 
@@ -1242,6 +1245,8 @@ operator:
       go:
         repository: ""
         tag: ""
+    podLabels:
+      swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
   admissionWebhooks:
     certManager:
       enabled: true
@@ -1256,9 +1261,17 @@ operator:
 certmanager:
   enabled: false
   installCRDs: true
+  podLabels:
+    swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
+  webhook:
+    podLabels:
+      swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
+  cainjector:
+    podLabels:
+      swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
 
 # Wait jobs ensure that subcharts are fully deployed before any resources deployed by post-install hooks
-# which avoids unnecessary installation failues (e.g. OpenTelemetryCollector custom resources should be deployed after operator is fully functional)
+# which avoids unnecessary installation failures (e.g. OpenTelemetryCollector custom resources should be deployed after operator is fully functional)
 waitJobs:
   # is valid only if `operator.enable=true`, otherwise is ignored
   operator:
@@ -1338,6 +1351,7 @@ trivy-operator:
   trivyOperator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
+    scanJobPodTemplateLabels: "swo.cloud.solarwinds.com/deployed-with-k8s-collector=true"
   operator:
     # Currently only Image Vulnerability Scanning is supported, other features are TBD
     vulnerabilityScannerEnabled: true
@@ -1359,6 +1373,9 @@ trivy-operator:
 
     # Another option of providing access to private registries is to use managed registries, which will involve modifying the operator's service account
     # See https://aquasecurity.github.io/trivy-operator/v0.29.0/docs/vulnerability-scanning/managed-registries/ for configuration steps
+
+    podLabels:
+      swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
 
 # Configuration for migration jobs that handle upgrades between chart versions
 migrations:
