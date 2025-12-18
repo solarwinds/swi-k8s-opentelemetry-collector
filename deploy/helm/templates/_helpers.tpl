@@ -79,6 +79,7 @@ app.kubernetes.io/managed-by: {{ .Release.Name }}
 helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
+swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
 {{- if .Values.commonLabels}}
 {{ toYaml .Values.commonLabels }}
 {{- end }}
@@ -403,6 +404,39 @@ Usage:
 {{- $conditions = append $conditions (printf `resource.attributes["k8s.namespace.name"] == nil`) }}
 {{- $joinedConditions := join " or " $conditions }}
 - not({{ $joinedConditions }}) 
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns namespace filters for relationship metrics (OBI)
+
+Usage:
+{{- include "namespacesFilterRelationships" . | nindent 8 }}
+*/}}
+{{- define "namespacesFilterRelationships" -}}
+{{- range .Values.cluster.filter.exclude_namespaces }}
+- resource.attributes["source.k8s.namespace.name"] == "{{ . }}" or resource.attributes["dest.k8s.namespace.name"] == "{{ . }}"
+{{- end }}
+{{- range .Values.cluster.filter.exclude_namespaces_regex }}
+- IsMatch(resource.attributes["source.k8s.namespace.name"], "{{ . }}") or IsMatch(resource.attributes["dest.k8s.namespace.name"], "{{ . }}")
+{{- end }}
+# include namespaces have to be merged to one condition with ORs and ANDs
+{{- if or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
+{{- $srcConditions := list }}
+{{- $dstConditions := list }}
+{{- range .Values.cluster.filter.include_namespaces }}
+  {{- $value := . }}
+  {{- $srcConditions = append $srcConditions (printf `resource.attributes["source.k8s.namespace.name"] == "%s"` $value) }}
+  {{- $dstConditions = append $dstConditions (printf `resource.attributes["dest.k8s.namespace.name"] == "%s"` $value) }}
+{{- end }}
+{{- range .Values.cluster.filter.include_namespaces_regex }}
+  {{- $value := . }}
+  {{- $srcConditions = append $srcConditions (printf `IsMatch(resource.attributes["source.k8s.namespace.name"], "%s")` $value) }}
+  {{- $dstConditions = append $dstConditions (printf `IsMatch(resource.attributes["dest.k8s.namespace.name"], "%s")` $value) }}
+{{- end }}
+{{- $srcJoined := join " or " $srcConditions }}
+{{- $dstJoined := join " or " $dstConditions }}
+- not(({{ $srcJoined }} and {{ $dstJoined }}) or ({{ $srcJoined }} and resource.attributes["dest.k8s.namespace.name"] == nil) or ({{ $dstJoined }} and resource.attributes["source.k8s.namespace.name"] == nil))
 {{- end -}}
 {{- end -}}
 

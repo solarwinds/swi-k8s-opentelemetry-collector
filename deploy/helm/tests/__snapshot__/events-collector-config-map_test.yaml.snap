@@ -2,6 +2,15 @@ Custom events filter with new syntax:
   1: |
     events.config: |-
       connectors:
+        routing/bypass-keepalive-for-entitystateevents:
+          default_pipelines:
+          - logs/solarwindsentity-keepalive
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "entitystateevent"
+            context: resource
+            pipelines:
+            - logs/stateevents
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -19,12 +28,6 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.configmap.name
-            - entity: KubernetesContainer
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.pod.name
-              - k8s.container.name
             - entity: KubernetesCronJob
               id:
               - sw.k8s.cluster.uid
@@ -93,6 +96,53 @@ Custom events filter with new syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.kustomization.name
+            events:
+              entities:
+              - action: update
+                context: log
+                entity: KubernetesConfigMap
+              - action: update
+                context: log
+                entity: KubernetesCronJob
+              - action: update
+                context: log
+                entity: KubernetesDaemonSet
+              - action: update
+                context: log
+                entity: KubernetesDeployment
+              - action: update
+                context: log
+                entity: KubernetesIngress
+              - action: update
+                context: log
+                entity: KubernetesJob
+              - action: update
+                context: log
+                entity: KubernetesNode
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolume
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolumeClaim
+              - action: update
+                context: log
+                entity: KubernetesPod
+              - action: update
+                context: log
+                entity: KubernetesReplicaSet
+              - action: update
+                context: log
+                entity: KubernetesService
+              - action: update
+                context: log
+                entity: KubernetesStatefulSet
+              - action: update
+                context: log
+                entity: KubernetesGitRepository
+              - action: update
+                context: log
+                entity: KubernetesKustomization
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -477,6 +527,16 @@ Custom events filter with new syntax:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -898,6 +958,7 @@ Custom events filter with new syntax:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
@@ -916,7 +977,7 @@ Custom events filter with new syntax:
             - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
-            - solarwindsentity/keepalive
+            - routing/bypass-keepalive-for-entitystateevents
             processors:
             - memory_limiter
             - transform/manifest
@@ -924,6 +985,7 @@ Custom events filter with new syntax:
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -934,6 +996,11 @@ Custom events filter with new syntax:
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
+          logs/solarwindsentity-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            receivers:
+            - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
             - otlp
@@ -942,6 +1009,7 @@ Custom events filter with new syntax:
             - transform/scope
             - batch
             receivers:
+            - routing/bypass-keepalive-for-entitystateevents
             - solarwindsentity/keepalive
         telemetry:
           logs:
@@ -957,6 +1025,15 @@ Custom events filter with old syntax:
   1: |
     events.config: |-
       connectors:
+        routing/bypass-keepalive-for-entitystateevents:
+          default_pipelines:
+          - logs/solarwindsentity-keepalive
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "entitystateevent"
+            context: resource
+            pipelines:
+            - logs/stateevents
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -974,12 +1051,6 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.configmap.name
-            - entity: KubernetesContainer
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.pod.name
-              - k8s.container.name
             - entity: KubernetesCronJob
               id:
               - sw.k8s.cluster.uid
@@ -1048,6 +1119,53 @@ Custom events filter with old syntax:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.kustomization.name
+            events:
+              entities:
+              - action: update
+                context: log
+                entity: KubernetesConfigMap
+              - action: update
+                context: log
+                entity: KubernetesCronJob
+              - action: update
+                context: log
+                entity: KubernetesDaemonSet
+              - action: update
+                context: log
+                entity: KubernetesDeployment
+              - action: update
+                context: log
+                entity: KubernetesIngress
+              - action: update
+                context: log
+                entity: KubernetesJob
+              - action: update
+                context: log
+                entity: KubernetesNode
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolume
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolumeClaim
+              - action: update
+                context: log
+                entity: KubernetesPod
+              - action: update
+                context: log
+                entity: KubernetesReplicaSet
+              - action: update
+                context: log
+                entity: KubernetesService
+              - action: update
+                context: log
+                entity: KubernetesStatefulSet
+              - action: update
+                context: log
+                entity: KubernetesGitRepository
+              - action: update
+                context: log
+                entity: KubernetesKustomization
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -1435,6 +1553,16 @@ Custom events filter with old syntax:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -1856,6 +1984,7 @@ Custom events filter with old syntax:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
@@ -1874,7 +2003,7 @@ Custom events filter with old syntax:
             - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
-            - solarwindsentity/keepalive
+            - routing/bypass-keepalive-for-entitystateevents
             processors:
             - memory_limiter
             - transform/manifest
@@ -1882,6 +2011,7 @@ Custom events filter with old syntax:
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -1892,6 +2022,11 @@ Custom events filter with old syntax:
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
+          logs/solarwindsentity-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            receivers:
+            - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
             - otlp
@@ -1900,6 +2035,7 @@ Custom events filter with old syntax:
             - transform/scope
             - batch
             receivers:
+            - routing/bypass-keepalive-for-entitystateevents
             - solarwindsentity/keepalive
         telemetry:
           logs:
@@ -1915,6 +2051,15 @@ Events config should match snapshot when using default values:
   1: |
     events.config: |-
       connectors:
+        routing/bypass-keepalive-for-entitystateevents:
+          default_pipelines:
+          - logs/solarwindsentity-keepalive
+          table:
+          - condition: |
+              attributes["sw.k8s.log.type"] == "entitystateevent"
+            context: resource
+            pipelines:
+            - logs/stateevents
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -1932,12 +2077,6 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.configmap.name
-            - entity: KubernetesContainer
-              id:
-              - sw.k8s.cluster.uid
-              - k8s.namespace.name
-              - k8s.pod.name
-              - k8s.container.name
             - entity: KubernetesCronJob
               id:
               - sw.k8s.cluster.uid
@@ -2006,6 +2145,53 @@ Events config should match snapshot when using default values:
               - sw.k8s.cluster.uid
               - k8s.namespace.name
               - k8s.kustomization.name
+            events:
+              entities:
+              - action: update
+                context: log
+                entity: KubernetesConfigMap
+              - action: update
+                context: log
+                entity: KubernetesCronJob
+              - action: update
+                context: log
+                entity: KubernetesDaemonSet
+              - action: update
+                context: log
+                entity: KubernetesDeployment
+              - action: update
+                context: log
+                entity: KubernetesIngress
+              - action: update
+                context: log
+                entity: KubernetesJob
+              - action: update
+                context: log
+                entity: KubernetesNode
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolume
+              - action: update
+                context: log
+                entity: KubernetesPersistentVolumeClaim
+              - action: update
+                context: log
+                entity: KubernetesPod
+              - action: update
+                context: log
+                entity: KubernetesReplicaSet
+              - action: update
+                context: log
+                entity: KubernetesService
+              - action: update
+                context: log
+                entity: KubernetesStatefulSet
+              - action: update
+                context: log
+                entity: KubernetesGitRepository
+              - action: update
+                context: log
+                entity: KubernetesKustomization
         solarwindsentity/serviceendpointsmapping:
           destination_prefix: dest.
           schema:
@@ -2386,6 +2572,16 @@ Events config should match snapshot when using default values:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -2806,6 +3002,7 @@ Events config should match snapshot when using default values:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
@@ -2824,7 +3021,7 @@ Events config should match snapshot when using default values:
             - solarwindsentity/serviceendpointsmapping
           logs/manifests-keepalive:
             exporters:
-            - solarwindsentity/keepalive
+            - routing/bypass-keepalive-for-entitystateevents
             processors:
             - memory_limiter
             - transform/manifest
@@ -2832,6 +3029,7 @@ Events config should match snapshot when using default values:
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -2842,6 +3040,11 @@ Events config should match snapshot when using default values:
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
+          logs/solarwindsentity-keepalive:
+            exporters:
+            - solarwindsentity/keepalive
+            receivers:
+            - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
             - otlp
@@ -2850,6 +3053,7 @@ Events config should match snapshot when using default values:
             - transform/scope
             - batch
             receivers:
+            - routing/bypass-keepalive-for-entitystateevents
             - solarwindsentity/keepalive
         telemetry:
           logs:
@@ -3254,6 +3458,16 @@ Events config should not contain manifest collection pipeline when disabled:
           log_statements:
           - statements:
             - set(log.attributes["sw.namespace"], "sw.events.inframon.k8s")
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          log_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.log.type"] == "entitystateevent" and log.attributes["otel.entity.attributes"]
+              != nil and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"]
+              == true and log.attributes["otel.entity.id"] != nil and log.attributes["otel.entity.id"]["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
         transform/scope:
           log_statements:
           - statements:
@@ -3509,6 +3723,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes

@@ -461,6 +461,10 @@ Metrics config should match snapshot when fargate is enabled:
         k8sattributes:
           auth_type: serviceAccount
           extract:
+            labels:
+            - from: pod
+              key: swo.cloud.solarwinds.com/deployed-with-k8s-collector
+              tag_name: sw.k8s.deployedbycollector
             metadata:
             - k8s.pod.name
             - k8s.deployment.name
@@ -1506,6 +1510,14 @@ Metrics config should match snapshot when fargate is enabled:
           - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
               != nil
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.deployedbycollector"] == "true" and resource.attributes["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(resource.attributes, "sw.k8s.deployedbycollector")
         transform/scope:
           metric_statements:
           - statements:
@@ -1787,6 +1799,7 @@ Metrics config should match snapshot when fargate is enabled:
             - groupbyattrs/all
             - resource/metrics
             - k8sattributes
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
@@ -2290,6 +2303,10 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
         k8sattributes:
           auth_type: serviceAccount
           extract:
+            labels:
+            - from: pod
+              key: swo.cloud.solarwinds.com/deployed-with-k8s-collector
+              tag_name: sw.k8s.deployedbycollector
             metadata:
             - k8s.pod.name
             - k8s.deployment.name
@@ -3335,6 +3352,14 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
               != nil
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.deployedbycollector"] == "true" and resource.attributes["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(resource.attributes, "sw.k8s.deployedbycollector")
         transform/scope:
           metric_statements:
           - statements:
@@ -3551,6 +3576,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - groupbyattrs/all
             - resource/metrics
             - k8sattributes
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
@@ -4061,6 +4087,10 @@ Metrics config should match snapshot when using default values:
         k8sattributes:
           auth_type: serviceAccount
           extract:
+            labels:
+            - from: pod
+              key: swo.cloud.solarwinds.com/deployed-with-k8s-collector
+              tag_name: sw.k8s.deployedbycollector
             metadata:
             - k8s.pod.name
             - k8s.deployment.name
@@ -5106,6 +5136,14 @@ Metrics config should match snapshot when using default values:
           - statements:
             - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
               != nil
+        transform/remove_deployed_by_collector_label_if_from_different_namespace:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["sw.k8s.deployedbycollector"] == "true" and resource.attributes["k8s.namespace.name"]
+              != "NAMESPACE"
+            statements:
+            - delete_key(resource.attributes, "sw.k8s.deployedbycollector")
         transform/scope:
           metric_statements:
           - statements:
@@ -5307,6 +5345,7 @@ Metrics config should match snapshot when using default values:
             - groupbyattrs/all
             - resource/metrics
             - k8sattributes
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:

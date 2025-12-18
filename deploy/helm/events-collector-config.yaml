@@ -83,12 +83,6 @@ connectors:
             - sw.k8s.cluster.uid
             - k8s.namespace.name
             - k8s.configmap.name
-        - entity: KubernetesContainer
-          id:
-            - sw.k8s.cluster.uid
-            - k8s.namespace.name
-            - k8s.pod.name
-            - k8s.container.name
         - entity: KubernetesCronJob
           id:
             - sw.k8s.cluster.uid
@@ -157,7 +151,64 @@ connectors:
             - sw.k8s.cluster.uid
             - k8s.namespace.name
             - k8s.kustomization.name
+      events:
+        entities:
+          - entity: "KubernetesConfigMap"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesCronJob"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesDaemonSet"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesDeployment"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesIngress"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesJob"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesNode"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesPersistentVolume"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesPersistentVolumeClaim"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesPod"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesReplicaSet"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesService"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesStatefulSet"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesGitRepository"
+            context: "log"
+            action: "update"
+          - entity: "KubernetesKustomization"
+            context: "log"
+            action: "update"
+
+  routing/bypass-keepalive-for-entitystateevents:
+    default_pipelines: [logs/solarwindsentity-keepalive]
+    table:
+      - context: resource
+        pipelines:
+          - logs/stateevents
+        condition: |
+          attributes["sw.k8s.log.type"] == "entitystateevent"
 {{- end }}
+
   solarwindsentity/serviceendpointsmapping:
     source_prefix: "source."
     destination_prefix: "dest."
@@ -275,7 +326,7 @@ processors:
   transform/entity_attributes:
     log_statements:
       - statements:
-          # do not create/update endities from events
+          # do not create/update entities from events
           - set(resource.attributes["sw.entity.noupdate"], "true")
 
           - set(resource.attributes["k8s.pod.name"], resource.attributes["k8s.object.name"]) where resource.attributes["k8s.object.kind"] == "Pod"
@@ -319,6 +370,18 @@ processors:
           - log.body["kind"] == "Service"
         statements:
           - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"]) where log.body["spec"]["type"] != nil
+
+  transform/remove_deployed_by_collector_label_if_from_different_namespace:
+    error_mode: ignore
+    log_statements:
+      - conditions:
+          - resource.attributes["sw.k8s.log.type"] == "entitystateevent"
+            and log.attributes["otel.entity.attributes"] != nil
+            and log.attributes["otel.entity.attributes"]["sw.k8s.deployedbycollector"] == true
+            and log.attributes["otel.entity.id"] != nil
+            and log.attributes["otel.entity.id"]["k8s.namespace.name"] != "{{ .Release.Namespace }}"
+        statements:
+          - delete_key(log.attributes["otel.entity.attributes"], "sw.k8s.deployedbycollector")
 
   transform/set_labels_and_annotations_for_entities:
     error_mode: ignore
@@ -695,6 +758,7 @@ service:
         - resource/manifest
         - resourcedetection/providers
         - k8seventgeneration
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
         - groupbyattrs/serviceendpointsmapping
         - transform/serviceendpointsmapping-renamepodip
         - k8sattributes
@@ -742,6 +806,7 @@ service:
         - resource/manifest
         - k8sattributes
         - k8seventgeneration
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}
@@ -749,10 +814,17 @@ service:
         - filter/manifests
 {{- end }}
       exporters:
+        - routing/bypass-keepalive-for-entitystateevents
+
+    logs/solarwindsentity-keepalive:
+      receivers:
+        - routing/bypass-keepalive-for-entitystateevents
+      exporters:
         - solarwindsentity/keepalive
 
     logs/stateevents:
       receivers:
+        - routing/bypass-keepalive-for-entitystateevents
         - solarwindsentity/keepalive
       processors:
         - memory_limiter
