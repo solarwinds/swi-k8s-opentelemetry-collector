@@ -4,6 +4,15 @@ Metrics config should match snapshot when using default values:
       connectors:
         forward/metric-exporter: {}
         forward/prometheus: {}
+        forward/prometheus-filtered: {}
+        routing/prometheus-alerts:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-alerts-passthrough
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -360,8 +369,6 @@ Metrics config should match snapshot when using default values:
             - name == "scrape_samples_scraped"
             - name == "scrape_series_added"
             - name == "up"
-            - name == "ALERTS"
-            - name == "ALERTS_FOR_STATE"
         filter/remove_internal:
           metrics:
             datapoint:
@@ -1732,10 +1739,25 @@ Metrics config should match snapshot when using default values:
             - prometheus/kube-state-metrics
           metrics/prometheus:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-alerts
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - forward/prometheus
+          metrics/prometheus-alerts-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-alerts
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - transform
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
@@ -1768,7 +1790,7 @@ Metrics config should match snapshot when using default values:
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
-            - forward/prometheus
+            - routing/prometheus-alerts
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus

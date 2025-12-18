@@ -8,8 +8,18 @@ filter/receiver:
       - 'name == "scrape_samples_scraped"'
       - 'name == "scrape_series_added"'
       - 'name == "up"'
-      - 'name == "ALERTS"'
-      - 'name == "ALERTS_FOR_STATE"'
+{{- end }}
+
+{{- define "common-config.routing-prometheus-alerts" -}}
+# Route Prometheus alerting metrics to a passthrough pipeline
+# These metrics may contain k8s labels from alert definitions, and we should not add
+# our collector attributes to them to avoid creating incorrect entity relationships in SWO
+routing/prometheus-alerts:
+  default_pipelines: [metrics/prometheus-continue]
+  table:
+    - context: metric
+      pipelines: [metrics/prometheus-alerts-passthrough]
+      condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
 {{- end }}
 
 {{- define "common-config.filter-remove-internal" -}}
