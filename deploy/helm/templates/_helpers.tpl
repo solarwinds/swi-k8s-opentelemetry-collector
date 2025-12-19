@@ -79,6 +79,7 @@ app.kubernetes.io/managed-by: {{ .Release.Name }}
 helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
+swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
 {{- if .Values.commonLabels}}
 {{ toYaml .Values.commonLabels }}
 {{- end }}
