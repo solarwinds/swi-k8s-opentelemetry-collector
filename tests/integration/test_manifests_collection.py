@@ -24,7 +24,7 @@ def teardown_function():
 
 def test_manifests_generated():
     retry_until_ok_clickhouse(
-        lambda: clickhouse_client.get_logs(),
+        lambda _attempt: clickhouse_client.get_logs(),
         assert_test_manifest_found,
         print_failure
     )
@@ -32,7 +32,7 @@ def test_manifests_generated():
 
 def test_manifests_have_labels_and_annotations():
     retry_until_ok_clickhouse(
-        lambda: clickhouse_client.get_logs(),
+        lambda _attempt: clickhouse_client.get_logs(),
         assert_test_manifest_label_and_annotation_found,
         print_labels_and_annotations_failure
     )
@@ -40,7 +40,7 @@ def test_manifests_have_labels_and_annotations():
 
 def test_manifests_have_labels_and_annotations_unchanged():
     retry_until_ok_clickhouse(
-        lambda: clickhouse_client.get_logs(),
+        lambda _attempt: clickhouse_client.get_logs(),
         assert_test_manifest_label_and_annotation_unchanged,
         print_labels_and_annotations_unchanged_failure
     )

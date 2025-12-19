@@ -21,7 +21,7 @@ def teardown_function():
 
 def test_logs_generated():
     retry_until_ok_clickhouse(
-        lambda: clickhouse_client.get_logs(),
+        lambda _attempt: clickhouse_client.get_logs(),
         assert_test_log_found,
         print_failure
     )
