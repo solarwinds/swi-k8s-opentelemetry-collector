@@ -282,7 +282,7 @@ connectors:
   forward/logs-exporter: {}
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
-  {{- include "common-config.routing-prometheus-alerts" . | nindent 2 }}
+  {{- include "common-config.routing-prometheus-passthrough" . | nindent 2 }}
 {{- end }}
 
 {{ include "common-discovery-config.connectors" . | indent 2 }}
@@ -682,23 +682,22 @@ service:
         - memory_limiter
         - filter/receiver
       exporters:
-        - routing/prometheus-alerts
+        - routing/prometheus-passthrough
 
-    # Passthrough pipeline for Prometheus alerting metrics (ALERTS, ALERTS_FOR_STATE)
-    # These metrics should not have collector attributes added to avoid creating incorrect entity relationships
-    metrics/prometheus-alerts-passthrough:
+    # Passthrough pipeline for metrics that should bypass standard processing
+    # These metrics are sent directly without collector attributes
+    metrics/prometheus-passthrough:
       receivers:
-        - routing/prometheus-alerts
+        - routing/prometheus-passthrough
       processors:
         - memory_limiter
         - transform/scope
       exporters:
         - forward/metric-exporter
 
-    # Continue processing regular Prometheus metrics (non-alerting)
     metrics/prometheus-continue:
       receivers:
-        - routing/prometheus-alerts
+        - routing/prometheus-passthrough
       processors:
         - memory_limiter
         - filter/remove_internal

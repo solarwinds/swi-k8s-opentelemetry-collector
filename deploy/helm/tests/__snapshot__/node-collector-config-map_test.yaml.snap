@@ -19,14 +19,14 @@ Custom logs filter with new syntax:
             context: metric
             pipelines:
             - metrics/discovery-istio
-        routing/prometheus-alerts:
+        routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
           table:
           - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
             context: metric
             pipelines:
-            - metrics/prometheus-alerts-passthrough
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -1783,7 +1783,7 @@ Custom logs filter with new syntax:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
@@ -1797,14 +1797,6 @@ Custom logs filter with new syntax:
             - filter/keep-not-relationships
             receivers:
             - forward/not-relationship-state-events
-          metrics/prometheus-alerts-passthrough:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - transform/scope
-            receivers:
-            - routing/prometheus-alerts
           metrics/prometheus-continue:
             exporters:
             - forward/metric-exporter
@@ -1826,7 +1818,15 @@ Custom logs filter with new syntax:
             - resource/metrics
             - resource/all
             receivers:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
@@ -1901,14 +1901,14 @@ Custom logs filter with old syntax:
             context: metric
             pipelines:
             - metrics/discovery-istio
-        routing/prometheus-alerts:
+        routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
           table:
           - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
             context: metric
             pipelines:
-            - metrics/prometheus-alerts-passthrough
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -3749,7 +3749,7 @@ Custom logs filter with old syntax:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
@@ -3763,14 +3763,6 @@ Custom logs filter with old syntax:
             - filter/keep-not-relationships
             receivers:
             - forward/not-relationship-state-events
-          metrics/prometheus-alerts-passthrough:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - transform/scope
-            receivers:
-            - routing/prometheus-alerts
           metrics/prometheus-continue:
             exporters:
             - forward/metric-exporter
@@ -3792,7 +3784,15 @@ Custom logs filter with old syntax:
             - resource/metrics
             - resource/all
             receivers:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
@@ -3867,14 +3867,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
             context: metric
             pipelines:
             - metrics/discovery-istio
-        routing/prometheus-alerts:
+        routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
           table:
           - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
             context: metric
             pipelines:
-            - metrics/prometheus-alerts-passthrough
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -5566,7 +5566,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
@@ -5580,14 +5580,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - filter/keep-not-relationships
             receivers:
             - forward/not-relationship-state-events
-          metrics/prometheus-alerts-passthrough:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - transform/scope
-            receivers:
-            - routing/prometheus-alerts
           metrics/prometheus-continue:
             exporters:
             - forward/metric-exporter
@@ -5609,7 +5601,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/metrics
             - resource/all
             receivers:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
@@ -9151,14 +9151,14 @@ Node collector config should match snapshot when using default values:
             context: metric
             pipelines:
             - metrics/discovery-istio
-        routing/prometheus-alerts:
+        routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
           table:
           - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
             context: metric
             pipelines:
-            - metrics/prometheus-alerts-passthrough
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -10910,7 +10910,7 @@ Node collector config should match snapshot when using default values:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
@@ -10924,14 +10924,6 @@ Node collector config should match snapshot when using default values:
             - filter/keep-not-relationships
             receivers:
             - forward/not-relationship-state-events
-          metrics/prometheus-alerts-passthrough:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - transform/scope
-            receivers:
-            - routing/prometheus-alerts
           metrics/prometheus-continue:
             exporters:
             - forward/metric-exporter
@@ -10953,7 +10945,15 @@ Node collector config should match snapshot when using default values:
             - resource/metrics
             - resource/all
             receivers:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service

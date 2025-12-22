@@ -979,7 +979,7 @@ connectors:
   forward/prometheus: {}
   forward/metric-exporter: {}
   forward/prometheus-filtered: {}
-  {{- include "common-config.routing-prometheus-alerts" . | nindent 2 }}
+  {{- include "common-config.routing-prometheus-passthrough" . | nindent 2 }}
 
 receivers:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
@@ -1251,13 +1251,13 @@ service:
         - memory_limiter
         - filter/receiver
       exporters:
-        - routing/prometheus-alerts
+        - routing/prometheus-passthrough
 
-    # Passthrough pipeline for Prometheus alerting metrics (ALERTS, ALERTS_FOR_STATE)
-    # These metrics should not have collector attributes added to avoid creating incorrect entity relationships
-    metrics/prometheus-alerts-passthrough:
+    # Passthrough pipeline for metrics that should bypass standard processing
+    # These metrics are sent directly without collector attributes
+    metrics/prometheus-passthrough:
       receivers:
-        - routing/prometheus-alerts
+        - routing/prometheus-passthrough
       processors:
         - memory_limiter
         - transform/scope
@@ -1266,7 +1266,7 @@ service:
 
     metrics/prometheus-continue:
       receivers:
-        - routing/prometheus-alerts
+        - routing/prometheus-passthrough
       processors:
         - memory_limiter
         - transform

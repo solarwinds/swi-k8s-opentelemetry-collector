@@ -5,14 +5,14 @@ Metrics config should match snapshot when fargate is enabled:
         forward/metric-exporter: {}
         forward/prometheus: {}
         forward/prometheus-filtered: {}
-        routing/prometheus-alerts:
+        routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
           table:
           - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
             context: metric
             pipelines:
-            - metrics/prometheus-alerts-passthrough
+            - metrics/prometheus-passthrough
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -1751,20 +1751,12 @@ Metrics config should match snapshot when fargate is enabled:
             - prometheus/kube-state-metrics
           metrics/prometheus:
             exporters:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
             receivers:
             - forward/prometheus
-          metrics/prometheus-alerts-passthrough:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - transform/scope
-            receivers:
-            - routing/prometheus-alerts
           metrics/prometheus-continue:
             exporters:
             - forward/metric-exporter
@@ -1803,7 +1795,7 @@ Metrics config should match snapshot when fargate is enabled:
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus
@@ -1812,6 +1804,14 @@ Metrics config should match snapshot when fargate is enabled:
             - filter/prometheus-node-metrics
             receivers:
             - prometheus/node-metrics
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/trivy-operator-metrics:
             exporters:
             - forward/metric-exporter
@@ -1844,14 +1844,14 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
         forward/metric-exporter: {}
         forward/prometheus: {}
         forward/prometheus-filtered: {}
-        routing/prometheus-alerts:
+        routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
           table:
           - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
             context: metric
             pipelines:
-            - metrics/prometheus-alerts-passthrough
+            - metrics/prometheus-passthrough
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -3528,20 +3528,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - prometheus/kube-state-metrics
           metrics/prometheus:
             exporters:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
             receivers:
             - forward/prometheus
-          metrics/prometheus-alerts-passthrough:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - transform/scope
-            receivers:
-            - routing/prometheus-alerts
           metrics/prometheus-continue:
             exporters:
             - forward/metric-exporter
@@ -3580,7 +3572,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus
@@ -3589,6 +3581,14 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - filter/prometheus-node-metrics
             receivers:
             - prometheus/node-metrics
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/prometheus-server:
             exporters:
             - forward/prometheus
@@ -3628,14 +3628,14 @@ Metrics config should match snapshot when using default values:
         forward/metric-exporter: {}
         forward/prometheus: {}
         forward/prometheus-filtered: {}
-        routing/prometheus-alerts:
+        routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
           table:
           - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
             context: metric
             pipelines:
-            - metrics/prometheus-alerts-passthrough
+            - metrics/prometheus-passthrough
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -5297,20 +5297,12 @@ Metrics config should match snapshot when using default values:
             - prometheus/kube-state-metrics
           metrics/prometheus:
             exporters:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
             receivers:
             - forward/prometheus
-          metrics/prometheus-alerts-passthrough:
-            exporters:
-            - forward/metric-exporter
-            processors:
-            - memory_limiter
-            - transform/scope
-            receivers:
-            - routing/prometheus-alerts
           metrics/prometheus-continue:
             exporters:
             - forward/metric-exporter
@@ -5349,7 +5341,7 @@ Metrics config should match snapshot when using default values:
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
-            - routing/prometheus-alerts
+            - routing/prometheus-passthrough
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus
@@ -5358,6 +5350,14 @@ Metrics config should match snapshot when using default values:
             - filter/prometheus-node-metrics
             receivers:
             - prometheus/node-metrics
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/trivy-operator-metrics:
             exporters:
             - forward/metric-exporter
