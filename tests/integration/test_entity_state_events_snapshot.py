@@ -15,6 +15,9 @@ EXPECTED_DIR = os.path.join(
     os.path.dirname(__file__), "expected_entitystateevents"
 )
 
+# Cache for entity state events - loaded once by first test, reused by others
+cached_entity_state_events: List[Dict] = None
+
 # Initialize ClickHouse client (uses CLICKHOUSE_ENDPOINT env var)
 clickhouse = ClickHouseClient()
 
@@ -165,6 +168,7 @@ def _event_found(
 
 @pytest.mark.parametrize("expected_file", list(_load_expected_cases()))
 def test_entity_state_events_expected_content(expected_file: str) -> None:
+    global cached_entity_state_events
     file_path = os.path.join(EXPECTED_DIR, expected_file)
     with open(file_path, "r", encoding="utf-8") as handle:
         expected_case = json.load(handle)
@@ -189,17 +193,18 @@ def test_entity_state_events_expected_content(expected_file: str) -> None:
         print(f"Attempt {attempt}/{max_attempts}: Querying ClickHouse for entity state events...")
         
         try:
-            merged_json = clickhouse.get_entity_state_events()
+            if not cached_entity_state_events or attempt > 1:
+              cached_entity_state_events = clickhouse.get_entity_state_events()
             
-            if not merged_json:
+            if not cached_entity_state_events:
                 print(f"  No events found yet, retrying...")
                 time.sleep(3)
                 continue
             
-            print(f"  Found {len(merged_json)} event records in ClickHouse")
+            print(f"  Found {len(cached_entity_state_events)} event records in ClickHouse")
             
             success, error_msg = _assert_expected_events(
-                merged_json, 
+                cached_entity_state_events, 
                 expected_resource_attributes,
                 expected_scope_attributes,
                 expected_events
