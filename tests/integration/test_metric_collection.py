@@ -6,6 +6,7 @@ from test_utils import retry_until_ok, retry_until_ok_clickhouse, get_merged_jso
 from prometheus_client.parser import text_string_to_metric_families
 from clickhouse_client import ClickHouseClient
 import difflib
+from typing import Dict, List
 
 # ClickHouse configuration
 clickhouse_endpoint = os.getenv("CLICKHOUSE_ENDPOINT", "localhost:8123")
@@ -20,6 +21,13 @@ endpointPrometheus = os.getenv("PROMETHEUS_MOCK_ENDPOINT", "localhost:8080")
 urlMetrics = [f'http://{endpointPrometheus}/metrics',
               f'http://{endpointPrometheus}/federate?match%5B%5D=container_cpu_usage_seconds_total&match%5B%5D=container_spec_cpu_quota&match%5B%5D=container_spec_cpu_period&match%5B%5D=container_memory_working_set_bytes&match%5B%5D=container_spec_memory_limit_bytes&match%5B%5D=container_cpu_cfs_throttled_periods_total&match%5B%5D=container_cpu_cfs_periods_total&match%5B%5D=container_fs_reads_total&match%5B%5D=container_fs_writes_total&match%5B%5D=container_fs_reads_bytes_total&match%5B%5D=container_fs_writes_bytes_total&match%5B%5D=container_fs_usage_bytes&match%5B%5D=container_network_receive_bytes_total&match%5B%5D=container_network_transmit_bytes_total&match%5B%5D=container_network_receive_packets_total&match%5B%5D=container_network_transmit_packets_total&match%5B%5D=container_network_receive_packets_dropped_total&match%5B%5D=container_network_transmit_packets_dropped_total&match%5B%5D=apiserver_request_total&match%5B%5D=kubelet_volume_stats_available_percent&match%5B%5D=%7B__name__%3D%22kubernetes_build_info%22%2C+job%3D~%22.%2Aapiserver.%2A%22%7D']
 
+cache_metrics: List[Dict] = None
+
+def load_metrics(attempt: int):
+  global cache_metrics
+  if not cache_metrics or attempt > 1:
+    cache_metrics = clickhouse_client.get_metrics_otlp()
+  return cache_metrics
 
 def test_expected_metric_names_are_generated():
     expected_metric_names = []
@@ -28,7 +36,7 @@ def test_expected_metric_names_are_generated():
         expected_metric_names = file_with_expected_metric_names.read().splitlines()
 
     retry_until_ok_clickhouse(
-        lambda: clickhouse_client.get_metrics_otlp(),
+        lambda attempt: load_metrics(attempt),
         lambda metrics_list: assert_metric_names_found(metrics_list, expected_metric_names),
         lambda metrics_list: print_failure_metric_names(metrics_list, expected_metric_names)
     )
@@ -59,7 +67,7 @@ def test_expected_otel_message_content_is_generated(file_name):
 
     timeout = int(os.getenv("TEST_TIMEOUT", "10"))
     retry_until_ok_clickhouse(
-        lambda: clickhouse_client.get_metrics_otlp(),
+        lambda attempt: load_metrics(attempt),
         lambda metrics_list: assert_test_contain_expected_datapoints(metrics_list, metrics, resource_attributes),
         print_failure_otel_content,
         timeout=timeout
@@ -67,7 +75,7 @@ def test_expected_otel_message_content_is_generated(file_name):
 
 def test_no_metric_datapoints_for_internal_containers():
     retry_until_ok_clickhouse(
-        lambda: clickhouse_client.get_metrics_otlp(),
+        lambda attempt: load_metrics(attempt),
         assert_test_no_metric_datapoints_for_internal_containers,
         print_failure_internal_containers
     )

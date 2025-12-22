@@ -11,13 +11,15 @@ def retry_until_ok_clickhouse(fetch_func: Callable, assert_func: Callable, print
     last_exception = None
     last_error = ''
     
+    attempt = 0
     while time.time() - start_time < timeout:
+        attempt += 1
         is_ok = False
         data = None
         
         try:
             # Fetch data from ClickHouse
-            data = fetch_func()
+            data = fetch_func(attempt)
             
             # Run assertion on the data
             result = assert_func(data)
