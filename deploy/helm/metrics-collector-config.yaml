@@ -978,6 +978,8 @@ processors:
 connectors:
   forward/prometheus: {}
   forward/metric-exporter: {}
+  forward/prometheus-filtered: {}
+  {{- include "common-config.routing-prometheus-passthrough" . | nindent 2 }}
 
 receivers:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
@@ -1248,6 +1250,25 @@ service:
       processors:
         - memory_limiter
         - filter/receiver
+      exporters:
+        - routing/prometheus-passthrough
+
+    # Passthrough pipeline for metrics that should bypass standard processing
+    # These metrics are sent directly without collector attributes
+    metrics/prometheus-passthrough:
+      receivers:
+        - routing/prometheus-passthrough
+      processors:
+        - memory_limiter
+        - transform/scope
+      exporters:
+        - forward/metric-exporter
+
+    metrics/prometheus-continue:
+      receivers:
+        - routing/prometheus-passthrough
+      processors:
+        - memory_limiter
         - transform
         - filter/remove_internal        
         - attributes/remove_prometheus_attributes

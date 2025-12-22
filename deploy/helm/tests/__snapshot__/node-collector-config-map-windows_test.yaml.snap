@@ -19,6 +19,14 @@ Node collector config for windows nodes should match snapshot when using default
             context: metric
             pipelines:
             - metrics/discovery-istio
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -1734,10 +1742,25 @@ Node collector config for windows nodes should match snapshot when using default
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
@@ -1754,15 +1777,15 @@ Node collector config for windows nodes should match snapshot when using default
             - resource/metrics
             - resource/all
             receivers:
-            - receiver_creator/node
-          metrics/not-relationship-state-events-preparation:
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
             exporters:
-            - forward/discovery-istio-metrics-clean
+            - forward/metric-exporter
             processors:
             - memory_limiter
-            - filter/keep-not-relationships
+            - transform/scope
             receivers:
-            - forward/not-relationship-state-events
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
@@ -1837,6 +1860,14 @@ Node collector config for windows nodes should match snapshot when using legacy 
             context: metric
             pipelines:
             - metrics/discovery-istio
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -3641,10 +3672,25 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
@@ -3661,15 +3707,15 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - resource/metrics
             - resource/all
             receivers:
-            - receiver_creator/node
-          metrics/not-relationship-state-events-preparation:
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
             exporters:
-            - forward/discovery-istio-metrics-clean
+            - forward/metric-exporter
             processors:
             - memory_limiter
-            - filter/keep-not-relationships
+            - transform/scope
             receivers:
-            - forward/not-relationship-state-events
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service

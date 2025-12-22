@@ -10,6 +10,27 @@ filter/receiver:
       - 'name == "up"'
 {{- end }}
 
+{{- define "common-config.routing-prometheus-passthrough" -}}
+# Route specified metrics to a passthrough pipeline
+# These metrics bypass standard processing and are sent directly without collector attributes
+routing/prometheus-passthrough:
+  default_pipelines: [metrics/prometheus-continue]
+  table:
+{{- if .Values.otel.metrics.passthrough_metrics }}
+    - context: metric
+      pipelines: [metrics/prometheus-passthrough]
+      condition: {{ include "common-config.passthrough-metrics-condition" . }}
+{{- end }}
+{{- end }}
+
+{{- define "common-config.passthrough-metrics-condition" -}}
+{{- $conditions := list -}}
+{{- range .Values.otel.metrics.passthrough_metrics -}}
+{{- $conditions = append $conditions (printf "name == \"%s\"" .) -}}
+{{- end -}}
+{{ join " or " $conditions }}
+{{- end }}
+
 {{- define "common-config.filter-remove-internal" -}}
 # Remove datapoints of internal k8s containers from metrics, excluding the "container_network_.+_total" metric where other datapoints don't exist
 # This is a workaround to not create container entities for POD containers
