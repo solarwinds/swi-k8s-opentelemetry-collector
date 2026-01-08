@@ -486,7 +486,8 @@ class ClickHouseClient:
                key == 'otel.entity.id' or \
                key == 'otel.entity_relationship.source_entity.id' or \
                key == 'otel.entity_relationship.destination_entity.id' or \
-               key == 'otel.entity.attributes':
+               key == 'otel.entity.attributes' or \
+               key == 'otel.entity_relationship.attributes':
                 try:
                     # Try to parse as JSON
                     parsed = json.loads(value)
