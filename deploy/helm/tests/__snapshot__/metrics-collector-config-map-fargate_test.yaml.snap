@@ -4,7 +4,6 @@ Metrics config should match snapshot when using default values:
       connectors:
         forward/metric-exporter: {}
         forward/prometheus: {}
-        forward/prometheus-filtered: {}
         routing/prometheus-passthrough:
           default_pipelines:
           - metrics/prometheus-continue
@@ -1494,6 +1493,20 @@ Metrics config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         transform:
           metric_statements:
           - statements:
@@ -1809,6 +1822,7 @@ Metrics config should match snapshot when using default values:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - resource/passthrough
             - transform/scope
             receivers:
             - routing/prometheus-passthrough

@@ -272,6 +272,10 @@ processors:
         - set(scope.name, "")
         - set(scope.version, "")
 
+{{- if and .Values.otel.metrics.passthrough_metrics (not .Values.aws_fargate.enabled) }}
+  {{- include "common-config.resource-passthrough" . | nindent 2 }}
+{{- end }}
+
 {{ include "common-discovery-config.processors" . | indent 2 }}
 
 connectors:
@@ -281,7 +285,7 @@ connectors:
 {{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
   forward/logs-exporter: {}
 {{- end }}
-{{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+{{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) .Values.otel.metrics.passthrough_metrics }}
   {{- include "common-config.routing-prometheus-passthrough" . | nindent 2 }}
 {{- end }}
 
@@ -675,6 +679,7 @@ service:
 
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+{{- if .Values.otel.metrics.passthrough_metrics }}
     metrics/node:
       receivers:
         - receiver_creator/node
@@ -684,13 +689,13 @@ service:
       exporters:
         - routing/prometheus-passthrough
 
-    # Passthrough pipeline for metrics that should bypass standard processing
-    # These metrics are sent directly without collector attributes
+    # Passthrough pipeline for metrics that should bypass attribute manipulation
     metrics/prometheus-passthrough:
       receivers:
         - routing/prometheus-passthrough
       processors:
         - memory_limiter
+        - resource/passthrough
         - transform/scope
       exporters:
         - forward/metric-exporter
@@ -717,6 +722,31 @@ service:
         - resource/all
       exporters:
         - forward/metric-exporter
+{{- else }}
+    metrics/node:
+      receivers:
+        - receiver_creator/node
+      processors:
+        - memory_limiter
+        - filter/receiver
+        - filter/remove_internal
+        - attributes/remove_prometheus_attributes
+        - attributes/unify_node_attribute
+        - transform/unify_node_attribute
+        - metricstransform/rename-following-otel-semantics
+        - metricstransform/preprocessing
+        - filter/remove_internal_postprocessing
+        - attributes/remove_temp
+        - cumulativetodelta/cadvisor
+        - deltatorate/cadvisor
+        - groupbyattrs/node
+        - groupbyattrs/pod
+        - groupbyattrs/all
+        - resource/metrics
+        - resource/all
+      exporters:
+        - forward/metric-exporter
+{{- end }}
 {{- end }}
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
     metrics:

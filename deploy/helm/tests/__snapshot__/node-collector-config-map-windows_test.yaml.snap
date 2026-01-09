@@ -1311,6 +1311,20 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -1783,6 +1797,7 @@ Node collector config for windows nodes should match snapshot when using default
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - resource/passthrough
             - transform/scope
             receivers:
             - routing/prometheus-passthrough
@@ -3159,6 +3174,20 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -3713,6 +3742,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - resource/passthrough
             - transform/scope
             receivers:
             - routing/prometheus-passthrough

@@ -11,12 +11,12 @@ filter/receiver:
 {{- end }}
 
 {{- define "common-config.routing-prometheus-passthrough" -}}
+{{- if .Values.otel.metrics.passthrough_metrics }}
 # Route specified metrics to a passthrough pipeline
-# These metrics bypass standard processing and are sent directly without collector attributes
+# These metrics bypass attribute manipulation processors that could overwrite existing labels
 routing/prometheus-passthrough:
   default_pipelines: [metrics/prometheus-continue]
   table:
-{{- if .Values.otel.metrics.passthrough_metrics }}
     - context: metric
       pipelines: [metrics/prometheus-passthrough]
       condition: {{ include "common-config.passthrough-metrics-condition" . }}
@@ -29,6 +29,24 @@ routing/prometheus-passthrough:
 {{- $conditions = append $conditions (printf "name == \"%s\"" .) -}}
 {{- end -}}
 {{ join " or " $conditions }}
+{{- end }}
+
+{{- define "common-config.resource-passthrough" -}}
+# Resource processor for passthrough metrics - adds essential cluster identification
+resource/passthrough:
+  attributes:
+    - key: sw.k8s.agent.manifest.version
+      value: ${MANIFEST_VERSION}
+      action: insert
+    - key: sw.k8s.agent.app.version
+      value: ${APP_VERSION}
+      action: insert
+    - key: sw.k8s.cluster.uid
+      value: ${CLUSTER_UID}
+      action: insert
+    - key: k8s.cluster.name
+      value: ${CLUSTER_NAME}
+      action: insert
 {{- end }}
 
 {{- define "common-config.filter-remove-internal" -}}

@@ -1335,6 +1335,20 @@ Custom logs filter with new syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -1824,6 +1838,7 @@ Custom logs filter with new syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - resource/passthrough
             - transform/scope
             receivers:
             - routing/prometheus-passthrough
@@ -3220,6 +3235,20 @@ Custom logs filter with old syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -3790,6 +3819,7 @@ Custom logs filter with old syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - resource/passthrough
             - transform/scope
             receivers:
             - routing/prometheus-passthrough
@@ -5179,6 +5209,20 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -5607,6 +5651,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - resource/passthrough
             - transform/scope
             receivers:
             - routing/prometheus-passthrough
@@ -10463,6 +10508,20 @@ Node collector config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -10951,6 +11010,7 @@ Node collector config should match snapshot when using default values:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - resource/passthrough
             - transform/scope
             receivers:
             - routing/prometheus-passthrough

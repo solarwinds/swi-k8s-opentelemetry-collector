@@ -79,6 +79,11 @@ processors:
       - statements:
         - set(scope.name, "")
         - set(scope.version, "")
+
+{{- if .Values.otel.metrics.passthrough_metrics }}
+  {{- include "common-config.resource-passthrough" . | nindent 2 }}
+{{- end }}
+
   # unify attributes
   attributes/unify_node_attribute:
     include:
@@ -978,8 +983,9 @@ processors:
 connectors:
   forward/prometheus: {}
   forward/metric-exporter: {}
-  forward/prometheus-filtered: {}
+{{- if .Values.otel.metrics.passthrough_metrics }}
   {{- include "common-config.routing-prometheus-passthrough" . | nindent 2 }}
+{{- end }}
 
 receivers:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
@@ -1244,6 +1250,7 @@ service:
       exporters:
         - forward/metric-exporter
 
+{{- if .Values.otel.metrics.passthrough_metrics }}
     metrics/prometheus:
       receivers:
         - forward/prometheus
@@ -1253,13 +1260,13 @@ service:
       exporters:
         - routing/prometheus-passthrough
 
-    # Passthrough pipeline for metrics that should bypass standard processing
-    # These metrics are sent directly without collector attributes
+    # Passthrough pipeline for metrics that should bypass attribute manipulation
     metrics/prometheus-passthrough:
       receivers:
         - routing/prometheus-passthrough
       processors:
         - memory_limiter
+        - resource/passthrough
         - transform/scope
       exporters:
         - forward/metric-exporter
@@ -1309,6 +1316,54 @@ service:
         - filter/remove_temporary_metrics
       exporters:
         - forward/metric-exporter
+{{- else }}
+    metrics/prometheus:
+      receivers:
+        - forward/prometheus
+      processors:
+        - memory_limiter
+        - filter/receiver
+        - transform
+        - filter/remove_internal        
+        - attributes/remove_prometheus_attributes
+        - attributes/remove_prometheus_attributes_endpoint
+        - attributes/unify_node_attribute
+        - transform/unify_node_attribute
+        - attributes/unify_volume_attribute        
+        - attributes/unify_service_attribute
+        - attributes/unify_endpoint_attribute
+        - attributes/unify_pod_attribute
+        - attributes/unify_configmap_attribute
+        - attributes/identify_init_container
+        - attributes/identify_standard_container
+        - metricstransform/rename
+        - metricstransform/preprocessing
+        - filter/preprocessing
+        - filter/remove_internal_postprocessing
+        - attributes/remove_temp
+        - attributes/attributes_namespace_status
+        - cumulativetodelta
+        - deltatorate
+        - metricsgeneration/cluster
+        - groupbyattrs/node
+        - metricstransform/aggregate_node_level
+        - groupbyattrs/pod
+        - metricstransform/aggregate_pod_level
+        - groupbyattrs/all
+        - resource/metrics
+        - k8sattributes
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
+        - transform/cleanup_attributes_for_nonexisting_entities
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}        
+{{- if .Values.otel.metrics.filter }}
+        - filter
+{{- end }}
+        - filter/remove_temporary_metrics
+      exporters:
+        - forward/metric-exporter
+{{- end }}
     metrics:
       receivers:
         - forward/metric-exporter
