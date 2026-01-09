@@ -266,7 +266,7 @@ profiles:
       - op: remove
         path: /deploy/helm/releases/2
       - op: remove
-        path: /portForward/1
+        path: /portForward/2
   - name: swo
     patches:
       - op: remove
@@ -274,6 +274,12 @@ profiles:
       - op: replace
         path: /deploy/helm/releases/1/setValueTemplates/otel.endpoint
         value: "{{.SOLARWINDS_OTEL_ENDPOINT}}"
+      - op: remove
+        path: /deploy/helm/releases/0
+      - op: remove
+        path: /portForward/1
+      - op: remove
+        path: /portForward/0
   - name: ci
     activation:
       - env: CI=true
