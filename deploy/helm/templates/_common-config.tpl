@@ -33,8 +33,19 @@ routing/prometheus-passthrough:
 
 {{- define "common-config.resource-passthrough" -}}
 # Resource processor for passthrough metrics - adds essential cluster identification
+# and removes APM-related attributes to avoid interference
 resource/passthrough:
   attributes:
+    - key: service.name
+      action: delete
+    - key: service.instance.id
+      action: delete
+    - key: net.host.name
+      action: delete
+    - key: net.host.port
+      action: delete
+    - key: http.scheme
+      action: delete
     - key: sw.k8s.agent.manifest.version
       value: ${MANIFEST_VERSION}
       action: insert
