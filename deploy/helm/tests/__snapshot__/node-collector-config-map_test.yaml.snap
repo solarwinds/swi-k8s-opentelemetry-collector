@@ -19,6 +19,14 @@ Custom logs filter with new syntax:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -1327,6 +1335,30 @@ Custom logs filter with new syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: delete
+            key: service.name
+          - action: delete
+            key: service.instance.id
+          - action: delete
+            key: net.host.name
+          - action: delete
+            key: net.host.port
+          - action: delete
+            key: http.scheme
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -1775,10 +1807,25 @@ Custom logs filter with new syntax:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
@@ -1795,15 +1842,16 @@ Custom logs filter with new syntax:
             - resource/metrics
             - resource/all
             receivers:
-            - receiver_creator/node
-          metrics/not-relationship-state-events-preparation:
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
             exporters:
-            - forward/discovery-istio-metrics-clean
+            - forward/metric-exporter
             processors:
             - memory_limiter
-            - filter/keep-not-relationships
+            - resource/passthrough
+            - transform/scope
             receivers:
-            - forward/not-relationship-state-events
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
@@ -1878,6 +1926,14 @@ Custom logs filter with old syntax:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -3189,6 +3245,30 @@ Custom logs filter with old syntax:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: delete
+            key: service.name
+          - action: delete
+            key: service.instance.id
+          - action: delete
+            key: net.host.name
+          - action: delete
+            key: net.host.port
+          - action: delete
+            key: http.scheme
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -3718,10 +3798,25 @@ Custom logs filter with old syntax:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
@@ -3738,15 +3833,16 @@ Custom logs filter with old syntax:
             - resource/metrics
             - resource/all
             receivers:
-            - receiver_creator/node
-          metrics/not-relationship-state-events-preparation:
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
             exporters:
-            - forward/discovery-istio-metrics-clean
+            - forward/metric-exporter
             processors:
             - memory_limiter
-            - filter/keep-not-relationships
+            - resource/passthrough
+            - transform/scope
             receivers:
-            - forward/not-relationship-state-events
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
@@ -3821,6 +3917,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -5125,6 +5229,30 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: delete
+            key: service.name
+          - action: delete
+            key: service.instance.id
+          - action: delete
+            key: net.host.name
+          - action: delete
+            key: net.host.port
+          - action: delete
+            key: http.scheme
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -5512,10 +5640,25 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
@@ -5532,15 +5675,16 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - resource/metrics
             - resource/all
             receivers:
-            - receiver_creator/node
-          metrics/not-relationship-state-events-preparation:
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
             exporters:
-            - forward/discovery-istio-metrics-clean
+            - forward/metric-exporter
             processors:
             - memory_limiter
-            - filter/keep-not-relationships
+            - resource/passthrough
+            - transform/scope
             receivers:
-            - forward/not-relationship-state-events
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service
@@ -9082,6 +9226,14 @@ Node collector config should match snapshot when using default values:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -10386,6 +10538,30 @@ Node collector config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: delete
+            key: service.name
+          - action: delete
+            key: service.instance.id
+          - action: delete
+            key: net.host.name
+          - action: delete
+            key: net.host.port
+          - action: delete
+            key: http.scheme
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         swok8sworkloadtype/istio:
           workload_mappings:
           - expected_types:
@@ -10833,10 +11009,25 @@ Node collector config should match snapshot when using default values:
             - receiver_creator/discovery
           metrics/node:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - receiver_creator/node
+          metrics/not-relationship-state-events-preparation:
+            exporters:
+            - forward/discovery-istio-metrics-clean
+            processors:
+            - memory_limiter
+            - filter/keep-not-relationships
+            receivers:
+            - forward/not-relationship-state-events
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
@@ -10853,15 +11044,16 @@ Node collector config should match snapshot when using default values:
             - resource/metrics
             - resource/all
             receivers:
-            - receiver_creator/node
-          metrics/not-relationship-state-events-preparation:
+            - routing/prometheus-passthrough
+          metrics/prometheus-passthrough:
             exporters:
-            - forward/discovery-istio-metrics-clean
+            - forward/metric-exporter
             processors:
             - memory_limiter
-            - filter/keep-not-relationships
+            - resource/passthrough
+            - transform/scope
             receivers:
-            - forward/not-relationship-state-events
+            - routing/prometheus-passthrough
           metrics/relationship-state-events-workload-service-filtering:
             exporters:
             - solarwindsentity/istio-workload-service

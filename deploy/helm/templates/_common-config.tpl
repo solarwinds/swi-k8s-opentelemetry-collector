@@ -10,6 +10,56 @@ filter/receiver:
       - 'name == "up"'
 {{- end }}
 
+{{- define "common-config.routing-prometheus-passthrough" -}}
+{{- if .Values.otel.metrics.passthrough_metrics }}
+# Route specified metrics to a passthrough pipeline
+# These metrics bypass attribute manipulation processors that could overwrite existing labels
+routing/prometheus-passthrough:
+  default_pipelines: [metrics/prometheus-continue]
+  table:
+    - context: metric
+      pipelines: [metrics/prometheus-passthrough]
+      condition: {{ include "common-config.passthrough-metrics-condition" . }}
+{{- end }}
+{{- end }}
+
+{{- define "common-config.passthrough-metrics-condition" -}}
+{{- $conditions := list -}}
+{{- range .Values.otel.metrics.passthrough_metrics -}}
+{{- $conditions = append $conditions (printf "name == \"%s\"" .) -}}
+{{- end -}}
+{{ join " or " $conditions }}
+{{- end }}
+
+{{- define "common-config.resource-passthrough" -}}
+# Resource processor for passthrough metrics - adds essential cluster identification
+# and removes APM-related attributes to avoid interference
+resource/passthrough:
+  attributes:
+    - key: service.name
+      action: delete
+    - key: service.instance.id
+      action: delete
+    - key: net.host.name
+      action: delete
+    - key: net.host.port
+      action: delete
+    - key: http.scheme
+      action: delete
+    - key: sw.k8s.agent.manifest.version
+      value: ${MANIFEST_VERSION}
+      action: insert
+    - key: sw.k8s.agent.app.version
+      value: ${APP_VERSION}
+      action: insert
+    - key: sw.k8s.cluster.uid
+      value: ${CLUSTER_UID}
+      action: insert
+    - key: k8s.cluster.name
+      value: ${CLUSTER_NAME}
+      action: insert
+{{- end }}
+
 {{- define "common-config.filter-remove-internal" -}}
 # Remove datapoints of internal k8s containers from metrics, excluding the "container_network_.+_total" metric where other datapoints don't exist
 # This is a workaround to not create container entities for POD containers

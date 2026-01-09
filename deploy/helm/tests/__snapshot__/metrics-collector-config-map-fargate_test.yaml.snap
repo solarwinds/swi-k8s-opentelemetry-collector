@@ -4,6 +4,14 @@ Metrics config should match snapshot when using default values:
       connectors:
         forward/metric-exporter: {}
         forward/prometheus: {}
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus-continue
+          table:
+          - condition: name == "ALERTS" or name == "ALERTS_FOR_STATE"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -1485,6 +1493,30 @@ Metrics config should match snapshot when using default values:
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: delete
+            key: service.name
+          - action: delete
+            key: service.instance.id
+          - action: delete
+            key: net.host.name
+          - action: delete
+            key: net.host.port
+          - action: delete
+            key: http.scheme
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         transform:
           metric_statements:
           - statements:
@@ -1742,10 +1774,17 @@ Metrics config should match snapshot when using default values:
             - prometheus/kube-state-metrics
           metrics/prometheus:
             exporters:
-            - forward/metric-exporter
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             - filter/receiver
+            receivers:
+            - forward/prometheus
+          metrics/prometheus-continue:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
             - transform
             - filter/remove_internal
             - attributes/remove_prometheus_attributes
@@ -1779,7 +1818,7 @@ Metrics config should match snapshot when using default values:
             - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
-            - forward/prometheus
+            - routing/prometheus-passthrough
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus
@@ -1788,6 +1827,15 @@ Metrics config should match snapshot when using default values:
             - filter/prometheus-node-metrics
             receivers:
             - prometheus/node-metrics
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - resource/passthrough
+            - transform/scope
+            receivers:
+            - routing/prometheus-passthrough
           metrics/trivy-operator-metrics:
             exporters:
             - forward/metric-exporter
