@@ -474,7 +474,7 @@ Configuration:
 
     The operator expects that Cert Manager is already present on the cluster. There are a few different ways you can use to generate/configure the required TLS certificate:
 
-      - Deploy `cert-manager` as part of this chart.
+      - Deploy `cert-manager` as part of this chart. [Deprecated in 5.1.0 and newer]
         - Ensure there is no cert-manager instance already present in the cluster.
         - Set `certmanager.enabled=true`.
       - Or, read the [OTEL Operator documentation for alternative options](https://opentelemetry.io/docs/kubernetes/helm/operator/#configuration). All OTEL Operator configuration options are available below the `operator` key in `values.yaml`.
