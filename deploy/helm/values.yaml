@@ -1336,6 +1336,8 @@ trivy-operator:
   nodeSelector:
     kubernetes.io/os: linux
   targetWorkloads: pod,replicaset,statefulset,daemonset,cronjob,job
+  compliance:
+    specs: []
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
     additionalVulnerabilityReportFields: CVSS,Description,Links
@@ -1365,6 +1367,7 @@ trivy-operator:
     infraAssessmentScannerEnabled: false
     clusterComplianceEnabled: false
     exposedSecretScannerEnabled: false
+    sbomGenerationEnabled: false
 
     # Access to global secrets and service account tokens is disabled by default
     accessGlobalSecretsAndServiceAccount: false
