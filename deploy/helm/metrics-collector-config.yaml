@@ -975,9 +975,45 @@ processors:
         statements:
           - delete_key(resource.attributes, "sw.k8s.deployedbycollector")
 
+{{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
+  resource/passthrough:
+    attributes:
+      - key: service.name
+        action: delete
+      - key: service.instance.id
+        action: delete
+      - key: net.host.name
+        action: delete
+      - key: net.host.port
+        action: delete
+      - key: http.scheme
+        action: delete
+      - key: sw.k8s.agent.manifest.version
+        value: ${MANIFEST_VERSION}
+        action: insert
+      - key: sw.k8s.agent.app.version
+        value: ${APP_VERSION}
+        action: insert
+      - key: sw.k8s.cluster.uid
+        value: ${CLUSTER_UID}
+        action: insert
+      - key: k8s.cluster.name
+        value: ${CLUSTER_NAME}
+        action: insert
+{{- end }}
+
 connectors:
   forward/prometheus: {}
   forward/metric-exporter: {}
+
+{{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
+  routing/prometheus-passthrough:
+    default_pipelines: [metrics/prometheus]
+    table:
+      - context: metric
+        pipelines: [metrics/prometheus-passthrough]
+        condition: name == "ALERTS_FOR_STATE" or name == "ALERTS"
+{{- end }}
 
 receivers:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
@@ -1201,7 +1237,28 @@ service:
       processors:
         - memory_limiter
       exporters:
-        - forward/prometheus
+        - routing/prometheus-passthrough
+
+    # Passthrough pipeline for metrics that should bypass attribute manipulation
+    metrics/prometheus-passthrough:
+      receivers:
+        - routing/prometheus-passthrough
+      processors:
+        - memory_limiter
+        - groupbyattrs/pod
+        - groupbyattrs/all
+        - resource/passthrough
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
+        - transform/cleanup_attributes_for_nonexisting_entities
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+        - filter/namespaces
+{{- end }}        
+{{- if .Values.otel.metrics.filter }}
+        - filter
+{{- end }}
+        - filter/remove_temporary_metrics
+      exporters:
+        - forward/metric-exporter
 {{- end }}
     metrics/kubestatemetrics:
       receivers:
@@ -1245,6 +1302,9 @@ service:
     metrics/prometheus:
       receivers:
         - forward/prometheus
+{{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
+        - routing/prometheus-passthrough
+{{- end }}
       processors:
         - memory_limiter
         - filter/receiver
@@ -1288,6 +1348,7 @@ service:
         - filter/remove_temporary_metrics
       exporters:
         - forward/metric-exporter
+
     metrics:
       receivers:
         - forward/metric-exporter

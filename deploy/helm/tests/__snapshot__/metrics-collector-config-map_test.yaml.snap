@@ -1819,6 +1819,14 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
       connectors:
         forward/metric-exporter: {}
         forward/prometheus: {}
+        routing/prometheus-passthrough:
+          default_pipelines:
+          - metrics/prometheus
+          table:
+          - condition: name == "ALERTS_FOR_STATE" or name == "ALERTS"
+            context: metric
+            pipelines:
+            - metrics/prometheus-passthrough
       exporters:
         otlp:
           endpoint: ${OTEL_ENVOY_ADDRESS}
@@ -3303,6 +3311,30 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - action: insert
             from_attribute: persistentvolumeclaim
             key: k8s.persistentvolumeclaim.name
+        resource/passthrough:
+          attributes:
+          - action: delete
+            key: service.name
+          - action: delete
+            key: service.instance.id
+          - action: delete
+            key: net.host.name
+          - action: delete
+            key: net.host.port
+          - action: delete
+            key: http.scheme
+          - action: insert
+            key: sw.k8s.agent.manifest.version
+            value: ${MANIFEST_VERSION}
+          - action: insert
+            key: sw.k8s.agent.app.version
+            value: ${APP_VERSION}
+          - action: insert
+            key: sw.k8s.cluster.uid
+            value: ${CLUSTER_UID}
+          - action: insert
+            key: k8s.cluster.name
+            value: ${CLUSTER_NAME}
         transform:
           metric_statements:
           - statements:
@@ -3533,6 +3565,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
+            - routing/prometheus-passthrough
           metrics/prometheus-node-metrics:
             exporters:
             - forward/prometheus
@@ -3541,9 +3574,22 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - filter/prometheus-node-metrics
             receivers:
             - prometheus/node-metrics
+          metrics/prometheus-passthrough:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - groupbyattrs/pod
+            - groupbyattrs/all
+            - resource/passthrough
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
+            - transform/cleanup_attributes_for_nonexisting_entities
+            - filter/remove_temporary_metrics
+            receivers:
+            - routing/prometheus-passthrough
           metrics/prometheus-server:
             exporters:
-            - forward/prometheus
+            - routing/prometheus-passthrough
             processors:
             - memory_limiter
             receivers:
