@@ -4,12 +4,14 @@ kind: ConfigMap
 metadata:  
   name: {{ include "common.fullname" . }}-crds
   namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
   annotations:
     "helm.sh/hook": pre-upgrade
     "helm.sh/hook-weight": "-15" # Ensure this is created before the Job
     "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded
+{{ include "common.annotations" . | indent 4 }}    
 data:
-{{- if (index .Values "trivy-operator").enabled }}
   aquasecurity.github.io_clustercompliancereports.yaml: |
 {{ (.Files.Get "crds-trivy/aquasecurity.github.io_clustercompliancereports.yaml") | indent 4 }}
   aquasecurity.github.io_clusterconfigauditreports.yaml: |
@@ -34,6 +36,4 @@ data:
 {{ (.Files.Get "crds-trivy/aquasecurity.github.io_sbomreports.yaml") | indent 4 }}
   aquasecurity.github.io_vulnerabilityreports.yaml: |
 {{ (.Files.Get "crds-trivy/aquasecurity.github.io_vulnerabilityreports.yaml") | indent 4 }}
-{{- end }}
-# add other crds here as needed
 {{- end }}

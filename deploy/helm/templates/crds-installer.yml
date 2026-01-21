@@ -5,15 +5,22 @@ kind: Job
 metadata:
   name: {{ include "common.fullname" . }}-crds-installer
   namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
   annotations:
     "helm.sh/hook": pre-upgrade
     "helm.sh/hook-weight": "-10"
     "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded
+{{ include "common.annotations" . | indent 4 }}    
 spec:
   template:
     metadata:
-      name: {{ include "common.fullname" . }}-crds-installer
-      # some labels common
+      name: {{ include "common.fullname" . }}-crds-installer      
+      labels:
+{{ include "common.labels" . | indent 8 }}
+      annotations:    
+{{ include "common.annotations" . | indent 8 }}    
+
     spec:
       restartPolicy: Never
       serviceAccountName: {{ include "common.fullname" . }}-crds-installer
@@ -24,7 +31,7 @@ spec:
 
       containers:
         - name: kubectl
-          image: bitnami/kubectl:latest          
+          image: bitnami/kubectl@sha256:b349e60a6ae2969af84a778c0b976b050a0cc77f4fb6a4ad44307cd0a06e9d8f
           command:
             - /bin/sh
             - -c
