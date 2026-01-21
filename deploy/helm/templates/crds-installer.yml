@@ -1,0 +1,50 @@
+
+{{- if (index .Values "trivy-operator").enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.fullname" . }}-crds-installer
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ include "common.fullname" . }}-crds-installer
+      # some labels common
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "common.fullname" . }}-crds-installer
+      volumes:
+        - name: crds
+          configMap:
+            name: {{ include "common.fullname" . }}-crds
+
+      containers:
+        - name: kubectl
+          image: bitnami/kubectl:latest          
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+              echo "[trivy-crds-installer] Checking and applying Trivy Operator CRDs..."
+              for f in /crds/*.yaml; do
+                crd_name=$(grep -E '^\s+name:' "$f" | head -1 | awk '{print $2}')
+                if [ -z "$crd_name" ]; then
+                  echo "[trivy-crds-installer] Warning: Could not extract CRD name from $f, skipping"
+                  continue
+                fi
+                if kubectl get crd "$crd_name" >/dev/null 2>&1; then
+                  echo "[trivy-crds-installer] CRD $crd_name already exists, skipping"
+                else
+                  echo "[trivy-crds-installer] Applying CRD $crd_name from $f"
+                  kubectl apply -f "$f"
+                fi
+              done
+          volumeMounts:
+            - name: crds
+              mountPath: /crds
+{{- end }}

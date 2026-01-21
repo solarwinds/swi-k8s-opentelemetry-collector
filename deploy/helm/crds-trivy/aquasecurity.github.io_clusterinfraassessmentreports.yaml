@@ -1,24 +1,23 @@
-{{- if .Values.trivyCRDs.install }}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: clusterconfigauditreports.aquasecurity.github.io
+  name: clusterinfraassessmentreports.aquasecurity.github.io
 spec:
   group: aquasecurity.github.io
   names:
-    kind: ClusterConfigAuditReport
-    listKind: ClusterConfigAuditReportList
-    plural: clusterconfigauditreports
+    kind: ClusterInfraAssessmentReport
+    listKind: ClusterInfraAssessmentReportList
+    plural: clusterinfraassessmentreports
     shortNames:
-    - clusterconfigaudit
-    singular: clusterconfigauditreport
+    - clusterinfraassessment
+    singular: clusterinfraassessmentreport
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - description: The name of the config audit scanner
+    - description: The name of the infra assessement scanner
       jsonPath: .report.scanner.name
       name: Scanner
       type: string
@@ -49,7 +48,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ClusterConfigAuditReport is a specification for the ClusterConfigAuditReport
+        description: ClusterInfraAssessmentReport is a specification for the ClusterInfraAssessmentReport
           resource.
         properties:
           apiVersion:
@@ -141,7 +140,7 @@ spec:
                 - version
                 type: object
               summary:
-                description: ConfigAuditSummary counts failed checks by severity.
+                description: InfraAssessmentSummary counts failed checks by severity.
                 properties:
                   criticalCount:
                     description: CriticalCount is the number of failed checks with
@@ -164,11 +163,10 @@ spec:
                 - lowCount
                 - mediumCount
                 type: object
-              updateTimestamp:
-                format: date-time
-                type: string
             required:
             - checks
+            - scanner
+            - summary
             type: object
         required:
         - report
@@ -177,4 +175,3 @@ spec:
     served: true
     storage: true
     subresources: {}
-{{- end }}
