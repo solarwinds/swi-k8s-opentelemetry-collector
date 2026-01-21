@@ -1,4 +1,4 @@
-
+{{- if (index .Values "trivy-operator").enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:  
@@ -34,4 +34,6 @@ data:
 {{ (.Files.Get "crds-trivy/aquasecurity.github.io_sbomreports.yaml") | indent 4 }}
   aquasecurity.github.io_vulnerabilityreports.yaml: |
 {{ (.Files.Get "crds-trivy/aquasecurity.github.io_vulnerabilityreports.yaml") | indent 4 }}
+{{- end }}
+# add other crds here as needed
 {{- end }}
