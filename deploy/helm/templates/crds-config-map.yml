@@ -1,0 +1,39 @@
+{{- if and .Values.installCRDs.enabled (index .Values "trivy-operator").enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:  
+  name: {{ include "common.fullname" . }}-crds
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-15" # Ensure this is created before the Job
+    "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded
+{{ include "common.annotations" . | indent 4 }}    
+data:
+  aquasecurity.github.io_clustercompliancereports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_clustercompliancereports.yaml") | indent 4 }}
+  aquasecurity.github.io_clusterconfigauditreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_clusterconfigauditreports.yaml") | indent 4 }}
+  aquasecurity.github.io_clusterinfraassessmentreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_clusterinfraassessmentreports.yaml") | indent 4 }}
+  aquasecurity.github.io_clusterrbacassessmentreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_clusterrbacassessmentreports.yaml") | indent 4 }}
+  aquasecurity.github.io_clustersbomreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_clustersbomreports.yaml") | indent 4 }}
+  aquasecurity.github.io_clustervulnerabilityreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_clustervulnerabilityreports.yaml") | indent 4 }}
+  aquasecurity.github.io_configauditreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_configauditreports.yaml") | indent 4 }}
+  aquasecurity.github.io_exposedsecretreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_exposedsecretreports.yaml") | indent 4 }}
+  aquasecurity.github.io_infraassessmentreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_infraassessmentreports.yaml") | indent 4 }}
+  aquasecurity.github.io_rbacassessmentreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_rbacassessmentreports.yaml") | indent 4 }}
+  aquasecurity.github.io_sbomreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_sbomreports.yaml") | indent 4 }}
+  aquasecurity.github.io_vulnerabilityreports.yaml: |
+{{ (.Files.Get "crds-trivy/aquasecurity.github.io_vulnerabilityreports.yaml") | indent 4 }}
+{{- end }}
