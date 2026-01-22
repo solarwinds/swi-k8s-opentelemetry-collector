@@ -20,10 +20,23 @@ spec:
 {{ include "common.labels" . | indent 8 }}
       annotations:    
 {{ include "common.annotations" . | indent 8 }}    
-
     spec:
       restartPolicy: Never
       serviceAccountName: {{ include "common.fullname" . }}-crds-installer
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
       volumes:
         - name: crds
           configMap:
