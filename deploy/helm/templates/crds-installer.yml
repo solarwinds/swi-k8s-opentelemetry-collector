@@ -1,5 +1,4 @@
-
-{{- if (index .Values "trivy-operator").enabled }}
+{{- if and .Values.installCRDs.enabled (index .Values "trivy-operator").enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -13,6 +12,7 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded
 {{ include "common.annotations" . | indent 4 }}    
 spec:
+  backoffLimit: 2
   template:
     metadata:
       name: {{ include "common.fullname" . }}-crds-installer      
@@ -31,15 +31,16 @@ spec:
 
       containers:
         - name: kubectl
-          image: bitnami/kubectl@sha256:b349e60a6ae2969af84a778c0b976b050a0cc77f4fb6a4ad44307cd0a06e9d8f
+          image: "{{ include "common.image" (tuple . .Values.installCRDs (tuple "image" "installCRDs")) }}"
+          imagePullPolicy: {{ .Values.installCRDs.image.pullPolicy }}
           command:
             - /bin/sh
             - -c
             - |
               set -euo pipefail
               echo "[trivy-crds-installer] Checking and applying Trivy Operator CRDs..."
-              for f in /crds/*.yaml; do
-                crd_name=$(grep -E '^\s+name:' "$f" | head -1 | awk '{print $2}')
+              for f in /crds/*.yaml; do                
+                crd_name=$(grep -E '^\s+name:' "$f" | head -1 | awk '{print $2}' || true)                
                 if [ -z "$crd_name" ]; then
                   echo "[trivy-crds-installer] Warning: Could not extract CRD name from $f, skipping"
                   continue
