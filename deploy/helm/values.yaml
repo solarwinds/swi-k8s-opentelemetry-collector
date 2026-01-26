@@ -1207,6 +1207,13 @@ openshift:
 prometheusCRDs:
   install: false
 
+installCRDs:
+  enabled: true
+  image:
+      repository: "alpine/k8s"
+      tag: "1.31.13"
+      pullPolicy: IfNotPresent
+
 autoinstrumentation:
   installDefaultCR: false
 
@@ -1232,7 +1239,7 @@ operator:
       # Currently only Java and Python supported, other languages are TBD
       java:
         repository: "solarwinds/autoinstrumentation-java"
-        tag: "3.1.1"
+        tag: "3.1.2"
       nodejs:
         repository: ""
         tag: ""
@@ -1258,6 +1265,7 @@ operator:
         "helm.sh/hook": post-install,post-upgrade
         "helm.sh/hook-weight": "1"
 
+# DEPRECATED: cert-manager has to be installed outside of this chart. It is not recommended to deploy cert-manager as sub-chart.
 certmanager:
   enabled: false
   installCRDs: true
@@ -1296,7 +1304,7 @@ network_topology:
 
   image:
     repository: "ghcr.io/open-telemetry/opentelemetry-ebpf-instrumentation/ebpf-instrument"
-    tag: "v0.3.0"
+    tag: "v0.4.1"
     pullPolicy: IfNotPresent
 
   resources:
@@ -1336,8 +1344,11 @@ trivy-operator:
   nodeSelector:
     kubernetes.io/os: linux
   targetWorkloads: pod,replicaset,statefulset,daemonset,cronjob,job
+  compliance:
+    specs: []
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
+    additionalVulnerabilityReportFields: CVSS,Description,Links
     
     # Resources for scan job containers
     resources:
@@ -1364,6 +1375,7 @@ trivy-operator:
     infraAssessmentScannerEnabled: false
     clusterComplianceEnabled: false
     exposedSecretScannerEnabled: false
+    sbomGenerationEnabled: false
 
     # Access to global secrets and service account tokens is disabled by default
     accessGlobalSecretsAndServiceAccount: false
