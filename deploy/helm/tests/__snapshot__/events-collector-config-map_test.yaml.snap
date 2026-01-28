@@ -299,10 +299,6 @@ Custom events filter with new syntax:
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
-        logdedup/entitystateevents:
-          conditions:
-          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -969,7 +965,6 @@ Custom events filter with new syntax:
             - otlp
             processors:
             - memory_limiter
-            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
@@ -1325,10 +1320,6 @@ Custom events filter with old syntax:
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
-        logdedup/entitystateevents:
-          conditions:
-          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -1995,7 +1986,6 @@ Custom events filter with old syntax:
             - otlp
             processors:
             - memory_limiter
-            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
@@ -2344,10 +2334,6 @@ Events config should match snapshot when using default values:
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
-        logdedup/entitystateevents:
-          conditions:
-          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -3013,7 +2999,6 @@ Events config should match snapshot when using default values:
             - otlp
             processors:
             - memory_limiter
-            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
@@ -3230,10 +3215,6 @@ Events config should not contain manifest collection pipeline when disabled:
             - from: resource_attribute
               name: k8s.namespace.name
         k8seventgeneration: null
-        logdedup/entitystateevents:
-          conditions:
-          - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
-          interval: 5m
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
@@ -3734,7 +3715,6 @@ Events config should not contain manifest collection pipeline when disabled:
             - otlp
             processors:
             - memory_limiter
-            - logdedup/entitystateevents
             - transform/scope
             - batch
             receivers:
