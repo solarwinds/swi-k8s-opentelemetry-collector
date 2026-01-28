@@ -232,50 +232,6 @@ Metrics config should match snapshot when fargate is enabled:
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
               or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
               or name == "k8s.istio_request_duration_milliseconds" )
-        filter/kube-state-metrics:
-          metrics:
-            metric:
-            - "not(\nname == \"kube_deployment_created\" or\nname == \"kube_deployment_created\"
-              or\nname == \"kube_daemonset_created\" or\nname == \"kube_namespace_created\"
-              or\nname == \"kube_node_info\" or\nname == \"kube_node_created\" or\nname
-              == \"kube_node_status_capacity\" or\nname == \"kube_node_status_condition\"
-              or\nname == \"kube_pod_created\" or\nname == \"kube_pod_info\" or\nname ==
-              \"kube_pod_owner\" or\nname == \"kube_pod_completion_time\" or\nname == \"kube_pod_status_phase\"
-              or\nname == \"kube_pod_status_ready\" or\nname == \"kube_pod_status_reason\"
-              or\nname == \"kube_pod_start_time\" or \nIsMatch(name, \"^kube_pod_container_.*$\")
-              or \nIsMatch(name, \"^kube_pod_init_container_.*$\") or \nname == \"kube_namespace_status_phase\"
-              or\nname == \"kube_deployment_spec_replicas\" or\nname == \"kube_deployment_spec_paused\"
-              or\nname == \"kube_deployment_status_replicas\" or\nname == \"kube_deployment_status_replicas_ready\"
-              or\nname == \"kube_deployment_status_replicas_available\" or\nname == \"kube_deployment_status_replicas_updated\"
-              or\nname == \"kube_deployment_status_replicas_unavailable\" or\nname == \"kube_deployment_status_condition\"
-              or\nname == \"kube_replicaset_owner\" or\nname == \"kube_replicaset_created\"
-              or\nname == \"kube_replicaset_spec_replicas\" or\nname == \"kube_replicaset_status_ready_replicas\"
-              or\nname == \"kube_replicaset_status_replicas\" or\nname == \"kube_statefulset_replicas\"
-              or\nname == \"kube_statefulset_status_replicas_ready\" or\nname == \"kube_statefulset_status_replicas_current\"
-              or\nname == \"kube_statefulset_status_replicas_updated\" or\nname == \"kube_statefulset_created\"
-              or\nname == \"kube_daemonset_status_current_number_scheduled\" or\nname ==
-              \"kube_daemonset_status_desired_number_scheduled\" or\nname == \"kube_daemonset_status_updated_number_scheduled\"
-              or\nname == \"kube_daemonset_status_number_available\" or\nname == \"kube_daemonset_status_number_misscheduled\"
-              or\nname == \"kube_daemonset_status_number_ready\" or\nname == \"kube_daemonset_status_number_unavailable\"
-              or\nname == \"kube_resourcequota\" or\nname == \"kube_node_status_allocatable\"
-              or\nname == \"kube_node_spec_unschedulable\" or\nname == \"kube_cronjob_info\"
-              or\nname == \"kube_cronjob_created\" or\nname == \"kube_cronjob_status_last_schedule_time\"
-              or\nname == \"kube_job_info\" or\nname == \"kube_job_owner\" or\nname == \"kube_job_created\"
-              or\nname == \"kube_job_complete\" or\nname == \"kube_job_failed\" or\nname
-              == \"kube_job_status_active\" or\nname == \"kube_job_status_succeeded\" or\nname
-              == \"kube_job_status_failed\" or\nname == \"kube_job_status_start_time\" or\nname
-              == \"kube_job_status_completion_time\" or\nname == \"kube_job_spec_completions\"
-              or\nname == \"kube_job_spec_parallelism\" or\nname == \"kube_persistentvolume_capacity_bytes\"
-              or\nname == \"kube_persistentvolume_info\" or\nname == \"kube_persistentvolume_status_phase\"
-              or\nname == \"kube_persistentvolume_claim_ref\" or\nname == \"kube_persistentvolume_created\"
-              or\nname == \"kube_persistentvolumeclaim_info\" or\nname == \"kube_persistentvolumeclaim_access_mode\"
-              or\nname == \"kube_persistentvolumeclaim_status_phase\" or\nname == \"kube_persistentvolumeclaim_resource_requests_storage_bytes\"
-              or\nname == \"kube_persistentvolumeclaim_created\" or\nname == \"kube_pod_spec_volumes_persistentvolumeclaims_info\"
-              or\nname == \"kube_service_info\" or\nname == \"kube_service_created\" or\nname
-              == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
-              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
-              or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
-              or\nname == \"kube_endpoint_address\" or\nname == \"kube_configmap_created\"\n)\n"
         filter/preprocessing:
           error_mode: ignore
           metrics:
@@ -1737,7 +1693,6 @@ Metrics config should match snapshot when fargate is enabled:
             - forward/prometheus
             processors:
             - memory_limiter
-            - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
           metrics/prometheus:
@@ -2058,50 +2013,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
               or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
               or name == "k8s.istio_request_duration_milliseconds" )
-        filter/kube-state-metrics:
-          metrics:
-            metric:
-            - "not(\nname == \"kube_deployment_created\" or\nname == \"kube_deployment_created\"
-              or\nname == \"kube_daemonset_created\" or\nname == \"kube_namespace_created\"
-              or\nname == \"kube_node_info\" or\nname == \"kube_node_created\" or\nname
-              == \"kube_node_status_capacity\" or\nname == \"kube_node_status_condition\"
-              or\nname == \"kube_pod_created\" or\nname == \"kube_pod_info\" or\nname ==
-              \"kube_pod_owner\" or\nname == \"kube_pod_completion_time\" or\nname == \"kube_pod_status_phase\"
-              or\nname == \"kube_pod_status_ready\" or\nname == \"kube_pod_status_reason\"
-              or\nname == \"kube_pod_start_time\" or \nIsMatch(name, \"^kube_pod_container_.*$\")
-              or \nIsMatch(name, \"^kube_pod_init_container_.*$\") or \nname == \"kube_namespace_status_phase\"
-              or\nname == \"kube_deployment_spec_replicas\" or\nname == \"kube_deployment_spec_paused\"
-              or\nname == \"kube_deployment_status_replicas\" or\nname == \"kube_deployment_status_replicas_ready\"
-              or\nname == \"kube_deployment_status_replicas_available\" or\nname == \"kube_deployment_status_replicas_updated\"
-              or\nname == \"kube_deployment_status_replicas_unavailable\" or\nname == \"kube_deployment_status_condition\"
-              or\nname == \"kube_replicaset_owner\" or\nname == \"kube_replicaset_created\"
-              or\nname == \"kube_replicaset_spec_replicas\" or\nname == \"kube_replicaset_status_ready_replicas\"
-              or\nname == \"kube_replicaset_status_replicas\" or\nname == \"kube_statefulset_replicas\"
-              or\nname == \"kube_statefulset_status_replicas_ready\" or\nname == \"kube_statefulset_status_replicas_current\"
-              or\nname == \"kube_statefulset_status_replicas_updated\" or\nname == \"kube_statefulset_created\"
-              or\nname == \"kube_daemonset_status_current_number_scheduled\" or\nname ==
-              \"kube_daemonset_status_desired_number_scheduled\" or\nname == \"kube_daemonset_status_updated_number_scheduled\"
-              or\nname == \"kube_daemonset_status_number_available\" or\nname == \"kube_daemonset_status_number_misscheduled\"
-              or\nname == \"kube_daemonset_status_number_ready\" or\nname == \"kube_daemonset_status_number_unavailable\"
-              or\nname == \"kube_resourcequota\" or\nname == \"kube_node_status_allocatable\"
-              or\nname == \"kube_node_spec_unschedulable\" or\nname == \"kube_cronjob_info\"
-              or\nname == \"kube_cronjob_created\" or\nname == \"kube_cronjob_status_last_schedule_time\"
-              or\nname == \"kube_job_info\" or\nname == \"kube_job_owner\" or\nname == \"kube_job_created\"
-              or\nname == \"kube_job_complete\" or\nname == \"kube_job_failed\" or\nname
-              == \"kube_job_status_active\" or\nname == \"kube_job_status_succeeded\" or\nname
-              == \"kube_job_status_failed\" or\nname == \"kube_job_status_start_time\" or\nname
-              == \"kube_job_status_completion_time\" or\nname == \"kube_job_spec_completions\"
-              or\nname == \"kube_job_spec_parallelism\" or\nname == \"kube_persistentvolume_capacity_bytes\"
-              or\nname == \"kube_persistentvolume_info\" or\nname == \"kube_persistentvolume_status_phase\"
-              or\nname == \"kube_persistentvolume_claim_ref\" or\nname == \"kube_persistentvolume_created\"
-              or\nname == \"kube_persistentvolumeclaim_info\" or\nname == \"kube_persistentvolumeclaim_access_mode\"
-              or\nname == \"kube_persistentvolumeclaim_status_phase\" or\nname == \"kube_persistentvolumeclaim_resource_requests_storage_bytes\"
-              or\nname == \"kube_persistentvolumeclaim_created\" or\nname == \"kube_pod_spec_volumes_persistentvolumeclaims_info\"
-              or\nname == \"kube_service_info\" or\nname == \"kube_service_created\" or\nname
-              == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
-              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
-              or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
-              or\nname == \"kube_endpoint_address\" or\nname == \"kube_configmap_created\"\n)\n"
         filter/preprocessing:
           error_mode: ignore
           metrics:
@@ -3522,7 +3433,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - forward/prometheus
             processors:
             - memory_limiter
-            - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
           metrics/prometheus:
@@ -3856,50 +3766,6 @@ Metrics config should match snapshot when using default values:
               or name == "k8s.workqueue_queue_duration_seconds" or name == "k8s.coredns_dns_request_duration_seconds"
               or name == "k8s.coredns_dns_request_size_bytes" or name == "k8s.coredns_dns_response_size_bytes"
               or name == "k8s.istio_request_duration_milliseconds" )
-        filter/kube-state-metrics:
-          metrics:
-            metric:
-            - "not(\nname == \"kube_deployment_created\" or\nname == \"kube_deployment_created\"
-              or\nname == \"kube_daemonset_created\" or\nname == \"kube_namespace_created\"
-              or\nname == \"kube_node_info\" or\nname == \"kube_node_created\" or\nname
-              == \"kube_node_status_capacity\" or\nname == \"kube_node_status_condition\"
-              or\nname == \"kube_pod_created\" or\nname == \"kube_pod_info\" or\nname ==
-              \"kube_pod_owner\" or\nname == \"kube_pod_completion_time\" or\nname == \"kube_pod_status_phase\"
-              or\nname == \"kube_pod_status_ready\" or\nname == \"kube_pod_status_reason\"
-              or\nname == \"kube_pod_start_time\" or \nIsMatch(name, \"^kube_pod_container_.*$\")
-              or \nIsMatch(name, \"^kube_pod_init_container_.*$\") or \nname == \"kube_namespace_status_phase\"
-              or\nname == \"kube_deployment_spec_replicas\" or\nname == \"kube_deployment_spec_paused\"
-              or\nname == \"kube_deployment_status_replicas\" or\nname == \"kube_deployment_status_replicas_ready\"
-              or\nname == \"kube_deployment_status_replicas_available\" or\nname == \"kube_deployment_status_replicas_updated\"
-              or\nname == \"kube_deployment_status_replicas_unavailable\" or\nname == \"kube_deployment_status_condition\"
-              or\nname == \"kube_replicaset_owner\" or\nname == \"kube_replicaset_created\"
-              or\nname == \"kube_replicaset_spec_replicas\" or\nname == \"kube_replicaset_status_ready_replicas\"
-              or\nname == \"kube_replicaset_status_replicas\" or\nname == \"kube_statefulset_replicas\"
-              or\nname == \"kube_statefulset_status_replicas_ready\" or\nname == \"kube_statefulset_status_replicas_current\"
-              or\nname == \"kube_statefulset_status_replicas_updated\" or\nname == \"kube_statefulset_created\"
-              or\nname == \"kube_daemonset_status_current_number_scheduled\" or\nname ==
-              \"kube_daemonset_status_desired_number_scheduled\" or\nname == \"kube_daemonset_status_updated_number_scheduled\"
-              or\nname == \"kube_daemonset_status_number_available\" or\nname == \"kube_daemonset_status_number_misscheduled\"
-              or\nname == \"kube_daemonset_status_number_ready\" or\nname == \"kube_daemonset_status_number_unavailable\"
-              or\nname == \"kube_resourcequota\" or\nname == \"kube_node_status_allocatable\"
-              or\nname == \"kube_node_spec_unschedulable\" or\nname == \"kube_cronjob_info\"
-              or\nname == \"kube_cronjob_created\" or\nname == \"kube_cronjob_status_last_schedule_time\"
-              or\nname == \"kube_job_info\" or\nname == \"kube_job_owner\" or\nname == \"kube_job_created\"
-              or\nname == \"kube_job_complete\" or\nname == \"kube_job_failed\" or\nname
-              == \"kube_job_status_active\" or\nname == \"kube_job_status_succeeded\" or\nname
-              == \"kube_job_status_failed\" or\nname == \"kube_job_status_start_time\" or\nname
-              == \"kube_job_status_completion_time\" or\nname == \"kube_job_spec_completions\"
-              or\nname == \"kube_job_spec_parallelism\" or\nname == \"kube_persistentvolume_capacity_bytes\"
-              or\nname == \"kube_persistentvolume_info\" or\nname == \"kube_persistentvolume_status_phase\"
-              or\nname == \"kube_persistentvolume_claim_ref\" or\nname == \"kube_persistentvolume_created\"
-              or\nname == \"kube_persistentvolumeclaim_info\" or\nname == \"kube_persistentvolumeclaim_access_mode\"
-              or\nname == \"kube_persistentvolumeclaim_status_phase\" or\nname == \"kube_persistentvolumeclaim_resource_requests_storage_bytes\"
-              or\nname == \"kube_persistentvolumeclaim_created\" or\nname == \"kube_pod_spec_volumes_persistentvolumeclaims_info\"
-              or\nname == \"kube_service_info\" or\nname == \"kube_service_created\" or\nname
-              == \"kube_service_spec_type\" or\nname == \"kube_service_spec_external_ip\"
-              or\nname == \"kube_service_status_load_balancer_ingress\" or\nname == \"kube_endpoint_info\"
-              or\nname == \"kube_endpoint_created\" or\nname == \"kube_endpoint_ports\"
-              or\nname == \"kube_endpoint_address\" or\nname == \"kube_configmap_created\"\n)\n"
         filter/preprocessing:
           error_mode: ignore
           metrics:
@@ -5281,7 +5147,6 @@ Metrics config should match snapshot when using default values:
             - forward/prometheus
             processors:
             - memory_limiter
-            - filter/kube-state-metrics
             receivers:
             - prometheus/kube-state-metrics
           metrics/prometheus:
