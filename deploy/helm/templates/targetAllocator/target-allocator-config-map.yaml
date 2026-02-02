@@ -29,6 +29,12 @@ data:
             operator: NotIn
             values:
             - "true"
+          - key: app.kubernetes.io/part-of
+            operator: NotIn
+            values:
+              - kube-prometheus-stack
+              - kube-state-metrics
+              - prometheus-node-exporter
         {{- end }}
       pod_monitor_selector: 
         {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.podMonitorSelector }}
@@ -39,6 +45,12 @@ data:
             operator: NotIn
             values:
             - "true"
+          - key: app.kubernetes.io/part-of
+            operator: NotIn
+            values:
+              - kube-prometheus-stack
+              - kube-state-metrics
+              - prometheus-node-exporter
         {{- end }}
       probe_selector:
         {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.probeSelector }}
@@ -49,6 +61,12 @@ data:
             operator: NotIn
             values:
             - "true"
+          - key: app.kubernetes.io/part-of
+            operator: NotIn
+            values:
+              - kube-prometheus-stack
+              - kube-state-metrics
+              - prometheus-node-exporter
         {{- end }}
       scrape_config_selector:
         {{- if .Values.otel.metrics.autodiscovery.discovery_collector.targetAllocator.scrapeConfigSelector }}
@@ -59,6 +77,12 @@ data:
             operator: NotIn
             values:
             - "true"
+          - key: app.kubernetes.io/part-of
+            operator: NotIn
+            values:
+              - kube-prometheus-stack
+              - kube-state-metrics
+              - prometheus-node-exporter
         {{- end }}
     filter_strategy: relabel-config
     config:
