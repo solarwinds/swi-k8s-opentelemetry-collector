@@ -155,6 +155,7 @@ transform/istio-metric-datapoints:
   metric_statements:
     - statements:
         - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
+        - set(datapoint.attributes["dest.sw.server.address.fqdn"], datapoint.attributes["destination_service"]) where metric.name == "{{ .Values.otel.metrics.autodiscovery.prefix }}istio_response_bytes_sum" and IsMatch(datapoint.attributes["destination_service"], "^(https?://)?[a-zA-Z0-9][-a-zA-Z0-9]*\\.[a-zA-Z0-9][-a-zA-Z0-9\\.]*(:\\d+)?$") and not(IsMatch(datapoint.attributes["destination_service"], ".*\\.cluster\\.local$")) and not(IsMatch(datapoint.attributes["destination_service"], "^(https?://)?\\d+\\.\\d+\\.\\d+\\.\\d+(:\\d+)?$"))
 
 transform/istio-parse-service-fqdn:
   error_mode: ignore
