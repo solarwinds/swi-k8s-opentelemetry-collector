@@ -640,12 +640,6 @@ processors:
   k8sattributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
-{{- $defaultKeepAliveDedupInterval := "5m" }}
-{{- $customKeepAliveDedupIntervalIsGreater := include "durationGt" (tuple .Values.otel.manifests.pull_every $defaultKeepAliveDedupInterval) }}
-  logdedup/entitystateevents: 
-    interval: {{ (eq $customKeepAliveDedupIntervalIsGreater "true") | ternary $defaultKeepAliveDedupInterval .Values.otel.manifests.pull_every }}
-    conditions:
-      - instrumentation_scope.attributes["otel.entity.event_as_log"] == true
 
 receivers:
   k8s_events:
@@ -786,7 +780,6 @@ service:
         - solarwindsentity/serviceendpointsmapping
       processors:
         - memory_limiter
-        - logdedup/entitystateevents
         - transform/scope
         - batch
       exporters:

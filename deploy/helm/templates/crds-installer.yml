@@ -1,0 +1,71 @@
+{{- if and .Values.installCRDs.enabled (index .Values "trivy-operator").enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.fullname" . }}-crds-installer
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "common.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded
+{{ include "common.annotations" . | indent 4 }}    
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      name: {{ include "common.fullname" . }}-crds-installer      
+      labels:
+{{ include "common.labels" . | indent 8 }}
+      annotations:    
+{{ include "common.annotations" . | indent 8 }}    
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "common.fullname" . }}-crds-installer
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      volumes:
+        - name: crds
+          configMap:
+            name: {{ include "common.fullname" . }}-crds
+
+      containers:
+        - name: kubectl
+          image: "{{ include "common.image" (tuple . .Values.installCRDs (tuple "image" "installCRDs")) }}"
+          imagePullPolicy: {{ .Values.installCRDs.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+              echo "[trivy-crds-installer] Checking and applying Trivy Operator CRDs..."
+              for f in /crds/*.yaml; do                
+                crd_name=$(grep -E '^\s+name:' "$f" | head -1 | awk '{print $2}' || true)                
+                if [ -z "$crd_name" ]; then
+                  echo "[trivy-crds-installer] Warning: Could not extract CRD name from $f, skipping"
+                  continue
+                fi
+                if kubectl get crd "$crd_name" >/dev/null 2>&1; then
+                  echo "[trivy-crds-installer] CRD $crd_name already exists, skipping"
+                else
+                  echo "[trivy-crds-installer] Applying CRD $crd_name from $f"
+                  kubectl apply -f "$f"
+                fi
+              done
+          volumeMounts:
+            - name: crds
+              mountPath: /crds
+{{- end }}
