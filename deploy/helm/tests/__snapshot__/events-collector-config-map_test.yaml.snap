@@ -443,6 +443,11 @@ Custom events filter with new syntax:
             statements:
             - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
               where log.body["spec"]["type"] != nil
+          - conditions:
+            - log.body["kind"] == "Node"
+            statements:
+            - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
+              != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1464,6 +1469,11 @@ Custom events filter with old syntax:
             statements:
             - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
               where log.body["spec"]["type"] != nil
+          - conditions:
+            - log.body["kind"] == "Node"
+            statements:
+            - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
+              != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -2478,6 +2488,11 @@ Events config should match snapshot when using default values:
             statements:
             - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
               where log.body["spec"]["type"] != nil
+          - conditions:
+            - log.body["kind"] == "Node"
+            statements:
+            - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
+              != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -3359,6 +3374,11 @@ Events config should not contain manifest collection pipeline when disabled:
             statements:
             - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"])
               where log.body["spec"]["type"] != nil
+          - conditions:
+            - log.body["kind"] == "Node"
+            statements:
+            - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
+              != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
         transform/manifest:
           error_mode: ignore
           log_statements:

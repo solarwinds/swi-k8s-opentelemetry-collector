@@ -370,6 +370,10 @@ processors:
           - log.body["kind"] == "Service"
         statements:
           - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"]) where log.body["spec"]["type"] != nil
+      - conditions:
+          - log.body["kind"] == "Node"
+        statements:
+          - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"] != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
 
   transform/remove_deployed_by_collector_label_if_from_different_namespace:
     error_mode: ignore
