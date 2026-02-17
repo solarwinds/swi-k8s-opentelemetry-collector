@@ -337,7 +337,7 @@ processors:
 {{- if not (has .Release.Namespace .Values.cluster.filter.include_namespaces) }}
 {{- if empty .Values.cluster.filter.include_namespaces_regex }}
         # the collector's namespace is not explicitly included and there is no include regex - only collect the values configmap from the collector's namespace
-        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and (resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}" or resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}"))
+        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
 {{- else }}
 {{- $regexConditions := list }}
 {{- range .Values.cluster.filter.include_namespaces_regex }}
@@ -346,12 +346,12 @@ processors:
 {{- end }}
 {{- $joinedRegexConditions := join " or " $regexConditions }}
         # the collector's namespace is not explicitly included, but there is some include regex - only collect the values configmap from the collector's namespace IF it doesn't match any include regex
-        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not({{ $joinedRegexConditions }}) and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and (resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}" or resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}"))
+        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not({{ $joinedRegexConditions }}) and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
 {{- end }}
 {{- end }}
 {{- else if has .Release.Namespace .Values.cluster.filter.exclude_namespaces }}
         # the collector's namespace is explicitly excluded - only collect the values configmap from the collector's namespace
-        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and (resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}" or resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}"))
+        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
 {{- end }}
 {{- if not (empty .Values.cluster.filter.exclude_namespaces_regex) }}
 {{- $excludeRegexConditions := list }}
@@ -361,7 +361,7 @@ processors:
 {{- end }}
 {{- $joinedExcludeRegexConditions := join " or " $excludeRegexConditions }}
         # the collector's namespace is not explicitly excluded, but there is some exclude regex - only collect the values configmap from the collector's namespace IF it matches some exclude regex
-        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and ({{ $joinedExcludeRegexConditions }}) and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and (resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}" or resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}"))
+        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and ({{ $joinedExcludeRegexConditions }}) and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
 {{- end }}
 {{- end }}
 
