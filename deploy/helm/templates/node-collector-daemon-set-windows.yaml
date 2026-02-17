@@ -67,7 +67,7 @@ spec:
       {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil (printf "%s-k8s" .Chart.AppVersion) ) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.windows "image" (printf "%s-k8s" .Chart.AppVersion) ) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
             - /connection-check.exe
@@ -88,7 +88,7 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ include "common.image" (tuple . .Values.otel.windows (tuple "image" "image_windows") nil (printf "%s-k8s" .Chart.AppVersion) ) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel.windows "image" (printf "%s-k8s" .Chart.AppVersion) ) }}"
           imagePullPolicy: {{ .Values.otel.windows.image.pullPolicy }}
           securityContext:
             windowsOptions:

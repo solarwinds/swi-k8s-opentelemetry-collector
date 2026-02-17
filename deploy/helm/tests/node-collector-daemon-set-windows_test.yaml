@@ -26,17 +26,6 @@ tests:
     - equal:
           path: spec.template.spec.containers[0].image
           value: solarwinds/solarwinds-otel-collector:beta1
-  - it: Image should be correct when overridden by azure
-    template: node-collector-daemon-set-windows.yaml
-    set:
-      aks: true
-      global.azure.images.image_windows.digest: "abcd"
-      global.azure.images.image_windows.image: "swi-opentelemetry-collector:v1.2.3"
-      global.azure.images.image_windows.registry: "azurek8s.azure.io/marketplaceimages"
-    asserts:
-    - equal:
-          path: spec.template.spec.containers[0].image
-          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd
   - it: DaemonSet spec for windows nodes should match snapshot when overriding cluster ID
     template: node-collector-daemon-set-windows.yaml
     set:
@@ -90,15 +79,3 @@ tests:
     - equal:
           path: spec.template.spec.initContainers[0].image
           value: solarwinds/solarwinds-otel-collector:beta1
-  - it: Image otel-endpoint-check should be correct when overridden by azure
-    template: node-collector-daemon-set-windows.yaml
-    set:
-      otel.swi_endpoint_check.enabled: true
-      aks: true
-      global.azure.images.image_windows.digest: "abcd"
-      global.azure.images.image_windows.image: "swi-opentelemetry-collector:v1.2.3"
-      global.azure.images.image_windows.registry: "azurek8s.azure.io/marketplaceimages"
-    asserts:
-    - equal:
-          path: spec.template.spec.initContainers[0].image
-          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd

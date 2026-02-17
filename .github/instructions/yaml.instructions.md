@@ -71,7 +71,6 @@ The repository defines reusable templates in `_helpers.tpl` and `_common-config.
 
 **Image Resolution:**
 - `{{ include "common.image" (tuple . .Values.otel "image") }}` - Resolve image path
-- Supports Azure-specific image configuration
 - Handles repository, tag, and digest resolution
 
 **OTEL Configuration Helpers:**

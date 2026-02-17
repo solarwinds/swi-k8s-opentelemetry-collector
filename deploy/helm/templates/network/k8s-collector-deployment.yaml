@@ -47,13 +47,13 @@ spec:
             - name: "EBPF_NET_INTAKE_PORT"
               value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
       containers:
-      - image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.k8sCollector.watcher (tuple "image" "ebpf_k8s_watcher")) }}"
+      - image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.k8sCollector.watcher "image") }}"
         imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.watcher.image.pullPolicy }}
         name: k8s-watcher
         args:
           - --log-console
           - --log-level={{ .Values.ebpfNetworkMonitoring.k8sCollector.telemetry.logs.level }}
-      - image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.k8sCollector.relay (tuple "image" "ebpf_k8s_relay")) }}"
+      - image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.k8sCollector.relay "image") }}"
         imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.k8sCollector.relay.image.pullPolicy }}
         name: k8s-relay
         args:

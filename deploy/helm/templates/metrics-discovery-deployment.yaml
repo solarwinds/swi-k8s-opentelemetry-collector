@@ -69,7 +69,7 @@ spec:
       {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
             - /connection-check
@@ -103,7 +103,7 @@ spec:
               drop:
               - ALL
 
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
             - name: SOLARWINDS_API_TOKEN

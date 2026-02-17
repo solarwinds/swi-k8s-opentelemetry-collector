@@ -89,7 +89,7 @@ spec:
       {{- if include "isSwiEndpointCheckEnabled" . }}
       initContainers:
         - name: otel-endpoint-check
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           command:
             - /connection-check
@@ -110,7 +110,7 @@ spec:
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
-          image: "{{ include "common.image" (tuple . .Values.otel "image" nil (printf "%s-k8s" .Chart.AppVersion)) }}"
+          image: "{{ include "common.image" (tuple . .Values.otel "image" (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           securityContext: 
             readOnlyRootFilesystem: true
