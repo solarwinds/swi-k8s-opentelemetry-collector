@@ -17,6 +17,7 @@
   - [OpenShift Support (disabled by default)](#openshift-support-disabled-by-default)
   - [Auto Update (disabled by default)](#auto-update-disabled-by-default)
 - [Receive 3rd party metrics](#receive-3rd-party-metrics)
+- [Uninstallation](#uninstallation)
 
 ## Architecture
 
@@ -573,4 +574,13 @@ config:
   outputs:
     - opentelemetry:
         service_address: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
+```
+
+## Uninstallation
+
+To remove the collector from your cluster, run the following commands:
+
+```bash
+helm uninstall swo-k8s-collector -n <namespace>
+kubectl delete namespace <namespace>
 ```
