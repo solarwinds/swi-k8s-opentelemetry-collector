@@ -40,3 +40,81 @@ tests:
       - matchRegex:
           path: data["metrics.config"]
           pattern: "pprof"
+  - it: Cluster filter should match snapshot with exclude_namespaces
+    template: metrics-collector-config-map.yaml
+    release:
+      namespace: release-namespace
+    set:
+      cluster.filter:
+        exclude_namespaces:
+          - exclude1
+          - exclude2
+          - release-namespace
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Cluster filter should match snapshot with exclude_namespaces_regex
+    template: metrics-collector-config-map.yaml
+    release:
+      namespace: release-namespace
+    set:
+      cluster.filter:
+        exclude_namespaces_regex:
+          - "^exclude1-.*"
+          - "^exclude2-.*"
+          - "^release-namespace$"
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Cluster filter should match snapshot with include_namespaces
+    template: metrics-collector-config-map.yaml
+    release:
+      namespace: release-namespace
+    set:
+      cluster.filter:
+        include_namespaces:
+          - include1
+          - include2
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Cluster filter should match snapshot with include_namespaces_regex
+    template: metrics-collector-config-map.yaml
+    release:
+      namespace: release-namespace
+    set:
+      cluster.filter:
+        include_namespaces_regex:
+          - "^prod-.*"
+          - "^stage-.*"
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Cluster filter should match snapshot with combined exclude filters
+    template: metrics-collector-config-map.yaml
+    release:
+      namespace: release-namespace
+    set:
+      cluster.filter:
+        exclude_namespaces:
+          - exclude1
+          - release-namespace
+        exclude_namespaces_regex:
+          - "^exclude1-.*"
+          - "^release-namespace$"
+    asserts:
+      - matchSnapshot:
+          path: data
+  - it: Cluster filter should match snapshot with combined include filters
+    template: metrics-collector-config-map.yaml
+    release:
+      namespace: release-namespace
+    set:
+      cluster.filter:
+        include_namespaces:
+          - include1
+        include_namespaces_regex:
+          - "^include1-.*"
+    asserts:
+      - matchSnapshot:
+          path: data
