@@ -63,9 +63,6 @@ Usage:
 Common pod labels - those labels are included on every pod in the chart
 */}}
 {{- define "common.pod-labels" -}}
-{{- if .Values.aks }}
-azure-extensions-usage-release-identifier: {{ .Release.Name }}
-{{- end -}}
 {{- end -}}
 
 {{/*
