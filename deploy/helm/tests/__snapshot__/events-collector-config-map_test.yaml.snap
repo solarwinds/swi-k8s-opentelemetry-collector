@@ -250,6 +250,9 @@ Cluster filter should match snapshot with combined exclude filters:
               != "release-namespace"
             - IsMatch(resource.attributes["k8s.namespace.name"], "^release-namespace$")
               and resource.attributes["k8s.namespace.name"] != "release-namespace"
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -2317,6 +2320,9 @@ Cluster filter should match snapshot with exclude_namespaces:
             log_record:
             - resource.attributes["k8s.namespace.name"] == "exclude1"
             - resource.attributes["k8s.namespace.name"] == "exclude2"
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -3353,6 +3359,9 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               != "release-namespace"
             - IsMatch(resource.attributes["k8s.namespace.name"], "^release-namespace$")
               and resource.attributes["k8s.namespace.name"] != "release-namespace"
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name

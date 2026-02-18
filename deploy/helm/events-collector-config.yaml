@@ -338,10 +338,10 @@ processors:
         # the collector's namespace is not explicitly included or there is some include regex - only collect the values configmap from the collector's namespace
         - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
 {{- end }}
+{{- end }}
 {{- if or (has .Release.Namespace .Values.cluster.filter.exclude_namespaces) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) }}
         # the collector's namespace is explicitly excluded or there is some exclude regex - only collect the values configmap from the collector's namespace
         - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
-{{- end }}
 {{- end }}
 {{- end }}
 
