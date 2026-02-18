@@ -13,10 +13,11 @@
   - [Manifests Collection](#events-collection)
   - [APM auto Instrumentation (disabled by default)](#apm-auto-instrumentation-disabled-by-default)
   - [AWS Fargate (disabled by default)](#aws-fargate-disabled-by-default)
-  - [eBPF Network Observability](#ebpf-network-observability)
+  - [OBI (OpenTelemetry eBPF Instrumentation)](#obi-opentelemetry-ebpf-instrumentation)
   - [OpenShift Support (disabled by default)](#openshift-support-disabled-by-default)
   - [Auto Update (disabled by default)](#auto-update-disabled-by-default)
 - [Receive 3rd party metrics](#receive-3rd-party-metrics)
+- [Uninstallation](#uninstallation)
 
 ## Architecture
 
@@ -46,9 +47,6 @@ subgraph Kubernetes
         MetricsCollector["Metrics Collector"]:::deployment
         DiscoveryCollector["Discovery Collector"]:::statefulset
         EventCollector["Event Collector"]:::deployment
-        Reducer["eBPF Network - Reducer"]:::deployment
-        K8sCollector["eBPF Network - K8s Collector"]:::deployment
-        KernelCollector["eBPF Network - Kernel Collector"]:::daemonset
         OBI["OpenTelemetry eBPF Instrumentation"]:::daemonset
         Gateway["OTLP Gateway"]:::deployment
 
@@ -62,7 +60,6 @@ subgraph Kubernetes
 
     subgraph "Nodes" 
         WorkloadLogs["Container Logs"]
-        eBPF["Workload Communication"]
     end
 end
 
@@ -73,8 +70,6 @@ subgraph "SolarWinds Observability (SWO)"
 end
 
 %% Connections explicitly via SWO Interface
-KernelCollector --> Reducer
-KernelCollector --> eBPF
 NodeCollector --> |"scrape"| PrometheusWorkloads
 DiscoveryCollector --> |"scrape"| PrometheusWorkloads
 OtelOperator---> |"autoinstruments"| PrometheusWorkloads
@@ -86,7 +81,6 @@ TargetAllocator --> |"discover"| KubeAPI
 KubeStateMetrics --> KubeAPI
 
 %% Gateway connections
-Reducer --> |"ingest"| Gateway
 OBI --> |"ingest"| Gateway
 Gateway --> |"ingest"| SWO_Interface
 
@@ -530,9 +524,9 @@ It makes sure that no operation is dependent on DaemonSets (metrics and logs), w
 
 To collect logs from Fargate, set setting `aws_fargate.logs.enabled: true` and follow [this documentation](https://documentation.solarwinds.com/en/success_center/observability/content/configure/configure-logs-k8s-fargate.htm)
 
-### eBPF Network Observability
+### OBI (OpenTelemetry eBPF Instrumentation)
 
-Enabled by default. To disable, set `ebpfNetworkMonitoring.enabled: false`.
+Enabled by default. To disable, set `network_topology.enabled: false`.
 
 The SWO K8s Collector collects metrics about network communication between workloads. This enables network topology mapping.
 
@@ -580,4 +574,13 @@ config:
   outputs:
     - opentelemetry:
         service_address: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
+```
+
+## Uninstallation
+
+To remove the collector from your cluster, run the following commands:
+
+```bash
+helm uninstall swo-k8s-collector -n <namespace>
+kubectl delete namespace <namespace>
 ```
