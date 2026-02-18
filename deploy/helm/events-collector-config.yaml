@@ -301,6 +301,50 @@ processors:
       log_record:
 {{- include "namespacesFilter" . | nindent 8 }}      
 {{- end }}
+
+# A namespace filter specific for manifests to ensure we always collect at least the values configmap from the collector's namespace, regardless of namespace filters
+# The regular namespace filter is reconfigured to allways collect from the release namespace and only keep the values configmap
+{{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
+  filter/namespaces_manifests:
+    logs:
+      log_record:
+{{- range .Values.cluster.filter.exclude_namespaces }}
+{{- if ne . $.Release.Namespace }}
+        - resource.attributes["k8s.namespace.name"] == "{{ . }}"
+{{- end }}
+{{- end }}
+{{- range .Values.cluster.filter.exclude_namespaces_regex }}
+        - IsMatch(resource.attributes["k8s.namespace.name"], "{{ . }}") and resource.attributes["k8s.namespace.name"] != "{{ $.Release.Namespace }}"
+{{- end }}
+{{- if or (not (empty .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) -}}
+{{- $conditions := list }}
+{{- range .Values.cluster.filter.include_namespaces }}
+  {{- $value := . }}
+  {{- $condition := printf `resource.attributes["k8s.namespace.name"] == "%s"` $value }}
+  {{- $conditions = append $conditions $condition }}
+{{- end }}
+{{- range .Values.cluster.filter.include_namespaces_regex }}
+  {{- $value := . }}
+  {{- $condition := printf `IsMatch(resource.attributes["k8s.namespace.name"], "%s")` $value }}
+  {{- $conditions = append $conditions $condition }}
+{{- end }}
+{{- if not (has .Release.Namespace .Values.cluster.filter.include_namespaces) }}
+{{- $conditions = append $conditions (printf `resource.attributes["k8s.namespace.name"] == "%s"` .Release.Namespace) }}
+{{- end }}
+{{- $conditions = append $conditions (printf `resource.attributes["k8s.namespace.name"] == nil`) }}
+{{- $joinedConditions := join " or " $conditions }}
+        - not({{ $joinedConditions }})
+{{- if or (not (has .Release.Namespace .Values.cluster.filter.include_namespaces)) (not (empty .Values.cluster.filter.include_namespaces_regex)) }}
+        # the collector's namespace is not explicitly included or there is some include regex - only collect the values configmap from the collector's namespace
+        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
+{{- end }}
+{{- end }}
+{{- if or (has .Release.Namespace .Values.cluster.filter.exclude_namespaces) (not (empty .Values.cluster.filter.exclude_namespaces_regex)) }}
+        # the collector's namespace is explicitly excluded or there is some exclude regex - only collect the values configmap from the collector's namespace
+        - resource.attributes["k8s.namespace.name"] == "{{ .Release.Namespace }}" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"] == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"] == "{{ include "common.cluster-uid" . }}")
+{{- end }}
+{{- end }}
+
   groupbyattrs/workloadstatus:
     keys:
       - sw.k8s.deployment.status
@@ -370,6 +414,10 @@ processors:
           - log.body["kind"] == "Service"
         statements:
           - set(resource.attributes["sw.k8s.service.type"], log.body["spec"]["type"]) where log.body["spec"]["type"] != nil
+      - conditions:
+          - log.body["kind"] == "Node"
+        statements:
+          - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"] != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
 
   transform/remove_deployed_by_collector_label_if_from_different_namespace:
     error_mode: ignore
@@ -757,7 +805,7 @@ service:
         - transform/serviceendpointsmapping-renamepodip
         - k8sattributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
-        - filter/namespaces
+        - filter/namespaces_manifests
 {{- end }}
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
@@ -801,7 +849,7 @@ service:
         - k8seventgeneration
         - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
-        - filter/namespaces
+        - filter/namespaces_manifests
 {{- end }}
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
