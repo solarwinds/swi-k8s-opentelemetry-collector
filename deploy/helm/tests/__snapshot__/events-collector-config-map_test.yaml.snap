@@ -242,6 +242,17 @@ Cluster filter should match snapshot with combined exclude filters:
             - resource.attributes["k8s.namespace.name"] == "release-namespace"
             - IsMatch(resource.attributes["k8s.namespace.name"], "^exclude1-.*")
             - IsMatch(resource.attributes["k8s.namespace.name"], "^release-namespace$")
+        filter/namespaces_manifests:
+          logs:
+            log_record:
+            - resource.attributes["k8s.namespace.name"] == "exclude1"
+            - IsMatch(resource.attributes["k8s.namespace.name"], "^exclude1-.*") and resource.attributes["k8s.namespace.name"]
+              != "release-namespace"
+            - IsMatch(resource.attributes["k8s.namespace.name"], "^release-namespace$")
+              and resource.attributes["k8s.namespace.name"] != "release-namespace"
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -966,7 +977,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -990,7 +1001,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - k8sattributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -1268,6 +1279,15 @@ Cluster filter should match snapshot with combined include filters:
             log_record:
             - not(resource.attributes["k8s.namespace.name"] == "include1" or IsMatch(resource.attributes["k8s.namespace.name"],
               "^include1-.*") or resource.attributes["k8s.namespace.name"] == nil)
+        filter/namespaces_manifests:
+          logs:
+            log_record:
+            - not(resource.attributes["k8s.namespace.name"] == "include1" or IsMatch(resource.attributes["k8s.namespace.name"],
+              "^include1-.*") or resource.attributes["k8s.namespace.name"] == "release-namespace"
+              or resource.attributes["k8s.namespace.name"] == nil)
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -1992,7 +2012,7 @@ Cluster filter should match snapshot with combined include filters:
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -2016,7 +2036,7 @@ Cluster filter should match snapshot with combined include filters:
             - k8sattributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -2295,6 +2315,14 @@ Cluster filter should match snapshot with exclude_namespaces:
             - resource.attributes["k8s.namespace.name"] == "exclude1"
             - resource.attributes["k8s.namespace.name"] == "exclude2"
             - resource.attributes["k8s.namespace.name"] == "release-namespace"
+        filter/namespaces_manifests:
+          logs:
+            log_record:
+            - resource.attributes["k8s.namespace.name"] == "exclude1"
+            - resource.attributes["k8s.namespace.name"] == "exclude2"
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -3019,7 +3047,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -3043,7 +3071,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - k8sattributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -3322,6 +3350,18 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - IsMatch(resource.attributes["k8s.namespace.name"], "^exclude1-.*")
             - IsMatch(resource.attributes["k8s.namespace.name"], "^exclude2-.*")
             - IsMatch(resource.attributes["k8s.namespace.name"], "^release-namespace$")
+        filter/namespaces_manifests:
+          logs:
+            log_record:
+            - IsMatch(resource.attributes["k8s.namespace.name"], "^exclude1-.*") and resource.attributes["k8s.namespace.name"]
+              != "release-namespace"
+            - IsMatch(resource.attributes["k8s.namespace.name"], "^exclude2-.*") and resource.attributes["k8s.namespace.name"]
+              != "release-namespace"
+            - IsMatch(resource.attributes["k8s.namespace.name"], "^release-namespace$")
+              and resource.attributes["k8s.namespace.name"] != "release-namespace"
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -4046,7 +4086,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -4070,7 +4110,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - k8sattributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -4348,6 +4388,15 @@ Cluster filter should match snapshot with include_namespaces:
             log_record:
             - not(resource.attributes["k8s.namespace.name"] == "include1" or resource.attributes["k8s.namespace.name"]
               == "include2" or resource.attributes["k8s.namespace.name"] == nil)
+        filter/namespaces_manifests:
+          logs:
+            log_record:
+            - not(resource.attributes["k8s.namespace.name"] == "include1" or resource.attributes["k8s.namespace.name"]
+              == "include2" or resource.attributes["k8s.namespace.name"] == "release-namespace"
+              or resource.attributes["k8s.namespace.name"] == nil)
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -5072,7 +5121,7 @@ Cluster filter should match snapshot with include_namespaces:
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -5096,7 +5145,7 @@ Cluster filter should match snapshot with include_namespaces:
             - k8sattributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -5375,6 +5424,15 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - not(IsMatch(resource.attributes["k8s.namespace.name"], "^include1-.*") or
               IsMatch(resource.attributes["k8s.namespace.name"], "^include2-.*") or resource.attributes["k8s.namespace.name"]
               == nil)
+        filter/namespaces_manifests:
+          logs:
+            log_record:
+            - not(IsMatch(resource.attributes["k8s.namespace.name"], "^include1-.*") or
+              IsMatch(resource.attributes["k8s.namespace.name"], "^include2-.*") or resource.attributes["k8s.namespace.name"]
+              == "release-namespace" or resource.attributes["k8s.namespace.name"] == nil)
+            - resource.attributes["k8s.namespace.name"] == "release-namespace" and not(resource.attributes["k8s.configmap.labels.swo.cloud.solarwinds.com/config-type"]
+              == "values-config-map" and resource.attributes["k8s.configmap.annotations.swo.cloud.solarwinds.com/cluster-uid"]
+              == "<CLUSTER_NAME>")
         groupbyattrs/manifest:
           keys:
           - k8s.pod.name
@@ -6099,7 +6157,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
             - k8sattributes
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -6123,7 +6181,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - k8sattributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces
+            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
