@@ -70,7 +70,7 @@ spec:
               value: "{{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}"
       containers:
         - name: swi-kernel-collector
-          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.kernelCollector (tuple "image" "ebpf_kernel_collector")) }}"
+          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.kernelCollector "image") }}"
           imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.kernelCollector.image.pullPolicy }}
           args:
             - --config-file=/etc/network-explorer/config.yaml

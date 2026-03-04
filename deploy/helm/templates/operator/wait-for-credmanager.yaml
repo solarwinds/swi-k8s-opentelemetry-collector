@@ -27,7 +27,7 @@ spec:
                 - linux
       containers:
         - name: wait-for-certmanager
-          image: "{{ include "common.image" (tuple . .Values.waitJobs.certmanager (tuple "image" "waitjob_certmanager")) }}"
+          image: "{{ include "common.image" (tuple . .Values.waitJobs.certmanager "image") }}"
           imagePullPolicy: {{ .Values.waitJobs.certmanager.image.pullPolicy }}
           command:
             - /bin/sh

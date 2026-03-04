@@ -58,15 +58,3 @@ tests:
     - equal:
           path: spec.template.spec.initContainers[0].image
           value: solarwinds/solarwinds-otel-collector:beta1
-  - it: Image otel-endpoint-check should be correct when overridden by azure
-    template: events-collector-statefulset.yaml
-    set:
-      otel.swi_endpoint_check.enabled: true
-      aks: true
-      global.azure.images.image.digest: "abcd"
-      global.azure.images.image.image: "swi-opentelemetry-collector:v1.2.3"
-      global.azure.images.image.registry: "azurek8s.azure.io/marketplaceimages"
-    asserts:
-    - equal:
-          path: spec.template.spec.initContainers[0].image
-          value: azurek8s.azure.io/marketplaceimages/swi-opentelemetry-collector:v1.2.3@abcd

@@ -45,7 +45,7 @@ spec:
               value: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
       containers:
         - name: reducer
-          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.reducer (tuple "image" "ebpf_reducer")) }}"
+          image: "{{ include "common.image" (tuple . .Values.ebpfNetworkMonitoring.reducer "image") }}"
           imagePullPolicy: {{ .Values.ebpfNetworkMonitoring.reducer.image.pullPolicy }}
           args:
             - --port={{ .Values.ebpfNetworkMonitoring.reducer.telemetryPort }}
