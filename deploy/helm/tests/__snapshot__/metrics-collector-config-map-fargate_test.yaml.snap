@@ -396,15 +396,6 @@ Metrics config should match snapshot when using default values:
           - k8s.daemonset.name
           - k8s.replicaset.name
           - severity
-        groupbyattrs/trivy-operator-metrics-by-image:
-          keys:
-          - k8s.namespace.name
-          - k8s.pod.name
-          - k8s.statefulset.name
-          - k8s.daemonset.name
-          - k8s.replicaset.name
-          - severity
-          - image_digest
         k8sattributes:
           auth_type: serviceAccount
           extract:
@@ -1332,7 +1323,7 @@ Metrics config should match snapshot when using default values:
             - action: aggregate_labels
               aggregation_type: max
               label_set:
-              - dummy_label_workaround
+              - image_digest
         resource/metrics:
           attributes:
           - action: delete
@@ -1751,9 +1742,8 @@ Metrics config should match snapshot when using default values:
             - filter/trivy-operator-metrics
             - transform/trivy-operator-metrics-attributes
             - metricstransform/rename
-            - groupbyattrs/trivy-operator-metrics-by-image
-            - metricstransform/trivy-operator-metrics-aggregation-by-image
             - groupbyattrs/trivy-operator-metrics
+            - metricstransform/trivy-operator-metrics-aggregation-by-image
             - metricstransform/trivy-operator-metrics-aggregation
             - transform/trivy-operator-metrics-split
             receivers:

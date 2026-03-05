@@ -770,16 +770,6 @@ processors:
           # adds severity to metric name (metrics are grouped by severity)
           - set(name, Format("%s_%s", [name, ToLowerCase(resource.attributes["severity"])])) where resource.attributes["severity"] != nil
 
-  groupbyattrs/trivy-operator-metrics-by-image:
-    keys:
-    - k8s.namespace.name
-    - k8s.pod.name
-    - k8s.statefulset.name
-    - k8s.daemonset.name
-    - k8s.replicaset.name
-    - severity
-    - image_digest
-
   metricstransform/trivy-operator-metrics-aggregation-by-image:
     transforms:
       - include: ^k8s.trivy_.*$
@@ -787,8 +777,10 @@ processors:
         action: update
         operations:
           - action: aggregate_labels
-            # use [dummy_label_workaround] instead of [] as a workaround for a bug introduced in metricstransform 0.106
-            label_set: [dummy_label_workaround]
+            # Keep image_digest to distinguish data points from different container images.
+            # After groupbyattrs moves workload/severity to resource attrs, image_digest remains
+            # as a datapoint attribute. MAX deduplicates across replicas reporting the same image.
+            label_set: [image_digest]
             aggregation_type: max
 
   groupbyattrs/trivy-operator-metrics:
@@ -1195,9 +1187,11 @@ service:
         - filter/trivy-operator-metrics
         - transform/trivy-operator-metrics-attributes
         - metricstransform/rename
-        - groupbyattrs/trivy-operator-metrics-by-image
-        - metricstransform/trivy-operator-metrics-aggregation-by-image
+        # Single groupbyattrs moves workload identity + severity to resource attrs.
+        # image_digest stays as a datapoint attribute so that the two-stage aggregation
+        # (MAX per image, then SUM across images) works correctly for multi-image workloads.
         - groupbyattrs/trivy-operator-metrics
+        - metricstransform/trivy-operator-metrics-aggregation-by-image
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}
