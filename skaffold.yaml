@@ -314,3 +314,11 @@ profiles:
           resourceName: timeseries-mock-service
           namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
           port: 8088
+  - name: tail-sampling
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.gateway.tailSampling.enabled
+        value: true
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.gateway.autoscaler.minReplicas
+        value: 3

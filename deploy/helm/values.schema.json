@@ -1543,6 +1543,55 @@
                         },
                         "prefix": {
                             "type": "string"
+                        },
+                        "tailSampling": {
+                            "type": "object",
+                            "description": "Tail-sampling configuration for traces. When enabled, gateway uses StatefulSet instead of Deployment.",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "decision_wait": {
+                                    "type": "string"
+                                },
+                                "num_traces": {
+                                    "type": "integer"
+                                },
+                                "expected_new_traces_per_sec": {
+                                    "type": "integer"
+                                },
+                                "decision_cache": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sampled_cache_size": {
+                                            "type": "integer"
+                                        },
+                                        "non_sampled_cache_size": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "policies": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                },
+                                "loadBalancing": {
+                                    "type": "object",
+                                    "properties": {
+                                        "interval": {
+                                            "type": "string"
+                                        },
+                                        "timeout": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            },
+                            "additionalProperties": false
                         }
                     },
                     "additionalProperties": false

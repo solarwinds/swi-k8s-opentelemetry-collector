@@ -19,6 +19,26 @@ exporters:
       storage: file_storage/sending_queue
 {{- end }}
     timeout: {{ .Values.otel.gateway.timeout }}
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+  # Load balancing exporter for tail-sampling
+  # Routes traces by traceID to specific gateway replicas via headless service
+  loadbalancing:
+    routing_key: "traceID"
+    protocol:
+      otlp:
+        timeout: {{ .Values.otel.gateway.tailSampling.loadBalancing.timeout }}
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: {{ .Values.otel.gateway.sending_queue.enabled }}
+          num_consumers: {{ .Values.otel.gateway.sending_queue.num_consumers }}
+          queue_size: {{ .Values.otel.gateway.sending_queue.queue_size }}
+    resolver:
+      dns:
+        hostname: {{ include "common.fullname" (tuple . "-gateway-headless") }}.{{ .Release.Namespace }}.svc.cluster.local
+        port: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
+        interval: {{ .Values.otel.gateway.tailSampling.loadBalancing.interval }}
+{{- end }}
 
 extensions:
 {{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
@@ -115,6 +135,82 @@ processors:
       - statements:
         - set(scope.name, "")
         - set(scope.version, "")
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+
+  # Transform processor to mark traces that have been load-balanced
+  # This marker attribute is used by the routing connector to distinguish
+  # between first-pass (external) and second-pass (load-balanced) traces
+  transform/mark-loadbalanced:
+    trace_statements:
+      - context: resource
+        statements:
+          - set(resource.attributes["x-loadbalanced"], "true")
+{{- end }}
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+
+  # Tail-sampling processor - applies sampling policies to traces
+  tail_sampling:
+    decision_wait: {{ .Values.otel.gateway.tailSampling.decision_wait }}
+    num_traces: {{ .Values.otel.gateway.tailSampling.num_traces }}
+    expected_new_traces_per_sec: {{ .Values.otel.gateway.tailSampling.expected_new_traces_per_sec }}
+    decision_cache:
+      sampled_cache_size: {{ .Values.otel.gateway.tailSampling.decision_cache.sampled_cache_size }}
+      non_sampled_cache_size: {{ .Values.otel.gateway.tailSampling.decision_cache.non_sampled_cache_size }}
+    policies:
+{{- range .Values.otel.gateway.tailSampling.policies }}
+      - name: {{ .name }}
+        type: {{ .type }}
+{{- if .string_attribute }}
+        string_attribute:
+          key: {{ .string_attribute.key }}
+          values:
+{{- range .string_attribute.values }}
+            - {{ . | quote }}
+{{- end }}
+{{- if .string_attribute.invert_match }}
+          invert_match: {{ .string_attribute.invert_match }}
+{{- end }}
+{{- end }}
+{{- if .status_code }}
+        status_code:
+          status_codes:
+{{- range .status_code.status_codes }}
+            - {{ . }}
+{{- end }}
+{{- end }}
+{{- if .latency }}
+        latency:
+          threshold_ms: {{ .latency.threshold_ms }}
+{{- end }}
+{{- if .probabilistic }}
+        probabilistic:
+          sampling_percentage: {{ .probabilistic.sampling_percentage }}
+{{- end }}
+{{- if .and }}
+        and:
+          and_sub_policy:
+{{- range .and.and_sub_policy }}
+            - name: {{ .name }}
+              type: {{ .type }}
+{{- if .string_attribute }}
+              string_attribute:
+                key: {{ .string_attribute.key }}
+                values:
+{{- range .string_attribute.values }}
+                  - {{ . | quote }}
+{{- end }}
+{{- if .string_attribute.invert_match }}
+                invert_match: {{ .string_attribute.invert_match }}
+{{- end }}
+{{- end }}
+{{- if .probabilistic }}
+              probabilistic:
+                sampling_percentage: {{ .probabilistic.sampling_percentage }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 
   filter/otlp-metrics:
     metrics:
@@ -371,6 +467,19 @@ receivers:
 connectors:
   forward/metrics_common: {}
   forward/obi-relationships: {}
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+  # Routing connector for tail-sampling architecture
+  # Routes traces based on the presence of x-loadbalanced attribute
+  # - Traces without attribute (first pass) → traces/loadbalance pipeline
+  # - Traces with attribute (second pass) → traces/tailsampling pipeline
+  routing/traces:
+    default_pipelines: [traces/loadbalance]
+    table:
+      - context: resource
+        pipelines:
+          - traces/tailsampling
+        condition: resource.attributes["x-loadbalanced"] == "true"
+{{- end }}
   routing/metrics:
     default_pipelines: [metrics]
     table:
@@ -707,6 +816,43 @@ service:
         - batch
       exporters:
         - otlp
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+    # Tail-sampling: Attribute-based routing architecture
+    # Single OTLP receiver with routing connector for first/second pass separation
+
+    # Entry point: receives all traces from external sources and load balancer
+    traces/receive:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+      exporters:
+        - routing/traces
+
+    # First pass: add marker attribute and route by traceID to gateway replicas
+    traces/loadbalance:
+      receivers:
+        - routing/traces
+      processors:
+        - transform/mark-loadbalanced
+      exporters:
+        - loadbalancing
+
+    # Second pass: apply tail-sampling policies and export to SWO
+    traces/tailsampling:
+      receivers:
+        - routing/traces
+      processors:
+        - memory_limiter
+        - tail_sampling
+        - k8sattributes
+        - resource
+        - transform/scope
+        - batch
+      exporters:
+        - otlp
+{{- else }}
+    # Standard traces pipeline (no tail-sampling)
     traces:
       receivers:
         - otlp
@@ -718,6 +864,7 @@ service:
         - batch
       exporters:
         - otlp
+{{- end }}
 
     # Current SWO pipeline cannot process state events and relationships events together,
     # so we need to split them into two separate pipelines.
