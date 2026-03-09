@@ -10,7 +10,7 @@ from clickhouse_client import ClickHouseClient
 clickhouse_endpoint = os.getenv("CLICKHOUSE_ENDPOINT", "localhost:8123")
 clickhouse_client = ClickHouseClient(clickhouse_endpoint)
 pod_name = 'dummy-pod'
-expected_event = f'Started container {pod_name}'
+expected_event = f'Successfully assigned default/{pod_name} to '
 
 def setup_function():
     run_shell_command(f"kubectl run {pod_name} --labels \"test-label=test-value\" --overrides=\"{{ \\\"apiVersion\\\": \\\"v1\\\", \\\"metadata\\\": {{\\\"annotations\\\": {{ \\\"test-annotation\\\":\\\"test-value\\\" }} }} }}\" --image bash:alpine3.19 -n default -- -ec \"while :; do sleep 5 ; done\"")
@@ -27,7 +27,8 @@ def test_events_generated():
 
 def assert_test_event_found(logs_list):
     raw_bodies = get_all_bodies_for_clickhouse_logs(logs_list)
-    test_event_found = any(expected_event in body for body in raw_bodies)
+    all_strings = [s for body in raw_bodies for s in body]
+    test_event_found = any(s.startswith(expected_event) for s in all_strings)
     return test_event_found
 
 def print_failure(logs_list):
