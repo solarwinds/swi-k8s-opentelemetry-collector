@@ -862,8 +862,8 @@ otel:
     prefix: "k8s."
 
     # Tail-sampling configuration
-    # When enabled, the gateway will use StatefulSet instead of Deployment
-    # and apply sampling policies to reduce trace volume
+    # When enabled, the gateway applies sampling policies to reduce trace volume
+    # using a load-balanced architecture that routes by traceID
     tailSampling:
       enabled: false
 
@@ -884,36 +884,44 @@ otel:
 
       # Sampling policies (evaluated in order)
       # Note: Traces that don't match any policy are dropped
+      # All tail_sampling processor policy types are supported:
+      # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/tailsamplingprocessor
       policies:
+        # Never sample healthcheck traces
+        - name: healthcheck-policy
+          type: drop
+          drop:
+            drop_sub_policy:
+              - name: drop-healthcheck-transaction-name
+                type: string_attribute
+                string_attribute:
+                  key: TransactionName
+                  values: [/healthcheck/]
+
         # Always sample errors (100%)
-        - name: always-sample-errors
+        - name: error-policy
           type: status_code
           status_code:
             status_codes: [ERROR]
 
         # Always sample high-latency requests >1000ms (100%)
-        - name: always-sample-high-latency
+        - name: high-latency-policy
           type: latency
           latency:
             threshold_ms: 1000
 
-        # Fallback: probabilistic sampling at 10% (excluding healthcheck)
-        - name: fallback-probabilistic
-          type: and
-          and:
-            and_sub_policy:
-              # Exclude healthcheck traces
-              - name: exclude-healthcheck
-                type: string_attribute
-                string_attribute:
-                  key: http.target
-                  values: ["/healthcheck", "/health", "/ping"]
-                  invert_match: true
-              # Sample 10% of remaining traces
-              - name: probabilistic-10
-                type: probabilistic
-                probabilistic:
-                  sampling_percentage: 10
+        # Always sample trigger-traced requests
+        - name: trigger-trace-policy
+          type: boolean_attribute
+          boolean_attribute:
+            key: TriggeredTrace
+            value: true
+
+        # Fallback: low sampling for any traces not meeting above policies
+        - name: fallback-policy
+          type: probabilistic
+          probabilistic:
+            sampling_percentage: 10
 
       # Load balancing exporter configuration
       loadBalancing:
