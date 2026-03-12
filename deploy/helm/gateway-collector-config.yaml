@@ -115,6 +115,10 @@ processors:
         action: delete
       - key: sw.k8s.workload.type
         action: delete
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+      - key: x-loadbalanced
+        action: delete
+{{- end }}
 
   # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
   attributes/clean-attributes-otlp-metrics:
@@ -149,67 +153,16 @@ processors:
 {{- if .Values.otel.gateway.tailSampling.enabled }}
 
   # Tail-sampling processor - applies sampling policies to traces
+  # Configuration is passed through directly from values.yaml to support
+  # all tail_sampling processor options (16+ policy types)
   tail_sampling:
     decision_wait: {{ .Values.otel.gateway.tailSampling.decision_wait }}
     num_traces: {{ .Values.otel.gateway.tailSampling.num_traces }}
     expected_new_traces_per_sec: {{ .Values.otel.gateway.tailSampling.expected_new_traces_per_sec }}
     decision_cache:
-      sampled_cache_size: {{ .Values.otel.gateway.tailSampling.decision_cache.sampled_cache_size }}
-      non_sampled_cache_size: {{ .Values.otel.gateway.tailSampling.decision_cache.non_sampled_cache_size }}
+{{ toYaml .Values.otel.gateway.tailSampling.decision_cache | indent 6 }}
     policies:
-{{- range .Values.otel.gateway.tailSampling.policies }}
-      - name: {{ .name }}
-        type: {{ .type }}
-{{- if .string_attribute }}
-        string_attribute:
-          key: {{ .string_attribute.key }}
-          values:
-{{- range .string_attribute.values }}
-            - {{ . | quote }}
-{{- end }}
-{{- if .string_attribute.invert_match }}
-          invert_match: {{ .string_attribute.invert_match }}
-{{- end }}
-{{- end }}
-{{- if .status_code }}
-        status_code:
-          status_codes:
-{{- range .status_code.status_codes }}
-            - {{ . }}
-{{- end }}
-{{- end }}
-{{- if .latency }}
-        latency:
-          threshold_ms: {{ .latency.threshold_ms }}
-{{- end }}
-{{- if .probabilistic }}
-        probabilistic:
-          sampling_percentage: {{ .probabilistic.sampling_percentage }}
-{{- end }}
-{{- if .and }}
-        and:
-          and_sub_policy:
-{{- range .and.and_sub_policy }}
-            - name: {{ .name }}
-              type: {{ .type }}
-{{- if .string_attribute }}
-              string_attribute:
-                key: {{ .string_attribute.key }}
-                values:
-{{- range .string_attribute.values }}
-                  - {{ . | quote }}
-{{- end }}
-{{- if .string_attribute.invert_match }}
-                invert_match: {{ .string_attribute.invert_match }}
-{{- end }}
-{{- end }}
-{{- if .probabilistic }}
-              probabilistic:
-                sampling_percentage: {{ .probabilistic.sampling_percentage }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
+{{ toYaml .Values.otel.gateway.tailSampling.policies | indent 6 }}
 {{- end }}
 
   filter/otlp-metrics:
@@ -847,6 +800,7 @@ service:
         - tail_sampling
         - k8sattributes
         - resource
+        - resource/clean-temporary-attributes
         - transform/scope
         - batch
       exporters:
