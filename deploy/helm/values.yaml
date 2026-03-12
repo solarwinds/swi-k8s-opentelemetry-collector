@@ -861,6 +861,68 @@ otel:
     # Prefix that will be added to all metrics
     prefix: "k8s."
 
+    # Tail-sampling configuration
+    # When enabled, the gateway will use StatefulSet instead of Deployment
+    # and apply sampling policies to reduce trace volume
+    tailSampling:
+      enabled: false
+
+      # Decision wait time - how long to wait before making a sampling decision
+      # This allows time for all spans of a trace to arrive
+      decision_wait: 10s
+
+      # Number of traces to buffer for sampling decisions
+      num_traces: 100
+
+      # Expected rate of new traces per second
+      expected_new_traces_per_sec: 10
+
+      # Decision cache configuration
+      decision_cache:
+        sampled_cache_size: 100000
+        non_sampled_cache_size: 100000
+
+      # Sampling policies (evaluated in order)
+      # Note: Traces that don't match any policy are dropped
+      policies:
+        # Always sample errors (100%)
+        - name: always-sample-errors
+          type: status_code
+          status_code:
+            status_codes: [ERROR]
+
+        # Always sample high-latency requests >1000ms (100%)
+        - name: always-sample-high-latency
+          type: latency
+          latency:
+            threshold_ms: 1000
+
+        # Fallback: probabilistic sampling at 10% (excluding healthcheck)
+        - name: fallback-probabilistic
+          type: and
+          and:
+            and_sub_policy:
+              # Exclude healthcheck traces
+              - name: exclude-healthcheck
+                type: string_attribute
+                string_attribute:
+                  key: http.target
+                  values: ["/healthcheck", "/health", "/ping"]
+                  invert_match: true
+              # Sample 10% of remaining traces
+              - name: probabilistic-10
+                type: probabilistic
+                probabilistic:
+                  sampling_percentage: 10
+
+      # Load balancing exporter configuration
+      loadBalancing:
+        # DNS refresh interval for discovering gateway replicas
+        interval: 30s
+
+        # Connection timeout
+        timeout: 5s
+
 cluster:
   # A unique name of a cluster provided by user during deployment of the Helm chart.
   name: <CLUSTER_NAME>
