@@ -917,6 +917,21 @@ otel:
             key: TriggeredTrace
             value: true
 
+        # High sampling rate for "custom_apm_transaction"
+        - name: custom-transaction-policy
+          type: and
+          and:
+            and_sub_policy:
+              - name: filter-custom-transaction-name
+                type: string_attribute
+                string_attribute:
+                  key: TransactionName
+                  values: [custom_apm_transaction]
+              - name: sample-custom-transaction-75-percent
+                type: probabilistic
+                probabilistic:
+                  sampling_percentage: 75
+
         # Fallback: low sampling for any traces not meeting above policies
         - name: fallback-policy
           type: probabilistic
