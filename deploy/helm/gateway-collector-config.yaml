@@ -35,7 +35,7 @@ exporters:
           queue_size: {{ .Values.otel.gateway.sending_queue.queue_size }}
     resolver:
       dns:
-        hostname: {{ include "common.fullname" (tuple . "-gateway-headless") }}.{{ .Release.Namespace }}.svc.cluster.local
+        hostname: swo-gateway-headless.{{ .Release.Namespace }}.svc.cluster.local
         port: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
         interval: {{ .Values.otel.gateway.tailSampling.loadBalancing.interval }}
 {{- end }}
