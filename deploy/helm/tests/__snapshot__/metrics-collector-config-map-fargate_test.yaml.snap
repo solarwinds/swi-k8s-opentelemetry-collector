@@ -1443,11 +1443,6 @@ Metrics config should match snapshot when using default values:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -1722,7 +1717,6 @@ Metrics config should match snapshot when using default values:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus

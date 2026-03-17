@@ -1453,11 +1453,6 @@ Cluster filter should match snapshot with combined exclude filters:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -1652,7 +1647,6 @@ Cluster filter should match snapshot with combined exclude filters:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/namespaces
             - filter/remove_temporary_metrics
             receivers:
@@ -3143,11 +3137,6 @@ Cluster filter should match snapshot with combined include filters:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -3342,7 +3331,6 @@ Cluster filter should match snapshot with combined include filters:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/namespaces
             - filter/remove_temporary_metrics
             receivers:
@@ -4834,11 +4822,6 @@ Cluster filter should match snapshot with exclude_namespaces:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -5033,7 +5016,6 @@ Cluster filter should match snapshot with exclude_namespaces:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/namespaces
             - filter/remove_temporary_metrics
             receivers:
@@ -6525,11 +6507,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -6724,7 +6701,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/namespaces
             - filter/remove_temporary_metrics
             receivers:
@@ -8215,11 +8191,6 @@ Cluster filter should match snapshot with include_namespaces:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -8414,7 +8385,6 @@ Cluster filter should match snapshot with include_namespaces:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/namespaces
             - filter/remove_temporary_metrics
             receivers:
@@ -9905,11 +9875,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -10104,7 +10069,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/namespaces
             - filter/remove_temporary_metrics
             receivers:
@@ -11587,11 +11551,6 @@ Metrics config should match snapshot when fargate is enabled:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -11866,7 +11825,6 @@ Metrics config should match snapshot when fargate is enabled:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
@@ -13382,11 +13340,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -13596,7 +13549,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
@@ -13618,7 +13570,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             - groupbyattrs/all
             - resource/passthrough
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - routing/prometheus-passthrough
@@ -15101,11 +15052,6 @@ Metrics config should match snapshot when using default values:
             - set(datapoint.attributes["job_condition"], "Complete") where IsMatch(metric.name,
               "^.*kube_job_complete$") == true and IsMatch(datapoint.attributes["condition"],
               "^true$") == true and datapoint.value_double > 0
-        transform/cleanup_attributes_for_nonexisting_entities:
-          metric_statements:
-          - statements:
-            - set(resource.attributes["sw.entity.noupdate"], "true") where resource.attributes["k8s.node.name"]
-              != nil
         transform/remove_deployed_by_collector_label_if_from_different_namespace:
           error_mode: ignore
           metric_statements:
@@ -15300,7 +15246,6 @@ Metrics config should match snapshot when using default values:
             - resource/metrics
             - k8sattributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - transform/cleanup_attributes_for_nonexisting_entities
             - filter/remove_temporary_metrics
             receivers:
             - forward/prometheus
