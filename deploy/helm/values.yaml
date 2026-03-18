@@ -1351,6 +1351,10 @@ trivy-operator:
   nodeSelector:
     kubernetes.io/os: linux
   targetWorkloads: pod,replicaset,statefulset,daemonset,cronjob,job
+  # Disable trivy telemetry (anonymous usage reporting enabled by default)
+  extraEnv:
+    - name: TRIVY_DISABLE_TELEMETRY
+      value: "true"
   compliance:
     specs: []
   trivy:
