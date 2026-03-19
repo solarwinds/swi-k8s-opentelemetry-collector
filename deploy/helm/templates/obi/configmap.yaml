@@ -93,6 +93,11 @@ data:
             - k8s.src.owner.name
             - k8s.src.owner.type
             - transport
+        "*":
+          exclude:
+            - "host.*"
+            - "container.*"
+            - "cloud.*"
     {{- end }}
     {{- if .Values.network_topology.config }}
   {{- toYaml .Values.network_topology.config | nindent 4}}
