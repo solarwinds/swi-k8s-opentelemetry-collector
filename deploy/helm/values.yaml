@@ -1361,6 +1361,11 @@ trivy-operator:
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
     additionalVulnerabilityReportFields: Description
+    # Disable trivy telemetry (anonymous usage reporting enabled by default)
+    # see https://trivy.dev/docs/latest/references/configuration/config-file/#scan-options
+    configFile:
+      scan:
+        disable-telemetry: true
   trivyOperator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
