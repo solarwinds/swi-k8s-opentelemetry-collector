@@ -16,6 +16,7 @@
   - [OBI (OpenTelemetry eBPF Instrumentation)](#obi-opentelemetry-ebpf-instrumentation)
   - [OpenShift Support (disabled by default)](#openshift-support-disabled-by-default)
   - [Auto Update (disabled by default)](#auto-update-disabled-by-default)
+  - [Image vulnerability scanning (disabled by default)](#image-vulnerability-scanning-disabled-by-default)
 - [Receive 3rd party metrics](#receive-3rd-party-metrics)
 - [Uninstallation](#uninstallation)
 
@@ -528,7 +529,9 @@ To collect logs from Fargate, set setting `aws_fargate.logs.enabled: true` and f
 
 Enabled by default. To disable, set `network_topology.enabled: false`.
 
-The SWO K8s Collector collects metrics about network communication between workloads. This enables network topology mapping.
+The SWO K8s Collector collects metrics about network communication between workloads. This enables network topology mapping based on OBI metrics.
+If enabled, OBI - [OpenTelemetry eBPF Instrumentation](https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation) (Apache-2.0 license) is deployed to the cluster.
+If Istio is already deployed in the cluster, this setting does not need to be enabled. The SWO K8s Collector will detect and use Istio metrics.
 
 ### OpenShift Support (disabled by default)
 
@@ -541,6 +544,15 @@ To enable, set `openshift.enabled: true`.
 Automatically updates the Helm chart to the latest version.
 
 To enable, set `autoupdate.enabled: true`.
+
+### Image vulnerability scanning (disabled by default)
+
+To enable, set `trivy-operator.enabled: false`.
+
+If enabled, Aqua Security [Trivy-Operator](https://github.com/aquasecurity/trivy-operator) (Apache-2.0 license) is deployed to the cluster.
+If there already is another instance of the operator deployed in the cluster, this setting does not need to be enabled. The SWO K8s Collector will detect and use the available scan results.
+
+SolarWinds does not provide any warranty or guarantee with respect to the accuracy, reliability, or completeness or of any information or insights provided to You through Your use of Aqua Security Trivy-Operator, and Your use of any such information, which is derived from third party sources, is at Your own risk.
 
 ## Receive 3rd party metrics
 
