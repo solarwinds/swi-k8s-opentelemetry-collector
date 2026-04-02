@@ -496,9 +496,9 @@ Cluster filter should match snapshot with combined exclude filters:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -510,7 +510,8 @@ Cluster filter should match snapshot with combined exclude filters:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -2371,9 +2372,9 @@ Cluster filter should match snapshot with combined include filters:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -2385,7 +2386,8 @@ Cluster filter should match snapshot with combined include filters:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -4242,9 +4244,9 @@ Cluster filter should match snapshot with exclude_namespaces:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -4256,7 +4258,8 @@ Cluster filter should match snapshot with exclude_namespaces:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -6115,9 +6118,9 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -6129,7 +6132,8 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -7988,9 +7992,9 @@ Cluster filter should match snapshot with include_namespaces:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -8002,7 +8006,8 @@ Cluster filter should match snapshot with include_namespaces:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -9859,9 +9864,9 @@ Cluster filter should match snapshot with include_namespaces_regex:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -9873,7 +9878,8 @@ Cluster filter should match snapshot with include_namespaces_regex:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -11732,9 +11738,9 @@ Custom logs filter with new syntax:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -11746,7 +11752,8 @@ Custom logs filter with new syntax:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -13596,9 +13603,9 @@ Custom logs filter with old syntax:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -13610,7 +13617,8 @@ Custom logs filter with old syntax:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -15544,9 +15552,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -15558,7 +15566,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -17340,9 +17349,9 @@ Node collector config should match snapshot when fargate is enabled:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -17354,7 +17363,8 @@ Node collector config should match snapshot when fargate is enabled:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -19112,9 +19122,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -19126,7 +19136,8 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -20820,9 +20831,9 @@ Node collector config should match snapshot when using default values:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -20834,7 +20845,8 @@ Node collector config should match snapshot when using default values:
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:

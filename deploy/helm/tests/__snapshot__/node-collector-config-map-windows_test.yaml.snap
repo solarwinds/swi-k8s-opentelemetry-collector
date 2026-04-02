@@ -496,9 +496,9 @@ Node collector config for windows nodes should match snapshot when using default
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -510,7 +510,8 @@ Node collector config for windows nodes should match snapshot when using default
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:
@@ -2319,9 +2320,9 @@ Node collector config for windows nodes should match snapshot when using legacy 
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+            - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
+              == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
         filter/keep-relationship-state-events:
@@ -2333,7 +2334,8 @@ Node collector config for windows nodes should match snapshot when using legacy 
           metrics:
             datapoint:
             - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"]
-              == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
+              == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"]
+              != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"]
               == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or
               datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
         filter/keep-workload-workload-relationships:

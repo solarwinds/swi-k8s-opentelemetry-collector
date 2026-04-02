@@ -221,14 +221,14 @@ filter/keep-workload-service-relationships:
   error_mode: ignore
   metrics:
     datapoint:
-      - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
+      - datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or (datapoint.attributes["destination_workload_type"] != nil and datapoint.attributes["destination_workload_type"] != "") or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil))
 
 # filter is used to keep only metrics that are not workload-to-workload or workload-to-service
 filter/keep-not-relationships:
   error_mode: ignore
   metrics:
     datapoint:
-      - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
+      - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or ((datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == "") and (datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
 
 filter/zero-delta-values:
   error_mode: ignore
