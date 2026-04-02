@@ -96,6 +96,7 @@ otel:
     # configuration for metric discovery
     autodiscovery:
       # Discovery collector is responsible for discovering and scraping based on Prometheus CRDs - ServiceMonitors, PodMonitors and ScrapeConfigs
+      # If enabled, deploys OpenTelemetry Target Allocator (https://github.com/open-telemetry/opentelemetry-operator; Apache-2.0 license) to the cluster.
       discovery_collector:
         enabled: false
         
@@ -896,6 +897,7 @@ autoupdate:
 # Set labels to every deployed resource
 # commonLabels:
 
+# If enabled, deploys kube-state-metrics (https://github.com/prometheus-community/helm-charts; Apache-2.0 license) to the cluster.
 kube-state-metrics:
   enabled: true
 
@@ -1229,6 +1231,7 @@ autoinstrumentation:
   # correctly reconcile resources that are installed as Helm hooks.
   installWithHelmHooks: true
 
+# If enabled, deploys OpenTelemetry Operator for Kubernetes (https://github.com/open-telemetry/opentelemetry-operator; Apache-2.0 license) to the cluster.
 operator:
   enabled: false
   manager:
@@ -1252,7 +1255,7 @@ operator:
         tag: ""
       python:
         repository: "solarwinds/autoinstrumentation-python"
-        tag: "5.2.1"
+        tag: "6.0.0"
       dotnet:
         repository: ""
         tag: ""
@@ -1306,12 +1309,13 @@ waitJobs:
       tag: "1.32.13"
       pullPolicy: IfNotPresent
   
+# If enabled, deploys OBI - OpenTelemetry eBPF Instrumentation (https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation; Apache-2.0 license) to the cluster.
 network_topology:
   enabled: true
 
   image:
     repository: "ghcr.io/open-telemetry/opentelemetry-ebpf-instrumentation/ebpf-instrument"
-    tag: "v0.4.1"
+    tag: "v0.6.0"
     pullPolicy: IfNotPresent
 
   resources:
@@ -1346,6 +1350,7 @@ diagnostics:
     # The port on which the profiling server will listen
     port: 1777
 
+# If enabled, deploys Aqua Security Trivy-Operator (https://github.com/aquasecurity/trivy-operator; Apache-2.0 license) to the cluster.
 trivy-operator:
   enabled: false
   nodeSelector:
@@ -1356,6 +1361,11 @@ trivy-operator:
   trivy:
     severity: LOW,MEDIUM,HIGH,CRITICAL
     additionalVulnerabilityReportFields: Description
+    # Disable trivy telemetry (anonymous usage reporting enabled by default)
+    # see https://trivy.dev/docs/latest/references/configuration/config-file/#scan-options
+    configFile:
+      scan:
+        disable-telemetry: true
   trivyOperator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
@@ -1371,7 +1381,7 @@ trivy-operator:
     rbacAssessmentScannerEnabled: false
     infraAssessmentScannerEnabled: false
     clusterComplianceEnabled: false
-    exposedSecretScannerEnabled: false
+    exposedSecretScannerEnabled: true
     sbomGenerationEnabled: false
 
     # Access to global secrets and service account tokens is disabled by default
@@ -1383,7 +1393,7 @@ trivy-operator:
     privateRegistryScanSecretsNames: {}
 
     # Another option of providing access to private registries is to use managed registries, which will involve modifying the operator's service account
-    # See https://aquasecurity.github.io/trivy-operator/v0.29.0/docs/vulnerability-scanning/managed-registries/ for configuration steps
+    # See https://aquasecurity.github.io/trivy-operator/v0.30.0/docs/vulnerability-scanning/managed-registries/ for configuration steps
 
     podLabels:
       swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
