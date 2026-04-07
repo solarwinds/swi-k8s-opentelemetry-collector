@@ -340,6 +340,17 @@ processors:
       - dest.k8s.pod.name
       - dest.k8s.namespace.name
 
+  filter/obi-direction-dedup:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        # Drop receiver-side (direction=response) obi.network.flow.bytes ONLY when the source is a known
+        # K8s workload (sw.k8s.src.workload.name != nil). In that case, the sender node's OBI also emits
+        # a direction=request datapoint with identical bytes, so the response side is a duplicate.
+        # When the source is external (sw.k8s.src.workload.name == nil), the response side is the only
+        # observation of that flow and must be kept.
+        - metric.name == "obi.network.flow.bytes" and datapoint.attributes["direction"] == "response" and resource.attributes["sw.k8s.src.workload.name"] != nil
+
   filter/obi-self-loop-relationships:
     error_mode: ignore
     metrics:
@@ -731,6 +742,7 @@ service:
         - transform/obi-fqdn-attribute
         - groupbyattrs/obi-entity-ids
         - transform/obi-entity-ids
+        - filter/obi-direction-dedup
         - transform/obi-relationship-types
         - groupbyattrs/obi-relationship-types
         - groupbyattrs/obi-entity-ids-after-transform

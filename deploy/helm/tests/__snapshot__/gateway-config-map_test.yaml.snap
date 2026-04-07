@@ -418,6 +418,12 @@ Gateway config should match snapshot when using default values:
           metrics:
             metric:
             - type == METRIC_DATA_TYPE_HISTOGRAM
+        filter/obi-direction-dedup:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - metric.name == "obi.network.flow.bytes" and datapoint.attributes["direction"]
+              == "response" and resource.attributes["sw.k8s.src.workload.name"] != nil
         filter/obi-self-loop-relationships:
           error_mode: ignore
           metrics:
@@ -857,6 +863,7 @@ Gateway config should match snapshot when using default values:
             - transform/obi-fqdn-attribute
             - groupbyattrs/obi-entity-ids
             - transform/obi-entity-ids
+            - filter/obi-direction-dedup
             - transform/obi-relationship-types
             - groupbyattrs/obi-relationship-types
             - groupbyattrs/obi-entity-ids-after-transform
