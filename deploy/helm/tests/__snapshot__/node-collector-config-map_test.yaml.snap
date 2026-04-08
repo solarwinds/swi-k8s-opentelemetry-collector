@@ -1450,6 +1450,8 @@ Cluster filter should match snapshot with combined exclude filters:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -3332,6 +3334,8 @@ Cluster filter should match snapshot with combined include filters:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -5216,6 +5220,8 @@ Cluster filter should match snapshot with exclude_namespaces:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -7100,6 +7106,8 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -8982,6 +8990,8 @@ Cluster filter should match snapshot with include_namespaces:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -10866,6 +10876,8 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -12742,6 +12754,8 @@ Custom logs filter with new syntax:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -14620,6 +14634,8 @@ Custom logs filter with old syntax:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -16572,6 +16588,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -18379,6 +18397,8 @@ Node collector config should match snapshot when fargate is enabled:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -20162,6 +20182,8 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
@@ -21881,6 +21903,8 @@ Node collector config should match snapshot when using default values:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
         transform/mark-dual-attribute-service-metrics:
           metric_statements:
           - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
