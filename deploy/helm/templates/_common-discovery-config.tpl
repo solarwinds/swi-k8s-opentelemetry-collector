@@ -1,4 +1,4 @@
-﻿{{- define "common-discovery-config.processors" -}}
+{{- define "common-discovery-config.processors" -}}
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
 filter/metrics-discovery:
   metrics:
@@ -230,20 +230,18 @@ filter/keep-not-relationships:
     datapoint:
       - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
 
-# Drop the workload-service-path copy for dual-attribute datapoints.
-# A dual-attribute datapoint (has both destination_workload_type and destination_service_type/fqdn)
-# traverses both preparation pipelines and reaches forward/discovery-istio-metrics-clean twice.
-# The service-path copy lacks dest.k8s.{deployment,statefulset,daemonset}.name (set only by
-# transform/istio-workload-workload), so it is dropped here. The workload-path copy is retained.
+# Mark workload-service-path datapoints that are duplicates: they also have destination_workload_type
+# set, meaning the same datapoint already flows through the workload-workload path.
+# Marked datapoints are dropped in metrics/discovery-istio-clean before export.
+transform/mark-dual-attribute-service-metrics:
+  metric_statements:
+    - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == "")
+
 filter/deduplicate-dual-attribute-metrics:
   error_mode: ignore
   metrics:
     datapoint:
-      - >-
-        not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == "") and
-        (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"] == "") and
-        (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"] == "") and
-        (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"] == "")
+      - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
 
 filter/zero-delta-values:
   error_mode: ignore
@@ -642,6 +640,7 @@ metrics/relationship-state-events-workload-service-preparation:
   processors:
     - memory_limiter
     - filter/keep-workload-service-relationships
+    - transform/mark-dual-attribute-service-metrics
     - transform/istio-workload-service
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes

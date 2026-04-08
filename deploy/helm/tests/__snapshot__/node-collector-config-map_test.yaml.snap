@@ -486,11 +486,7 @@ Cluster filter should match snapshot with combined exclude filters:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -1454,6 +1450,10 @@ Cluster filter should match snapshot with combined exclude filters:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -1845,6 +1845,7 @@ Cluster filter should match snapshot with combined exclude filters:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -2371,11 +2372,7 @@ Cluster filter should match snapshot with combined include filters:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -3335,6 +3332,10 @@ Cluster filter should match snapshot with combined include filters:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -3726,6 +3727,7 @@ Cluster filter should match snapshot with combined include filters:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -4252,11 +4254,7 @@ Cluster filter should match snapshot with exclude_namespaces:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -5218,6 +5216,10 @@ Cluster filter should match snapshot with exclude_namespaces:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -5609,6 +5611,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -6135,11 +6138,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -7101,6 +7100,10 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -7492,6 +7495,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -8018,11 +8022,7 @@ Cluster filter should match snapshot with include_namespaces:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -8982,6 +8982,10 @@ Cluster filter should match snapshot with include_namespaces:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -9373,6 +9377,7 @@ Cluster filter should match snapshot with include_namespaces:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -9899,11 +9904,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -10865,6 +10866,10 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -11256,6 +11261,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -11782,11 +11788,7 @@ Custom logs filter with new syntax:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -12740,6 +12742,10 @@ Custom logs filter with new syntax:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -13130,6 +13136,7 @@ Custom logs filter with new syntax:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -13656,11 +13663,7 @@ Custom logs filter with old syntax:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -14617,6 +14620,10 @@ Custom logs filter with old syntax:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -15088,6 +15095,7 @@ Custom logs filter with old syntax:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -15614,11 +15622,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -16568,6 +16572,10 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -16897,6 +16905,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -17420,11 +17429,7 @@ Node collector config should match snapshot when fargate is enabled:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -18374,6 +18379,10 @@ Node collector config should match snapshot when fargate is enabled:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -18685,6 +18694,7 @@ Node collector config should match snapshot when fargate is enabled:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -19202,11 +19212,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -20156,6 +20162,10 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -20394,6 +20404,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -20920,11 +20931,7 @@ Node collector config should match snapshot when using default values:
           error_mode: ignore
           metrics:
             datapoint:
-            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
-              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
-              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
-              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
-              == "")
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -21874,6 +21881,10 @@ Node collector config should match snapshot when using default values:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -22263,6 +22274,7 @@ Node collector config should match snapshot when using default values:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
