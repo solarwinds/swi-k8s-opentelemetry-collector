@@ -1,4 +1,4 @@
-{{- define "common-discovery-config.processors" -}}
+﻿{{- define "common-discovery-config.processors" -}}
 {{- if .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter }}
 filter/metrics-discovery:
   metrics:
@@ -229,6 +229,21 @@ filter/keep-not-relationships:
   metrics:
     datapoint:
       - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
+
+# Drop the workload-service-path copy for dual-attribute datapoints.
+# A dual-attribute datapoint (has both destination_workload_type and destination_service_type/fqdn)
+# traverses both preparation pipelines and reaches forward/discovery-istio-metrics-clean twice.
+# The service-path copy lacks dest.k8s.{deployment,statefulset,daemonset}.name (set only by
+# transform/istio-workload-workload), so it is dropped here. The workload-path copy is retained.
+filter/deduplicate-dual-attribute-metrics:
+  error_mode: ignore
+  metrics:
+    datapoint:
+      - >-
+        not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == "") and
+        (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"] == "") and
+        (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"] == "") and
+        (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"] == "")
 
 filter/zero-delta-values:
   error_mode: ignore
@@ -658,6 +673,7 @@ metrics/discovery-istio-clean:
     - forward/discovery-istio-metrics-clean
   processors:
     - memory_limiter
+    - filter/deduplicate-dual-attribute-metrics
     - resource/clean-temporary-attributes
   exporters:
     - {{ $metricExporter }}

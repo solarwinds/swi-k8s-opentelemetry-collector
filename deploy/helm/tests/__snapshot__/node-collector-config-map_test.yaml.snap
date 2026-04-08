@@ -482,6 +482,15 @@ Cluster filter should match snapshot with combined exclude filters:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -1778,6 +1787,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -2357,6 +2367,15 @@ Cluster filter should match snapshot with combined include filters:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -3649,6 +3668,7 @@ Cluster filter should match snapshot with combined include filters:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -4228,6 +4248,15 @@ Cluster filter should match snapshot with exclude_namespaces:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -5522,6 +5551,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -6101,6 +6131,15 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -7395,6 +7434,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -7974,6 +8014,15 @@ Cluster filter should match snapshot with include_namespaces:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -9266,6 +9315,7 @@ Cluster filter should match snapshot with include_namespaces:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -9845,6 +9895,15 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -11139,6 +11198,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -11718,6 +11778,15 @@ Custom logs filter with new syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -13003,6 +13072,7 @@ Custom logs filter with new syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -13582,6 +13652,15 @@ Custom logs filter with old syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -14951,6 +15030,7 @@ Custom logs filter with old syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -15530,6 +15610,15 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -16750,6 +16839,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -17326,6 +17416,15 @@ Node collector config should match snapshot when fargate is enabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -18551,6 +18650,7 @@ Node collector config should match snapshot when fargate is enabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -19098,6 +19198,15 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -20250,6 +20359,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -20806,6 +20916,15 @@ Node collector config should match snapshot when using default values:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -22086,6 +22205,7 @@ Node collector config should match snapshot when using default values:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean

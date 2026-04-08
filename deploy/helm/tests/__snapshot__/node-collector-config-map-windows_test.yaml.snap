@@ -482,6 +482,15 @@ Node collector config for windows nodes should match snapshot when using default
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -1726,6 +1735,7 @@ Node collector config for windows nodes should match snapshot when using default
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -2305,6 +2315,15 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"]
+              == "") and (datapoint.attributes["dest.k8s.deployment.name"] == nil or datapoint.attributes["dest.k8s.deployment.name"]
+              == "") and (datapoint.attributes["dest.k8s.statefulset.name"] == nil or datapoint.attributes["dest.k8s.statefulset.name"]
+              == "") and (datapoint.attributes["dest.k8s.daemonset.name"] == nil or datapoint.attributes["dest.k8s.daemonset.name"]
+              == "")
         filter/histograms:
           metrics:
             metric:
@@ -3638,6 +3657,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
