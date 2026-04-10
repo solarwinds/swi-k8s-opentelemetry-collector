@@ -482,6 +482,11 @@ Node collector config for windows nodes should match snapshot when using default
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -1411,6 +1416,12 @@ Node collector config for windows nodes should match snapshot when using default
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -1726,6 +1737,7 @@ Node collector config for windows nodes should match snapshot when using default
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -1783,6 +1795,7 @@ Node collector config for windows nodes should match snapshot when using default
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -2305,6 +2318,11 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -3241,6 +3259,12 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -3638,6 +3662,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -3695,6 +3720,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes

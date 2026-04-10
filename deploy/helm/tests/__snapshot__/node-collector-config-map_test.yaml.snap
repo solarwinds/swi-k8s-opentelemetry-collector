@@ -482,6 +482,11 @@ Cluster filter should match snapshot with combined exclude filters:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -1445,6 +1450,12 @@ Cluster filter should match snapshot with combined exclude filters:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -1778,6 +1789,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -1835,6 +1847,7 @@ Cluster filter should match snapshot with combined exclude filters:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -2357,6 +2370,11 @@ Cluster filter should match snapshot with combined include filters:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -3316,6 +3334,12 @@ Cluster filter should match snapshot with combined include filters:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -3649,6 +3673,7 @@ Cluster filter should match snapshot with combined include filters:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -3706,6 +3731,7 @@ Cluster filter should match snapshot with combined include filters:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -4228,6 +4254,11 @@ Cluster filter should match snapshot with exclude_namespaces:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -5189,6 +5220,12 @@ Cluster filter should match snapshot with exclude_namespaces:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -5522,6 +5559,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -5579,6 +5617,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -6101,6 +6140,11 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -7062,6 +7106,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -7395,6 +7445,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -7452,6 +7503,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -7974,6 +8026,11 @@ Cluster filter should match snapshot with include_namespaces:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -8933,6 +8990,12 @@ Cluster filter should match snapshot with include_namespaces:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -9266,6 +9329,7 @@ Cluster filter should match snapshot with include_namespaces:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -9323,6 +9387,7 @@ Cluster filter should match snapshot with include_namespaces:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -9845,6 +9910,11 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -10806,6 +10876,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -11139,6 +11215,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -11196,6 +11273,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -11718,6 +11796,11 @@ Custom logs filter with new syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -12671,6 +12754,12 @@ Custom logs filter with new syntax:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -13003,6 +13092,7 @@ Custom logs filter with new syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -13060,6 +13150,7 @@ Custom logs filter with new syntax:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -13582,6 +13673,11 @@ Custom logs filter with old syntax:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -14538,6 +14634,12 @@ Custom logs filter with old syntax:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -14951,6 +15053,7 @@ Custom logs filter with old syntax:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -15008,6 +15111,7 @@ Custom logs filter with old syntax:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -15530,6 +15634,11 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -16479,6 +16588,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -16750,6 +16865,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -16807,6 +16923,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -17326,6 +17443,11 @@ Node collector config should match snapshot when fargate is enabled:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -18275,6 +18397,12 @@ Node collector config should match snapshot when fargate is enabled:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -18551,6 +18679,7 @@ Node collector config should match snapshot when fargate is enabled:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -18585,6 +18714,7 @@ Node collector config should match snapshot when fargate is enabled:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -19098,6 +19228,11 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -20047,6 +20182,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -20250,6 +20391,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -20284,6 +20426,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
@@ -20806,6 +20949,11 @@ Node collector config should match snapshot when using default values:
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        filter/deduplicate-dual-attribute-metrics:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
         filter/histograms:
           metrics:
             metric:
@@ -21755,6 +21903,12 @@ Node collector config should match snapshot when using default values:
           - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"])
             where datapoint.attributes["destination_workload_type"] == "DaemonSet"
           - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+          - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"])
+            where datapoint.attributes["destination_service_type"] == "Service"
+        transform/mark-dual-attribute-service-metrics:
+          metric_statements:
+          - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"]
+            == nil or datapoint.attributes["destination_workload_type"] == "")
         transform/only-relationship-resource-attributes:
           metric_statements:
           - set(resource.attributes["sw.server.address.fqdn"], resource.attributes["dest.sw.server.address.fqdn"])
@@ -22086,6 +22240,7 @@ Node collector config should match snapshot when using default values:
             - forward/metric-exporter
             processors:
             - memory_limiter
+            - filter/deduplicate-dual-attribute-metrics
             - resource/clean-temporary-attributes
             receivers:
             - forward/discovery-istio-metrics-clean
@@ -22143,6 +22298,7 @@ Node collector config should match snapshot when using default values:
             processors:
             - memory_limiter
             - filter/keep-workload-service-relationships
+            - transform/mark-dual-attribute-service-metrics
             - transform/istio-workload-service
             - groupbyattrs/istio-relationships
             - transform/only-relationship-resource-attributes
