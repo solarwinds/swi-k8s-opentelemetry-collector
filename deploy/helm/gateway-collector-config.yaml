@@ -34,10 +34,12 @@ exporters:
           num_consumers: {{ .Values.otel.gateway.sending_queue.num_consumers }}
           queue_size: {{ .Values.otel.gateway.sending_queue.queue_size }}
     resolver:
-      dns:
-        hostname: swo-gateway-headless.{{ .Release.Namespace }}.svc.cluster.local
-        port: "{{ .Values.otel.gateway.otlp_endpoint.port }}"
-        interval: {{ .Values.otel.gateway.tailSampling.loadBalancing.interval }}
+      # k8s resolver discovers gateway pod endpoints via the Kubernetes API (watch-based),
+      # which is more reliable in K8s environments than DNS-based discovery.
+      k8s:
+        service: swo-gateway-headless.{{ .Release.Namespace }}
+        ports:
+          - {{ .Values.otel.gateway.otlp_endpoint.port }}
 {{- end }}
 
 extensions:
@@ -873,6 +875,15 @@ service:
         - otlp
 
   telemetry:
+{{- if .Values.otel.gateway.telemetry.resourceAttributes.enabled }}
+    resource:
+      # Resource attributes on the collector's own internal telemetry.
+      # These correlate internal metrics to the SWO collector entity for diagnostics.
+      sw.otelcol.collector.name: ${POD_NAME}
+      sw.otelcol.collector.entity_creation: "on"
+      k8s.cluster.name: ${CLUSTER_NAME}
+      sw.k8s.cluster.uid: ${CLUSTER_UID}
+{{- end }}
 {{- if .Values.otel.gateway.telemetry.logs.enabled }}
     logs:
       level: {{ .Values.otel.gateway.telemetry.logs.level }}

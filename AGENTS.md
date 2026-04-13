@@ -97,6 +97,23 @@ skaffold delete
 - Keep test framework updates (Python tooling, mock services) separate from functional
   chart or collector changes.
 
+## OTel Feature Gates
+
+- Before adding a `featureGates` entry to values.yaml or collector config, verify the gate
+  still exists in the target collector version. Gates that are **graduated** (permanently
+  enabled) are removed from the binary; referencing them causes pod crash-loops at startup.
+  Check the gate's status in the release notes or source of `solarwinds-otel-collector-releases`.
+- Example: `processor.tailsamplingprocessor.metadataasattr` was graduated in v0.145.x and
+  must not be referenced in any config targeting that version or later.
+
+## Cross-Repo Image Dependencies
+
+- Helm chart changes that rely on new collector components (receivers, processors, etc.)
+  require the corresponding `solarwinds-otel-collector-releases` PR to be merged and a new
+  image published before live cluster testing is possible.
+- During development, test config changes independently with `helm unittest deploy/helm`;
+  defer live end-to-end validation until the upstream image PR is merged.
+
 ## Debugging and Troubleshooting
 
 - Missing CRDs during Skaffold deploy often indicate a stale Helm repository cache. Repair

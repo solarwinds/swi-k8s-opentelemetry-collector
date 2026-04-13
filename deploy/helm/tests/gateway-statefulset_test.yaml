@@ -19,3 +19,12 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: Feature gate metadataasattr should never be present (graduated in v0.145.x)
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.gateway.tailSampling.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].command
+          content: "--feature-gates=processor.tailsamplingprocessor.metadataasattr"
