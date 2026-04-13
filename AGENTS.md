@@ -97,6 +97,64 @@ skaffold delete
 - Keep test framework updates (Python tooling, mock services) separate from functional
   chart or collector changes.
 
+## Tail Sampling Local Development
+
+### Deploying with local image build
+
+Use the `build-collector` profile together with `tail-sampling` to build a custom
+collector image from the sibling `solarwinds-otel-collector-releases` submodule and deploy
+it with tail sampling enabled:
+
+```bash
+skaffold run -p build-collector,tail-sampling,no-tests --set-values otel.gateway.autoscaler.minReplicas=2
+```
+
+Apply the bundled trace generator to exercise the sampling policies:
+
+```bash
+kubectl apply -f tests/deploy/test-trace-generator.yaml
+```
+
+### Chart assert: minReplicas must be ≥ 2
+
+When `tailSampling.enabled=true` the Helm chart asserts that
+`autoscaler.minReplicas >= 2`. This is required for correct trace-ID-based load balancing
+across gateway replicas. Any Skaffold profile or values override that sets `minReplicas=1`
+will cause `helm template` to abort with an assertion error. On Docker Desktop 2×400 Mi
+replicas fit comfortably within the default memory limit.
+
+### Buffer sizing
+
+The `tailSamplingProcessor.num_traces` value must satisfy:
+
+```
+num_traces >= expected_new_traces_per_sec × decision_wait_seconds
+```
+
+If the buffer is too small, traces are evicted before sampling decisions are made and will
+be dropped rather than sampled. Increase `num_traces` in `values.yaml` when running high
+load tests.
+
+### OTel attribute keys in policies and test traces
+
+Use the modern OpenTelemetry semantic convention attribute keys. The legacy keys still
+appear in old examples but will not match spans produced by current SDKs:
+
+| Legacy (do NOT use) | Modern (use this) |
+|---------------------|-------------------|
+| `http.target`       | `url.path`        |
+| `http.method`       | `http.request.method` |
+
+Ensure both `test-trace-generator.yaml` span attributes and Helm values `policies[].http_status_code_filter` / `string_attribute_filter` use the same convention.
+
+### build-collector profile
+
+The `build-collector` Skaffold profile builds the collector image from
+`../solarwinds-otel-collector-releases` (the sibling submodule). This is the mechanism
+for testing unreleased collector changes end-to-end before an upstream image is published.
+Combine it with any feature profile (e.g. `tail-sampling`) to get a fully integrated
+local environment.
+
 ## OTel Feature Gates
 
 - Before adding a `featureGates` entry to values.yaml or collector config, verify the gate

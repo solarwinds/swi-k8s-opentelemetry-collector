@@ -876,10 +876,14 @@ otel:
       # This allows time for all spans of a trace to arrive
       decision_wait: 10s
 
-      # Number of traces to buffer for sampling decisions
+      # Number of traces to buffer for sampling decisions.
+      # Should be at least: expected_new_traces_per_sec × decision_wait (in seconds)
+      # Example: 10 traces/sec × 10s = 100 (minimum buffer size)
+      # Increase this value if your trace throughput exceeds expected_new_traces_per_sec.
       num_traces: 100
 
-      # Expected rate of new traces per second
+      # Expected rate of new traces per second.
+      # Used together with num_traces to size the in-memory buffer.
       expected_new_traces_per_sec: 10
 
       # Decision cache configuration
