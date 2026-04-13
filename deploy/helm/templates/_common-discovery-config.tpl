@@ -230,6 +230,19 @@ filter/keep-not-relationships:
     datapoint:
       - not(datapoint.attributes["source_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["source_workload_type"] == "" or datapoint.attributes["destination_workload_type"] == "" or ((datapoint.attributes["destination_service_type"] == "" or datapoint.attributes["destination_service_type"] == nil) and (datapoint.attributes["dest.sw.server.address.fqdn"] == "" or datapoint.attributes["dest.sw.server.address.fqdn"] == nil)))
 
+# Mark workload-service-path datapoints that are duplicates: they also have destination_workload_type
+# set, meaning the same datapoint already flows through the workload-workload path.
+# Marked datapoints are dropped in metrics/discovery-istio-clean before export.
+transform/mark-dual-attribute-service-metrics:
+  metric_statements:
+    - set(datapoint.attributes["sw.istio.metric.duplicate"], "true") where not(datapoint.attributes["destination_workload_type"] == nil or datapoint.attributes["destination_workload_type"] == "")
+
+filter/deduplicate-dual-attribute-metrics:
+  error_mode: ignore
+  metrics:
+    datapoint:
+      - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+
 filter/zero-delta-values:
   error_mode: ignore
   metrics:
@@ -252,6 +265,9 @@ transform/istio-workload-workload:
     - set(datapoint.attributes["dest.k8s.statefulset.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "StatefulSet"
     - set(datapoint.attributes["dest.k8s.daemonset.name"], datapoint.attributes["destination_workload"]) where datapoint.attributes["destination_workload_type"] == "DaemonSet"
     - set(datapoint.attributes["dest.k8s.namespace.name"], datapoint.attributes["destination_workload_namespace"])
+    
+    # datapoints with both destination_workload and destination_service attributes
+    - set(datapoint.attributes["dest.k8s.service.name"], datapoint.attributes["destination_service_name"]) where datapoint.attributes["destination_service_type"] == "Service"
 
 transform/istio-workload-service:
   metric_statements:
@@ -627,6 +643,7 @@ metrics/relationship-state-events-workload-service-preparation:
   processors:
     - memory_limiter
     - filter/keep-workload-service-relationships
+    - transform/mark-dual-attribute-service-metrics
     - transform/istio-workload-service
     - groupbyattrs/istio-relationships
     - transform/only-relationship-resource-attributes
@@ -658,6 +675,7 @@ metrics/discovery-istio-clean:
     - forward/discovery-istio-metrics-clean
   processors:
     - memory_limiter
+    - filter/deduplicate-dual-attribute-metrics
     - resource/clean-temporary-attributes
   exporters:
     - {{ $metricExporter }}

@@ -172,6 +172,19 @@ local environment.
 - During development, test config changes independently with `helm unittest deploy/helm`;
   defer live end-to-end validation until the upstream image PR is merged.
 
+## E2E Cluster (AWS)
+
+- Always use `skaffold run` (not `skaffold dev`) for automated/agent workflows — `skaffold dev`
+  blocks the terminal indefinitely.
+- Port-forwarding is NOT automatic with `skaffold run`. Set up manually:
+  `kubectl --context e2e-cluster port-forward -n test-namespace svc/clickhouse 8123:8123`
+- The `no-ebpf` Skaffold profile does NOT exist. Use `no-topology` to skip eBPF/Beyla.
+- Docker Hub images (e.g., `clickhouse/clickhouse-server:latest`) may fail to pull due to
+  rate limiting on AWS. Mirror to ECR if needed.
+- The `timeseries-mock-service` may OOM with default memory limits when processing high
+  entity event volumes. If pods restart with OOMKilled, increase memory in
+  `tests/deploy/timeseries-mock-service/templates/deployment.yaml`.
+
 ## Debugging and Troubleshooting
 
 - Missing CRDs during Skaffold deploy often indicate a stale Helm repository cache. Repair
