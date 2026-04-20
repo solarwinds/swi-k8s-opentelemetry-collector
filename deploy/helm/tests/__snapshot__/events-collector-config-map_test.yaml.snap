@@ -11,6 +11,15 @@ Cluster filter should match snapshot with combined exclude filters:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -317,24 +326,17 @@ Cluster filter should match snapshot with combined exclude filters:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -348,6 +350,8 @@ Cluster filter should match snapshot with combined exclude filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -765,6 +769,8 @@ Cluster filter should match snapshot with combined exclude filters:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -951,6 +957,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - filter/namespaces
@@ -958,6 +965,30 @@ Cluster filter should match snapshot with combined exclude filters:
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -970,6 +1001,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -997,6 +1029,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -1050,6 +1083,15 @@ Cluster filter should match snapshot with combined include filters:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -1352,24 +1394,17 @@ Cluster filter should match snapshot with combined include filters:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -1383,6 +1418,8 @@ Cluster filter should match snapshot with combined include filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -1800,6 +1837,8 @@ Cluster filter should match snapshot with combined include filters:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -1986,6 +2025,7 @@ Cluster filter should match snapshot with combined include filters:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - filter/namespaces
@@ -1993,6 +2033,30 @@ Cluster filter should match snapshot with combined include filters:
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -2005,6 +2069,7 @@ Cluster filter should match snapshot with combined include filters:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -2032,6 +2097,7 @@ Cluster filter should match snapshot with combined include filters:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -2085,6 +2151,15 @@ Cluster filter should match snapshot with exclude_namespaces:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -2387,24 +2462,17 @@ Cluster filter should match snapshot with exclude_namespaces:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -2418,6 +2486,8 @@ Cluster filter should match snapshot with exclude_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -2835,6 +2905,8 @@ Cluster filter should match snapshot with exclude_namespaces:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -3021,6 +3093,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - filter/namespaces
@@ -3028,6 +3101,30 @@ Cluster filter should match snapshot with exclude_namespaces:
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -3040,6 +3137,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -3067,6 +3165,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -3120,6 +3219,15 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -3426,24 +3534,17 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -3457,6 +3558,8 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -3874,6 +3977,8 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -4060,6 +4165,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - filter/namespaces
@@ -4067,6 +4173,30 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -4079,6 +4209,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -4106,6 +4237,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -4159,6 +4291,15 @@ Cluster filter should match snapshot with include_namespaces:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -4461,24 +4602,17 @@ Cluster filter should match snapshot with include_namespaces:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -4492,6 +4626,8 @@ Cluster filter should match snapshot with include_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -4909,6 +5045,8 @@ Cluster filter should match snapshot with include_namespaces:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -5095,6 +5233,7 @@ Cluster filter should match snapshot with include_namespaces:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - filter/namespaces
@@ -5102,6 +5241,30 @@ Cluster filter should match snapshot with include_namespaces:
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -5114,6 +5277,7 @@ Cluster filter should match snapshot with include_namespaces:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -5141,6 +5305,7 @@ Cluster filter should match snapshot with include_namespaces:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -5194,6 +5359,15 @@ Cluster filter should match snapshot with include_namespaces_regex:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -5497,24 +5671,17 @@ Cluster filter should match snapshot with include_namespaces_regex:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -5528,6 +5695,8 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -5945,6 +6114,8 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -6131,6 +6302,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - filter/namespaces
@@ -6138,6 +6310,30 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -6150,6 +6346,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -6177,6 +6374,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -6230,6 +6428,15 @@ Custom events filter with new syntax:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -6522,24 +6729,17 @@ Custom events filter with new syntax:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -6553,6 +6753,8 @@ Custom events filter with new syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -6970,6 +7172,8 @@ Custom events filter with new syntax:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -7156,6 +7360,7 @@ Custom events filter with new syntax:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - filter
@@ -7163,6 +7368,30 @@ Custom events filter with new syntax:
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -7175,6 +7404,7 @@ Custom events filter with new syntax:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -7201,6 +7431,7 @@ Custom events filter with new syntax:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -7253,6 +7484,15 @@ Custom events filter with old syntax:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -7548,24 +7788,17 @@ Custom events filter with old syntax:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -7579,6 +7812,8 @@ Custom events filter with old syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -7996,6 +8231,8 @@ Custom events filter with old syntax:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -8183,12 +8420,37 @@ Custom events filter with old syntax:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - transform/scope
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -8201,6 +8463,7 @@ Custom events filter with old syntax:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -8227,6 +8490,7 @@ Custom events filter with old syntax:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -8279,6 +8543,15 @@ Events config should match snapshot when using default values:
             context: resource
             pipelines:
             - logs/stateevents
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -8567,24 +8840,17 @@ Events config should match snapshot when using default values:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -8598,6 +8864,8 @@ Events config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -9015,6 +9283,8 @@ Events config should match snapshot when using default values:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -9201,12 +9471,37 @@ Events config should match snapshot when using default values:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - transform/scope
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -9219,6 +9514,7 @@ Events config should match snapshot when using default values:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
@@ -9245,6 +9541,7 @@ Events config should match snapshot when using default values:
             - memory_limiter
             - transform/manifest
             - groupbyattrs/manifest
+            - resource/mandatory
             - resource/manifest
             - k8sattributes
             - k8seventgeneration
@@ -9288,6 +9585,15 @@ Events config should not contain manifest collection pipeline when disabled:
   1: |
     events.config: |-
       connectors:
+        routing/entity-discovery:
+          default_pipelines:
+          - logs/entity-discovery-entities
+          table:
+          - condition: |
+              attributes["otel.entity.event.type"] == "entity_relationship_state"
+            context: log
+            pipelines:
+            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -9453,24 +9759,17 @@ Events config should not contain manifest collection pipeline when disabled:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
+        resource/entity-state-event:
+          attributes:
+          - action: insert
+            key: sw.k8s.log.type
+            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
-            key: sw.k8s.agent.manifest.version
-            value: ${MANIFEST_VERSION}
-          - action: insert
-            key: sw.k8s.agent.app.version
-            value: ${APP_VERSION}
-          - action: insert
-            key: sw.k8s.cluster.uid
-            value: ${CLUSTER_UID}
-          - action: insert
-            key: k8s.cluster.name
-            value: ${CLUSTER_NAME}
-          - action: insert
             key: sw.k8s.log.type
             value: event
-        resource/manifest:
+        resource/mandatory:
           attributes:
           - action: insert
             key: sw.k8s.agent.manifest.version
@@ -9484,6 +9783,8 @@ Events config should not contain manifest collection pipeline when disabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+        resource/manifest:
+          attributes:
           - action: insert
             key: sw.k8s.log.type
             value: manifest
@@ -9901,6 +10202,8 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
+        swok8sdiscovery:
+          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -9921,12 +10224,37 @@ Events config should not contain manifest collection pipeline when disabled:
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
+            - resource/mandatory
             - resource/events
             - k8sattributes
             - transform/scope
             - batch
             receivers:
             - k8s_events
+          logs/entity-discovery:
+            exporters:
+            - routing/entity-discovery
+            processors:
+            - memory_limiter
+            - resource/mandatory
+            - resource/entity-state-event
+            - transform/scope
+            receivers:
+            - swok8sdiscovery
+          logs/entity-discovery-entities:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
+          logs/entity-discovery-relationships:
+            exporters:
+            - otlp
+            processors:
+            - batch
+            receivers:
+            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -9940,6 +10268,7 @@ Events config should not contain manifest collection pipeline when disabled:
             - transform/stringify_body
             - swok8sworkloadstatus
             - groupbyattrs/workloadstatus
+            - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
             - k8seventgeneration
