@@ -1366,6 +1366,10 @@ trivy-operator:
     configFile:
       scan:
         disable-telemetry: true
+      # Use in-memory cache backend to avoid BoltDB file lock contention
+      # See https://github.com/aquasecurity/trivy-operator/issues/2769
+      cache:
+        backend: memory
   trivyOperator:
     scanJobNodeSelector:
       kubernetes.io/os: linux
