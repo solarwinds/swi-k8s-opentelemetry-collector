@@ -1,6 +1,6 @@
 {{- if .Values.otel.gateway.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "common.fullname" (tuple . "-gateway") }}
   namespace: {{ .Release.Namespace }}
@@ -10,6 +10,8 @@ metadata:
   annotations:
 {{ include "common.annotations" . | indent 4 }}
 spec:
+  serviceName: swo-gateway-headless
+  podManagementPolicy: Parallel
   replicas: {{ .Values.otel.gateway.autoscaler.minReplicas }}
   selector:
     matchLabels:
@@ -93,7 +95,7 @@ spec:
           command:
             - /solarwinds-otel-collector
             - --config=/conf/gateway.config
-          securityContext: 
+          securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             runAsNonRoot: true
@@ -106,6 +108,16 @@ spec:
           image: "{{ include "common.image" (tuple . .Values.otel "image" (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:

@@ -858,9 +858,104 @@ otel:
       metrics:
         enabled: true
         address: 0.0.0.0:8888
+      # When enabled, adds SolarWinds resource attributes to the collector's own
+      # internal telemetry so it can be correlated to the collector entity in SWO.
+      # The attribute sw.otelcol.collector.name is set to the pod name.
+      resourceAttributes:
+        enabled: false
     
     # Prefix that will be added to all metrics
     prefix: "k8s."
+
+    # Tail-sampling configuration
+    # When enabled, the gateway applies sampling policies to reduce trace volume
+    # using a load-balanced architecture that routes by traceID
+    tailSampling:
+      enabled: false
+
+      # Decision wait time - how long to wait before making a sampling decision
+      # This allows time for all spans of a trace to arrive
+      decision_wait: 10s
+
+      # Number of traces to buffer for sampling decisions.
+      # Should be at least: expected_new_traces_per_sec × decision_wait (in seconds)
+      # Example: 10 traces/sec × 10s = 100 (minimum buffer size)
+      # Increase this value if your trace throughput exceeds expected_new_traces_per_sec.
+      num_traces: 100
+
+      # Expected rate of new traces per second.
+      # Used together with num_traces to size the in-memory buffer.
+      expected_new_traces_per_sec: 10
+
+      # Decision cache configuration
+      decision_cache:
+        sampled_cache_size: 100000
+        non_sampled_cache_size: 100000
+
+      # Sampling policies (evaluated in order)
+      # Note: Traces that don't match any policy are dropped
+      # All tail_sampling processor policy types are supported:
+      # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/tailsamplingprocessor
+      policies:
+        # Never sample health-check traces.
+        - name: healthcheck-policy
+          type: drop
+          drop:
+            drop_sub_policy:
+              - name: drop-healthcheck-url-path
+                type: string_attribute
+                string_attribute:
+                  key: url.path
+                  values: [/health.*]
+                  enabled_regex_matching: true
+
+        # Always sample errors (100%).
+        - name: error-policy
+          type: status_code
+          status_code:
+            status_codes: [ERROR]
+
+        # Always sample requests that took more than 5 seconds (100%).
+        - name: high-latency-policy
+          type: latency
+          latency:
+            threshold_ms: 5000
+
+        # Always sample trigger-traced requests.
+        - name: trigger-trace-policy
+          type: boolean_attribute
+          boolean_attribute:
+            key: TriggeredTrace
+            value: true
+
+        # High sampling rate for critical HTTP routes.
+        - name: critical-transactions-policy
+          type: and
+          and:
+            and_sub_policy:
+              - name: http-route-policy
+                type: string_attribute
+                string_attribute:
+                  key: http.route
+                  values: [/login, /payment]
+              - name: high-sampling-policy
+                type: probabilistic
+                probabilistic:
+                  sampling_percentage: 50
+
+        # Fallback: low sampling for any traces not meeting above policies.
+        - name: fallback-policy
+          type: probabilistic
+          probabilistic:
+            sampling_percentage: 1
+
+      # Note: The sampling.rule attribute (which policy matched a trace) is now
+      # permanently enabled in tailsamplingprocessor v0.145.x+ without a feature gate.
+
+      # Load balancing exporter configuration
+      loadBalancing:
+        # Connection timeout
+        timeout: 5s
 
 cluster:
   # A unique name of a cluster provided by user during deployment of the Helm chart.

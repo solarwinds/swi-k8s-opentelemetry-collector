@@ -19,6 +19,16 @@ Gateway spec should match snapshot when using default values:
           - /solarwinds-otel-collector
           - --config=/conf/gateway.config
         env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
           - name: MY_POD_IP
             valueFrom:
               fieldRef:
