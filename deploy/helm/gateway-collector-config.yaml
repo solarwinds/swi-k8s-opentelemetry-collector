@@ -19,6 +19,28 @@ exporters:
       storage: file_storage/sending_queue
 {{- end }}
     timeout: {{ .Values.otel.gateway.timeout }}
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+  # Load balancing exporter for tail-sampling
+  # Routes traces by traceID to specific gateway replicas via headless service
+  loadbalancing:
+    routing_key: "traceID"
+    protocol:
+      otlp:
+        timeout: {{ .Values.otel.gateway.tailSampling.loadBalancing.timeout }}
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: {{ .Values.otel.gateway.sending_queue.enabled }}
+          num_consumers: {{ .Values.otel.gateway.sending_queue.num_consumers }}
+          queue_size: {{ .Values.otel.gateway.sending_queue.queue_size }}
+    resolver:
+      # k8s resolver discovers gateway pod endpoints via the Kubernetes API (watch-based),
+      # which is more reliable in K8s environments than DNS-based discovery.
+      k8s:
+        service: swo-gateway-headless.{{ .Release.Namespace }}
+        ports:
+          - {{ .Values.otel.gateway.otlp_endpoint.port }}
+{{- end }}
 
 extensions:
 {{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
@@ -95,6 +117,10 @@ processors:
         action: delete
       - key: sw.k8s.workload.type
         action: delete
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+      - key: x-loadbalanced
+        action: delete
+{{- end }}
 
   # Those attributes are defined by SWO K8s Collector even if they are send as attributes in OTLP message
   attributes/clean-attributes-otlp-metrics:
@@ -115,6 +141,31 @@ processors:
       - statements:
         - set(scope.name, "")
         - set(scope.version, "")
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+
+  # Transform processor to mark traces that have been load-balanced
+  # This marker attribute is used by the routing connector to distinguish
+  # between first-pass (external) and second-pass (load-balanced) traces
+  transform/mark-loadbalanced:
+    trace_statements:
+      - context: resource
+        statements:
+          - set(resource.attributes["x-loadbalanced"], "true")
+{{- end }}
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+
+  # Tail-sampling processor - applies sampling policies to traces
+  # Configuration is passed through directly from values.yaml to support
+  # all tail_sampling processor options (16+ policy types)
+  tail_sampling:
+    decision_wait: {{ .Values.otel.gateway.tailSampling.decision_wait }}
+    num_traces: {{ .Values.otel.gateway.tailSampling.num_traces }}
+    expected_new_traces_per_sec: {{ .Values.otel.gateway.tailSampling.expected_new_traces_per_sec }}
+    decision_cache:
+{{ toYaml .Values.otel.gateway.tailSampling.decision_cache | indent 6 }}
+    policies:
+{{ toYaml .Values.otel.gateway.tailSampling.policies | indent 6 }}
+{{- end }}
 
   filter/otlp-metrics:
     metrics:
@@ -371,6 +422,19 @@ receivers:
 connectors:
   forward/metrics_common: {}
   forward/obi-relationships: {}
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+  # Routing connector for tail-sampling architecture
+  # Routes traces based on the presence of x-loadbalanced attribute
+  # - Traces without attribute (first pass) → traces/loadbalance pipeline
+  # - Traces with attribute (second pass) → traces/tailsampling pipeline
+  routing/traces:
+    default_pipelines: [traces/loadbalance]
+    table:
+      - context: resource
+        pipelines:
+          - traces/tailsampling
+        condition: resource.attributes["x-loadbalanced"] == "true"
+{{- end }}
   routing/metrics:
     default_pipelines: [metrics]
     table:
@@ -707,6 +771,44 @@ service:
         - batch
       exporters:
         - otlp
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+    # Tail-sampling: Attribute-based routing architecture
+    # Single OTLP receiver with routing connector for first/second pass separation
+
+    # Entry point: receives all traces from external sources and load balancer
+    traces/receive:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+      exporters:
+        - routing/traces
+
+    # First pass: add marker attribute and route by traceID to gateway replicas
+    traces/loadbalance:
+      receivers:
+        - routing/traces
+      processors:
+        - transform/mark-loadbalanced
+      exporters:
+        - loadbalancing
+
+    # Second pass: apply tail-sampling policies and export to SWO
+    traces/tailsampling:
+      receivers:
+        - routing/traces
+      processors:
+        - memory_limiter
+        - tail_sampling
+        - k8sattributes
+        - resource
+        - resource/clean-temporary-attributes
+        - transform/scope
+        - batch
+      exporters:
+        - otlp
+{{- else }}
+    # Standard traces pipeline (no tail-sampling)
     traces:
       receivers:
         - otlp
@@ -718,6 +820,7 @@ service:
         - batch
       exporters:
         - otlp
+{{- end }}
 
     # Current SWO pipeline cannot process state events and relationships events together,
     # so we need to split them into two separate pipelines.
@@ -772,6 +875,15 @@ service:
         - otlp
 
   telemetry:
+{{- if .Values.otel.gateway.telemetry.resourceAttributes.enabled }}
+    resource:
+      # Resource attributes on the collector's own internal telemetry.
+      # These correlate internal metrics to the SWO collector entity for diagnostics.
+      sw.otelcol.collector.name: ${POD_NAME}
+      sw.otelcol.collector.entity_creation: "on"
+      k8s.cluster.name: ${CLUSTER_NAME}
+      sw.k8s.cluster.uid: ${CLUSTER_UID}
+{{- end }}
 {{- if .Values.otel.gateway.telemetry.logs.enabled }}
     logs:
       level: {{ .Values.otel.gateway.telemetry.logs.level }}

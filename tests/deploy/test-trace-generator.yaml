@@ -1,0 +1,154 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trace-generator
+  labels:
+    app: trace-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trace-generator
+  template:
+    metadata:
+      labels:
+        app: trace-generator
+    spec:
+      containers:
+      - name: trace-generator
+        image: curlimages/curl:latest
+        command:
+          - /bin/sh
+          - -c
+          - |
+            while true; do
+              # Normal request (should be sampled at ~10%)
+              curl -X POST http://swo-gateway.test-namespace.svc.cluster.local:4318/v1/traces \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "resourceSpans": [{
+                    "resource": {
+                      "attributes": [{
+                        "key": "service.name",
+                        "value": {"stringValue": "test-service"}
+                      }]
+                    },
+                    "scopeSpans": [{
+                      "spans": [{
+                        "traceId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 32 | head -n 1)'",
+                        "spanId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 16 | head -n 1)'",
+                        "name": "normal-request",
+                        "kind": 1,
+                        "startTimeUnixNano": "'$(date +%s)000000000'",
+                        "endTimeUnixNano": "'$(date +%s)000000500'",
+                        "attributes": [{
+                          "key": "http.method",
+                          "value": {"stringValue": "GET"}
+                        }, {
+                          "key": "http.target",
+                          "value": {"stringValue": "/api/data"}
+                        }],
+                        "status": {"code": 0}
+                      }]
+                    }]
+                  }]
+                }' > /dev/null 2>&1
+
+              # Healthcheck request (should be dropped)
+              curl -X POST http://swo-gateway.test-namespace.svc.cluster.local:4318/v1/traces \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "resourceSpans": [{
+                    "resource": {
+                      "attributes": [{
+                        "key": "service.name",
+                        "value": {"stringValue": "test-service"}
+                      }]
+                    },
+                    "scopeSpans": [{
+                      "spans": [{
+                        "traceId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 32 | head -n 1)'",
+                        "spanId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 16 | head -n 1)'",
+                        "name": "healthcheck-request",
+                        "kind": 1,
+                        "startTimeUnixNano": "'$(date +%s)000000000'",
+                        "endTimeUnixNano": "'$(date +%s)000000100'",
+                        "attributes": [{
+                          "key": "http.method",
+                          "value": {"stringValue": "GET"}
+                        }, {
+                          "key": "url.path",
+                          "value": {"stringValue": "/healthcheck"}
+                        }],
+                        "status": {"code": 0}
+                      }]
+                    }]
+                  }]
+                }' > /dev/null 2>&1
+
+              # Error request (should be sampled at 100%)
+              curl -X POST http://swo-gateway.test-namespace.svc.cluster.local:4318/v1/traces \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "resourceSpans": [{
+                    "resource": {
+                      "attributes": [{
+                        "key": "service.name",
+                        "value": {"stringValue": "test-service"}
+                      }]
+                    },
+                    "scopeSpans": [{
+                      "spans": [{
+                        "traceId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 32 | head -n 1)'",
+                        "spanId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 16 | head -n 1)'",
+                        "name": "error-request",
+                        "kind": 1,
+                        "startTimeUnixNano": "'$(date +%s)000000000'",
+                        "endTimeUnixNano": "'$(date +%s)000000300'",
+                        "attributes": [{
+                          "key": "http.method",
+                          "value": {"stringValue": "POST"}
+                        }, {
+                          "key": "http.target",
+                          "value": {"stringValue": "/api/process"}
+                        }],
+                        "status": {"code": 2}
+                      }]
+                    }]
+                  }]
+                }' > /dev/null 2>&1
+
+              # High latency request (should be sampled at 100%)
+              curl -X POST http://swo-gateway.test-namespace.svc.cluster.local:4318/v1/traces \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "resourceSpans": [{
+                    "resource": {
+                      "attributes": [{
+                        "key": "service.name",
+                        "value": {"stringValue": "test-service"}
+                      }]
+                    },
+                    "scopeSpans": [{
+                      "spans": [{
+                        "traceId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 32 | head -n 1)'",
+                        "spanId": "'$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 16 | head -n 1)'",
+                        "name": "high-latency-request",
+                        "kind": 1,
+                        "startTimeUnixNano": "'$(date +%s)000000000'",
+                        "endTimeUnixNano": "'$(($(date +%s) + 2))000000000'",
+                        "attributes": [{
+                          "key": "http.method",
+                          "value": {"stringValue": "GET"}
+                        }, {
+                          "key": "http.target",
+                          "value": {"stringValue": "/api/slow"}
+                        }],
+                        "status": {"code": 0}
+                      }]
+                    }]
+                  }]
+                }' > /dev/null 2>&1
+
+              sleep 0.05
+            done

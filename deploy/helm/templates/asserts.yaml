@@ -41,3 +41,9 @@
 {{- fail "The network topology feature requires `otel.gateway.enabled` to be set to `true`." }}
 {{- end }}
 {{- end }}
+
+{{- if and .Values.otel.gateway.enabled .Values.otel.gateway.tailSampling.enabled }}
+{{- if lt (int .Values.otel.gateway.autoscaler.minReplicas) 2 }}
+{{- fail "Tail-sampling requires at least 2 gateway replicas for effective load balancing. Set `otel.gateway.autoscaler.minReplicas` to 2 or higher." }}
+{{- end }}
+{{- end }}
