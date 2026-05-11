@@ -751,7 +751,54 @@ receivers:
 
 {{- if .Values.entityDiscovery.enabled }}
   swok8sdiscovery:
-    reporter: "swo-k8s-collector"
+    auth_type: serviceAccount
+    reporter: swo-k8s-collector
+    database:
+      image_rules:
+        - database_type: "redis"
+          patterns: ["(^|/)redis:.+$"]
+          default_port: 6379
+        - database_type: "mysql"
+          patterns: ["(^|/)mysql:.+$", "(^|/)mariadb:.+$", "(^|/)mysql-server:.+$"]
+          default_port: 3306
+        - database_type: "sqlserver"
+          patterns: ["(^|/)mssql:.+$", "(^|/)mssql/server:.+$"]
+          default_port: 1433
+        - database_type: "postgresql"
+          patterns: ["(^|/)postgres:.+$", "(^|/)postgresql:.+$"]
+          default_port: 5432
+        - database_type: "mongodb"
+          patterns: ["(^|/)mongo:.+$"]
+          default_port: 27017
+      domain_rules:
+        - database_type: redis
+          patterns:
+            - "\\.redis\\.cache\\.windows\\.net$"
+            - "\\.elasticache(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+            - "\\.redis(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+            - "\\.cache(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 6379
+        - database_type: mysql
+          patterns:
+            - "\\.mysql\\.database\\.azure\\.com$"
+            - "\\.rds(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 3306
+        - database_type: sqlserver
+          patterns:
+            - "\\.database\\.windows\\.net$"
+            - "\\.rds(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 1433
+        - database_type: postgresql
+          patterns:
+            - "\\.postgres\\.database\\.azure\\.com$"
+            - "\\.rds(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 5432
+        - database_type: mongodb
+          patterns:
+            - "\\.mongo\\.cosmos\\.azure\\.com$"
+            - "\\.docdb(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+            - "\\.mongodb\\.net$"
+          default_port: 27017
 {{- end }}
 
 service:
