@@ -770,6 +770,62 @@ Cluster filter should match snapshot with combined exclude filters:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -1838,6 +1894,62 @@ Cluster filter should match snapshot with combined include filters:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -2906,6 +3018,62 @@ Cluster filter should match snapshot with exclude_namespaces:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -3978,6 +4146,62 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -5046,6 +5270,62 @@ Cluster filter should match snapshot with include_namespaces:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -6115,6 +6395,62 @@ Cluster filter should match snapshot with include_namespaces_regex:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -7173,6 +7509,62 @@ Custom events filter with new syntax:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -8232,6 +8624,62 @@ Custom events filter with old syntax:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -9284,6 +9732,62 @@ Events config should match snapshot when using default values:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
@@ -10203,6 +10707,62 @@ Events config should not contain manifest collection pipeline when disabled:
       receivers:
         k8s_events: null
         swok8sdiscovery:
+          auth_type: serviceAccount
+          database:
+            domain_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - \.redis\.cache\.windows\.net$
+              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - \.mysql\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - \.database\.windows\.net$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - \.postgres\.database\.azure\.com$
+              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - \.mongo\.cosmos\.azure\.com$
+              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
+              - \.mongodb\.net$
+            image_rules:
+            - database_type: redis
+              default_port: 6379
+              patterns:
+              - (^|/)redis:.+$
+            - database_type: mysql
+              default_port: 3306
+              patterns:
+              - (^|/)mysql:.+$
+              - (^|/)mariadb:.+$
+              - (^|/)mysql-server:.+$
+            - database_type: sqlserver
+              default_port: 1433
+              patterns:
+              - (^|/)mssql:.+$
+              - (^|/)mssql/server:.+$
+            - database_type: postgresql
+              default_port: 5432
+              patterns:
+              - (^|/)postgres:.+$
+              - (^|/)postgresql:.+$
+            - database_type: mongodb
+              default_port: 27017
+              patterns:
+              - (^|/)mongo:.+$
           reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
