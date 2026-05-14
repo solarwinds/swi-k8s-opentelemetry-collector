@@ -1,5 +1,5 @@
 exporters:
-  otlp:
+  otlp_grpc:
     endpoint: ${OTEL_ENVOY_ADDRESS}
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
@@ -231,7 +231,7 @@ processors:
   batch/metrics:
 {{ toYaml .Values.otel.metrics.batch | indent 4 }}
 
-  k8sattributes:
+  k8s_attributes:
     auth_type: "serviceAccount"
     passthrough: false
     filter:
@@ -293,7 +293,7 @@ receivers:
       - docker
       - containerd
 {{- end}}
-  filelog:
+  file_log:
 {{- if (.isWindows) }}
     include: [ "\\var\\log\\pods\\*\\*\\*.log" ]
     exclude: [ "\\var\\log\\pods\\${POD_NAMESPACE}_${POD_NAME}*_*\\swi-opentelemetry-collector\\*.log" ]
@@ -623,7 +623,7 @@ service:
 {{- if .Values.otel.logs.container }}
     logs/container:
       receivers:
-        - filelog
+        - file_log
       processors:
         - memory_limiter
 {{- if eq (include "isDeprecatedFilterSyntax" .Values.otel.logs.filter) "true" }}
@@ -632,7 +632,7 @@ service:
         - transform/syslogify
         - groupbyattrs/common-all
         - resource/container
-        - k8sattributes
+        - k8s_attributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces_logs
 {{- end }}           
@@ -664,7 +664,7 @@ service:
         - transform/scope
         - batch/logs
       exporters:
-        - otlp
+        - otlp_grpc
 {{- end }}
 
 {{- if .Values.otel.metrics.enabled }}
@@ -705,7 +705,7 @@ service:
 {{- if .Values.otel.metrics.filter_histograms }}
         - filter/histograms
 {{- end }}
-        - k8sattributes
+        - k8s_attributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}             
@@ -716,7 +716,7 @@ service:
         - transform/scope
         - batch/metrics
       exporters:
-        - otlp
+        - otlp_grpc
 {{- end }}
   telemetry:
 {{- if .Values.otel.logs.telemetry.logs.enabled }}

@@ -571,7 +571,7 @@ In case you want to send data from your own [OpenTelemetry Collector](https://gi
 ```yaml
 config:
   exporters:
-    otlp:
+    otlp_grpc:
       endpoint: <chart-name>-metrics-collector.<namespace>.svc.cluster.local:4317
 ```
 

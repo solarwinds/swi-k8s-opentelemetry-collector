@@ -16,7 +16,7 @@ stateDiagram-v2
     mc_metricsPipeline: 'metrics' pipeline
     state mc_metricsPipeline {
       mc_r1: 'forward/metric-exporter' connector
-      mc_e1: 'otlp' exporter
+      mc_e1: 'otlp_grpc' exporter
       mc_r1 --> mc_e1 : processors
     }
 
@@ -114,7 +114,7 @@ stateDiagram-v2
     state md_logsStateEventsEntitiesPipeline {
       md_r7a: 'solarwindsentity/istio-workload-workload' connector
       md_r7b: 'solarwindsentity/istio-workload-service' connector
-      md_e7: 'otlp' exporter
+      md_e7: 'otlp_grpc' exporter
       md_r7a --> md_e7 : processors
       md_r7b --> md_e7 : processors
     }
@@ -123,7 +123,7 @@ stateDiagram-v2
     state md_logsStateEventsRelationshipsPipeline {
       md_r8a: 'solarwindsentity/istio-workload-workload' connector
       md_r8b: 'solarwindsentity/istio-workload-service' connector
-      md_e8: 'otlp' exporter
+      md_e8: 'otlp_grpc' exporter
       md_r8a --> md_e8 : processors
       md_r8b --> md_e8 : processors
     }
@@ -138,7 +138,7 @@ stateDiagram-v2
     md_metricsPipeline: 'metrics' pipeline
     state md_metricsPipeline {
       md_r10: 'forward/metric-exporter' connector
-      md_e10: 'otlp' exporter
+      md_e10: 'otlp_grpc' exporter
       md_r10 --> md_e10 : processors
     }
 
@@ -167,7 +167,7 @@ stateDiagram-v2
     ec_logsPipeline: 'logs' pipeline
     state ec_logsPipeline {
       ec_r1: 'k8s_events' receiver
-      ec_e1: 'otlp' exporter
+      ec_e1: 'otlp_grpc' exporter
       ec_r1 --> ec_e1 : processors
     }
 
@@ -182,7 +182,7 @@ stateDiagram-v2
     state ec_manifestsExportPipeline {
       ec_r2b: 'routing/manifests' connector
       ec_r2c: 'solarwindsentity/serviceendpointsmapping' connector
-      ec_e2b: 'otlp' exporter
+      ec_e2b: 'otlp_grpc' exporter
       ec_r2b --> ec_e2b : processors
       ec_r2c --> ec_e2b : processors
     }
@@ -197,7 +197,7 @@ stateDiagram-v2
     ec_stateEventsPipeline: 'logs/stateevents' pipeline
     state ec_stateEventsPipeline {
       ec_r4: 'solarwindsentity/keepalive' connector
-      ec_e4: 'otlp' exporter
+      ec_e4: 'otlp_grpc' exporter
       ec_r4 --> ec_e4 : processors
     }
 
@@ -222,7 +222,7 @@ stateDiagram-v2
 
     gw_metricsCommonInPipeline: 'metrics/common_in' pipeline
     state gw_metricsCommonInPipeline {
-      gw_mr1: 'otlp' receiver
+      gw_mr1: 'otlp_grpc' receiver
       gw_me1: 'routing/metrics' connector
       gw_mr1 --> gw_me1 : processors
     }
@@ -237,7 +237,7 @@ stateDiagram-v2
     gw_metricsCommonOutPipeline: 'metrics/common_out' pipeline
     state gw_metricsCommonOutPipeline {
       gw_mr3: 'forward/metrics_common' connector
-      gw_me3: 'otlp' exporter
+      gw_me3: 'otlp_grpc' exporter
       gw_mr3 --> gw_me3 : processors
     }
 
@@ -255,28 +255,28 @@ stateDiagram-v2
     gw_logsObiStateEventsEntitiesPipeline: 'logs/obi-stateevents-entities' pipeline
     state gw_logsObiStateEventsEntitiesPipeline {
       gw_lr1: 'solarwindsentity/obi-entities' connector
-      gw_le1: 'otlp' exporter
+      gw_le1: 'otlp_grpc' exporter
       gw_lr1 --> gw_le1 : processors
     }
 
     gw_logsObiStateEventsRelationshipsPipeline: 'logs/obi-stateevents-relationships' pipeline
     state gw_logsObiStateEventsRelationshipsPipeline {
       gw_lr2: 'solarwindsentity/obi-relationships' connector
-      gw_le2: 'otlp' exporter
+      gw_le2: 'otlp_grpc' exporter
       gw_lr2 --> gw_le2 : processors
     }
 
     gw_logsPipeline: 'logs' pipeline
     state gw_logsPipeline {
       gw_lr3: 'otlp' receiver
-      gw_le3: 'otlp' exporter
+      gw_le3: 'otlp_grpc' exporter
       gw_lr3 --> gw_le3 : processors
     }
 
     gw_tracesPipeline: 'traces' pipeline
     state gw_tracesPipeline {
       gw_tr: 'otlp' receiver
-      gw_te: 'otlp' exporter
+      gw_te: 'otlp_grpc' exporter
       gw_tr --> gw_te : processors
     }
 
@@ -308,13 +308,13 @@ stateDiagram-v2
     nc_logsPipeline: 'logs' pipeline
     state nc_logsPipeline {
       nc_r1: 'forward/logs-exporter' connector
-      nc_e1: 'otlp' exporter
+      nc_e1: 'otlp_grpc' exporter
       nc_r1 --> nc_e1 : processors
     }
 
     nc_logsContainerPipeline: 'logs/container' pipeline
     state nc_logsContainerPipeline {
-      nc_r2: 'filelog' receiver
+      nc_r2: 'file_log' receiver
       nc_e2: 'forward/logs-exporter' connector
       nc_r2 --> nc_e2 : processors
     }
@@ -329,7 +329,7 @@ stateDiagram-v2
     nc_metricsPipeline: 'metrics' pipeline
     state nc_metricsPipeline {
       nc_r4: 'forward/metric-exporter' connector
-      nc_e4: 'otlp' exporter
+      nc_e4: 'otlp_grpc' exporter
       nc_r4 --> nc_e4 : processors
     }
 
@@ -387,7 +387,7 @@ stateDiagram-v2
     state nc_logsStateEventsEntitiesPipeline {
       nc_r11a: 'solarwindsentity/istio-workload-workload' connector
       nc_r11b: 'solarwindsentity/istio-workload-service' connector
-      nc_e11: 'otlp' exporter
+      nc_e11: 'otlp_grpc' exporter
       nc_r11a --> nc_e11 : processors
       nc_r11b --> nc_e11 : processors
     }
@@ -396,7 +396,7 @@ stateDiagram-v2
     state nc_logsStateEventsRelationshipsPipeline {
       nc_r12a: 'solarwindsentity/istio-workload-workload' connector
       nc_r12b: 'solarwindsentity/istio-workload-service' connector
-      nc_e12: 'otlp' exporter
+      nc_e12: 'otlp_grpc' exporter
       nc_r12a --> nc_e12 : processors
       nc_r12b --> nc_e12 : processors
     }

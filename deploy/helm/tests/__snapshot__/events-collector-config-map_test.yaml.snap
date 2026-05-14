@@ -204,7 +204,7 @@ Cluster filter should match snapshot with combined exclude filters:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -288,7 +288,7 @@ Cluster filter should match snapshot with combined exclude filters:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -945,14 +945,14 @@ Cluster filter should match snapshot with combined exclude filters:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - transform/scope
             - batch
@@ -976,13 +976,13 @@ Cluster filter should match snapshot with combined exclude filters:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -998,7 +998,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - filter/namespaces_manifests
@@ -1019,7 +1019,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -1243,7 +1243,7 @@ Cluster filter should match snapshot with combined include filters:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -1323,7 +1323,7 @@ Cluster filter should match snapshot with combined include filters:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -1980,14 +1980,14 @@ Cluster filter should match snapshot with combined include filters:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - transform/scope
             - batch
@@ -2011,13 +2011,13 @@ Cluster filter should match snapshot with combined include filters:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -2033,7 +2033,7 @@ Cluster filter should match snapshot with combined include filters:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - filter/namespaces_manifests
@@ -2054,7 +2054,7 @@ Cluster filter should match snapshot with combined include filters:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -2278,7 +2278,7 @@ Cluster filter should match snapshot with exclude_namespaces:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -2358,7 +2358,7 @@ Cluster filter should match snapshot with exclude_namespaces:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -3015,14 +3015,14 @@ Cluster filter should match snapshot with exclude_namespaces:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - transform/scope
             - batch
@@ -3046,13 +3046,13 @@ Cluster filter should match snapshot with exclude_namespaces:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -3068,7 +3068,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - filter/namespaces_manifests
@@ -3089,7 +3089,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -3313,7 +3313,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -3397,7 +3397,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -4054,14 +4054,14 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - transform/scope
             - batch
@@ -4085,13 +4085,13 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -4107,7 +4107,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - filter/namespaces_manifests
@@ -4128,7 +4128,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -4352,7 +4352,7 @@ Cluster filter should match snapshot with include_namespaces:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -4432,7 +4432,7 @@ Cluster filter should match snapshot with include_namespaces:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -5089,14 +5089,14 @@ Cluster filter should match snapshot with include_namespaces:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - transform/scope
             - batch
@@ -5120,13 +5120,13 @@ Cluster filter should match snapshot with include_namespaces:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -5142,7 +5142,7 @@ Cluster filter should match snapshot with include_namespaces:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - filter/namespaces_manifests
@@ -5163,7 +5163,7 @@ Cluster filter should match snapshot with include_namespaces:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -5387,7 +5387,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -5468,7 +5468,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -6125,14 +6125,14 @@ Cluster filter should match snapshot with include_namespaces_regex:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - transform/scope
             - batch
@@ -6156,13 +6156,13 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_manifests
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -6178,7 +6178,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - filter/namespaces_manifests
@@ -6199,7 +6199,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -6423,7 +6423,7 @@ Custom events filter with new syntax:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -6493,7 +6493,7 @@ Custom events filter with new syntax:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -7150,14 +7150,14 @@ Custom events filter with new syntax:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - filter
             - transform/scope
             - batch
@@ -7181,12 +7181,12 @@ Custom events filter with new syntax:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -7202,7 +7202,7 @@ Custom events filter with new syntax:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
@@ -7222,7 +7222,7 @@ Custom events filter with new syntax:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -7446,7 +7446,7 @@ Custom events filter with old syntax:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -7519,7 +7519,7 @@ Custom events filter with old syntax:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -8176,7 +8176,7 @@ Custom events filter with old syntax:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter
@@ -8184,7 +8184,7 @@ Custom events filter with old syntax:
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - transform/scope
             - batch
             receivers:
@@ -8207,12 +8207,12 @@ Custom events filter with old syntax:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -8228,7 +8228,7 @@ Custom events filter with old syntax:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
@@ -8248,7 +8248,7 @@ Custom events filter with old syntax:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -8472,7 +8472,7 @@ Events config should match snapshot when using default values:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -8538,7 +8538,7 @@ Events config should match snapshot when using default values:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -9195,14 +9195,14 @@ Events config should match snapshot when using default values:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - transform/scope
             - batch
             receivers:
@@ -9225,12 +9225,12 @@ Events config should match snapshot when using default values:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -9246,7 +9246,7 @@ Events config should match snapshot when using default values:
             - transform/manifest
             - groupbyattrs/manifest
             - resource/manifest
-            - k8sattributes
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
@@ -9266,7 +9266,7 @@ Events config should match snapshot when using default values:
             - routing/bypass-keepalive-for-entitystateevents
           logs/stateevents:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -9358,7 +9358,7 @@ Events config should not contain manifest collection pipeline when disabled:
                 type: KubernetesServiceRoutesTo
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -9424,7 +9424,7 @@ Events config should not contain manifest collection pipeline when disabled:
           - sw.k8s.deployment.status
           - sw.k8s.statefulset.status
           - sw.k8s.daemonset.status
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -9915,14 +9915,14 @@ Events config should not contain manifest collection pipeline when disabled:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/severity
             - transform/namespace
             - transform/entity_attributes
             - resource/events
-            - k8sattributes
+            - k8s_attributes
             - transform/scope
             - batch
             receivers:
@@ -9946,12 +9946,12 @@ Events config should not contain manifest collection pipeline when disabled:
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - groupbyattrs/serviceendpointsmapping
             - transform/serviceendpointsmapping-renamepodip
-            - k8sattributes
+            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
