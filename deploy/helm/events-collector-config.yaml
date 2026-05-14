@@ -34,7 +34,7 @@
 {{- end }}
 {{- $arrayOfWatchedResources := keys $resourceMap | sortAlpha }}
 exporters:
-  otlp:
+  otlp_grpc:
     endpoint: ${OTEL_ENVOY_ADDRESS}
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
@@ -685,7 +685,7 @@ processors:
 
   batch:
 {{ toYaml .Values.otel.events.batch | indent 4 }}
-  k8sattributes:
+  k8s_attributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
 
@@ -769,7 +769,7 @@ service:
         - transform/namespace
         - transform/entity_attributes
         - resource/events
-        - k8sattributes
+        - k8s_attributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}          
@@ -779,7 +779,7 @@ service:
         - transform/scope
         - batch
       exporters:
-        - otlp
+        - otlp_grpc
 {{- end }}
 
     logs/manifests:
@@ -803,7 +803,7 @@ service:
         - transform/remove_deployed_by_collector_label_if_from_different_namespace
         - groupbyattrs/serviceendpointsmapping
         - transform/serviceendpointsmapping-renamepodip
-        - k8sattributes
+        - k8s_attributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces_manifests
 {{- end }}
@@ -831,7 +831,7 @@ service:
         - transform/scope
         - batch
       exporters:
-        - otlp
+        - otlp_grpc
 
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
     logs/manifests-keepalive:
@@ -845,7 +845,7 @@ service:
         - filter/k8s_collector_config_include
 {{- end }}
         - resource/manifest
-        - k8sattributes
+        - k8s_attributes
         - k8seventgeneration
         - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
@@ -872,7 +872,7 @@ service:
         - transform/scope
         - batch
       exporters:
-        - otlp
+        - otlp_grpc
 {{- end }}
 
   telemetry:
