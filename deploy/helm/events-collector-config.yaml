@@ -209,6 +209,20 @@ connectors:
           attributes["sw.k8s.log.type"] == "entitystateevent"
 {{- end }}
 
+{{- if .Values.entityDiscovery.enabled }}
+  # Current SWO pipeline cannot process state events and relationships events together,
+  # so we need to split them into two separate pipelines.
+  # TODO - merge them into one pipeline when SWO supports it.
+  routing/entity-discovery:
+    default_pipelines: [logs/entity-discovery-entities]
+    table:
+      - context: log
+        pipelines:
+          - logs/entity-discovery-relationships
+        condition: |
+          attributes["otel.entity.event.type"] == "entity_relationship_state"
+{{- end }}
+
   solarwindsentity/serviceendpointsmapping:
     source_prefix: "source."
     destination_prefix: "dest."
@@ -574,7 +588,7 @@ processors:
       - k8s.gitrepository.name
 {{- end }}
 
-  resource/events:
+  resource/mandatory:
     attributes:
       # Collector and Manifest version
       - key: sw.k8s.agent.manifest.version
@@ -594,33 +608,25 @@ processors:
         value: ${CLUSTER_NAME}
         action: insert
 
+  resource/events:
+    attributes:
       - key: sw.k8s.log.type
         value: event
         action: insert
 
   resource/manifest:
     attributes:
-      # Collector and Manifest version
-      - key: sw.k8s.agent.manifest.version
-        value: ${MANIFEST_VERSION}
-        action: insert
-
-      - key: sw.k8s.agent.app.version
-        value: ${APP_VERSION}
-        action: insert
-
-      # Cluster
-      - key: sw.k8s.cluster.uid
-        value: ${CLUSTER_UID}
-        action: insert
-
-      - key: k8s.cluster.name
-        value: ${CLUSTER_NAME}
-        action: insert
-
       - key: sw.k8s.log.type
         value: manifest
         action: insert
+
+{{- if .Values.entityDiscovery.enabled }}
+  resource/entity-state-event:
+    attributes:
+      - key: sw.k8s.log.type
+        value: entitystateevent
+        action: insert
+{{- end }}
 
   resourcedetection/providers:
     timeout: 2s
@@ -743,6 +749,58 @@ receivers:
         mode: watch
 {{- end }}
 
+{{- if .Values.entityDiscovery.enabled }}
+  swok8sdiscovery:
+    auth_type: serviceAccount
+    reporter: swo-k8s-collector
+    database:
+      image_rules:
+        - database_type: "redis"
+          patterns: ["(^|/)redis:.+$"]
+          default_port: 6379
+        - database_type: "mysql"
+          patterns: ["(^|/)mysql:.+$", "(^|/)mariadb:.+$", "(^|/)mysql-server:.+$"]
+          default_port: 3306
+        - database_type: "sqlserver"
+          patterns: ["(^|/)mssql:.+$", "(^|/)mssql/server:.+$"]
+          default_port: 1433
+        - database_type: "postgresql"
+          patterns: ["(^|/)postgres:.+$", "(^|/)postgresql:.+$"]
+          default_port: 5432
+        - database_type: "mongodb"
+          patterns: ["(^|/)mongo:.+$"]
+          default_port: 27017
+      domain_rules:
+        - database_type: redis
+          patterns:
+            - "\\.redis\\.cache\\.windows\\.net$"
+            - "\\.elasticache(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+            - "\\.redis(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+            - "\\.cache(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 6379
+        - database_type: mysql
+          patterns:
+            - "\\.mysql\\.database\\.azure\\.com$"
+            - "\\.rds(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 3306
+        - database_type: sqlserver
+          patterns:
+            - "\\.database\\.windows\\.net$"
+            - "\\.rds(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 1433
+        - database_type: postgresql
+          patterns:
+            - "\\.postgres\\.database\\.azure\\.com$"
+            - "\\.rds(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+          default_port: 5432
+        - database_type: mongodb
+          patterns:
+            - "\\.mongo\\.cosmos\\.azure\\.com$"
+            - "\\.docdb(?:\\.[a-z]{2}(?:-[a-z]+){1,2}-\\d+)?\\.amazonaws\\.com$"
+            - "\\.mongodb\\.net$"
+          default_port: 27017
+{{- end }}
+
 service:
   extensions:
 {{- if .Values.otel.events.sending_queue.offload_to_disk }}
@@ -768,6 +826,7 @@ service:
         - transform/severity
         - transform/namespace
         - transform/entity_attributes
+        - resource/mandatory
         - resource/events
         - k8s_attributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
@@ -797,6 +856,7 @@ service:
         - transform/stringify_body
         - swok8sworkloadstatus
         - groupbyattrs/workloadstatus
+        - resource/mandatory
         - resource/manifest
         - resourcedetection/providers
         - k8seventgeneration
@@ -844,6 +904,7 @@ service:
 {{- if not (and .Values.otel.events.enabled .Values.otel.manifests.enabled) }}
         - filter/k8s_collector_config_include
 {{- end }}
+        - resource/mandatory
         - resource/manifest
         - k8s_attributes
         - k8seventgeneration
@@ -873,6 +934,35 @@ service:
         - batch
       exporters:
         - otlp_grpc
+{{- end }}
+
+{{- if .Values.entityDiscovery.enabled }}
+    logs/entity-discovery:
+      receivers:
+        - swok8sdiscovery
+      processors:
+        - memory_limiter
+        - resource/mandatory
+        - resource/entity-state-event
+        - transform/scope
+      exporters:
+        - routing/entity-discovery
+
+    logs/entity-discovery-entities:
+      receivers:
+        - routing/entity-discovery
+      processors:
+        - batch
+      exporters:
+        - otlp
+
+    logs/entity-discovery-relationships:
+      receivers:
+        - routing/entity-discovery
+      processors:
+        - batch
+      exporters:
+        - otlp
 {{- end }}
 
   telemetry:
