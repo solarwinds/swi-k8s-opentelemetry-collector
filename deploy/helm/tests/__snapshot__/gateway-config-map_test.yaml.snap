@@ -385,7 +385,7 @@ Gateway config should match snapshot when using default values:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -472,7 +472,7 @@ Gateway config should match snapshot when using default values:
           - tcp
           - http
           - grpc
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -788,10 +788,10 @@ Gateway config should match snapshot when using default values:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
-            - k8sattributes
+            - k8s_attributes
             - resource
             - transform/scope
             - batch
@@ -799,7 +799,7 @@ Gateway config should match snapshot when using default values:
             - otlp
           logs/obi-stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -809,7 +809,7 @@ Gateway config should match snapshot when using default values:
             - solarwindsentity/obi-entities
           logs/obi-stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -834,10 +834,10 @@ Gateway config should match snapshot when using default values:
             - otlp
           metrics/common_out:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
-            - k8sattributes
+            - k8s_attributes
             - metricstransform/rename-following-otel-semantics
             - attributes/clean-attributes-otlp-metrics
             - resource/clean-temporary-attributes
@@ -873,10 +873,10 @@ Gateway config should match snapshot when using default values:
             - forward/obi-relationships
           traces:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
-            - k8sattributes
+            - k8s_attributes
             - resource
             - transform/scope
             - batch

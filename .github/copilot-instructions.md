@@ -76,7 +76,7 @@ The SWO K8s Collector consists of multiple components, each with specific pipeli
 
 ### NodeCollector DaemonSet
 - **logs pipeline**: Main pipeline for logs that exports them via OTLP
-- **logs/container pipeline**: Collects container logs from files using the filelog receiver
+- **logs/container pipeline**: Collects container logs from files using the file_log receiver
 - **logs/journal pipeline**: Collects system logs from journald
 - **metrics pipeline**: Main pipeline for node-level metrics that exports them via OTLP
 - **metrics/discovery pipeline**: Uses receiver_creator to discover and collect metrics from discoverable endpoints

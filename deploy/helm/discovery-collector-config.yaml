@@ -1,5 +1,5 @@
 exporters:
-  otlp:
+  otlp_grpc:
     endpoint: ${OTEL_ENVOY_ADDRESS}
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
@@ -26,7 +26,7 @@ extensions:
 {{- end }}
 
 processors:
-  k8sattributes:
+  k8s_attributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
   memory_limiter:
@@ -130,7 +130,7 @@ service:
 {{- if .Values.otel.metrics.filter_histograms }}
         - filter/histograms
 {{- end }}
-        - k8sattributes
+        - k8s_attributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}             
@@ -141,7 +141,7 @@ service:
         - transform/scope
         - batch/metrics
       exporters:
-        - otlp
+        - otlp_grpc
     
   telemetry:
 {{- if .Values.otel.metrics.autodiscovery.discovery_collector.telemetry.logs.enabled }}

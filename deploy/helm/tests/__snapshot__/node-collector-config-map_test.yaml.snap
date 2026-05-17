@@ -326,7 +326,7 @@ Cluster filter should match snapshot with combined exclude filters:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -642,7 +642,7 @@ Cluster filter should match snapshot with combined exclude filters:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -1482,7 +1482,7 @@ Cluster filter should match snapshot with combined exclude filters:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -1691,7 +1691,7 @@ Cluster filter should match snapshot with combined exclude filters:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -1706,10 +1706,10 @@ Cluster filter should match snapshot with combined exclude filters:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_logs
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -1721,7 +1721,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -1733,7 +1733,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -1745,11 +1745,11 @@ Cluster filter should match snapshot with combined exclude filters:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - filter/remove_temporary_metrics
             - transform/scope
@@ -2218,7 +2218,7 @@ Cluster filter should match snapshot with combined include filters:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -2530,7 +2530,7 @@ Cluster filter should match snapshot with combined include filters:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -3370,7 +3370,7 @@ Cluster filter should match snapshot with combined include filters:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -3579,7 +3579,7 @@ Cluster filter should match snapshot with combined include filters:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -3594,10 +3594,10 @@ Cluster filter should match snapshot with combined include filters:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_logs
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -3609,7 +3609,7 @@ Cluster filter should match snapshot with combined include filters:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -3621,7 +3621,7 @@ Cluster filter should match snapshot with combined include filters:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -3633,11 +3633,11 @@ Cluster filter should match snapshot with combined include filters:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - filter/remove_temporary_metrics
             - transform/scope
@@ -4106,7 +4106,7 @@ Cluster filter should match snapshot with exclude_namespaces:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -4420,7 +4420,7 @@ Cluster filter should match snapshot with exclude_namespaces:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -5260,7 +5260,7 @@ Cluster filter should match snapshot with exclude_namespaces:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -5469,7 +5469,7 @@ Cluster filter should match snapshot with exclude_namespaces:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -5484,10 +5484,10 @@ Cluster filter should match snapshot with exclude_namespaces:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_logs
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -5499,7 +5499,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -5511,7 +5511,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -5523,11 +5523,11 @@ Cluster filter should match snapshot with exclude_namespaces:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - filter/remove_temporary_metrics
             - transform/scope
@@ -5996,7 +5996,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -6310,7 +6310,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -7150,7 +7150,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -7359,7 +7359,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -7374,10 +7374,10 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_logs
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -7389,7 +7389,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -7401,7 +7401,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -7413,11 +7413,11 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - filter/remove_temporary_metrics
             - transform/scope
@@ -7886,7 +7886,7 @@ Cluster filter should match snapshot with include_namespaces:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -8198,7 +8198,7 @@ Cluster filter should match snapshot with include_namespaces:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -9038,7 +9038,7 @@ Cluster filter should match snapshot with include_namespaces:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -9247,7 +9247,7 @@ Cluster filter should match snapshot with include_namespaces:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -9262,10 +9262,10 @@ Cluster filter should match snapshot with include_namespaces:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_logs
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -9277,7 +9277,7 @@ Cluster filter should match snapshot with include_namespaces:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -9289,7 +9289,7 @@ Cluster filter should match snapshot with include_namespaces:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -9301,11 +9301,11 @@ Cluster filter should match snapshot with include_namespaces:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - filter/remove_temporary_metrics
             - transform/scope
@@ -9774,7 +9774,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -10088,7 +10088,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -10928,7 +10928,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -11137,7 +11137,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -11152,10 +11152,10 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces_logs
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -11167,7 +11167,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -11179,7 +11179,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -11191,11 +11191,11 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/namespaces
             - filter/remove_temporary_metrics
             - transform/scope
@@ -11664,7 +11664,7 @@ Custom logs filter with new syntax:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -11970,7 +11970,7 @@ Custom logs filter with new syntax:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -12810,7 +12810,7 @@ Custom logs filter with new syntax:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -13019,7 +13019,7 @@ Custom logs filter with new syntax:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -13034,10 +13034,10 @@ Custom logs filter with new syntax:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             - filter/logs
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -13049,7 +13049,7 @@ Custom logs filter with new syntax:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -13061,7 +13061,7 @@ Custom logs filter with new syntax:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -13073,11 +13073,11 @@ Custom logs filter with new syntax:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -13545,7 +13545,7 @@ Custom logs filter with old syntax:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -13854,7 +13854,7 @@ Custom logs filter with old syntax:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -14694,7 +14694,7 @@ Custom logs filter with old syntax:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -14984,7 +14984,7 @@ Custom logs filter with old syntax:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -15000,9 +15000,9 @@ Custom logs filter with old syntax:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -15014,7 +15014,7 @@ Custom logs filter with old syntax:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -15026,7 +15026,7 @@ Custom logs filter with old syntax:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -15038,11 +15038,11 @@ Custom logs filter with old syntax:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -15510,7 +15510,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -15812,7 +15812,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -16652,7 +16652,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -16801,7 +16801,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -16816,9 +16816,9 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -16830,7 +16830,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -16842,7 +16842,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -16854,11 +16854,11 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -17326,7 +17326,7 @@ Node collector config should match snapshot when fargate is enabled:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -17625,7 +17625,7 @@ Node collector config should match snapshot when fargate is enabled:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -18465,7 +18465,7 @@ Node collector config should match snapshot when fargate is enabled:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -18619,7 +18619,7 @@ Node collector config should match snapshot when fargate is enabled:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -18634,9 +18634,9 @@ Node collector config should match snapshot when fargate is enabled:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -18648,7 +18648,7 @@ Node collector config should match snapshot when fargate is enabled:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -18660,7 +18660,7 @@ Node collector config should match snapshot when fargate is enabled:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -18672,11 +18672,11 @@ Node collector config should match snapshot when fargate is enabled:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
@@ -19120,7 +19120,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -19414,7 +19414,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -20254,7 +20254,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -20347,7 +20347,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -20362,9 +20362,9 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -20376,7 +20376,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -20388,7 +20388,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -20837,7 +20837,7 @@ Node collector config should match snapshot when using default values:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -21139,7 +21139,7 @@ Node collector config should match snapshot when using default values:
           keys:
           - namespace
           - pod
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -21979,7 +21979,7 @@ Node collector config should match snapshot when using default values:
               where IsMatch(metric.name, "^(container_.*)$") == true and datapoint.attributes["k8s.node.name"]
               == nil
       receivers:
-        filelog:
+        file_log:
           encoding: utf-8
           exclude:
           - /var/log/pods/${POD_NAMESPACE}_${POD_NAME}*_*/swi-opentelemetry-collector/*.log
@@ -22188,7 +22188,7 @@ Node collector config should match snapshot when using default values:
         pipelines:
           logs:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - transform/scope
@@ -22203,9 +22203,9 @@ Node collector config should match snapshot when using default values:
             - transform/syslogify
             - groupbyattrs/common-all
             - resource/container
-            - k8sattributes
+            - k8s_attributes
             receivers:
-            - filelog
+            - file_log
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -22217,7 +22217,7 @@ Node collector config should match snapshot when using default values:
             - journald
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -22229,7 +22229,7 @@ Node collector config should match snapshot when using default values:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -22241,11 +22241,11 @@ Node collector config should match snapshot when using default values:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics

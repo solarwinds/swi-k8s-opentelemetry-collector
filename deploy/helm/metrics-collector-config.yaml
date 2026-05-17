@@ -1,5 +1,5 @@
 exporters:
-  otlp:
+  otlp_grpc:
     endpoint: ${OTEL_ENVOY_ADDRESS}
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
@@ -33,7 +33,7 @@ extensions:
 {{- end }}
 
 processors:
-  k8sattributes:
+  k8s_attributes:
     auth_type: "serviceAccount"
     passthrough: false
     extract:
@@ -762,7 +762,7 @@ processors:
       - context: metric
         statements:
           # adds severity to metric name (metrics are grouped by severity)
-          - set(name, Format("%s_%s", [name, ToLowerCase(resource.attributes["severity"])])) where resource.attributes["severity"] != nil
+          - set(name, Format("%s_%s", [metric.name, ToLowerCase(resource.attributes["severity"])])) where resource.attributes["severity"] != nil
 
   metricstransform/trivy-operator-metrics-aggregation-by-image:
     transforms:
@@ -1233,7 +1233,7 @@ service:
         - metricstransform/aggregate_pod_level
         - groupbyattrs/all
         - resource/metrics
-        - k8sattributes
+        - k8s_attributes
         - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
@@ -1256,7 +1256,7 @@ service:
         - transform/scope
         - batch
       exporters:
-        - otlp
+        - otlp_grpc
     
   telemetry:
 {{- if .Values.otel.metrics.telemetry.logs.enabled }}
