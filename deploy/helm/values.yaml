@@ -609,7 +609,7 @@ otel:
     journal: true
 
     # If true, the container logs will be collected
-    # Log collection uses `filelog` OTEL receiver under the hood
+    # Log collection uses `file_log` OTEL receiver under the hood
     # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
     # Each log has following attributes so they can be filtered out by them using filter configuration:
     #   * sw.k8s.log.type=container
@@ -728,7 +728,7 @@ otel:
     # By default: affinity is set to run the DaemonSet on linux amd64.
     affinity: {}
 
-    # Properties that can be configured on filelog receiver. For full description of properties
+    # Properties that can be configured on file_log receiver. For full description of properties
     # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver
     receiver:
       start_at: end
@@ -1249,7 +1249,7 @@ operator:
       # Currently only Java and Python supported, other languages are TBD
       java:
         repository: "solarwinds/autoinstrumentation-java"
-        tag: "3.1.4"
+        tag: "3.2.0"
       nodejs:
         repository: ""
         tag: ""
@@ -1408,3 +1408,8 @@ migrations:
   # In 5.x.x the discovery collector is no longer managed by OpenTelemetryOperator. To avoid conflicts the old CR has to be removed.
   cleanup_discovery_collector:
     enabled: true
+
+# Configuration for discovery of potential SWO integrations
+entityDiscovery:
+  # Define whether discovery is enabled or not
+  enabled: true

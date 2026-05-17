@@ -5,7 +5,7 @@ Metrics config should match snapshot when using default values:
         forward/metric-exporter: {}
         forward/prometheus: {}
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -396,7 +396,7 @@ Metrics config should match snapshot when using default values:
           - k8s.daemonset.name
           - k8s.replicaset.name
           - severity
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             labels:
@@ -1472,7 +1472,7 @@ Metrics config should match snapshot when using default values:
           metric_statements:
           - context: metric
             statements:
-            - set(name, Format("%s_%s", [name, ToLowerCase(resource.attributes["severity"])]))
+            - set(name, Format("%s_%s", [metric.name, ToLowerCase(resource.attributes["severity"])]))
               where resource.attributes["severity"] != nil
         transform/unify_node_attribute:
           metric_statements:
@@ -1666,7 +1666,7 @@ Metrics config should match snapshot when using default values:
         pipelines:
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
@@ -1715,7 +1715,7 @@ Metrics config should match snapshot when using default values:
             - metricstransform/aggregate_pod_level
             - groupbyattrs/all
             - resource/metrics
-            - k8sattributes
+            - k8s_attributes
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
             - filter/remove_temporary_metrics
             receivers:

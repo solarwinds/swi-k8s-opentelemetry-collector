@@ -694,7 +694,7 @@ logs/stateevents-entities:
     - logdedup/solarwindsentity
     - batch/stateevents
   exporters:
-    - otlp
+    - otlp_grpc
 
 logs/stateevents-relationships:
   receivers:
@@ -707,7 +707,7 @@ logs/stateevents-relationships:
     - logdedup/solarwindsentity
     - batch/stateevents
   exporters:
-    - otlp
+    - otlp_grpc
 
 metrics/discovery-custom:
   receivers:

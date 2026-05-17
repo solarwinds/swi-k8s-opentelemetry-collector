@@ -325,7 +325,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
                 type: KubernetesCommunicatesWith
           source_prefix: source.
       exporters:
-        otlp:
+        otlp_grpc:
           endpoint: ${OTEL_ENVOY_ADDRESS}
           headers:
             Authorization: Bearer ${SOLARWINDS_API_TOKEN}
@@ -462,7 +462,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - dest.k8s.namespace.name
           - dest.k8s.service.name
           - dest.sw.server.address.fqdn
-        k8sattributes:
+        k8s_attributes:
           auth_type: serviceAccount
           extract:
             metadata:
@@ -763,7 +763,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
         pipelines:
           logs/stateevents-entities:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-entity-state-events
@@ -775,7 +775,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - solarwindsentity/istio-workload-service
           logs/stateevents-relationships:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/keep-relationship-state-events
@@ -787,11 +787,11 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - solarwindsentity/istio-workload-service
           metrics:
             exporters:
-            - otlp
+            - otlp_grpc
             processors:
             - memory_limiter
             - filter/histograms
-            - k8sattributes
+            - k8s_attributes
             - filter/remove_temporary_metrics
             - transform/scope
             - batch/metrics
