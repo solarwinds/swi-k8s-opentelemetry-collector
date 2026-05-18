@@ -1363,6 +1363,49 @@ Cluster filter should match snapshot with combined exclude filters:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -1707,6 +1750,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             - filter/namespaces_logs
             receivers:
             - file_log
@@ -3247,6 +3291,49 @@ Cluster filter should match snapshot with combined include filters:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -3591,6 +3678,7 @@ Cluster filter should match snapshot with combined include filters:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             - filter/namespaces_logs
             receivers:
             - file_log
@@ -5133,6 +5221,49 @@ Cluster filter should match snapshot with exclude_namespaces:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -5477,6 +5608,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             - filter/namespaces_logs
             receivers:
             - file_log
@@ -7019,6 +7151,49 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -7363,6 +7538,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             - filter/namespaces_logs
             receivers:
             - file_log
@@ -8903,6 +9079,49 @@ Cluster filter should match snapshot with include_namespaces:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -9247,6 +9466,7 @@ Cluster filter should match snapshot with include_namespaces:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             - filter/namespaces_logs
             receivers:
             - file_log
@@ -10789,6 +11009,49 @@ Cluster filter should match snapshot with include_namespaces_regex:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -11133,6 +11396,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             - filter/namespaces_logs
             receivers:
             - file_log
@@ -12667,6 +12931,49 @@ Custom logs filter with new syntax:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -13011,6 +13318,7 @@ Custom logs filter with new syntax:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             - filter/logs
             receivers:
             - file_log
@@ -14547,6 +14855,49 @@ Custom logs filter with old syntax:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -14973,6 +15324,7 @@ Custom logs filter with old syntax:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             receivers:
             - file_log
           logs/journal:
@@ -16501,6 +16853,49 @@ Node collector config should match snapshot when autodiscovery is disabled:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -16785,6 +17180,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             receivers:
             - file_log
           logs/journal:
@@ -18310,6 +18706,49 @@ Node collector config should match snapshot when fargate is enabled:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -18599,6 +19038,7 @@ Node collector config should match snapshot when fargate is enabled:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             receivers:
             - file_log
           logs/journal:
@@ -20095,6 +20535,49 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -20323,6 +20806,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             receivers:
             - file_log
           logs/journal:
@@ -21816,6 +22300,49 @@ Node collector config should match snapshot when using default values:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -22160,6 +22687,7 @@ Node collector config should match snapshot when using default values:
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             receivers:
             - file_log
           logs/journal:
