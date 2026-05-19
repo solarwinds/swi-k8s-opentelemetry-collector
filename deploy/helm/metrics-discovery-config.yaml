@@ -204,6 +204,9 @@ service:
     logs:
       level: {{ .Values.aws_fargate.metrics.autodiscovery.telemetry.logs.level }}
 {{- end }}
+    # Disable internal tracing to prevent evictedQueue span event accumulation (memory leak)
+    traces:
+      level: none
 {{- if .Values.aws_fargate.metrics.autodiscovery.telemetry.metrics.enabled }}
     metrics:
       readers:

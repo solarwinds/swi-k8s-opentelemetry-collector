@@ -776,6 +776,9 @@ service:
     logs:
       level: {{ .Values.otel.gateway.telemetry.logs.level }}
 {{- end }}
+    # Disable internal tracing to prevent evictedQueue span event accumulation (memory leak)
+    traces:
+      level: none
 {{- if .Values.otel.gateway.telemetry.metrics.enabled }}
     metrics:
       readers:
