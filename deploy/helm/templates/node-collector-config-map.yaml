@@ -10,5 +10,7 @@ metadata:
 {{ include "common.annotations" . | indent 4 }}
 data:
   logs.config: |
-{{ tpl (.Files.Get "node-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
+{{- $main := tpl (.Files.Get "node-collector-config.yaml") . | fromYaml }}
+{{- $extra := tpl (.Files.Get "node-collector-config-entity-discovery.yaml") . | fromYaml }}
+{{ merge $main $extra | toYaml | indent 8 }}
 {{- end }}
