@@ -131,3 +131,21 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Events config should contain Job condition transform
+    template: events-collector-config-map.yaml
+    asserts:
+      - matchRegex:
+          path: data["events.config"]
+          pattern: 'log\.body\["kind"\] == "Job"'
+      - matchRegex:
+          path: data["events.config"]
+          pattern: 'set\(resource\.attributes\["k8s\.job\.condition"\], "Active"\)'
+      - matchRegex:
+          path: data["events.config"]
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Complete"\) where.*"type"\]\s*== "Complete".*"status"\]\s*== "True"'
+      - matchRegex:
+          path: data["events.config"]
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Failed"\) where.*\[0\].*"type"\]\s*== "Failed".*"status"\]\s*== "True"'
+      - matchRegex:
+          path: data["events.config"]
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Failed"\) where.*\[1\].*"type"\]\s*== "Failed".*"status"\]\s*== "True"'
