@@ -139,13 +139,19 @@ tests:
           pattern: 'log\.body\["kind"\] == "Job"'
       - matchRegex:
           path: data["events.config"]
-          pattern: 'set\(resource\.attributes\["k8s\.job\.condition"\], "Active"\)'
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Active"\) where.*completionTime.*== nil.*active.*!= nil.*active.*> 0'
       - matchRegex:
           path: data["events.config"]
-          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Complete"\) where.*"type"\]\s*== "Complete".*"status"\]\s*== "True"'
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Failed"\) where.*completionTime.*== nil.*failed.*!= nil.*failed.*> 0'
       - matchRegex:
           path: data["events.config"]
-          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Failed"\) where.*\[0\].*"type"\]\s*== "Failed".*"status"\]\s*== "True"'
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Complete"\) where.*status.*succeeded.*!= nil.*spec.*completions.*== nil.*succeeded.*> 0'
       - matchRegex:
           path: data["events.config"]
-          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Failed"\) where.*\[1\].*"type"\]\s*== "Failed".*"status"\]\s*== "True"'
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Complete"\) where.*status.*succeeded.*!= nil.*spec.*completions.*!= nil.*succeeded.*>=.*completions'
+      - matchRegex:
+          path: data["events.config"]
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Failed"\) where.*completionTime.*== nil.*uncountedTerminatedPods.*failed.*!= nil.*Len\(.*uncountedTerminatedPods.*failed.*\).* > 0'
+      - matchRegex:
+          path: data["events.config"]
+          pattern: '(?s)set\(resource\.attributes\["k8s\.job\.condition"\], "Complete"\) where.*completionTime.*!= nil'

@@ -469,13 +469,23 @@ Cluster filter should match snapshot with combined exclude filters:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1605,13 +1615,23 @@ Cluster filter should match snapshot with combined include filters:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -2741,13 +2761,23 @@ Cluster filter should match snapshot with exclude_namespaces:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -3881,13 +3911,23 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -5017,13 +5057,23 @@ Cluster filter should match snapshot with include_namespaces:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -6154,13 +6204,23 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -7280,13 +7340,23 @@ Custom events filter with new syntax:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -8407,13 +8477,23 @@ Custom events filter with old syntax:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -9527,13 +9607,23 @@ Events config should match snapshot when using default values:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -10514,13 +10604,23 @@ Events config should not contain manifest collection pipeline when disabled:
           - conditions:
             - log.body["kind"] == "Job"
             statements:
-            - set(resource.attributes["k8s.job.condition"], "Active")
-            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"]
-              == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"]
-              == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"]
-              == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"]
+              != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"]
+              >= log.body["spec"]["completions"]
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil
+              and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["active"] != nil and log.body["status"]["active"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"]
+              == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"]
+              > 0
+            - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"]
+              != nil
         transform/manifest:
           error_mode: ignore
           log_statements:

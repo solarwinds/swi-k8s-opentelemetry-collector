@@ -435,10 +435,12 @@ processors:
       - conditions:
           - log.body["kind"] == "Job"
         statements:
-          - set(resource.attributes["k8s.job.condition"], "Active")
-          - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["conditions"][0]["type"] == "Complete" and log.body["status"]["conditions"][0]["status"] == "True"
-          - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][0]["type"] == "Failed" and log.body["status"]["conditions"][0]["status"] == "True"
-          - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["conditions"][1]["type"] == "Failed" and log.body["status"]["conditions"][1]["status"] == "True"
+          - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"] != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"] > 0
+          - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"] != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"] >= log.body["spec"]["completions"]
+          - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"] == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
+          - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"] == nil and log.body["status"]["active"] != nil and log.body["status"]["active"] > 0
+          - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"] == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"] > 0
+          - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"] != nil
 
   transform/remove_deployed_by_collector_label_if_from_different_namespace:
     error_mode: ignore
