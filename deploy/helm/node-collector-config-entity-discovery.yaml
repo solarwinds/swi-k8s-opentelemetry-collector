@@ -1,0 +1,180 @@
+{{- if .Values.entityDiscovery.enabled }}
+receivers:
+  hostmetrics/entity-discovery:
+    collection_interval: 30s
+    root_path: /hostfs
+    scrapers:
+      process:
+        mute_process_all_errors: false
+        include:
+          names: ["^python\\d?$", "^php$", "^java$", "^dotnet$", "^ruby$", "^go$", "^node$"]
+          match_type: regexp
+        metrics:
+          process.cpu.time:
+            enabled: true
+          process.disk.io:
+            enabled: false
+          process.memory.usage:
+            enabled: false
+          process.memory.virtual:
+            enabled: false
+        resource_attributes:
+          process.cgroup:
+            enabled: true   # contains container ID — the pod correlation key
+          process.executable.name:
+            enabled: true   # the process name
+          process.pid:
+            enabled: false
+          process.parent_pid:
+            enabled: false
+          process.executable.path:
+            enabled: false
+          process.command:
+            enabled: false
+          process.command_line:
+            enabled: false
+          process.owner:
+            enabled: false
+
+processors:
+  transform/entity-discovery-extract-container-id:
+    error_mode: ignore
+    metric_statements:
+      # parse and set container.id
+      - conditions:
+          - resource.attributes["process.cgroup"] != nil
+        statements:
+          # containerd format: cri-containerd-<64-char hex id>.scope
+          # Docker/OCI format: trailing 64-char hex
+          # OpenShift format: crio-<64-char hex id>.scope
+          - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"], "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+          - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"]) where resource.cache["regex_group"]["id_containerd"] != ""
+          - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"]) where resource.cache["regex_group"]["id_docker"] != ""
+          - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"]) where resource.cache["regex_group"]["id_crio"] != ""
+
+  transform/entity-discovery-set-discovery-attributes:
+    error_mode: ignore
+    metric_statements:
+      # set sw.discovery.apm.language for process names matching known APM language runtimes
+      - conditions:
+          - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+        statements:
+          - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+      # set sw.discovery.apm.language for the rest of the languages
+      - conditions:
+          - resource.attributes["sw.discovery.apm.language"] == nil
+        statements:
+          - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"], "^python\\d?$")
+          - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"] == "node"
+      # misc
+      - statements:
+          - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+          - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+          - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+          # only linux is supported
+          - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+          # remove unnecessary attributes that would prevent deduplication by the groupbyattrs processor
+          - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
+
+  filter/entity-discovery-has-container-id:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'resource.attributes["container.id"] == nil'
+
+  filter/entity-discovery-has-pod-uid:
+    error_mode: ignore
+    metrics:
+      datapoint:
+        - 'resource.attributes["k8s.pod.uid"] == nil'
+
+  k8s_attributes/entity-discovery:
+    auth_type: serviceAccount
+    passthrough: false
+    extract:
+      metadata:
+        - k8s.pod.uid
+        # k8s.container.name must be listed here for the pod attributes extraction to work
+        - k8s.container.name
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: container.id  # matched against running container IDs via K8s API
+
+  groupbyattrs/entity-discovery:
+    keys:
+      - sw.discovery.id
+      - sw.discovery.source
+      - sw.discovery.apm.pod.uid
+      - sw.discovery.apm.language
+      - sw.discovery.apm.os.type
+      - k8s.pod.uid
+
+connectors:
+  solarwindsentity/entity-discovery-discovered-apm-service-instance:
+    schema:
+      entities:
+        - entity: DiscoveredApmServiceInstance
+          id:
+            - sw.discovery.apm.language
+            - sw.discovery.apm.pod.uid
+            - sw.discovery.id
+          attributes:
+            - sw.discovery.source
+            - sw.discovery.apm.os.type
+      events:
+        entities:
+          - entity: "DiscoveredApmServiceInstance"
+            context: "metric"
+            action: "update"
+
+  solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+    schema:
+      entities:
+        - entity: DiscoveredApmServiceInstance
+          id:
+            - sw.discovery.apm.language
+            - sw.discovery.apm.pod.uid
+            - sw.discovery.id
+        - entity: KubernetesPodInstance
+          id:
+            - k8s.pod.uid
+      events:
+        relationships:
+          - type: DiscoveredBy
+            source_entity: KubernetesPodInstance
+            destination_entity: DiscoveredApmServiceInstance
+            context: "metric"
+            action: "update"
+
+service:
+  pipelines:
+    metrics/entity-discovery:
+      receivers:
+        - hostmetrics/entity-discovery
+      processors:
+        - memory_limiter
+        - transform/entity-discovery-extract-container-id
+        - filter/entity-discovery-has-container-id
+        - k8s_attributes/entity-discovery
+        - filter/entity-discovery-has-pod-uid
+        - transform/entity-discovery-set-discovery-attributes
+        - groupbyattrs/entity-discovery
+      exporters:
+        - solarwindsentity/entity-discovery-discovered-apm-service-instance
+        - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+    logs/entity-discovery-instances:
+      receivers:
+        - solarwindsentity/entity-discovery-discovered-apm-service-instance
+      processors:
+        - batch/logs
+      exporters:
+        - otlp_grpc
+    logs/entity-discovery-relations:
+      receivers:
+        - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+      processors:
+        - batch/logs
+      exporters:
+        - otlp_grpc
+{{- end }}
