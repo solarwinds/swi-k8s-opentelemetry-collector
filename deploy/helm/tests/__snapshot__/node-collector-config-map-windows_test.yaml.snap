@@ -1329,6 +1329,49 @@ Node collector config for windows nodes should match snapshot when using default
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -1666,6 +1709,7 @@ Node collector config for windows nodes should match snapshot when using default
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             receivers:
             - file_log
           logs/stateevents-entities:
@@ -3174,6 +3218,49 @@ Node collector config for windows nodes should match snapshot when using legacy 
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        swootelentityref/container_logs:
+          action: insert
+          entity_refs:
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.container.name
+            type: KubernetesContainer
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.pod.name
+            type: KubernetesPod
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.node.name
+            type: KubernetesNode
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.deployment.name
+            type: KubernetesDeployment
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.statefulset.name
+            type: KubernetesStatefulSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.daemonset.name
+            type: KubernetesDaemonSet
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.job.name
+            type: KubernetesJob
+          - id_keys:
+            - sw.k8s.cluster.uid
+            - k8s.namespace.name
+            - k8s.cronjob.name
+            type: KubernetesCronJob
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -3593,6 +3680,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - groupbyattrs/common-all
             - resource/container
             - k8s_attributes
+            - swootelentityref/container_logs
             receivers:
             - file_log
           logs/stateevents-entities:
