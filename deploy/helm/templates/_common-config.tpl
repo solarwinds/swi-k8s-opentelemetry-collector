@@ -614,10 +614,6 @@ resource/metrics:
       from_attribute: job_name
       action: insert      
 
-    - key: k8s.job.condition
-      from_attribute: job_condition
-      action: insert      
-
     # CronJob
     - key: k8s.cronjob.name
       from_attribute: cronjob
