@@ -435,12 +435,10 @@ processors:
       - conditions:
           - log.body["kind"] == "Job"
         statements:
-          - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"] != nil and log.body["spec"]["completions"] == nil and log.body["status"]["succeeded"] > 0
-          - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["succeeded"] != nil and log.body["spec"]["completions"] != nil and log.body["status"]["succeeded"] >= log.body["spec"]["completions"]
-          - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"] == nil and log.body["status"]["uncountedTerminatedPods"]["failed"] != nil and Len(log.body["status"]["uncountedTerminatedPods"]["failed"]) > 0
-          - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["completionTime"] == nil and log.body["status"]["active"] != nil and log.body["status"]["active"] > 0
-          - set(resource.attributes["k8s.job.condition"], "Failed") where log.body["status"]["completionTime"] == nil and log.body["status"]["failed"] != nil and log.body["status"]["failed"] > 0
-          - set(resource.attributes["k8s.job.condition"], "Complete") where log.body["status"]["completionTime"] != nil
+          - delete_key(resource.attributes, "k8s.job.condition")
+          - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+          - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"] == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+          - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"] != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"] == nil
 
   transform/remove_deployed_by_collector_label_if_from_different_namespace:
     error_mode: ignore
