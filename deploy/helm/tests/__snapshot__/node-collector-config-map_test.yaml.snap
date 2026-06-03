@@ -661,19 +661,12 @@ Cluster filter should match snapshot with combined exclude filters:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -705,7 +698,7 @@ Cluster filter should match snapshot with combined exclude filters:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -1139,7 +1132,7 @@ Cluster filter should match snapshot with combined exclude filters:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -1153,7 +1146,7 @@ Cluster filter should match snapshot with combined exclude filters:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -1167,6 +1160,13 @@ Cluster filter should match snapshot with combined exclude filters:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -1775,7 +1775,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1787,7 +1787,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1825,7 +1825,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -1847,7 +1847,7 @@ Cluster filter should match snapshot with combined exclude filters:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -1860,8 +1860,8 @@ Cluster filter should match snapshot with combined exclude filters:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -2596,19 +2596,12 @@ Cluster filter should match snapshot with combined include filters:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -2640,7 +2633,7 @@ Cluster filter should match snapshot with combined include filters:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -3074,7 +3067,7 @@ Cluster filter should match snapshot with combined include filters:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -3088,7 +3081,7 @@ Cluster filter should match snapshot with combined include filters:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -3102,6 +3095,13 @@ Cluster filter should match snapshot with combined include filters:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -3710,7 +3710,7 @@ Cluster filter should match snapshot with combined include filters:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3722,7 +3722,7 @@ Cluster filter should match snapshot with combined include filters:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3760,7 +3760,7 @@ Cluster filter should match snapshot with combined include filters:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -3782,7 +3782,7 @@ Cluster filter should match snapshot with combined include filters:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -3795,8 +3795,8 @@ Cluster filter should match snapshot with combined include filters:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -4533,19 +4533,12 @@ Cluster filter should match snapshot with exclude_namespaces:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -4577,7 +4570,7 @@ Cluster filter should match snapshot with exclude_namespaces:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -5011,7 +5004,7 @@ Cluster filter should match snapshot with exclude_namespaces:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -5025,7 +5018,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -5039,6 +5032,13 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -5647,7 +5647,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -5659,7 +5659,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -5697,7 +5697,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -5719,7 +5719,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -5732,8 +5732,8 @@ Cluster filter should match snapshot with exclude_namespaces:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -6470,19 +6470,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -6514,7 +6507,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -6948,7 +6941,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -6962,7 +6955,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -6976,6 +6969,13 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -7584,7 +7584,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -7596,7 +7596,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -7634,7 +7634,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -7656,7 +7656,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -7669,8 +7669,8 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -8405,19 +8405,12 @@ Cluster filter should match snapshot with include_namespaces:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -8449,7 +8442,7 @@ Cluster filter should match snapshot with include_namespaces:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -8883,7 +8876,7 @@ Cluster filter should match snapshot with include_namespaces:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -8897,7 +8890,7 @@ Cluster filter should match snapshot with include_namespaces:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -8911,6 +8904,13 @@ Cluster filter should match snapshot with include_namespaces:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -9519,7 +9519,7 @@ Cluster filter should match snapshot with include_namespaces:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -9531,7 +9531,7 @@ Cluster filter should match snapshot with include_namespaces:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -9569,7 +9569,7 @@ Cluster filter should match snapshot with include_namespaces:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -9591,7 +9591,7 @@ Cluster filter should match snapshot with include_namespaces:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -9604,8 +9604,8 @@ Cluster filter should match snapshot with include_namespaces:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -10342,19 +10342,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -10386,7 +10379,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -10820,7 +10813,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -10834,7 +10827,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -10848,6 +10841,13 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -11456,7 +11456,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -11468,7 +11468,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -11506,7 +11506,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -11528,7 +11528,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -11541,8 +11541,8 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -12271,19 +12271,12 @@ Custom logs filter with new syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -12315,7 +12308,7 @@ Custom logs filter with new syntax:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -12749,7 +12742,7 @@ Custom logs filter with new syntax:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -12763,7 +12756,7 @@ Custom logs filter with new syntax:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -12777,6 +12770,13 @@ Custom logs filter with new syntax:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -13385,7 +13385,7 @@ Custom logs filter with new syntax:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -13397,7 +13397,7 @@ Custom logs filter with new syntax:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -13434,7 +13434,7 @@ Custom logs filter with new syntax:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -13456,7 +13456,7 @@ Custom logs filter with new syntax:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -13469,8 +13469,8 @@ Custom logs filter with new syntax:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -14202,19 +14202,12 @@ Custom logs filter with old syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -14246,7 +14239,7 @@ Custom logs filter with old syntax:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -14680,7 +14673,7 @@ Custom logs filter with old syntax:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -14694,7 +14687,7 @@ Custom logs filter with old syntax:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -14708,6 +14701,13 @@ Custom logs filter with old syntax:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -15397,7 +15397,7 @@ Custom logs filter with old syntax:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -15409,7 +15409,7 @@ Custom logs filter with old syntax:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -15446,7 +15446,7 @@ Custom logs filter with old syntax:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -15468,7 +15468,7 @@ Custom logs filter with old syntax:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -15481,8 +15481,8 @@ Custom logs filter with old syntax:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -16207,19 +16207,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -16251,7 +16244,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -16685,7 +16678,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -16699,7 +16692,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -16713,6 +16706,13 @@ Node collector config should match snapshot when autodiscovery is disabled:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -17260,7 +17260,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -17272,7 +17272,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -17309,7 +17309,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -17331,7 +17331,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -17344,8 +17344,8 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -18067,19 +18067,12 @@ Node collector config should match snapshot when fargate is enabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -18111,7 +18104,7 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -18545,7 +18538,7 @@ Node collector config should match snapshot when fargate is enabled:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -18559,7 +18552,7 @@ Node collector config should match snapshot when fargate is enabled:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -18573,6 +18566,13 @@ Node collector config should match snapshot when fargate is enabled:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -19125,7 +19125,7 @@ Node collector config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -19137,7 +19137,7 @@ Node collector config should match snapshot when fargate is enabled:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -19174,7 +19174,7 @@ Node collector config should match snapshot when fargate is enabled:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -19196,7 +19196,7 @@ Node collector config should match snapshot when fargate is enabled:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/not-relationship-state-events-preparation:
@@ -19903,19 +19903,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -19947,7 +19940,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -20381,7 +20374,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -20395,7 +20388,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -20409,6 +20402,13 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -20900,7 +20900,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -20912,7 +20912,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -20937,7 +20937,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -20959,7 +20959,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/not-relationship-state-events-preparation:
@@ -21675,19 +21675,12 @@ Node collector config should match snapshot when using default values:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -21719,7 +21712,7 @@ Node collector config should match snapshot when using default values:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -22153,7 +22146,7 @@ Node collector config should match snapshot when using default values:
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -22167,7 +22160,7 @@ Node collector config should match snapshot when using default values:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -22181,6 +22174,13 @@ Node collector config should match snapshot when using default values:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -22788,7 +22788,7 @@ Node collector config should match snapshot when using default values:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -22800,7 +22800,7 @@ Node collector config should match snapshot when using default values:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -22837,7 +22837,7 @@ Node collector config should match snapshot when using default values:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -22859,7 +22859,7 @@ Node collector config should match snapshot when using default values:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -22872,8 +22872,8 @@ Node collector config should match snapshot when using default values:
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor

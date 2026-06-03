@@ -74,7 +74,7 @@ processors:
 
   {{- include "common-config.transform-node-attributes" . | nindent 2 }}
 
-  metricstransform/preprocessing:
+  metrics_transform/preprocessing:
     transforms:
       {{- include "common-config.metricstransform-preprocessing-cadvisor" . | nindent 6 }}
 
@@ -301,7 +301,7 @@ processors:
           - from: resource_attribute
             name: k8s.namespace.name
 
-  metricstransform/rename-following-otel-semantics:
+  metrics_transform/rename-following-otel-semantics:
     transforms:
 {{ include "common-config.metricstransform-rename" "k8s." | indent 6 }}
 
@@ -733,8 +733,8 @@ service:
         - attributes/remove_prometheus_attributes
         - attributes/unify_node_attribute
         - transform/unify_node_attribute
-        - metricstransform/rename-following-otel-semantics
-        - metricstransform/preprocessing
+        - metrics_transform/rename-following-otel-semantics
+        - metrics_transform/preprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
         - cumulativetodelta/cadvisor

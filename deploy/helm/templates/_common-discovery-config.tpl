@@ -5,7 +5,7 @@ filter/metrics-discovery:
 {{ toYaml .Values.otel.metrics.autodiscovery.prometheusEndpoints.filter | indent 4 }}
 {{- end }}
 
-logdedup/solarwindsentity: {}
+log_dedup/solarwindsentity: {}
 
 filter/keep-entity-state-events:
   logs:
@@ -17,7 +17,7 @@ filter/keep-relationship-state-events:
     log_record:
       - not(attributes["otel.entity.event.type"] == "entity_relationship_state")
 
-metricstransform/rename-following-otel-semantics/discovery:
+metrics_transform/rename-following-otel-semantics/discovery:
   transforms:
 {{ include "common-config.metricstransform-rename" .Values.otel.metrics.autodiscovery.prefix | indent 4 }}
 
@@ -47,7 +47,7 @@ metricstransform/rename-following-otel-semantics/discovery:
   "workqueue_depth"
   "workqueue_queue_duration_seconds"
 }}
-metricstransform/copy-required-metrics:
+metrics_transform/copy-required-metrics:
   transforms:
   {{- $root := . }}
   {{- range $index, $metric := $arrayOfRequiredMetrics }}
@@ -73,7 +73,7 @@ deltatorate/discovery:
 {{- end }}
 {{- end }}
 
-metricstransform/istio-metrics:
+metrics_transform/istio-metrics:
   transforms:
     - include: {{ .Values.otel.metrics.autodiscovery.prefix }}istio_request_bytes_sum
       action: insert
@@ -585,10 +585,10 @@ metrics/discovery-scrape:
     - filter/metrics-discovery
 {{- end }}
 {{- if $context.Values.otel.metrics.autodiscovery.prefix }}
-    - metricstransform/rename-following-otel-semantics/discovery
+    - metrics_transform/rename-following-otel-semantics/discovery
 {{- end }}
 {{- if ne $context.Values.otel.metrics.autodiscovery.prefix "k8s." }}
-    - metricstransform/copy-required-metrics
+    - metrics_transform/copy-required-metrics
 {{- end }}
   exporters:
     - routing/discovered_metrics
@@ -602,7 +602,7 @@ metrics/discovery-istio:
     - swok8sworkloadtype/istio
     - transform/istio-metrics
     - transform/istio-metric-datapoints
-    - metricstransform/istio-metrics
+    - metrics_transform/istio-metrics
     - cumulativetodelta/istio-metrics
     - deltatorate/istio-metrics
     - metricsgeneration/istio-metrics
@@ -691,7 +691,7 @@ logs/stateevents-entities:
     - memory_limiter
     - filter/keep-entity-state-events
     - transform/scope
-    - logdedup/solarwindsentity
+    - log_dedup/solarwindsentity
     - batch/stateevents
   exporters:
     - otlp_grpc
@@ -704,7 +704,7 @@ logs/stateevents-relationships:
     - memory_limiter
     - filter/keep-relationship-state-events
     - transform/scope
-    - logdedup/solarwindsentity
+    - log_dedup/solarwindsentity
     - batch/stateevents
   exporters:
     - otlp_grpc

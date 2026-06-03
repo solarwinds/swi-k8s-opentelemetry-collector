@@ -496,12 +496,12 @@ Gateway config should match snapshot when using default values:
               name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_percentage: 80
           spike_limit_percentage: 25
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -803,7 +803,7 @@ Gateway config should match snapshot when using default values:
             processors:
             - memory_limiter
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch
             receivers:
             - solarwindsentity/obi-entities
@@ -813,7 +813,7 @@ Gateway config should match snapshot when using default values:
             processors:
             - memory_limiter
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch
             receivers:
             - solarwindsentity/obi-relationships
@@ -838,7 +838,7 @@ Gateway config should match snapshot when using default values:
             processors:
             - memory_limiter
             - k8s_attributes
-            - metricstransform/rename-following-otel-semantics
+            - metrics_transform/rename-following-otel-semantics
             - attributes/clean-attributes-otlp-metrics
             - resource/clean-temporary-attributes
             - resource
