@@ -14,6 +14,8 @@ data:
   OTEL_ENVOY_ADDRESS_TLS_INSECURE: {{ quote .Values.otel.tls_insecure }}
   MANIFEST_VERSION: {{ quote .Chart.Version }}
   APP_VERSION: {{ quote .Chart.AppVersion }}
+  # Disable exemplar storage to prevent unbounded FixedSizeReservoir growth (memory leak)
+  OTEL_METRICS_EXEMPLAR_FILTER: "always_off"
 {{ if .Values.otel.https_proxy_url }}
   HTTPS_PROXY: {{ quote .Values.otel.https_proxy_url }}
 {{ end }}
