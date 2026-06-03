@@ -79,6 +79,9 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
+          - mountPath: /hostfs/proc
+            name: hostproc
+            readOnly: true
           - mountPath: /var/log/pods
             name: varlogpods
             readOnly: true
@@ -129,6 +132,10 @@ DaemonSet spec should match snapshot when ebpfNetworkMonitoring is enabled:
       - effect: NoSchedule
         operator: Exists
     volumes:
+      - hostPath:
+          path: /proc
+          type: Directory
+        name: hostproc
       - hostPath:
           path: /var/log/pods
         name: varlogpods
@@ -235,6 +242,9 @@ DaemonSet spec should match snapshot when openshift is enabled:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
+          - mountPath: /hostfs/proc
+            name: hostproc
+            readOnly: true
           - mountPath: /var/log/pods
             name: varlogpods
             readOnly: true
@@ -292,6 +302,10 @@ DaemonSet spec should match snapshot when openshift is enabled:
       - effect: NoSchedule
         operator: Exists
     volumes:
+      - hostPath:
+          path: /proc
+          type: Directory
+        name: hostproc
       - hostPath:
           path: /var/log/pods
         name: varlogpods
@@ -398,6 +412,9 @@ DaemonSet spec should match snapshot when overriding cluster ID:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
+          - mountPath: /hostfs/proc
+            name: hostproc
+            readOnly: true
           - mountPath: /var/log/pods
             name: varlogpods
             readOnly: true
@@ -448,6 +465,10 @@ DaemonSet spec should match snapshot when overriding cluster ID:
       - effect: NoSchedule
         operator: Exists
     volumes:
+      - hostPath:
+          path: /proc
+          type: Directory
+        name: hostproc
       - hostPath:
           path: /var/log/pods
         name: varlogpods
@@ -554,6 +575,9 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
+          - mountPath: /hostfs/proc
+            name: hostproc
+            readOnly: true
           - mountPath: /var/log/pods
             name: varlogpods
             readOnly: true
@@ -604,6 +628,10 @@ DaemonSet spec should match snapshot when setting cluster name with spaces:
       - effect: NoSchedule
         operator: Exists
     volumes:
+      - hostPath:
+          path: /proc
+          type: Directory
+        name: hostproc
       - hostPath:
           path: /var/log/pods
         name: varlogpods
@@ -710,6 +738,9 @@ DaemonSet spec should match snapshot when using default values:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
+          - mountPath: /hostfs/proc
+            name: hostproc
+            readOnly: true
           - mountPath: /var/log/pods
             name: varlogpods
             readOnly: true
@@ -760,6 +791,10 @@ DaemonSet spec should match snapshot when using default values:
       - effect: NoSchedule
         operator: Exists
     volumes:
+      - hostPath:
+          path: /proc
+          type: Directory
+        name: hostproc
       - hostPath:
           path: /var/log/pods
         name: varlogpods

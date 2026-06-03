@@ -172,6 +172,11 @@ spec:
           resources:
 {{ toYaml .Values.otel.logs.resources | indent 12 }}
           volumeMounts:
+{{- if .Values.entityDiscovery.enabled }}
+            - mountPath: /hostfs/proc
+              name: hostproc
+              readOnly: true
+{{- end }}
             - mountPath: /var/log/pods
               name: varlogpods
               readOnly: true
@@ -197,6 +202,12 @@ spec:
               mountPath: {{ .Values.otel.node_collector.sending_queue.persistent_storage.directory }}
 {{- end }}
       volumes:
+{{- if .Values.entityDiscovery.enabled }}
+        - name: hostproc
+          hostPath:
+            path: /proc
+            type: Directory
+{{- end }}
         - name: varlogpods
           hostPath:
             path: /var/log/pods

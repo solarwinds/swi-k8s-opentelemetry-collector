@@ -19,6 +19,40 @@ Cluster filter should match snapshot with combined exclude filters:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -487,6 +521,16 @@ Cluster filter should match snapshot with combined exclude filters:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -622,6 +666,14 @@ Cluster filter should match snapshot with combined exclude filters:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -661,6 +713,17 @@ Cluster filter should match snapshot with combined exclude filters:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -1363,6 +1426,40 @@ Cluster filter should match snapshot with combined exclude filters:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -1503,6 +1600,48 @@ Cluster filter should match snapshot with combined exclude filters:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -1710,6 +1849,20 @@ Cluster filter should match snapshot with combined exclude filters:
             - filter/namespaces_logs
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -1801,6 +1954,20 @@ Cluster filter should match snapshot with combined exclude filters:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -1909,6 +2076,40 @@ Cluster filter should match snapshot with combined include filters:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -2377,6 +2578,16 @@ Cluster filter should match snapshot with combined include filters:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -2508,6 +2719,14 @@ Cluster filter should match snapshot with combined include filters:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -2547,6 +2766,17 @@ Cluster filter should match snapshot with combined include filters:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -3249,6 +3479,40 @@ Cluster filter should match snapshot with combined include filters:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -3389,6 +3653,48 @@ Cluster filter should match snapshot with combined include filters:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -3596,6 +3902,20 @@ Cluster filter should match snapshot with combined include filters:
             - filter/namespaces_logs
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -3687,6 +4007,20 @@ Cluster filter should match snapshot with combined include filters:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -3795,6 +4129,40 @@ Cluster filter should match snapshot with exclude_namespaces:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -4263,6 +4631,16 @@ Cluster filter should match snapshot with exclude_namespaces:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -4396,6 +4774,14 @@ Cluster filter should match snapshot with exclude_namespaces:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -4435,6 +4821,17 @@ Cluster filter should match snapshot with exclude_namespaces:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -5137,6 +5534,40 @@ Cluster filter should match snapshot with exclude_namespaces:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -5277,6 +5708,48 @@ Cluster filter should match snapshot with exclude_namespaces:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -5484,6 +5957,20 @@ Cluster filter should match snapshot with exclude_namespaces:
             - filter/namespaces_logs
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -5575,6 +6062,20 @@ Cluster filter should match snapshot with exclude_namespaces:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -5683,6 +6184,40 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -6151,6 +6686,16 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -6284,6 +6829,14 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -6323,6 +6876,17 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -7025,6 +7589,40 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -7165,6 +7763,48 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -7372,6 +8012,20 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - filter/namespaces_logs
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -7463,6 +8117,20 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -7571,6 +8239,40 @@ Cluster filter should match snapshot with include_namespaces:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -8039,6 +8741,16 @@ Cluster filter should match snapshot with include_namespaces:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -8170,6 +8882,14 @@ Cluster filter should match snapshot with include_namespaces:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -8209,6 +8929,17 @@ Cluster filter should match snapshot with include_namespaces:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -8911,6 +9642,40 @@ Cluster filter should match snapshot with include_namespaces:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -9051,6 +9816,48 @@ Cluster filter should match snapshot with include_namespaces:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -9258,6 +10065,20 @@ Cluster filter should match snapshot with include_namespaces:
             - filter/namespaces_logs
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -9349,6 +10170,20 @@ Cluster filter should match snapshot with include_namespaces:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -9457,6 +10292,40 @@ Cluster filter should match snapshot with include_namespaces_regex:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -9925,6 +10794,16 @@ Cluster filter should match snapshot with include_namespaces_regex:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -10058,6 +10937,14 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -10097,6 +10984,17 @@ Cluster filter should match snapshot with include_namespaces_regex:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -10799,6 +11697,40 @@ Cluster filter should match snapshot with include_namespaces_regex:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -10939,6 +11871,48 @@ Cluster filter should match snapshot with include_namespaces_regex:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -11146,6 +12120,20 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - filter/namespaces_logs
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -11237,6 +12225,20 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -11345,6 +12347,40 @@ Custom logs filter with new syntax:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -11813,6 +12849,16 @@ Custom logs filter with new syntax:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -11938,6 +12984,14 @@ Custom logs filter with new syntax:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -11977,6 +13031,17 @@ Custom logs filter with new syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -12679,6 +13744,40 @@ Custom logs filter with new syntax:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -12819,6 +13918,48 @@ Custom logs filter with new syntax:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -13026,6 +14167,20 @@ Custom logs filter with new syntax:
             - filter/logs
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -13116,6 +14271,20 @@ Custom logs filter with new syntax:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -13224,6 +14393,40 @@ Custom logs filter with old syntax:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -13692,6 +14895,16 @@ Custom logs filter with old syntax:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -13820,6 +15033,14 @@ Custom logs filter with old syntax:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -13859,6 +15080,17 @@ Custom logs filter with old syntax:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -14561,6 +15793,40 @@ Custom logs filter with old syntax:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -14782,6 +16048,48 @@ Custom logs filter with old syntax:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -14989,6 +16297,20 @@ Custom logs filter with old syntax:
             - k8s_attributes
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -15079,6 +16401,20 @@ Custom logs filter with old syntax:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -15187,6 +16523,40 @@ Node collector config should match snapshot when autodiscovery is disabled:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -15655,6 +17025,16 @@ Node collector config should match snapshot when autodiscovery is disabled:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -15776,6 +17156,14 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -15815,6 +17203,17 @@ Node collector config should match snapshot when autodiscovery is disabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -16517,6 +17916,40 @@ Node collector config should match snapshot when autodiscovery is disabled:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -16657,6 +18090,48 @@ Node collector config should match snapshot when autodiscovery is disabled:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -16803,6 +18278,20 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - k8s_attributes
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -16893,6 +18382,20 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
@@ -17001,6 +18504,40 @@ Node collector config should match snapshot when fargate is enabled:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -17466,6 +19003,16 @@ Node collector config should match snapshot when fargate is enabled:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -17587,6 +19134,14 @@ Node collector config should match snapshot when fargate is enabled:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -17626,6 +19181,17 @@ Node collector config should match snapshot when fargate is enabled:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -18328,6 +19894,40 @@ Node collector config should match snapshot when fargate is enabled:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -18468,6 +20068,48 @@ Node collector config should match snapshot when fargate is enabled:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -18619,6 +20261,20 @@ Node collector config should match snapshot when fargate is enabled:
             - k8s_attributes
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -18709,6 +20365,20 @@ Node collector config should match snapshot when fargate is enabled:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/not-relationship-state-events-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -18793,6 +20463,40 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -19253,6 +20957,16 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -19374,6 +21088,14 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -19413,6 +21135,17 @@ Node collector config should match snapshot when fargate is enabled and autodisc
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -20115,6 +21848,40 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -20255,6 +22022,48 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -20345,6 +22154,20 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - k8s_attributes
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -20423,6 +22246,20 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/not-relationship-state-events-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -20508,6 +22345,40 @@ Node collector config should match snapshot when using default values:
             context: metric
             pipelines:
             - metrics/discovery-istio
+        solarwindsentity/entity-discovery-apm-service-instance-discovered-on:
+          schema:
+            entities:
+            - entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            - entity: KubernetesPodInstance
+              id:
+              - k8s.pod.uid
+            events:
+              relationships:
+              - action: update
+                context: metric
+                destination_entity: DiscoveredApmServiceInstance
+                source_entity: KubernetesPodInstance
+                type: DiscoveredBy
+        solarwindsentity/entity-discovery-discovered-apm-service-instance:
+          schema:
+            entities:
+            - attributes:
+              - sw.discovery.source
+              - sw.discovery.apm.os.type
+              entity: DiscoveredApmServiceInstance
+              id:
+              - sw.discovery.apm.language
+              - sw.discovery.apm.pod.uid
+              - sw.discovery.id
+            events:
+              entities:
+              - action: update
+                context: metric
+                entity: DiscoveredApmServiceInstance
         solarwindsentity/istio-workload-service:
           destination_prefix: dest.
           schema:
@@ -20976,6 +22847,16 @@ Node collector config should match snapshot when using default values:
           metrics:
             datapoint:
             - datapoint.attributes["sw.istio.metric.duplicate"] == "true"
+        filter/entity-discovery-has-container-id:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["container.id"] == nil
+        filter/entity-discovery-has-pod-uid:
+          error_mode: ignore
+          metrics:
+            datapoint:
+            - resource.attributes["k8s.pod.uid"] == nil
         filter/histograms:
           metrics:
             metric:
@@ -21097,6 +22978,14 @@ Node collector config should match snapshot when using default values:
           - k8s.pod.uid
           - host.name
           - service.name
+        groupbyattrs/entity-discovery:
+          keys:
+          - sw.discovery.id
+          - sw.discovery.source
+          - sw.discovery.apm.pod.uid
+          - sw.discovery.apm.language
+          - sw.discovery.apm.os.type
+          - k8s.pod.uid
         groupbyattrs/istio-relationships:
           keys:
           - sw.k8s.cluster.uid
@@ -21136,6 +23025,17 @@ Node collector config should match snapshot when using default values:
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
+        k8s_attributes/entity-discovery:
+          auth_type: serviceAccount
+          extract:
+            metadata:
+            - k8s.pod.uid
+            - k8s.container.name
+          passthrough: false
+          pod_association:
+          - sources:
+            - from: resource_attribute
+              name: container.id
         logdedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
@@ -21838,6 +23738,40 @@ Node collector config should match snapshot when using default values:
             name_attr: destination_service_name
             namespace_attr: destination_service_namespace
             workload_type_attr: destination_service_type
+        transform/entity-discovery-extract-container-id:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - resource.attributes["process.cgroup"] != nil
+            statements:
+            - set(resource.cache["regex_group"], ExtractPatterns(resource.attributes["process.cgroup"],
+              "(cri-containerd-(?P<id_containerd>[a-f0-9]{64})\\.scope$)|(/(?P<id_docker>[a-f0-9]{64})$)|(crio-(?P<id_crio>[a-f0-9]{64})\\.scope$)"))
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_containerd"])
+              where resource.cache["regex_group"]["id_containerd"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_docker"])
+              where resource.cache["regex_group"]["id_docker"] != ""
+            - set(resource.attributes["container.id"], resource.cache["regex_group"]["id_crio"])
+              where resource.cache["regex_group"]["id_crio"] != ""
+        transform/entity-discovery-set-discovery-attributes:
+          error_mode: ignore
+          metric_statements:
+          - conditions:
+            - IsMatch(resource.attributes["process.executable.name"], "^(php|java|dotnet|ruby|go)$")
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], resource.attributes["process.executable.name"])
+          - conditions:
+            - resource.attributes["sw.discovery.apm.language"] == nil
+            statements:
+            - set(resource.attributes["sw.discovery.apm.language"], "python") where IsMatch(resource.attributes["process.executable.name"],
+              "^python\\d?$")
+            - set(resource.attributes["sw.discovery.apm.language"], "nodejs") where resource.attributes["process.executable.name"]
+              == "node"
+          - statements:
+            - set(resource.attributes["sw.discovery.id"], "${CLUSTER_UID}")
+            - set(resource.attributes["sw.discovery.source"], "swo-k8s-collector")
+            - set(resource.attributes["sw.discovery.apm.pod.uid"], resource.attributes["k8s.pod.uid"])
+            - set(resource.attributes["sw.discovery.apm.os.type"], resource.attributes["linux"])
+            - delete_matching_keys(resource.attributes, "^container\\.id|k8s\\.container\\.name|process\\.cgroup|process\\.executable\\.name$")
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -21978,6 +23912,48 @@ Node collector config should match snapshot when using default values:
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        hostmetrics/entity-discovery:
+          collection_interval: 30s
+          root_path: /hostfs
+          scrapers:
+            process:
+              include:
+                match_type: regexp
+                names:
+                - ^python\d?$
+                - ^php$
+                - ^java$
+                - ^dotnet$
+                - ^ruby$
+                - ^go$
+                - ^node$
+              metrics:
+                process.cpu.time:
+                  enabled: true
+                process.disk.io:
+                  enabled: false
+                process.memory.usage:
+                  enabled: false
+                process.memory.virtual:
+                  enabled: false
+              mute_process_all_errors: false
+              resource_attributes:
+                process.cgroup:
+                  enabled: true
+                process.command:
+                  enabled: false
+                process.command_line:
+                  enabled: false
+                process.executable.name:
+                  enabled: true
+                process.executable.path:
+                  enabled: false
+                process.owner:
+                  enabled: false
+                process.parent_pid:
+                  enabled: false
+                process.pid:
+                  enabled: false
         journald:
           files:
           - /*/log/journal/**/*
@@ -22184,6 +24160,20 @@ Node collector config should match snapshot when using default values:
             - k8s_attributes
             receivers:
             - file_log
+          logs/entity-discovery-instances:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+          logs/entity-discovery-relations:
+            exporters:
+            - otlp_grpc
+            processors:
+            - batch/logs
+            receivers:
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
           logs/journal:
             exporters:
             - forward/logs-exporter
@@ -22274,6 +24264,20 @@ Node collector config should match snapshot when using default values:
             - metricstransform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
+          metrics/entity-discovery:
+            exporters:
+            - solarwindsentity/entity-discovery-discovered-apm-service-instance
+            - solarwindsentity/entity-discovery-apm-service-instance-discovered-on
+            processors:
+            - memory_limiter
+            - transform/entity-discovery-extract-container-id
+            - filter/entity-discovery-has-container-id
+            - k8s_attributes/entity-discovery
+            - filter/entity-discovery-has-pod-uid
+            - transform/entity-discovery-set-discovery-attributes
+            - groupbyattrs/entity-discovery
+            receivers:
+            - hostmetrics/entity-discovery
           metrics/node:
             exporters:
             - forward/metric-exporter
