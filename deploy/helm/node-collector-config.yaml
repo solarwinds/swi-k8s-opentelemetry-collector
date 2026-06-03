@@ -182,6 +182,56 @@ processors:
       - key: k8s.node.name
         value: ${NODE_NAME}
         action: insert
+
+  swootelentityref/container_logs:
+    action: insert
+    entity_refs:
+      - type: KubernetesContainer
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.pod.name
+          - k8s.container.name
+      - type: KubernetesPod
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.pod.name
+      - type: KubernetesNode
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.node.name
+      - type: KubernetesDeployment
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.deployment.name
+      - type: KubernetesReplicaSet
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.replicaset.name
+      - type: KubernetesStatefulSet
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.statefulset.name
+      - type: KubernetesDaemonSet
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.daemonset.name
+      - type: KubernetesJob
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.job.name
+      - type: KubernetesCronJob
+        id_keys:
+          - sw.k8s.cluster.uid
+          - k8s.namespace.name
+          - k8s.cronjob.name
+
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
   resource/journal:
     attributes:
@@ -633,6 +683,7 @@ service:
         - groupbyattrs/common-all
         - resource/container
         - k8s_attributes
+        - swootelentityref/container_logs
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces_logs
 {{- end }}           
