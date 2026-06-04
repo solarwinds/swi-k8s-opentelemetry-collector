@@ -486,19 +486,12 @@ Metrics discovery config should match snapshot when Fargate is enabled:
               name: k8s.pod.ip
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 2560
           spike_limit_mib: 512
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -530,7 +523,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -544,6 +537,13 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -768,7 +768,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -780,7 +780,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -817,7 +817,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -839,7 +839,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/not-relationship-state-events-preparation:

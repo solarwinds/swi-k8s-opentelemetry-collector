@@ -194,7 +194,7 @@ processors:
         from_attribute: configmap
         action: insert
 
-  metricstransform/rename:
+  metrics_transform/rename:
     transforms:
       # add `k8s.` suffix to all metrics that are clearly provided by Kubernetes
       - include: ^(trivy_|kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
@@ -203,7 +203,7 @@ processors:
         new_name: k8s.$${1}$${2}
 
   # Transformations done on all metrics before any grouping
-  metricstransform/preprocessing:
+  metrics_transform/preprocessing:
     transforms:
       - include: k8s.kube_node_status_condition
         experimental_match_labels: { "condition": "Ready" }
@@ -624,7 +624,7 @@ processors:
     keys:
       - k8s.node.name
   # Transformations done after grouping per k8s.node.name
-  metricstransform/aggregate_node_level:
+  metrics_transform/aggregate_node_level:
     transforms:
       - include: k8s.kube_pod_info
         action: insert
@@ -639,7 +639,7 @@ processors:
       - namespace
       - pod
   # Transformations done after grouping per pod
-  metricstransform/aggregate_pod_level:
+  metrics_transform/aggregate_pod_level:
     transforms:
       - include: k8s.kube_pod_container_info
         action: insert
@@ -764,7 +764,7 @@ processors:
           # adds severity to metric name (metrics are grouped by severity)
           - set(name, Format("%s_%s", [metric.name, ToLowerCase(resource.attributes["severity"])])) where resource.attributes["severity"] != nil
 
-  metricstransform/trivy-operator-metrics-aggregation-by-image:
+  metrics_transform/trivy-operator-metrics-aggregation-by-image:
     transforms:
       - include: ^k8s.trivy_.*$
         match_type: regexp
@@ -786,7 +786,7 @@ processors:
     - k8s.replicaset.name
     - severity
       
-  metricstransform/trivy-operator-metrics-aggregation:
+  metrics_transform/trivy-operator-metrics-aggregation:
     transforms:
       - include: ^k8s.trivy_.*$
         match_type: regexp
@@ -1179,19 +1179,19 @@ service:
         - memory_limiter
         - filter/trivy-operator-metrics
         - transform/trivy-operator-metrics-attributes
-        - metricstransform/rename
+        - metrics_transform/rename
         # Single groupbyattrs moves workload identity + severity to resource attrs.
         # image_digest stays as a datapoint attribute so that the two-stage aggregation
         # (MAX per image, then SUM across images) works correctly for multi-image workloads.
         - groupbyattrs/trivy-operator-metrics
-        - metricstransform/trivy-operator-metrics-aggregation-by-image
+        - metrics_transform/trivy-operator-metrics-aggregation-by-image
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces
 {{- end }}
 {{- if .Values.otel.metrics.filter }}
         - filter
 {{- end }}
-        - metricstransform/trivy-operator-metrics-aggregation
+        - metrics_transform/trivy-operator-metrics-aggregation
         - transform/trivy-operator-metrics-split
       exporters:
         - forward/metric-exporter
@@ -1218,8 +1218,8 @@ service:
         - attributes/unify_configmap_attribute
         - attributes/identify_init_container
         - attributes/identify_standard_container
-        - metricstransform/rename
-        - metricstransform/preprocessing
+        - metrics_transform/rename
+        - metrics_transform/preprocessing
         - filter/preprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
@@ -1228,9 +1228,9 @@ service:
         - deltatorate
         - metricsgeneration/cluster
         - groupbyattrs/node
-        - metricstransform/aggregate_node_level
+        - metrics_transform/aggregate_node_level
         - groupbyattrs/pod
-        - metricstransform/aggregate_pod_level
+        - metrics_transform/aggregate_pod_level
         - groupbyattrs/all
         - resource/metrics
         - k8s_attributes

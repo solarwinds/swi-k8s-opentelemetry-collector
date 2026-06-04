@@ -647,19 +647,12 @@ Node collector config for windows nodes should match snapshot when using default
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -691,7 +684,7 @@ Node collector config for windows nodes should match snapshot when using default
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -1125,7 +1118,7 @@ Node collector config for windows nodes should match snapshot when using default
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -1139,7 +1132,7 @@ Node collector config for windows nodes should match snapshot when using default
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -1153,6 +1146,13 @@ Node collector config for windows nodes should match snapshot when using default
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -1724,7 +1724,7 @@ Node collector config for windows nodes should match snapshot when using default
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1736,7 +1736,7 @@ Node collector config for windows nodes should match snapshot when using default
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -1773,7 +1773,7 @@ Node collector config for windows nodes should match snapshot when using default
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -1795,7 +1795,7 @@ Node collector config for windows nodes should match snapshot when using default
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -1808,8 +1808,8 @@ Node collector config for windows nodes should match snapshot when using default
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor
@@ -2541,19 +2541,12 @@ Node collector config for windows nodes should match snapshot when using legacy 
               name: k8s.pod.name
             - from: resource_attribute
               name: k8s.namespace.name
-        logdedup/solarwindsentity: {}
+        log_dedup/solarwindsentity: {}
         memory_limiter:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        metricsgeneration/istio-metrics:
-          rules:
-          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
-            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
-            name: k8s.istio_request_duration_milliseconds.rate
-            operation: divide
-            type: calculate
-        metricstransform/istio-metrics:
+        metrics_transform/istio-metrics:
           transforms:
           - action: insert
             include: k8s.istio_request_bytes_sum
@@ -2585,7 +2578,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - action: insert
             include: k8s.istio_tcp_received_bytes.rate
             new_name: k8s.istio_tcp_received_bytes.delta
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             include: k8s.container_fs_reads_total
@@ -3019,7 +3012,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               aggregation_type: sum
               label_set:
               - k8s.node.name
-        metricstransform/rename-following-otel-semantics:
+        metrics_transform/rename-following-otel-semantics:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -3033,7 +3026,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
-        metricstransform/rename-following-otel-semantics/discovery:
+        metrics_transform/rename-following-otel-semantics/discovery:
           transforms:
           - action: update
             include: ^(.*)$$
@@ -3047,6 +3040,13 @@ Node collector config for windows nodes should match snapshot when using legacy 
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metricsgeneration/istio-metrics:
+          rules:
+          - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
+            metric2: k8s.istio_request_duration_milliseconds_count__swo_temp
+            name: k8s.istio_request_duration_milliseconds.rate
+            operation: divide
+            type: calculate
         resource/all:
           attributes:
           - action: insert
@@ -3700,7 +3700,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - memory_limiter
             - filter/keep-entity-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3712,7 +3712,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - memory_limiter
             - filter/keep-relationship-state-events
             - transform/scope
-            - logdedup/solarwindsentity
+            - log_dedup/solarwindsentity
             - batch/stateevents
             receivers:
             - solarwindsentity/istio-workload-workload
@@ -3749,7 +3749,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - swok8sworkloadtype/istio
             - transform/istio-metrics
             - transform/istio-metric-datapoints
-            - metricstransform/istio-metrics
+            - metrics_transform/istio-metrics
             - cumulativetodelta/istio-metrics
             - deltatorate/istio-metrics
             - metricsgeneration/istio-metrics
@@ -3771,7 +3771,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - routing/discovered_metrics
             processors:
             - memory_limiter
-            - metricstransform/rename-following-otel-semantics/discovery
+            - metrics_transform/rename-following-otel-semantics/discovery
             receivers:
             - receiver_creator/discovery
           metrics/node:
@@ -3784,8 +3784,8 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - attributes/remove_prometheus_attributes
             - attributes/unify_node_attribute
             - transform/unify_node_attribute
-            - metricstransform/rename-following-otel-semantics
-            - metricstransform/preprocessing
+            - metrics_transform/rename-following-otel-semantics
+            - metrics_transform/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
             - cumulativetodelta/cadvisor

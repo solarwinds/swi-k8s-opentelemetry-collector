@@ -428,15 +428,7 @@ Metrics config should match snapshot when using default values:
           check_interval: 1s
           limit_mib: 2560
           spike_limit_mib: 512
-        metricsgeneration/cluster:
-          rules:
-          - metric1: apiserver_request_not_failed__swo_temp
-            metric2: apiserver_request_total__swo_temp
-            name: k8s.apiserver.request.successrate
-            operation: percent
-            type: calculate
-            unit: Percent
-        metricstransform/aggregate_node_level:
+        metrics_transform/aggregate_node_level:
           transforms:
           - action: insert
             include: k8s.kube_pod_info
@@ -446,7 +438,7 @@ Metrics config should match snapshot when using default values:
               aggregation_type: sum
               label_set:
               - dummy_label_workaround
-        metricstransform/aggregate_pod_level:
+        metrics_transform/aggregate_pod_level:
           transforms:
           - action: insert
             include: k8s.kube_pod_container_info
@@ -456,7 +448,7 @@ Metrics config should match snapshot when using default values:
               aggregation_type: sum
               label_set:
               - dummy_label_workaround
-        metricstransform/preprocessing:
+        metrics_transform/preprocessing:
           transforms:
           - action: insert
             experimental_match_labels:
@@ -1298,13 +1290,13 @@ Metrics config should match snapshot when using default values:
             - action: update_label
               label: owner_name
               new_label: cronjob
-        metricstransform/rename:
+        metrics_transform/rename:
           transforms:
           - action: update
             include: ^(trivy_|kube_|container_|kubernetes_|kubelet_|workqueue_|apiserver_|coredns_|etcd_|certmanager_)(.*)$$
             match_type: regexp
             new_name: k8s.$${1}$${2}
-        metricstransform/trivy-operator-metrics-aggregation:
+        metrics_transform/trivy-operator-metrics-aggregation:
           transforms:
           - action: update
             include: ^k8s.trivy_.*$
@@ -1314,7 +1306,7 @@ Metrics config should match snapshot when using default values:
               aggregation_type: sum
               label_set:
               - dummy_label_workaround
-        metricstransform/trivy-operator-metrics-aggregation-by-image:
+        metrics_transform/trivy-operator-metrics-aggregation-by-image:
           transforms:
           - action: update
             include: ^k8s.trivy_.*$
@@ -1324,6 +1316,14 @@ Metrics config should match snapshot when using default values:
               aggregation_type: max
               label_set:
               - image_digest
+        metricsgeneration/cluster:
+          rules:
+          - metric1: apiserver_request_not_failed__swo_temp
+            metric2: apiserver_request_total__swo_temp
+            name: k8s.apiserver.request.successrate
+            operation: percent
+            type: calculate
+            unit: Percent
         resource/metrics:
           attributes:
           - action: delete
@@ -1700,8 +1700,8 @@ Metrics config should match snapshot when using default values:
             - attributes/unify_configmap_attribute
             - attributes/identify_init_container
             - attributes/identify_standard_container
-            - metricstransform/rename
-            - metricstransform/preprocessing
+            - metrics_transform/rename
+            - metrics_transform/preprocessing
             - filter/preprocessing
             - filter/remove_internal_postprocessing
             - attributes/remove_temp
@@ -1710,9 +1710,9 @@ Metrics config should match snapshot when using default values:
             - deltatorate
             - metricsgeneration/cluster
             - groupbyattrs/node
-            - metricstransform/aggregate_node_level
+            - metrics_transform/aggregate_node_level
             - groupbyattrs/pod
-            - metricstransform/aggregate_pod_level
+            - metrics_transform/aggregate_pod_level
             - groupbyattrs/all
             - resource/metrics
             - k8s_attributes
@@ -1735,10 +1735,10 @@ Metrics config should match snapshot when using default values:
             - memory_limiter
             - filter/trivy-operator-metrics
             - transform/trivy-operator-metrics-attributes
-            - metricstransform/rename
+            - metrics_transform/rename
             - groupbyattrs/trivy-operator-metrics
-            - metricstransform/trivy-operator-metrics-aggregation-by-image
-            - metricstransform/trivy-operator-metrics-aggregation
+            - metrics_transform/trivy-operator-metrics-aggregation-by-image
+            - metrics_transform/trivy-operator-metrics-aggregation
             - transform/trivy-operator-metrics-split
             receivers:
             - prometheus/trivy-operator-metrics

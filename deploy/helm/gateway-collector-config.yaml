@@ -43,7 +43,7 @@ processors:
   k8s_attributes:
 {{ include "common.k8s-instrumentation" . | indent 4 }}
 
-  metricstransform/rename-following-otel-semantics:
+  metrics_transform/rename-following-otel-semantics:
     transforms:
 {{ include "common-config.metricstransform-rename" .Values.otel.gateway.prefix | indent 6 }}
 
@@ -358,7 +358,7 @@ processors:
             resource.attributes["source.k8s.namespace.name"] == resource.attributes["dest.k8s.namespace.name"] and resource.attributes["source.k8s.namespace.name"] != nil
           )
 
-  logdedup/solarwindsentity: {}
+  log_dedup/solarwindsentity: {}
 
 receivers:
   otlp:
@@ -687,7 +687,7 @@ service:
         - memory_limiter
         - k8s_attributes
 {{- if .Values.otel.gateway.prefix }}
-        - metricstransform/rename-following-otel-semantics
+        - metrics_transform/rename-following-otel-semantics
 {{- end }}
         - attributes/clean-attributes-otlp-metrics
         - resource/clean-temporary-attributes
@@ -756,7 +756,7 @@ service:
       processors:
         - memory_limiter
         - transform/scope
-        - logdedup/solarwindsentity
+        - log_dedup/solarwindsentity
         - batch
       exporters:
         - otlp_grpc
@@ -766,7 +766,7 @@ service:
       processors:
         - memory_limiter
         - transform/scope
-        - logdedup/solarwindsentity
+        - log_dedup/solarwindsentity
         - batch
       exporters:
         - otlp_grpc
