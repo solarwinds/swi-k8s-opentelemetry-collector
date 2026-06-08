@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Multi-stage build for efficient image size
 FROM golang:1.25-alpine AS builder
 

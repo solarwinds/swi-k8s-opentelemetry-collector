@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM python:3.13-alpine3.19
 
 ADD --checksum=sha256:1d7f49f5aa52670d5f20970a9058894c0e82fee9c40dd935187168b8a9d96fa6 \
