@@ -7,14 +7,14 @@ build:
     - image: integration-test
       docker:
         dockerfile: build/docker/IntegrationTest.Dockerfile
-        buildArgs: 
+        buildArgs:
           CI: "{{ .CI }}"
     - image: test-communicator
       context: tests/deploy/test-communicator
       docker:
         dockerfile: Dockerfile
   local:
-    push: false
+    push: true
 deploy:
   helm:
     releases:
@@ -85,6 +85,8 @@ deploy:
                   - resource.attributes["k8s.namespace.name"] == "{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}"
           trivy-operator:
             enabled: false
+          network_topology:
+            enabled: false
         upgradeOnChange: true
       # Deploy prometheus for development purposes. Metrics prefixed with `output_` contains metrics produced by the agent
       - name: monitoring
@@ -118,7 +120,7 @@ deploy:
         setValueTemplates:
           podMonitors:
             enabled: true
-  kubeContext: docker-desktop
+  kubeContext: local
 portForward:
 - resourceType: service
   resourceName: clickhouse
