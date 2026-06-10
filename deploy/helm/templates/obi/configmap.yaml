@@ -17,6 +17,7 @@ data:
       protocol: grpc
       interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
       features: ["application", "network"]
+      instrumentations: ["http", "grpc"]
     {{- end }}
     {{- if not .Values.network_topology.config.ebpf }}
     ebpf:
