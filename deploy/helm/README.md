@@ -554,6 +554,8 @@ If there already is another instance of the operator deployed in the cluster, th
 
 SolarWinds does not provide any warranty or guarantee with respect to the accuracy, reliability, or completeness or of any information or insights provided to You through Your use of Aqua Security Trivy-Operator, and Your use of any such information, which is derived from third party sources, is at Your own risk.
 
+Note: This feature is not supported when deploying to an OpenShift cluster.
+
 ## Receive 3rd party metrics
 
 SWO K8s Collector has an OTEL service endpoint which is able to forward metrics, logs and traces into SolarWinds Observability. All incoming data is properly associated with current cluster. Additionally, metrics are decorated by default with prefix `k8s.` (prefix can be configured).

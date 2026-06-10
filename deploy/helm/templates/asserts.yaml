@@ -39,5 +39,9 @@
 {{- if .Values.network_topology.enabled }}
 {{- if not .Values.otel.gateway.enabled }}
 {{- fail "The network topology feature requires `otel.gateway.enabled` to be set to `true`." }}
-{{- end }}
-{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{- if and (index .Values "trivy-operator").enabled .Values.openshift.enabled -}}
+{{ fail "Deploying Aqua Security Trivy-Operator to an OpenShift cluster using this Helm chart is not supported. Please deploy Trivy-Operator separately following its official documentation." }}
+{{- end -}}
