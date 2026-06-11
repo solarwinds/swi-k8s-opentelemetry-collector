@@ -634,6 +634,14 @@ Gateway config should match snapshot when using default values:
             workload_name_attr: sw.k8s.src.workload.name
             workload_namespace_attr: sw.k8s.src.workload.namespace
             workload_type_attr: sw.k8s.src.workload.type
+        transform/obi-delete-unreliable-attributes:
+          metric_statements:
+          - statements:
+            - set(resource.cache["obi_k8s_attrs"], resource.attributes)
+            - keep_matching_keys(resource.cache["obi_k8s_attrs"], "^k8s\\.namespace\\.name|k8s\\.pod\\.name|k8s\\.pod\\.uid|k8s\\.container\\.name|k8s\\.container\\.id|k8s\\.owner\\.name$")
+            - delete_matching_keys(resource.attributes, "k8s\\..*")
+            - merge_maps(resource.attributes, resource.cache["obi_k8s_attrs"], "insert")
+            - delete_matching_keys(resource.attributes, "host\\..*")
         transform/obi-entity-ids:
           metric_statements:
           - conditions:
@@ -853,6 +861,7 @@ Gateway config should match snapshot when using default values:
             - solarwindsentity/obi-entities
             processors:
             - memory_limiter
+            - transform/obi-delete-unreliable-attributes
             - swok8sworkloadtype/obi
             - transform/obi-fqdn-attribute
             - groupbyattrs/obi-entity-ids
