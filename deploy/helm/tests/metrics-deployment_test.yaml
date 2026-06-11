@@ -86,7 +86,8 @@ tests:
     set:
       otel.metrics.prometheus_check: true
       otel.metrics.prometheus.url: "http://prometheus:9090"
+      otel.init_images.busy_box.tag: "test-tag"
     asserts:
     - equal:
           path: spec.template.spec.initContainers[0].image
-          value: busybox:1.36.1
+          value: busybox:test-tag

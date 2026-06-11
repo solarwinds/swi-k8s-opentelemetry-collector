@@ -1,0 +1,24 @@
+# Configuration for the automated Docker image updater.
+#
+# Schema:
+#   ignore:                 list of repositories to skip entirely (exact match)
+#   rules:                  list of per-repository overrides (first match wins)
+#     - match: <repo>       repository name; exact match unless ends with `*`
+#       allow_prereleases:  bool; if omitted, defaults to whether the current
+#                           pinned tag is itself a prerelease
+#       pin_major:          int; only consider versions with this major
+#       pin_minor:          int; only consider versions with this major.minor
+#       tag_prefix:         str; only consider tags starting with this prefix
+#                           (e.g. "v"). Empty string means strip-`v` allowed.
+
+ignore:
+  # Beyla pulls in eBPF kernel collectors that need version-locked support.
+  # Bumps must be coordinated across multiple images, so we don't auto-update.
+  - grafana/beyla
+  - solarwinds/opentelemetry-ebpf-kernel-collector
+  - solarwinds/opentelemetry-ebpf-k8s-watcher
+  - solarwinds/opentelemetry-ebpf-k8s-relay
+  - solarwinds/opentelemetry-ebpf-reducer
+  - ghcr.io/open-telemetry/opentelemetry-ebpf-instrumentation/ebpf-instrument
+
+rules: []

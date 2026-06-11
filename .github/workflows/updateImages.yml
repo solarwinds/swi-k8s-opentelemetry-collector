@@ -2,9 +2,18 @@ name: Automated Docker Image Updater
 
 on:
   schedule:
-    # Run every Monday at 9:00 AM UTC
+    # Every Monday at 9:00 AM UTC
     - cron: '0 9 * * 1'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Detect updates without committing or opening a PR'
+        required: false
+        default: 'false'
+  pull_request:
+    paths:
+      - '.github/update-images/**'
+      - '.github/workflows/updateImages.yml'
 
 permissions:
   contents: write
@@ -12,35 +21,57 @@ permissions:
   actions: read
 
 jobs:
-  update-images:
+  test:
+    # Always run the unit tests; gating prod runs on green tests prevents
+    # rolling out a broken updater that could open bad PRs against the chart.
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
+      - uses: actions/checkout@v6
 
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: '.github/update-images/requirements.txt'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r .github/scripts/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/update-images/requirements.txt
+          pip install pytest
 
-    - name: Configure Git
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: Run unit tests
+        working-directory: .github/update-images
+        run: python -m pytest -v
 
-    - name: Run Docker Image Updater
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        python .github/scripts/update_docker_images.py
+  update-images:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: '.github/update-images/requirements.txt'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/update-images/requirements.txt
+
+      - name: Run Docker Image Updater
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            python .github/update-images/update_images.py --dry-run --verbose
+          else
+            python .github/update-images/update_images.py --verbose
+          fi

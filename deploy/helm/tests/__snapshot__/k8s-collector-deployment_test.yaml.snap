@@ -4,7 +4,7 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
       - args:
           - --log-console
           - --log-level=error
-        image: solarwinds/opentelemetry-ebpf-k8s-watcher:v0.10.3
+        image: solarwinds/opentelemetry-ebpf-k8s-watcher:test-tag
         imagePullPolicy: IfNotPresent
         name: k8s-watcher
       - args:
@@ -21,7 +21,7 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
             value: swo-gateway
           - name: EBPF_NET_CRASH_METRIC_PORT
             value: "4317"
-        image: solarwinds/opentelemetry-ebpf-k8s-relay:v0.10.3
+        image: solarwinds/opentelemetry-ebpf-k8s-relay:test-tag
         imagePullPolicy: IfNotPresent
         name: k8s-relay
         volumeMounts:
@@ -37,7 +37,7 @@ Deployment spec should match snapshot when ebpfNetworkMonitoring is enabled:
             value: RELEASE-NAME-swo-k8s-collector-network-k8s-reducer
           - name: EBPF_NET_INTAKE_PORT
             value: "7000"
-        image: busybox:1.36.1
+        image: busybox:test-tag
         imagePullPolicy: IfNotPresent
         name: wait-for-reducer
     nodeSelector:

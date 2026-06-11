@@ -8,6 +8,9 @@ tests:
     template: network/k8s-collector-deployment.yaml
     set:
       ebpfNetworkMonitoring.enabled: true
+      otel.init_images.busy_box.tag: "test-tag"
+      ebpfNetworkMonitoring.k8sCollector.watcher.image.tag: "test-tag"
+      ebpfNetworkMonitoring.k8sCollector.relay.image.tag: "test-tag"
     asserts:
       - matchSnapshot:
           path: spec.template.spec

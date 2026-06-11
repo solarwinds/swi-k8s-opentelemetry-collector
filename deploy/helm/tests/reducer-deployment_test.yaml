@@ -8,6 +8,8 @@ tests:
     template: network/reducer-deployment.yaml
     set:
       ebpfNetworkMonitoring.enabled: true
+      otel.init_images.busy_box.tag: "test-tag"
+      ebpfNetworkMonitoring.reducer.image.tag: "test-tag"
     asserts:
       - matchSnapshot:
           path: spec.template.spec
