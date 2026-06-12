@@ -45,3 +45,26 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: The network topology feature requires `otel.gateway.enabled` to be set to `true`.
+  - it: should fail when Trivy-Operator is enabled on an OpenShift cluster
+    set:
+      trivy-operator.enabled: true
+      openshift.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Deploying Aqua Security Trivy-Operator to an OpenShift cluster using this Helm chart is not supported. Please deploy Trivy-Operator separately following its official documentation.
+  - it: should not fail when OpenShift is enabled but Trivy-Operator is disabled
+    set:
+      openshift.enabled: true
+      trivy-operator.enabled: false
+    template: "asserts.yaml"
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: should not fail when OpenShift is disabled but Trivy-Operator is enabled
+    set:
+      openshift.enabled: false
+      trivy-operator.enabled: true
+    template: "asserts.yaml"
+    asserts:
+      - hasDocuments:
+          count: 0
