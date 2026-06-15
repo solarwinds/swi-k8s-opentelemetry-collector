@@ -16,7 +16,14 @@ subjects:
 - kind: ServiceAccount
   name: {{ include "common.fullname" . }}
   namespace: {{ .Release.Namespace }}
+{{- if (index .Values "kube-state-metrics").enabled }}
 - kind: ServiceAccount
   name: {{ .Release.Name }}-kube-state-metrics
   namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- if .Values.operator.enabled }}
+- kind: ServiceAccount
+  name: operator
+  namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- end }}
