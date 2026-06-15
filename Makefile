@@ -36,7 +36,7 @@ integration-test-run: ## Internal target: Build, deploy and run tests
 	@echo "Step 3/3: Running integration tests..."
 	@echo "-----------------------------------------"
 	@echo "Waiting for timeseries-mock-service to be ready..."
-	kubectl wait --for=condition=ready --timeout=$(KUBECTL_TIMEOUT) pod -l app=timeseries-mock-service -n $(TEST_NAMESPACE)
+	kubectl wait --for=condition=ready --for=create --timeout=$(KUBECTL_TIMEOUT) pod -l app=timeseries-mock-service -n $(TEST_NAMESPACE)
 	@echo ""
 	@echo "Cleaning up any previous integration test jobs or pods..."
 	@kubectl delete job $(TEST_JOB_NAME) -n $(TEST_NAMESPACE) --ignore-not-found=true >/dev/null 2>&1 || true
@@ -46,7 +46,7 @@ integration-test-run: ## Internal target: Build, deploy and run tests
 	kubectl create job --from=cronjob/integration-test $(TEST_JOB_NAME) -n $(TEST_NAMESPACE)
 	@echo ""
 	@echo "Waiting for test pod to be ready..."
-	kubectl wait --for=condition=ready --timeout=$(KUBECTL_TIMEOUT) pod -l job-name=$(TEST_JOB_NAME) -n $(TEST_NAMESPACE)
+	kubectl wait --for=condition=ready --for=create --timeout=$(KUBECTL_TIMEOUT) pod -l job-name=$(TEST_JOB_NAME) -n $(TEST_NAMESPACE)
 	@echo ""
 	@echo "Test pod is ready. Starting log streaming in background..."
 	@LOG_PID=$$(kubectl logs -f -l job-name=$(TEST_JOB_NAME) -n $(TEST_NAMESPACE) 2>/dev/null & echo $$!); \

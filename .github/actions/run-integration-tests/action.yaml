@@ -5,7 +5,22 @@ runs:
   steps:
     - name: Run Integration tests
       run: |
-        kubectl wait --for=condition=ready --timeout=60s pod -l app=timeseries-mock-service -n test-namespace
+        # workaround for bug in kubectl - once only >= 1.33 is supported, "kubectl wait --for=create ..." will work and we can remove this workaround
+        echo "Waiting for timeseries-mock-service pod to be created"
+        timeout=60
+        elapsed=0
+        until kubectl get pod -l app=timeseries-mock-service -n test-namespace 2>/dev/null | grep -q timeseries-mock-service; do
+            if [[ $elapsed -ge $timeout ]]; then
+                echo "Timed out waiting for timeseries-mock-service pod to be created"
+                exit 1
+            fi
+            echo -n "."
+            sleep 3
+            elapsed=$((elapsed + 3))
+        done
+        echo "timeseries-mock-service pod found"
+
+        kubectl wait --for=condition=ready --for=create --timeout=60s pod -l app=timeseries-mock-service -n test-namespace
 
         # wait till vulnerability scans are finished
         echo "Waiting for vulnerability scans to complete"
@@ -22,7 +37,22 @@ runs:
 
         kubectl create job --from=cronjob/integration-test integration-test-manual -n test-namespace
 
-        kubectl wait --for=condition=ready --timeout=60s pod -l job-name=integration-test-manual -n test-namespace
+        # workaround for bug in kubectl - once only >= 1.33 is supported, "kubectl wait --for=create ..." will work and we can remove this workaround
+        echo "Waiting for integration-test-manual pod to be created"
+        timeout=60
+        elapsed=0
+        until kubectl get pod -l job-name=integration-test-manual -n test-namespace 2>/dev/null | grep -q integration-test-manual; do
+            if [[ $elapsed -ge $timeout ]]; then
+                echo "Timed out waiting for integration-test-manual pod to be created"
+                exit 1
+            fi
+            echo -n "."
+            sleep 3
+            elapsed=$((elapsed + 3))
+        done
+        echo "integration-test-manual pod found"
+
+        kubectl wait --for=condition=ready --for=create --timeout=60s pod -l job-name=integration-test-manual -n test-namespace
         kubetail -l job-name=integration-test-manual -n test-namespace &  
 
         # Wait for either complete or failed
