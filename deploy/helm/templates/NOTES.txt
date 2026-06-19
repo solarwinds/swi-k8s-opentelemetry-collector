@@ -1,7 +1,12 @@
-{{- if and .Release.IsUpgrade (not (kindIs "bool" .Values.otel.logs.enabled)) -}}
+{{- if not (kindIs "bool" .Values.otel.logs.enabled) -}}
+{{- $existingCM := lookup "v1" "ConfigMap" .Release.Namespace (include "common.fullname" (tuple . "-node-collector-config")) -}}
+{{- $stamp := "" -}}
+{{- if $existingCM -}}{{- $stamp = index $existingCM.metadata.annotations "swo.cloud.solarwinds.com/logs-default" | default "" -}}{{- end -}}
+{{- if and $existingCM (ne $stamp "false") -}}
 WARNING: `otel.logs.enabled` is not explicitly set. In the future version the default will change to `false` (disabled).
          Please explicitly set `otel.logs.enabled: true` to keep log collection enabled, or `otel.logs.enabled: false` to silence this warning.
 {{- println -}}
+{{- end -}}
 {{- end -}}
 
 {{- if and .Values.otel.metrics.extra_scrape_metrics .Values.prometheus -}}
