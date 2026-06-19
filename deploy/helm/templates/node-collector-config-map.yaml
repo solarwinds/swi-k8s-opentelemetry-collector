@@ -1,4 +1,4 @@
-{{- if or .Values.otel.logs.enabled .Values.otel.metrics.enabled }}
+{{- if or (include "isLogsEnabled" .) .Values.otel.metrics.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,6 +8,7 @@ metadata:
 {{ include "common.labels" . | indent 4 }}
   annotations:
 {{ include "common.annotations" . | indent 4 }}
+    swo.cloud.solarwinds.com/logs-default: {{ ternary "true" "false" (ne (include "isLogsEnabled" .) "") }}
 data:
   logs.config: |
 {{ tpl (.Files.Get "node-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}

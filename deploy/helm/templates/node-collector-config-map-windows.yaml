@@ -1,4 +1,4 @@
-{{- if and (or .Values.otel.logs.enabled .Values.otel.metrics.enabled) .Values.otel.windows.enabled }}
+{{- if and (or (include "isLogsEnabled" .) .Values.otel.metrics.enabled) .Values.otel.windows.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

@@ -331,7 +331,7 @@ connectors:
 {{- if and .Values.otel.metrics.enabled (or (not .Values.aws_fargate.enabled) .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) }}
   forward/metric-exporter: {}
 {{- end }}
-{{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
+{{- if and (include "isLogsEnabled" .) (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
   forward/logs-exporter: {}
 {{- end }}
 
@@ -672,7 +672,7 @@ service:
     - pprof
 {{- end }}
   pipelines:
-{{- if and .Values.otel.logs.enabled (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
+{{- if and (include "isLogsEnabled" .) (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}
 {{- if .Values.otel.logs.container }}
     logs/container:
       receivers:
