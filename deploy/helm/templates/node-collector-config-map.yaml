@@ -8,7 +8,7 @@ metadata:
 {{ include "common.labels" . | indent 4 }}
   annotations:
 {{ include "common.annotations" . | indent 4 }}
-    swo.cloud.solarwinds.com/logs-default: {{ ternary "true" "false" (ne (include "isLogsEnabled" .) "") }}
+    swo.cloud.solarwinds.com/logs-default: {{ ternary "true" "false" (ne (include "isLogsEnabled" .) "") | quote }}
 data:
   logs.config: |
 {{ tpl (.Files.Get "node-collector-config.yaml") . | fromYaml | toYaml | indent 8 }}
