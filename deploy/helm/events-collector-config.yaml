@@ -859,14 +859,12 @@ service:
         - resource/mandatory
         - resource/manifest
         - resourcedetection/providers
-        - k8seventgeneration
-        - transform/remove_deployed_by_collector_label_if_from_different_namespace
-        - groupbyattrs/serviceendpointsmapping
-        - transform/serviceendpointsmapping-renamepodip
         - k8s_attributes
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces_manifests
 {{- end }}
+        - k8seventgeneration
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
@@ -878,6 +876,9 @@ service:
         - routing/manifests
       processors:
         - memory_limiter
+        - groupbyattrs/serviceendpointsmapping
+        - transform/serviceendpointsmapping-renamepodip
+        - k8s_attributes
         - transform/serviceendpointsmapping
       exporters:
         - solarwindsentity/serviceendpointsmapping
@@ -907,11 +908,11 @@ service:
         - resource/mandatory
         - resource/manifest
         - k8s_attributes
-        - k8seventgeneration
-        - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if eq (include "isNamespacesFilterEnabled" .) "true" }}
         - filter/namespaces_manifests
 {{- end }}
+        - k8seventgeneration
+        - transform/remove_deployed_by_collector_label_if_from_different_namespace
 {{- if .Values.otel.manifests.filter }}
         - filter/manifests
 {{- end }}
