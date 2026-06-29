@@ -444,7 +444,8 @@ Usage:
 {{- else -}}
   {{- $existingCM := lookup "v1" "ConfigMap" .Release.Namespace (include "common.fullname" (tuple . "-node-collector-config")) -}}
   {{- if $existingCM -}}
-    {{- $stamp := index $existingCM.metadata.annotations "swo.cloud.solarwinds.com/logs-default" -}}
+    {{- $annotations := $existingCM.metadata.annotations | default dict -}}
+    {{- $stamp := index $annotations "swo.cloud.solarwinds.com/logs-default" | default "" -}}
     {{- if or (not $stamp) (eq $stamp "true") -}}true{{- end -}}
   {{- end -}}
 {{- end -}}
