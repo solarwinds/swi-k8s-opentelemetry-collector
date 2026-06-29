@@ -313,9 +313,7 @@ Configuration:
     ```
 
 ### Logs Collection
-`Before version 5.3.0.X was log collection enabled by default.`
-
-Disabled by default. To enabled, set `otel.logs.enabled: true`.
+Disabled by default. To enabled, set `otel.logs.enabled: true`. (`Before version 5.3.0 was log collection enabled by default.`)
 
 The following kinds of logs are collected:
 
