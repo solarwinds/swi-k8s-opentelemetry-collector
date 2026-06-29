@@ -11,15 +11,6 @@ Cluster filter should match snapshot with combined exclude filters:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -326,11 +317,6 @@ Cluster filter should match snapshot with combined exclude filters:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -769,64 +755,6 @@ Cluster filter should match snapshot with combined exclude filters:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -1021,30 +949,6 @@ Cluster filter should match snapshot with combined exclude filters:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -1060,12 +964,10 @@ Cluster filter should match snapshot with combined exclude filters:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
-            - k8seventgeneration
-            - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
             - k8s_attributes
             - filter/namespaces_manifests
+            - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -1088,9 +990,9 @@ Cluster filter should match snapshot with combined exclude filters:
             - resource/mandatory
             - resource/manifest
             - k8s_attributes
+            - filter/namespaces_manifests
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -1098,6 +1000,9 @@ Cluster filter should match snapshot with combined exclude filters:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -1141,15 +1046,6 @@ Cluster filter should match snapshot with combined include filters:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -1452,11 +1348,6 @@ Cluster filter should match snapshot with combined include filters:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -1895,64 +1786,6 @@ Cluster filter should match snapshot with combined include filters:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -2147,30 +1980,6 @@ Cluster filter should match snapshot with combined include filters:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -2186,12 +1995,10 @@ Cluster filter should match snapshot with combined include filters:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
-            - k8seventgeneration
-            - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
             - k8s_attributes
             - filter/namespaces_manifests
+            - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -2214,9 +2021,9 @@ Cluster filter should match snapshot with combined include filters:
             - resource/mandatory
             - resource/manifest
             - k8s_attributes
+            - filter/namespaces_manifests
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -2224,6 +2031,9 @@ Cluster filter should match snapshot with combined include filters:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -2267,15 +2077,6 @@ Cluster filter should match snapshot with exclude_namespaces:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -2578,11 +2379,6 @@ Cluster filter should match snapshot with exclude_namespaces:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -3021,64 +2817,6 @@ Cluster filter should match snapshot with exclude_namespaces:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -3273,30 +3011,6 @@ Cluster filter should match snapshot with exclude_namespaces:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -3312,12 +3026,10 @@ Cluster filter should match snapshot with exclude_namespaces:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
-            - k8seventgeneration
-            - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
             - k8s_attributes
             - filter/namespaces_manifests
+            - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -3340,9 +3052,9 @@ Cluster filter should match snapshot with exclude_namespaces:
             - resource/mandatory
             - resource/manifest
             - k8s_attributes
+            - filter/namespaces_manifests
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -3350,6 +3062,9 @@ Cluster filter should match snapshot with exclude_namespaces:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -3393,15 +3108,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -3708,11 +3414,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -4151,64 +3852,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -4403,30 +4046,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -4442,12 +4061,10 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
-            - k8seventgeneration
-            - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
             - k8s_attributes
             - filter/namespaces_manifests
+            - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -4470,9 +4087,9 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - resource/mandatory
             - resource/manifest
             - k8s_attributes
+            - filter/namespaces_manifests
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -4480,6 +4097,9 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -4523,15 +4143,6 @@ Cluster filter should match snapshot with include_namespaces:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -4834,11 +4445,6 @@ Cluster filter should match snapshot with include_namespaces:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -5277,64 +4883,6 @@ Cluster filter should match snapshot with include_namespaces:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -5529,30 +5077,6 @@ Cluster filter should match snapshot with include_namespaces:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -5568,12 +5092,10 @@ Cluster filter should match snapshot with include_namespaces:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
-            - k8seventgeneration
-            - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
             - k8s_attributes
             - filter/namespaces_manifests
+            - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -5596,9 +5118,9 @@ Cluster filter should match snapshot with include_namespaces:
             - resource/mandatory
             - resource/manifest
             - k8s_attributes
+            - filter/namespaces_manifests
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -5606,6 +5128,9 @@ Cluster filter should match snapshot with include_namespaces:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -5649,15 +5174,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -5961,11 +5477,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -6404,64 +5915,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -6656,30 +6109,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -6695,12 +6124,10 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
-            - k8seventgeneration
-            - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
             - k8s_attributes
             - filter/namespaces_manifests
+            - k8seventgeneration
+            - transform/remove_deployed_by_collector_label_if_from_different_namespace
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -6723,9 +6150,9 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - resource/mandatory
             - resource/manifest
             - k8s_attributes
+            - filter/namespaces_manifests
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - filter/namespaces_manifests
             receivers:
             - swok8sobjects/keepalive
           logs/serviceendpointsmapping:
@@ -6733,6 +6160,9 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -6776,15 +6206,6 @@ Custom events filter with new syntax:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -7077,11 +6498,6 @@ Custom events filter with new syntax:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -7520,64 +6936,6 @@ Custom events filter with new syntax:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -7772,30 +7130,6 @@ Custom events filter with new syntax:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -7811,11 +7145,9 @@ Custom events filter with new syntax:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -7847,6 +7179,9 @@ Custom events filter with new syntax:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -7890,15 +7225,6 @@ Custom events filter with old syntax:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -8194,11 +7520,6 @@ Custom events filter with old syntax:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -8637,64 +7958,6 @@ Custom events filter with old syntax:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -8889,30 +8152,6 @@ Custom events filter with old syntax:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -8928,11 +8167,9 @@ Custom events filter with old syntax:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -8964,6 +8201,9 @@ Custom events filter with old syntax:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -9007,15 +8247,6 @@ Events config should match snapshot when using default values:
             context: resource
             pipelines:
             - logs/stateevents
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -9304,11 +8535,6 @@ Events config should match snapshot when using default values:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -9747,64 +8973,6 @@ Events config should match snapshot when using default values:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -9998,30 +9166,6 @@ Events config should match snapshot when using default values:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -10037,11 +9181,9 @@ Events config should match snapshot when using default values:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -10073,6 +9215,9 @@ Events config should match snapshot when using default values:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
@@ -10107,15 +9252,6 @@ Events config should not contain manifest collection pipeline when disabled:
   1: |
     events.config: |-
       connectors:
-        routing/entity-discovery:
-          default_pipelines:
-          - logs/entity-discovery-entities
-          table:
-          - condition: |
-              attributes["otel.entity.event.type"] == "entity_relationship_state"
-            context: log
-            pipelines:
-            - logs/entity-discovery-relationships
         routing/manifests:
           default_pipelines:
           - logs/manifests-export
@@ -10281,11 +9417,6 @@ Events config should not contain manifest collection pipeline when disabled:
           check_interval: 1s
           limit_mib: 800
           spike_limit_mib: 300
-        resource/entity-state-event:
-          attributes:
-          - action: insert
-            key: sw.k8s.log.type
-            value: entitystateevent
         resource/events:
           attributes:
           - action: insert
@@ -10724,64 +9855,6 @@ Events config should not contain manifest collection pipeline when disabled:
             - set(log.body, log.body.string)
       receivers:
         k8s_events: null
-        swok8sdiscovery:
-          auth_type: serviceAccount
-          database:
-            domain_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - \.redis\.cache\.windows\.net$
-              - \.elasticache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.redis(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.cache(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - \.mysql\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - \.database\.windows\.net$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - \.postgres\.database\.azure\.com$
-              - \.rds(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - \.mongo\.cosmos\.azure\.com$
-              - \.docdb(?:\.[a-z]{2}(?:-[a-z]+){1,2}-\d+)?\.amazonaws\.com$
-              - \.mongodb\.net$
-            image_rules:
-            - database_type: redis
-              default_port: 6379
-              patterns:
-              - (^|/)redis:.+$
-            - database_type: mysql
-              default_port: 3306
-              patterns:
-              - (^|/)mysql:.+$
-              - (^|/)mariadb:.+$
-              - (^|/)mysql-server:.+$
-            - database_type: sqlserver
-              default_port: 1433
-              patterns:
-              - (^|/)mssql:.+$
-              - (^|/)mssql/server:.+$
-            - database_type: postgresql
-              default_port: 5432
-              patterns:
-              - (^|/)postgres:.+$
-              - (^|/)postgresql:.+$
-            - database_type: mongodb
-              default_port: 27017
-              patterns:
-              - (^|/)mongo:.+$
-          reporter: swo-k8s-collector
         swok8sobjects:
           auth_type: serviceAccount
           objects:
@@ -10809,30 +9882,6 @@ Events config should not contain manifest collection pipeline when disabled:
             - batch
             receivers:
             - k8s_events
-          logs/entity-discovery:
-            exporters:
-            - routing/entity-discovery
-            processors:
-            - memory_limiter
-            - resource/mandatory
-            - resource/entity-state-event
-            - transform/scope
-            receivers:
-            - swok8sdiscovery
-          logs/entity-discovery-entities:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
-          logs/entity-discovery-relationships:
-            exporters:
-            - otlp_grpc
-            processors:
-            - batch
-            receivers:
-            - routing/entity-discovery
           logs/manifests:
             exporters:
             - routing/manifests
@@ -10849,11 +9898,9 @@ Events config should not contain manifest collection pipeline when disabled:
             - resource/mandatory
             - resource/manifest
             - resourcedetection/providers
+            - k8s_attributes
             - k8seventgeneration
             - transform/remove_deployed_by_collector_label_if_from_different_namespace
-            - groupbyattrs/serviceendpointsmapping
-            - transform/serviceendpointsmapping-renamepodip
-            - k8s_attributes
             receivers:
             - swok8sobjects
           logs/manifests-export:
@@ -10871,6 +9918,9 @@ Events config should not contain manifest collection pipeline when disabled:
             - solarwindsentity/serviceendpointsmapping
             processors:
             - memory_limiter
+            - groupbyattrs/serviceendpointsmapping
+            - transform/serviceendpointsmapping-renamepodip
+            - k8s_attributes
             - transform/serviceendpointsmapping
             receivers:
             - routing/manifests
