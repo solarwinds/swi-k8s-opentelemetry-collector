@@ -424,6 +424,33 @@ Output will be the same format but tripled
 {{- end -}}
 {{- end -}}
 
+{{/*
+Resolve the effective value of otel.logs.enabled.
+- Explicit bool true/false → honour it directly.
+- null + no ConfigMap                             → fresh install → false.
+- null + ConfigMap exists, stamp absent           → old deployment (logs were on by default) → true.
+- null + ConfigMap exists, stamp = "true"         → was old deployment, preserved → true.
+- null + ConfigMap exists, stamp = "false"        → was new install, preserved → false.
+
+The ConfigMap annotation swo.cloud.solarwinds.com/logs-default always stores the
+resolved effective value, so the correct state is carried forward across all upgrades.
+
+Usage:
+{{- if include "isLogsEnabled" . }}
+*/}}
+{{- define "isLogsEnabled" -}}
+{{- if kindIs "bool" .Values.otel.logs.enabled -}}
+  {{- if .Values.otel.logs.enabled -}}true{{- end -}}
+{{- else -}}
+  {{- $existingCM := lookup "v1" "ConfigMap" .Release.Namespace (include "common.fullname" (tuple . "-node-collector-config")) -}}
+  {{- if $existingCM -}}
+    {{- $annotations := $existingCM.metadata.annotations | default dict -}}
+    {{- $stamp := index $annotations "swo.cloud.solarwinds.com/logs-default" | default "" -}}
+    {{- if or (not $stamp) (eq $stamp "true") -}}true{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "common.prometheus.relabelconfigs" -}}
 metric_relabel_configs:
   - source_labels: [service_name]

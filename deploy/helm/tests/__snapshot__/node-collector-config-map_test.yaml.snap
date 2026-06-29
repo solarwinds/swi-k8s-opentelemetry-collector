@@ -5,7 +5,6 @@ Cluster filter should match snapshot with combined exclude filters:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -1740,37 +1739,6 @@ Cluster filter should match snapshot with combined exclude filters:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            - filter/namespaces_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -1947,7 +1915,6 @@ Cluster filter should match snapshot with combined include filters:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -3678,37 +3645,6 @@ Cluster filter should match snapshot with combined include filters:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            - filter/namespaces_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -3885,7 +3821,6 @@ Cluster filter should match snapshot with exclude_namespaces:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -5618,37 +5553,6 @@ Cluster filter should match snapshot with exclude_namespaces:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            - filter/namespaces_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -5825,7 +5729,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -7558,37 +7461,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            - filter/namespaces_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -7765,7 +7637,6 @@ Cluster filter should match snapshot with include_namespaces:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -9496,37 +9367,6 @@ Cluster filter should match snapshot with include_namespaces:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            - filter/namespaces_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -9703,7 +9543,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -11436,37 +11275,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            - filter/namespaces_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -11643,7 +11451,6 @@ Custom logs filter with new syntax:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -13368,37 +13175,6 @@ Custom logs filter with new syntax:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            - filter/logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -13574,7 +13350,6 @@ Custom logs filter with old syntax:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -15383,37 +15158,6 @@ Custom logs filter with old syntax:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - filter/logs
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -15589,7 +15333,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -17250,36 +16993,6 @@ Node collector config should match snapshot when autodiscovery is disabled:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -17455,7 +17168,6 @@ Node collector config should match snapshot when fargate is enabled:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -19118,36 +18830,6 @@ Node collector config should match snapshot when fargate is enabled:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -19300,7 +18982,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
         forward/relationship-state-events-workload-workload: {}
@@ -20896,36 +20577,6 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         - file_storage/checkpoints
         - health_check
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -21066,7 +20717,6 @@ Node collector config should match snapshot when using default values:
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -22787,36 +22437,6 @@ Node collector config should match snapshot when using default values:
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            receivers:
-            - file_log
-          logs/journal:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - groupbyattrs/common-all
-            - resource/journal
-            receivers:
-            - journald
           logs/stateevents-entities:
             exporters:
             - otlp_grpc

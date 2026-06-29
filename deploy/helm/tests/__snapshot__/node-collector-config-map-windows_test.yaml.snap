@@ -5,7 +5,6 @@ Node collector config for windows nodes should match snapshot when using default
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -1699,27 +1698,6 @@ Node collector config for windows nodes should match snapshot when using default
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            receivers:
-            - file_log
           logs/stateevents-entities:
             exporters:
             - otlp_grpc
@@ -1895,7 +1873,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
         forward/discovery-istio-metrics-clean: {}
         forward/istio-workload-service-filtering: {}
         forward/istio-workload-workload-filtering: {}
-        forward/logs-exporter: {}
         forward/metric-exporter: {}
         forward/not-relationship-state-events: {}
         forward/relationship-state-events-workload-service: {}
@@ -3677,28 +3654,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
         - health_check
         - k8s_observer
         pipelines:
-          logs:
-            exporters:
-            - otlp_grpc
-            processors:
-            - memory_limiter
-            - transform/scope
-            - batch/logs
-            receivers:
-            - forward/logs-exporter
-          logs/container:
-            exporters:
-            - forward/logs-exporter
-            processors:
-            - memory_limiter
-            - filter/logs
-            - transform/syslogify
-            - groupbyattrs/common-all
-            - resource/container
-            - k8s_attributes
-            - swootelentityref/container_logs
-            receivers:
-            - file_log
           logs/stateevents-entities:
             exporters:
             - otlp_grpc

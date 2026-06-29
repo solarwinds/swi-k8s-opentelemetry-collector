@@ -1,0 +1,325 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test node-collector otel.logs.enabled behaviour
+templates:
+  - node-collector-config-map.yaml
+  - node-collector-daemon-set.yaml
+  - node-collector-config-map-windows.yaml
+  - node-collector-daemon-set-windows.yaml
+  - common-env-config-map.yaml
+chart:
+  appVersion: 1.0.0
+
+tests:
+  # ── explicit true ────────────────────────────────────────────────────────────
+
+  - it: ConfigMap should exist when logs.enabled is explicitly true
+    template: node-collector-config-map.yaml
+    set:
+      otel.logs.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: DaemonSet should exist when logs.enabled is explicitly true
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.logs.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: logs-default annotation should be "true" when logs.enabled is explicitly true
+    template: node-collector-config-map.yaml
+    set:
+      otel.logs.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
+          value: "true"
+
+  - it: Logs pipeline should be present in config when logs.enabled is explicitly true
+    template: node-collector-config-map.yaml
+    set:
+      otel.logs.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: "logs/container:"
+
+  # ── explicit false ───────────────────────────────────────────────────────────
+
+  - it: ConfigMap should still exist when logs.enabled is false but metrics.enabled is true
+    template: node-collector-config-map.yaml
+    set:
+      otel.logs.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: DaemonSet should still exist when logs.enabled is false but metrics.enabled is true
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.logs.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: ConfigMap should not exist when both logs.enabled and metrics.enabled are false
+    template: node-collector-config-map.yaml
+    set:
+      otel.logs.enabled: false
+      otel.metrics.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: DaemonSet should not exist when both logs.enabled and metrics.enabled are false
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.logs.enabled: false
+      otel.metrics.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: logs-default annotation should be "false" when logs.enabled is explicitly false
+    template: node-collector-config-map.yaml
+    set:
+      otel.logs.enabled: false
+    asserts:
+      - equal:
+          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
+          value: "false"
+
+  - it: Logs pipeline should not be present in config when logs.enabled is explicitly false
+    template: node-collector-config-map.yaml
+    set:
+      otel.logs.enabled: false
+    asserts:
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: "logs/container:"
+
+  # ── null / unset (fresh install — lookup returns empty in unit tests) ────────
+
+  - it: ConfigMap should exist when logs.enabled is null because metrics.enabled defaults to true
+    template: node-collector-config-map.yaml
+    # otel.logs.enabled is intentionally not set (defaults to null in values.yaml)
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: DaemonSet should exist when logs.enabled is null because metrics.enabled defaults to true
+    template: node-collector-daemon-set.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: logs-default annotation should be "false" when logs.enabled is null (fresh install)
+    template: node-collector-config-map.yaml
+    # lookup returns empty in unit tests so isLogsEnabled resolves to false
+    asserts:
+      - equal:
+          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
+          value: "false"
+
+  - it: Logs pipeline should not be present when logs.enabled is null (fresh install)
+    template: node-collector-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: "logs/container:"
+
+  - it: ConfigMap should not exist when logs.enabled is null and metrics.enabled is false
+    template: node-collector-config-map.yaml
+    set:
+      otel.metrics.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: DaemonSet should not exist when logs.enabled is null and metrics.enabled is false
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.metrics.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # ── upgrade: existing ConfigMap from old version (no annotation stamp) ──────
+  # When upgrading from a version that did not have the annotation, the stamp is
+  # absent.  isLogsEnabled must treat that as "true" to preserve the existing
+  # behaviour (logs were on by default).
+
+  - it: logs-default annotation should be "true" when upgrading from old version (no stamp on existing CM)
+    template: node-collector-config-map.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/ConfigMap":
+          gvr:
+            version: "v1"
+            resource: "configmaps"
+          namespaced: true
+      objects:
+        - kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            namespace: NAMESPACE
+    asserts:
+      - equal:
+          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
+          value: "true"
+
+  - it: Logs pipeline should be present when upgrading from old version (no stamp on existing CM)
+    template: node-collector-config-map.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/ConfigMap":
+          gvr:
+            version: "v1"
+            resource: "configmaps"
+          namespaced: true
+      objects:
+        - kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            namespace: NAMESPACE
+    asserts:
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: "logs/container:"
+
+  # ── upgrade: existing ConfigMap from new version with stamp="true" ───────────
+
+  - it: logs-default annotation should be "true" when existing CM stamp is "true"
+    template: node-collector-config-map.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/ConfigMap":
+          gvr:
+            version: "v1"
+            resource: "configmaps"
+          namespaced: true
+      objects:
+        - kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            namespace: NAMESPACE
+            annotations:
+              swo.cloud.solarwinds.com/logs-default: "true"
+    asserts:
+      - equal:
+          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
+          value: "true"
+
+  - it: Logs pipeline should be present when existing CM stamp is "true"
+    template: node-collector-config-map.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/ConfigMap":
+          gvr:
+            version: "v1"
+            resource: "configmaps"
+          namespaced: true
+      objects:
+        - kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            namespace: NAMESPACE
+            annotations:
+              swo.cloud.solarwinds.com/logs-default: "true"
+    asserts:
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: "logs/container:"
+
+  # ── upgrade: existing ConfigMap from new version with stamp="false" ──────────
+  # User explicitly disabled logs in a previous release — must stay disabled.
+
+  - it: logs-default annotation should be "false" when existing CM stamp is "false"
+    template: node-collector-config-map.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/ConfigMap":
+          gvr:
+            version: "v1"
+            resource: "configmaps"
+          namespaced: true
+      objects:
+        - kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            namespace: NAMESPACE
+            annotations:
+              swo.cloud.solarwinds.com/logs-default: "false"
+    asserts:
+      - equal:
+          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
+          value: "false"
+
+  - it: Logs pipeline should not be present when existing CM stamp is "false"
+    template: node-collector-config-map.yaml
+    kubernetesProvider:
+      scheme:
+        "v1/ConfigMap":
+          gvr:
+            version: "v1"
+            resource: "configmaps"
+          namespaced: true
+      objects:
+        - kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            namespace: NAMESPACE
+            annotations:
+              swo.cloud.solarwinds.com/logs-default: "false"
+    asserts:
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: "logs/container:"
+
+  # ── Windows mirrors ──────────────────────────────────────────────────────────
+
+  - it: Windows ConfigMap should exist when logs.enabled is true and windows.enabled is true
+    template: node-collector-config-map-windows.yaml
+    set:
+      otel.logs.enabled: true
+      otel.windows.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: Windows DaemonSet should exist when logs.enabled is true and windows.enabled is true
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.logs.enabled: true
+      otel.windows.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: Windows ConfigMap should not exist when both logs.enabled and metrics.enabled are false
+    template: node-collector-config-map-windows.yaml
+    set:
+      otel.logs.enabled: false
+      otel.metrics.enabled: false
+      otel.windows.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Windows DaemonSet should not exist when both logs.enabled and metrics.enabled are false
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.logs.enabled: false
+      otel.metrics.enabled: false
+      otel.windows.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
