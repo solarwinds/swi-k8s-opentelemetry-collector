@@ -13,7 +13,7 @@ pod_name = 'dummy-pod'
 expected_event = f'Successfully assigned default/{pod_name} to '
 
 def setup_function():
-    run_shell_command(f"kubectl run {pod_name} --labels \"test-label=test-value\" --overrides=\"{{ \\\"apiVersion\\\": \\\"v1\\\", \\\"metadata\\\": {{\\\"annotations\\\": {{ \\\"test-annotation\\\":\\\"test-value\\\" }} }} }}\" --image bash:alpine3.19 -n default -- -ec \"while :; do sleep 5 ; done\"")
+    run_shell_command(f"kubectl run {pod_name} --labels \"test-label=test-value\" --overrides=\"{{ \\\"apiVersion\\\": \\\"v1\\\", \\\"metadata\\\": {{\\\"annotations\\\": {{ \\\"test-annotation\\\":\\\"test-value\\\" }} }} }}\" --image bash:alpine3.23 -n default -- -ec \"while :; do sleep 5 ; done\"")
 
 def teardown_function():
     run_shell_command(f'kubectl delete pod {pod_name} -n default')
