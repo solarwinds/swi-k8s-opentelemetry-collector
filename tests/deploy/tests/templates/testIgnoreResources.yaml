@@ -1,0 +1,143 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ printf "%s-ignore" .Release.Namespace }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-http-server-ignore
+  namespace: {{ printf "%s-ignore" .Release.Namespace }}
+  labels:
+    app: test-communicator-http-server-ignore
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-http-server-ignore
+  template:
+    metadata:
+      labels:
+        app: test-communicator-http-server-ignore
+        component: test-communicator
+        protocol: http
+      annotations:
+        test-annotation: "test-value"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-http-server-ignore"
+        - name: PORT
+          value: "8080"
+        - name: PROTOCOL
+          value: "http"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-communicator-http-server-ignore
+  namespace: {{ printf "%s-ignore" .Release.Namespace }}
+  labels:
+    app: test-communicator-http-server-ignore
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+spec:
+  selector:
+    app: test-communicator-http-server-ignore
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-communicator-http-client-ignore
+  namespace: {{ printf "%s-ignore" .Release.Namespace }}
+  labels:
+    app: test-communicator-http-client-ignore
+    component: test-communicator
+    protocol: http
+  annotations:
+    test-annotation: "test-value"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-communicator-http-client-ignore
+  template:
+    metadata:
+      labels:
+        app: test-communicator-http-client-ignore
+        component: test-communicator
+        protocol: http
+      annotations:
+        test-annotation: "test-value"
+    spec:
+      containers:
+      - name: test-communicator
+        image: test-communicator
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SERVICE_NAME
+          value: "test-communicator-http-client-ignore"
+        - name: PORT
+          value: "8080"
+        - name: PROTOCOL
+          value: "http"
+        - name: TARGET_URL
+          value: {{ printf "http://test-communicator-http-server-ignore.%s-ignore.svc.cluster.local:8080" .Release.Namespace | quote }}
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10

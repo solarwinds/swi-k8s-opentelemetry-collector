@@ -34,6 +34,8 @@ deploy:
           cluster:
             name: '{{ env "CLUSTER_NAME" | default "cluster name" }}'
             uid: '{{ env "CLUSTER_NAME" | default "cluster-uid-123456789" }}'
+            filter:
+              exclude_namespaces: ['{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}-ignore']
           otel:
             endpoint: timeseries-mock-service:9082
             swi_endpoint_check: 
