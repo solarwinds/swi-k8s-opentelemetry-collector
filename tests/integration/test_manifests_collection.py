@@ -15,7 +15,7 @@ annotation_value = 'test-value'
 
 
 def setup_function():
-    run_shell_command(f"kubectl run {pod_name} --labels \"{label_key}={label_value}\" --overrides=\"{{ \\\"apiVersion\\\": \\\"v1\\\", \\\"metadata\\\": {{\\\"annotations\\\": {{ \\\"{annotation_key}\\\":\\\"{annotation_value}\\\" }} }} }}\" --image bash:alpine3.19 -n {namespace_name} -- -ec \"while :; do sleep 5 ; done\"")
+    run_shell_command(f"kubectl run {pod_name} --labels \"{label_key}={label_value}\" --overrides=\"{{ \\\"apiVersion\\\": \\\"v1\\\", \\\"metadata\\\": {{\\\"annotations\\\": {{ \\\"{annotation_key}\\\":\\\"{annotation_value}\\\" }} }} }}\" --image bash:alpine3.23 -n {namespace_name} -- -ec \"while :; do sleep 5 ; done\"")
 
 
 def teardown_function():
