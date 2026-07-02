@@ -6,6 +6,7 @@ templates:
   - node-collector-config-map-windows.yaml
   - node-collector-daemon-set-windows.yaml
   - common-env-config-map.yaml
+  - values-config-map.yaml
 chart:
   appVersion: 1.0.0
 
@@ -27,15 +28,6 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
-
-  - it: logs-default annotation should be "true" when logs.enabled is explicitly true
-    template: node-collector-config-map.yaml
-    set:
-      otel.logs.enabled: true
-    asserts:
-      - equal:
-          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
-          value: "true"
 
   - it: Logs pipeline should be present in config when logs.enabled is explicitly true
     template: node-collector-config-map.yaml
@@ -82,15 +74,6 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: logs-default annotation should be "false" when logs.enabled is explicitly false
-    template: node-collector-config-map.yaml
-    set:
-      otel.logs.enabled: false
-    asserts:
-      - equal:
-          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
-          value: "false"
-
   - it: Logs pipeline should not be present in config when logs.enabled is explicitly false
     template: node-collector-config-map.yaml
     set:
@@ -115,14 +98,6 @@ tests:
       - hasDocuments:
           count: 1
 
-  - it: logs-default annotation should be "false" when logs.enabled is null (fresh install)
-    template: node-collector-config-map.yaml
-    # lookup returns empty in unit tests so isLogsEnabled resolves to false
-    asserts:
-      - equal:
-          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
-          value: "false"
-
   - it: Logs pipeline should not be present when logs.enabled is null (fresh install)
     template: node-collector-config-map.yaml
     asserts:
@@ -146,12 +121,11 @@ tests:
       - hasDocuments:
           count: 0
 
-  # ── upgrade: existing ConfigMap from old version (no annotation stamp) ──────
-  # When upgrading from a version that did not have the annotation, the stamp is
-  # absent.  isLogsEnabled must treat that as "true" to preserve the existing
-  # behaviour (logs were on by default).
+  # ── upgrade: values ConfigMap from old chart version (enabled: true was the raw default) ──
+  # The old chart stored otel.logs.enabled: true in VALUES_YAML.
+  # isLogsEnabled must read that and keep logs on.
 
-  - it: logs-default annotation should be "true" when upgrading from old version (no stamp on existing CM)
+  - it: Logs pipeline should be present when upgrading from old version (VALUES_YAML has enabled=true)
     template: node-collector-config-map.yaml
     kubernetesProvider:
       scheme:
@@ -164,36 +138,19 @@ tests:
         - kind: ConfigMap
           apiVersion: v1
           metadata:
-            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            name: RELEASE-NAME-swo-k8s-collector-values
             namespace: NAMESPACE
-    asserts:
-      - equal:
-          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
-          value: "true"
-
-  - it: Logs pipeline should be present when upgrading from old version (no stamp on existing CM)
-    template: node-collector-config-map.yaml
-    kubernetesProvider:
-      scheme:
-        "v1/ConfigMap":
-          gvr:
-            version: "v1"
-            resource: "configmaps"
-          namespaced: true
-      objects:
-        - kind: ConfigMap
-          apiVersion: v1
-          metadata:
-            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
-            namespace: NAMESPACE
+          data:
+            # base64 of: "otel:\n  logs:\n    enabled: true\n"
+            VALUES_YAML: b3RlbDoKICBsb2dzOgogICAgZW5hYmxlZDogdHJ1ZQo=
     asserts:
       - matchRegex:
           path: data["logs.config"]
           pattern: "logs/container:"
 
-  # ── upgrade: existing ConfigMap from new version with stamp="true" ───────────
+  # ── upgrade: values ConfigMap from new chart version with resolved enabled=true ─
 
-  - it: logs-default annotation should be "true" when existing CM stamp is "true"
+  - it: Logs pipeline should be present when previous deploy had resolved enabled=true
     template: node-collector-config-map.yaml
     kubernetesProvider:
       scheme:
@@ -206,41 +163,19 @@ tests:
         - kind: ConfigMap
           apiVersion: v1
           metadata:
-            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            name: RELEASE-NAME-swo-k8s-collector-values
             namespace: NAMESPACE
-            annotations:
-              swo.cloud.solarwinds.com/logs-default: "true"
-    asserts:
-      - equal:
-          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
-          value: "true"
-
-  - it: Logs pipeline should be present when existing CM stamp is "true"
-    template: node-collector-config-map.yaml
-    kubernetesProvider:
-      scheme:
-        "v1/ConfigMap":
-          gvr:
-            version: "v1"
-            resource: "configmaps"
-          namespaced: true
-      objects:
-        - kind: ConfigMap
-          apiVersion: v1
-          metadata:
-            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
-            namespace: NAMESPACE
-            annotations:
-              swo.cloud.solarwinds.com/logs-default: "true"
+          data:
+            VALUES_YAML: b3RlbDoKICBsb2dzOgogICAgZW5hYmxlZDogdHJ1ZQo=
     asserts:
       - matchRegex:
           path: data["logs.config"]
           pattern: "logs/container:"
 
-  # ── upgrade: existing ConfigMap from new version with stamp="false" ──────────
-  # User explicitly disabled logs in a previous release — must stay disabled.
+  # ── upgrade: values ConfigMap from new chart version with resolved enabled=false ─
+  # User's previous deploy had logs disabled — must stay disabled.
 
-  - it: logs-default annotation should be "false" when existing CM stamp is "false"
+  - it: Logs pipeline should not be present when previous deploy had resolved enabled=false
     template: node-collector-config-map.yaml
     kubernetesProvider:
       scheme:
@@ -253,32 +188,11 @@ tests:
         - kind: ConfigMap
           apiVersion: v1
           metadata:
-            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
+            name: RELEASE-NAME-swo-k8s-collector-values
             namespace: NAMESPACE
-            annotations:
-              swo.cloud.solarwinds.com/logs-default: "false"
-    asserts:
-      - equal:
-          path: metadata.annotations["swo.cloud.solarwinds.com/logs-default"]
-          value: "false"
-
-  - it: Logs pipeline should not be present when existing CM stamp is "false"
-    template: node-collector-config-map.yaml
-    kubernetesProvider:
-      scheme:
-        "v1/ConfigMap":
-          gvr:
-            version: "v1"
-            resource: "configmaps"
-          namespaced: true
-      objects:
-        - kind: ConfigMap
-          apiVersion: v1
-          metadata:
-            name: RELEASE-NAME-swo-k8s-collector-node-collector-config
-            namespace: NAMESPACE
-            annotations:
-              swo.cloud.solarwinds.com/logs-default: "false"
+          data:
+            # base64 of: "otel:\n  logs:\n    enabled: false\n"
+            VALUES_YAML: b3RlbDoKICBsb2dzOgogICAgZW5hYmxlZDogZmFsc2UK
     asserts:
       - notMatchRegex:
           path: data["logs.config"]

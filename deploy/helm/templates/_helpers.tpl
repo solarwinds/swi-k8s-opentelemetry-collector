@@ -432,21 +432,26 @@ Resolve the effective value of otel.logs.enabled.
 - null + ConfigMap exists, stamp = "true"         → was old deployment, preserved → true.
 - null + ConfigMap exists, stamp = "false"        → was new install, preserved → false.
 
-The ConfigMap annotation swo.cloud.solarwinds.com/logs-default always stores the
-resolved effective value, so the correct state is carried forward across all upgrades.
+When otel.logs.enabled is not explicitly set (null), the resolved value is read
+from the VALUES_YAML blob in the previously-deployed values ConfigMap.  This
+preserves the behaviour across upgrades:
+  - Old cluster (values CM has enabled: true from old default) → logs stay on
+  - New cluster after first deploy (values CM has resolved false)  → logs stay off
+  - Fresh install (no values CM yet)                              → logs off (new default)
 
 Usage:
 {{- if include "isLogsEnabled" . }}
 */}}
 {{- define "isLogsEnabled" -}}
 {{- if kindIs "bool" .Values.otel.logs.enabled -}}
-  {{- if .Values.otel.logs.enabled -}}true{{- end -}}
+  {{- ternary "true" "false" .Values.otel.logs.enabled -}}
 {{- else -}}
-  {{- $existingCM := lookup "v1" "ConfigMap" .Release.Namespace (include "common.fullname" (tuple . "-node-collector-config")) -}}
-  {{- if $existingCM -}}
-    {{- $annotations := $existingCM.metadata.annotations | default dict -}}
-    {{- $stamp := index $annotations "swo.cloud.solarwinds.com/logs-default" | default "" -}}
-    {{- if or (not $stamp) (eq $stamp "true") -}}true{{- end -}}
+  {{- $valsCM := lookup "v1" "ConfigMap" .Release.Namespace (include "common.fullname" (tuple . "-values")) -}}
+  {{- if $valsCM -}}
+    {{- $prevValues := index $valsCM.data "VALUES_YAML" | b64dec | fromYaml -}}
+    {{- if kindIs "bool" $prevValues.otel.logs.enabled -}}
+      {{- ternary "true" "false" $prevValues.otel.logs.enabled -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}

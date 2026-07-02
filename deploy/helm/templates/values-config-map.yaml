@@ -14,4 +14,11 @@ data:
     {{- $filteredOtel := get $filteredValues "otel" }}
     {{- $_ := unset $filteredOtel "api_token" }}
     {{- $_ := set $filteredValues "otel" $filteredOtel }}
+    {{- if not (kindIs "bool" .Values.otel.logs.enabled) }}
+    {{- $logsState := include "isLogsEnabled" . }}
+    {{- if $logsState }}
+    {{- $filteredLogs := get $filteredOtel "logs" }}
+    {{- $_ = set $filteredLogs "enabled" (eq $logsState "true") }}
+    {{- end }}
+    {{- end }}
 {{ $filteredValues | toYaml | b64enc | indent 4 }}
