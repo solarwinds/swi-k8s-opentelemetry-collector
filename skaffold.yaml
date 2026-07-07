@@ -316,3 +316,18 @@ profiles:
           resourceName: timeseries-mock-service
           namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
           port: 8088
+  - name: sandbox
+    activation:
+      - env: "SANDBOX_VM_ID=*"
+    build:
+      local:
+        push: true
+        useBuildkit: true
+        concurrency: 0
+    deploy:
+      kubeContext: local
+    # patches augment the inline deploy override above — valid in Skaffold v4
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/network_topology.enabled
+        value: "false"

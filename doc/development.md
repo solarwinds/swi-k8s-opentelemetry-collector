@@ -5,6 +5,8 @@
 - [Contribution Guidelines](#contribution-guidelines)
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
+- [Develop against remote cluster](#develop-against-remote-cluster)
+- [Developing in a Claude Code sandbox](#developing-in-a-claude-code-sandbox)
 - [Develop against remote prometheus](#develop-against-remote-prometheus)
 - [Helm Unit tests](#helm-unit-tests)
 - [Integration tests](#integration-tests)
@@ -183,6 +185,40 @@ otel.metrics.batch.send_batch_size: 1024
 otel.metrics.batch.send_batch_max_size: 1024
 ```
 * Run `skaffold dev -p=test-cluster --default-repo=<Your ECR repository>`
+
+## Developing in a Claude Code sandbox
+
+Run `skaffold dev` inside a sandbox to develop and test collector changes without a local Kubernetes cluster.
+
+### Prerequisites
+
+- **k3s** must be running under the `local` kubeContext. The sandbox harness provides `start-k3s` as a built-in binary installed by the Claude Code sandbox image. Run it once before starting Skaffold:
+
+  ```shell
+  start-k3s
+  ```
+
+- **Docker Hub credentials** (or another accessible registry) must be available in the sandbox. k3s does not share the Docker daemon, so images must be pushed to a registry and pulled back by k3s. If you have Docker Hub credentials, configure them via `docker login`. Alternatively, pass `--default-repo` pointing to any registry the sandbox can reach.
+
+### Running skaffold dev
+
+```shell
+skaffold dev -p sandbox,build-collector
+```
+
+Why `-p build-collector` is required: the base artifact list in `skaffold.yaml` only contains `integration-test` and `test-communicator`. The collector image itself is added by the `build-collector` profile, so it must always be passed explicitly.
+
+The `sandbox` profile sets `kubeContext: local` (matching the k3s context) and configures registry handling for the sandbox environment. It activates automatically when the `SANDBOX_VM_ID` environment variable is set, which the Claude Code sandbox harness always sets. This means `-p sandbox` can be omitted when running inside a sandbox:
+
+```shell
+skaffold dev -p build-collector
+```
+
+If you need to push images to a specific registry, add `--default-repo`:
+
+```shell
+skaffold dev -p build-collector --default-repo=<your-registry>
+```
 
 ## Develop against remote prometheus
 
