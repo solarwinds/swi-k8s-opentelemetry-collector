@@ -192,32 +192,34 @@ Run `skaffold dev` inside a sandbox to develop and test collector changes withou
 
 ### Prerequisites
 
-- **k3s** must be running under the `local` kubeContext. The sandbox harness provides `start-k3s` as a built-in binary installed by the Claude Code sandbox image. Run it once before starting Skaffold:
+- **k3s** must be running under the `local` kubeContext. The sandbox harness provides `start-k3s` as a built-in binary. Run it once per session before starting Skaffold:
 
   ```shell
   start-k3s
   ```
 
-- **Docker Hub credentials** (or another accessible registry) must be available in the sandbox. k3s does not share the Docker daemon, so images must be pushed to a registry and pulled back by k3s. If you have Docker Hub credentials, configure them via `docker login`. Alternatively, pass `--default-repo` pointing to any registry the sandbox can reach.
+- **Local registry** must be configured as the Skaffold default. The sandbox already runs a `registry:2` container at `localhost:5000` (started by `start-k3s`). Register it once as the global default:
+
+  ```shell
+  skaffold config set --global default-repo localhost:5000
+  ```
+
+  This persists across `skaffold dev` invocations and eliminates the need for `--default-repo` flags.
 
 ### Running skaffold dev
 
+Once k3s is running and the registry is configured, simply run:
+
 ```shell
-skaffold dev -p sandbox,build-collector
+skaffold dev
 ```
 
-Why `-p build-collector` is required: the base artifact list in `skaffold.yaml` only contains `integration-test` and `test-communicator`. The collector image itself is added by the `build-collector` profile, so it must always be passed explicitly.
+The `sandbox` profile activates automatically when the active kubeContext is `local` (set by `start-k3s`). It configures `kubeContext: local`, `push: true`, disables `network_topology` (eBPF is not available in the sandbox), and skips the `monitoring` Prometheus stack (not needed for collector development).
 
-The `sandbox` profile sets `kubeContext: local` (matching the k3s context) and configures registry handling for the sandbox environment. It activates automatically when the `SANDBOX_VM_ID` environment variable is set, which the Claude Code sandbox harness always sets. This means `-p sandbox` can be omitted when running inside a sandbox:
+If you are developing local changes to the collector image itself, also pass `-p build-collector` to build and push it:
 
 ```shell
 skaffold dev -p build-collector
-```
-
-If you need to push images to a specific registry, add `--default-repo`:
-
-```shell
-skaffold dev -p build-collector --default-repo=<your-registry>
 ```
 
 ## Develop against remote prometheus
