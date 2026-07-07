@@ -6,7 +6,7 @@
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
 - [Develop against remote cluster](#develop-against-remote-cluster)
-- [Developing in a Claude Code sandbox](#developing-in-a-claude-code-sandbox)
+- [Developing in a sandbox](#developing-in-a-sandbox)
 - [Develop against remote prometheus](#develop-against-remote-prometheus)
 - [Helm Unit tests](#helm-unit-tests)
 - [Integration tests](#integration-tests)
@@ -186,37 +186,19 @@ otel.metrics.batch.send_batch_max_size: 1024
 ```
 * Run `skaffold dev -p=test-cluster --default-repo=<Your ECR repository>`
 
-## Developing in a Claude Code sandbox
+## Developing in a sandbox
 
-Run `skaffold dev` inside a sandbox to develop and test collector changes without a local Kubernetes cluster.
+To run `skaffold dev` in a Linux sandbox (e.g. a container-based dev environment), you need:
 
-### Prerequisites
-
-- **k3s** must be running under the `local` kubeContext. The sandbox harness provides `start-k3s` as a built-in binary. Run it once per session before starting Skaffold:
-
-  ```shell
-  start-k3s
-  ```
-
-- **Local registry** must be configured as the Skaffold default. The sandbox already runs a `registry:2` container at `localhost:5000` (started by `start-k3s`). Register it once as the global default:
-
+- **k3s** running under the `local` kubeContext
+- **A local registry** at `localhost:5000` configured as the Skaffold default:
   ```shell
   skaffold config set --global default-repo localhost:5000
   ```
 
-  This persists across `skaffold dev` invocations and eliminates the need for `--default-repo` flags.
+Once those prerequisites are met, `skaffold dev` with no flags will automatically activate the `sandbox` profile (triggers on `kubeContext: local`). The profile enables `push: true`, disables `network_topology` (eBPF unavailable in containers), and skips the Prometheus monitoring stack.
 
-### Running skaffold dev
-
-Once k3s is running and the registry is configured, simply run:
-
-```shell
-skaffold dev
-```
-
-The `sandbox` profile activates automatically when the active kubeContext is `local` (set by `start-k3s`). It configures `kubeContext: local`, `push: true`, disables `network_topology` (eBPF is not available in the sandbox), and skips the `monitoring` Prometheus stack (not needed for collector development).
-
-If you are developing local changes to the collector image itself, also pass `-p build-collector` to build and push it:
+To also build the collector image locally, add `-p build-collector`:
 
 ```shell
 skaffold dev -p build-collector
