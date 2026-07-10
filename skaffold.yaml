@@ -316,3 +316,39 @@ profiles:
           resourceName: timeseries-mock-service
           namespace: '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}'
           port: 8088
+  - name: sandbox
+    activation:
+      - kubeContext: local
+    build:
+      local:
+        push: true
+        useBuildkit: true
+        concurrency: 0
+      hooks:
+        after:
+          - command:
+              - sh
+              - -c
+              - |
+                helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
+                helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts --force-update
+                helm repo add jetstack https://charts.jetstack.io --force-update
+                helm repo add aqua https://aquasecurity.github.io/helm-charts --force-update
+                helm repo update
+    deploy:
+      kubeContext: local
+    # patches augment the inline deploy override above — valid in Skaffold v4
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/network_topology.enabled
+        value: "false"
+      # Remove prometheus/kube-prometheus-stack — not needed in sandbox and its
+      # pre-install webhook-cert Job times out on fresh k3s clusters.
+      - op: remove
+        path: /deploy/helm/releases/2
+      - op: remove
+        path: /portForward/2
+      # Install Prometheus CRDs directly so the collector's ServiceMonitors can be applied.
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/prometheusCRDs.install
+        value: true

@@ -5,6 +5,8 @@
 - [Contribution Guidelines](#contribution-guidelines)
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
+- [Develop against remote cluster](#develop-against-remote-cluster)
+- [Developing in a sandbox](#developing-in-a-sandbox)
 - [Develop against remote prometheus](#develop-against-remote-prometheus)
 - [Helm Unit tests](#helm-unit-tests)
 - [Integration tests](#integration-tests)
@@ -183,6 +185,24 @@ otel.metrics.batch.send_batch_size: 1024
 otel.metrics.batch.send_batch_max_size: 1024
 ```
 * Run `skaffold dev -p=test-cluster --default-repo=<Your ECR repository>`
+
+## Developing in a sandbox
+
+To run `skaffold dev` in a Linux sandbox (e.g. a container-based dev environment), you need:
+
+- **k3s** running under the `local` kubeContext
+- **A local registry** at `localhost:5000` configured as the Skaffold default:
+  ```shell
+  skaffold config set --global default-repo localhost:5000
+  ```
+
+Once those prerequisites are met, `skaffold dev` with no flags will automatically activate the `sandbox` profile (triggers on `kubeContext: local`). The profile enables `push: true`, disables `network_topology` (eBPF unavailable in containers), and skips the Prometheus monitoring stack.
+
+To also build the collector image locally, add `-p build-collector`:
+
+```shell
+skaffold dev -p build-collector
+```
 
 ## Develop against remote prometheus
 
