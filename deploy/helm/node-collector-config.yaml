@@ -122,6 +122,44 @@ processors:
       - k8s.node.cpu.usage.seconds.rate
 {{- end }}
 
+{{- if and (not .isWindows) .Values.otel.metrics.kubeletstats.enabled .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+  # Drop CPU metrics from cAdvisor pipeline to avoid duplicates when kubeletstats is collecting them.
+  filter/cadvisor-cpu:
+    error_mode: ignore
+    metrics:
+      metric:
+        - name == "k8s.node.cpu.usage.seconds.rate"
+        - name == "k8s.pod.cpu.usage.seconds.rate"
+        - name == "k8s.container.cpu.usage.seconds.rate"
+
+  metrics_transform/linux-kubeletstats:
+    transforms:
+      - include: k8s.container.cpu.time
+        action: update
+        new_name: k8s.container.cpu.usage.seconds.rate
+      - include: k8s.pod.cpu.time
+        action: update
+        new_name: k8s.pod.cpu.usage.seconds.rate
+      - include: k8s.node.cpu.time
+        action: update
+        new_name: k8s.node.cpu.usage.seconds.rate
+
+  cumulativetodelta/linux-kubeletstats:
+    max_staleness: {{ include "common.maxStaleness" . }}
+    include:
+      metrics:
+        - k8s.container.cpu.usage.seconds.rate
+        - k8s.pod.cpu.usage.seconds.rate
+        - k8s.node.cpu.usage.seconds.rate
+      match_type: strict
+
+  deltatorate/linux-kubeletstats:
+    metrics:
+      - k8s.container.cpu.usage.seconds.rate
+      - k8s.pod.cpu.usage.seconds.rate
+      - k8s.node.cpu.usage.seconds.rate
+{{- end }}
+
   {{- include "common-config.groupbyattrs-node" . | nindent 2 }}
   {{- include "common-config.groupbyattrs-pod" . | nindent 2 }}
   {{- include "common-config.groupbyattrs-all" . | nindent 2 }}
@@ -704,6 +742,18 @@ receivers:
       - node
 {{- end }}
 
+{{- if and (not .isWindows) .Values.otel.metrics.kubeletstats.enabled .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+  kubelet_stats/linux:
+    collection_interval: {{ quote .Values.otel.metrics.prometheus.scrape_interval }}
+    auth_type: "serviceAccount"
+    endpoint: "https://${NODE_IP}:10250"
+    insecure_skip_verify: true
+    metric_groups:
+      - container
+      - pod
+      - node
+{{- end }}
+
 service:
   extensions:
     - file_storage/checkpoints
@@ -786,6 +836,9 @@ service:
         - metrics_transform/preprocessing
         - filter/remove_internal_postprocessing
         - attributes/remove_temp
+{{- if and (not .isWindows) .Values.otel.metrics.kubeletstats.enabled }}
+        - filter/cadvisor-cpu
+{{- end }}
         - cumulativetodelta/cadvisor
         - deltatorate/cadvisor
         - groupbyattrs/node
@@ -805,6 +858,19 @@ service:
         - metrics_transform/windows-kubeletstats
         - cumulativetodelta/windows-kubeletstats
         - deltatorate/windows-kubeletstats
+        - resource/all
+      exporters:
+        - forward/metric-exporter
+{{- end }}
+{{- if and (not .isWindows) .Values.otel.metrics.kubeletstats.enabled .Values.otel.metrics.enabled (not .Values.aws_fargate.enabled) }}
+    metrics/node-kubeletstats:
+      receivers:
+        - kubelet_stats/linux
+      processors:
+        - memory_limiter
+        - metrics_transform/linux-kubeletstats
+        - cumulativetodelta/linux-kubeletstats
+        - deltatorate/linux-kubeletstats
         - resource/all
       exporters:
         - forward/metric-exporter
