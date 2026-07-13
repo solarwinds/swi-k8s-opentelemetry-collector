@@ -352,3 +352,17 @@ profiles:
       - op: add
         path: /deploy/helm/releases/1/setValueTemplates/prometheusCRDs.install
         value: true
+  - name: tail-sampling
+    activation:
+      - env: CI=true
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.gateway.tailSampling.enabled
+        value: true
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.gateway.autoscaler.minReplicas
+        value: 2
+      # Reduce the CPU request for the gateway to make it easier to run in CI environments with limited resources.
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/otel.gateway.resources.requests.cpu
+        value: 100m

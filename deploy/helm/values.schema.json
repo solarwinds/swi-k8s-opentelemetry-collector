@@ -1544,6 +1544,54 @@
                         },
                         "prefix": {
                             "type": "string"
+                        },
+                        "tailSampling": {
+                            "type": "object",
+                            "description": "Tail-sampling configuration for traces.",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "decision_wait": {
+                                    "type": "string"
+                                },
+                                "num_traces": {
+                                    "type": "integer"
+                                },
+                                "expected_new_traces_per_sec": {
+                                    "type": "integer"
+                                },
+                                "decision_cache": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sampled_cache_size": {
+                                            "type": "integer"
+                                        },
+                                        "non_sampled_cache_size": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "policies": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                },
+                                "recordPolicy": {
+                                    "type": "boolean",
+                                    "description": "Enable tracking sampling policy. If enabled, this will add additional attributes on each sampled span. More info: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/tailsamplingprocessor#tracking-sampling-policy"
+                                },
+                                "loadBalancing": {
+                                    "type": "object",
+                                    "properties": {
+                                        "timeout": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            }
                         }
                     },
                     "additionalProperties": false

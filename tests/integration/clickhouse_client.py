@@ -438,13 +438,49 @@ class ClickHouseClient:
         
         return result
     
+    def get_traces(self, where_clause: str = None) -> list:
+        """Fetch traces from ClickHouse.
+
+        Args:
+            where_clause: Optional WHERE clause to filter traces (without 'WHERE' keyword)
+
+        Returns:
+            List of trace span records from ClickHouse as flat dicts
+        """
+        query = """
+        SELECT
+            Timestamp,
+            TraceId,
+            SpanId,
+            ParentSpanId,
+            SpanName,
+            SpanKind,
+            ServiceName,
+            ResourceAttributes,
+            SpanAttributes,
+            Duration,
+            StatusCode,
+            StatusMessage
+        FROM otel.otel_traces
+        """
+
+        if where_clause:
+            query += f"\nWHERE {where_clause}"
+
+        query += "\nORDER BY Timestamp DESC"
+
+        try:
+            return self.query(query)
+        except Exception:
+            return []
+
     def count_records(self, table: str, where_clause: str = None) -> int:
         """Count records in a ClickHouse table.
-        
+
         Args:
             table: Table name (e.g., 'otel.otel_logs', 'otel.otel_metrics_gauge')
             where_clause: Optional WHERE clause (without 'WHERE' keyword)
-            
+
         Returns:
             Number of records matching the criteria
         """

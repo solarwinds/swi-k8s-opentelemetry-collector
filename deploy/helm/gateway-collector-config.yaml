@@ -68,7 +68,7 @@ processors:
         action: upsert
 
   resource/clean-temporary-attributes:
-    attributes:      
+    attributes:
       - key: obi
         action: delete
       - key: tcp
@@ -708,17 +708,6 @@ service:
       exporters:
         - otlp_grpc
     logs:
-      receivers:
-        - otlp
-      processors:
-        - memory_limiter
-        - k8s_attributes
-        - resource
-        - transform/scope
-        - batch
-      exporters:
-        - otlp_grpc
-    traces:
       receivers:
         - otlp
       processors:

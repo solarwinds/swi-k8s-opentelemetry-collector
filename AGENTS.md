@@ -97,6 +97,63 @@ skaffold delete
 - Keep test framework updates (Python tooling, mock services) separate from functional
   chart or collector changes.
 
+## Tail Sampling Local Development
+
+### Deploying
+
+Use the `tail-sampling` profile to deploy the collector with tail sampling enabled:
+
+```bash
+skaffold run -p="tail-sampling"
+```
+
+### Buffer sizing
+
+The `tailSamplingProcessor.num_traces` value must satisfy:
+
+```text
+num_traces >= expected_new_traces_per_sec × decision_wait_seconds
+```
+
+If the buffer is too small, traces are evicted before sampling decisions are made and will
+be dropped rather than sampled. Increase `num_traces` in `values.yaml` when running high
+load tests.
+
+### OTel attribute keys in policies and test traces
+
+Use the modern OpenTelemetry semantic convention attribute keys. The legacy keys still
+appear in old examples but will not match spans produced by current SDKs:
+
+| Legacy (do NOT use) | Modern (use this) |
+|---------------------|-------------------|
+| `http.target`       | `url.path`        |
+| `http.method`       | `http.request.method` |
+
+Ensure both `testResourcesTraces.yaml` span attributes and Helm values `policies[].http_status_code_filter` / `string_attribute_filter` use the same convention.
+
+### build-collector profile
+
+The `build-collector` Skaffold profile builds the collector image from
+`../solarwinds-otel-collector-releases` (the sibling submodule). This is the mechanism
+for testing unreleased collector changes end-to-end before an upstream image is published.
+Combine it with any feature profile (e.g. `tail-sampling`) to get a fully integrated
+local environment.
+
+## OTel Feature Gates
+
+- Before adding a `featureGates` entry to values.yaml or collector config, verify the gate
+  still exists in the target collector version. Gates that are **graduated** (permanently
+  enabled) are removed from the binary; referencing them causes pod crash-loops at startup.
+  Check the gate's status in the release notes or source of `solarwinds-otel-collector-releases`.
+
+## Cross-Repo Image Dependencies
+
+- Helm chart changes that rely on new collector components (receivers, processors, etc.)
+  require the corresponding `solarwinds-otel-collector-releases` PR to be merged and a new
+  image published before live cluster testing is possible.
+- During development, test config changes independently with `helm unittest deploy/helm`;
+  defer live end-to-end validation until the upstream image PR is merged.
+
 ## E2E Cluster (AWS)
 
 - Always use `skaffold run` (not `skaffold dev`) for automated/agent workflows — `skaffold dev`
