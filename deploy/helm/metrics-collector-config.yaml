@@ -1275,3 +1275,8 @@ service:
                 host: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._0 | quote }}
                 port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
 {{- end }}
+    resource:
+      # Resource attributes on the collector's own internal telemetry.
+      # These correlate internal metrics to the k8s collector in case they are collected by something else.
+      k8s.cluster.name: ${CLUSTER_NAME}
+      sw.k8s.cluster.uid: ${CLUSTER_UID}
