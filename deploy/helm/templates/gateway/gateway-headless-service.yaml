@@ -20,12 +20,6 @@ spec:
     port: {{ .Values.otel.gateway.otlp_endpoint.http_port }}
     targetPort: otlp-http
     protocol: TCP
-{{- if .Values.otel.gateway.telemetry.metrics.enabled }}
-  - name: metrics
-    port: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._1 }}
-    targetPort: metrics
-    protocol: TCP
-{{- end }}
   selector:
     app: {{ include "common.fullname" (tuple . "-gateway") }}
 {{- end }}
