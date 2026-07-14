@@ -1,0 +1,76 @@
+{{- if .Values.traceGenerator.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trace-generator
+  labels:
+    app: trace-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trace-generator
+  template:
+    metadata:
+      labels:
+        app: trace-generator
+    spec:
+      containers:
+      - name: trace-generator
+        image: curlimages/curl:latest
+        command:
+          - /bin/sh
+          - -c
+          - |
+            send_span() {
+              name="$1"; method="$2"; path="$3"; status_code="$4"; end_time="$5"
+              trace_id=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 32 | head -n 1)
+              span_id=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 16 | head -n 1)
+              curl -X POST http://swo-gateway.test-namespace.svc.cluster.local:4318/v1/traces \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "resourceSpans": [{
+                    "resource": {
+                      "attributes": [{
+                        "key": "service.name",
+                        "value": {"stringValue": "trace-gen-test-service"}
+                      }]
+                    },
+                    "scopeSpans": [{
+                      "spans": [{
+                        "traceId": "'"$trace_id"'",
+                        "spanId": "'"$span_id"'",
+                        "name": "'"$name"'",
+                        "kind": 1,
+                        "startTimeUnixNano": "'"$(date +%s)000000000"'",
+                        "endTimeUnixNano": "'"$end_time"'",
+                        "attributes": [{
+                          "key": "http.request.method",
+                          "value": {"stringValue": "'"$method"'"}
+                        }, {
+                          "key": "url.path",
+                          "value": {"stringValue": "'"$path"'"}
+                        }],
+                        "status": {"code": '"$status_code"'}
+                      }]
+                    }]
+                  }]
+                }' > /dev/null 2>&1
+            }
+
+            while true; do
+              # Normal request (should be sampled at ~1%)
+              send_span "normal-request" "GET" "/api/data" 0 "$(date +%s)000000500"
+
+              # Healthcheck request (should be dropped)
+              send_span "healthcheck-request" "GET" "/healthcheck" 0 "$(date +%s)000000100"
+
+              # Error request (should be sampled at 100%)
+              send_span "error-request" "POST" "/api/process" 2 "$(date +%s)000000300"
+
+              # High latency request (should be sampled at 100%)
+              send_span "high-latency-request" "GET" "/api/slow" 0 "$(($(date +%s) + 6))000000000"
+
+              sleep 0.05
+            done
+{{- end }}

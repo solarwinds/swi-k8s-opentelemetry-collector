@@ -68,7 +68,7 @@ processors:
         action: upsert
 
   resource/clean-temporary-attributes:
-    attributes:      
+    attributes:
       - key: obi
         action: delete
       - key: tcp
@@ -718,17 +718,6 @@ service:
         - batch
       exporters:
         - otlp_grpc
-    traces:
-      receivers:
-        - otlp
-      processors:
-        - memory_limiter
-        - k8s_attributes
-        - resource
-        - transform/scope
-        - batch
-      exporters:
-        - otlp_grpc
 
     # Current SWO pipeline cannot process state events and relationships events together,
     # so we need to split them into two separate pipelines.
@@ -800,3 +789,8 @@ service:
                 host: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._0 | quote }}
                 port: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._1 }}
 {{- end }}
+    resource:
+      # Resource attributes on the collector's own internal telemetry.
+      # These correlate internal metrics to the k8s collector in case they are collected by something else.
+      k8s.cluster.name: ${CLUSTER_NAME}
+      sw.k8s.cluster.uid: ${CLUSTER_UID}

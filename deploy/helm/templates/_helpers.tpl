@@ -466,3 +466,17 @@ metric_relabel_configs:
   - regex: ^service_name$
     action: labeldrop
 {{- end -}}
+
+{{/*
+Render the merged gateway collector configuration.
+Merges gateway-collector-config.yaml (main pipelines) with gateway-collector-config-traces.yaml
+(tail-sampling traces pipelines). $main wins on key conflicts.
+
+Usage:
+{{ include "common.gateway-config-file" . | indent 8 }}
+*/}}
+{{- define "common.gateway-config-file" -}}
+{{- $main := tpl (.Files.Get "gateway-collector-config.yaml") . | fromYaml -}}
+{{- $traces := tpl (.Files.Get "gateway-collector-config-traces.yaml") . | fromYaml -}}
+{{- merge $main $traces | toYaml -}}
+{{- end -}}

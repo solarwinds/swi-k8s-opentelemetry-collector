@@ -1,6 +1,6 @@
 {{- if .Values.otel.gateway.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "common.fullname" (tuple . "-gateway") }}
   namespace: {{ .Release.Namespace }}
@@ -10,6 +10,10 @@ metadata:
   annotations:
 {{ include "common.annotations" . | indent 4 }}
 spec:
+{{- if .Values.otel.gateway.tailSampling.enabled }}
+  serviceName: swo-gateway-headless
+{{- end }}
+  podManagementPolicy: Parallel
   replicas: {{ .Values.otel.gateway.autoscaler.minReplicas }}
   selector:
     matchLabels:
@@ -22,7 +26,7 @@ spec:
 {{ include "common.labels" . | indent 8 }}
 {{ include "common.pod-labels" . | indent 8 }}
       annotations:
-        checksum/config: {{ tpl (.Files.Get "gateway-collector-config.yaml") . | sha256sum }}
+        checksum/config: {{ include "common.gateway-config-file" . | sha256sum }}
         checksum/values: {{ toJson .Values | sha256sum }}
 {{ include "common.annotations" . | indent 8 }}
 {{- if .Values.otel.gateway.telemetry.metrics.enabled }}
@@ -93,7 +97,10 @@ spec:
           command:
             - /solarwinds-otel-collector
             - --config=/conf/gateway.config
-          securityContext: 
+            {{- if and .Values.otel.gateway.tailSampling.enabled .Values.otel.gateway.tailSampling.recordPolicy }}
+            - --feature-gates=+processor.tailsamplingprocessor.recordpolicy
+            {{- end }}
+          securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             runAsNonRoot: true

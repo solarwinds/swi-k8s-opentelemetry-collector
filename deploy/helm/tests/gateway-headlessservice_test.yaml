@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for gateway-headless-service
+templates:
+  - gateway/gateway-headless-service.yaml
+tests:
+  - it: Gateway headless service should match snapshot when tailSampling is enabled
+    template: gateway/gateway-headless-service.yaml
+    set:
+      otel.gateway.tailSampling.enabled: true
+    asserts:
+      - matchSnapshot:
+          path: spec
+  - it: Gateway headless service should not be generated when tailSampling is disabled
+    template: gateway/gateway-headless-service.yaml
+    set:
+      otel.gateway.tailSampling.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

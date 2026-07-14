@@ -1,0 +1,15 @@
+Gateway headless service should match snapshot when tailSampling is enabled:
+  1: |
+    clusterIP: None
+    ports:
+      - name: otlp-grpc
+        port: 4317
+        protocol: TCP
+        targetPort: otlp-grpc
+      - name: otlp-http
+        port: 4318
+        protocol: TCP
+        targetPort: otlp-http
+    selector:
+      app: RELEASE-NAME-swo-k8s-collector-gateway
+    type: ClusterIP
