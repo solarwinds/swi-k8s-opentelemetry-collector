@@ -36,3 +36,9 @@ tests:
       - matchRegex:
           path: data["logs.config"]
           pattern: "pprof"
+  - it: kubernetes-nodes-cadvisor scrape job should not be present in windows config
+    template: node-collector-config-map-windows.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: "kubernetes-nodes-cadvisor"
