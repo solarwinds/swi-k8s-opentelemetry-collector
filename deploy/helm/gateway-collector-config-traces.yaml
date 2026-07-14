@@ -13,6 +13,11 @@ exporters:
         timeout: {{ .Values.otel.gateway.tailSampling.loadBalancing.timeout }}
         tls:
           insecure: true
+        retry_on_failure:
+          enabled: {{ .Values.otel.gateway.retry_on_failure.enabled }}
+          initial_interval: {{ .Values.otel.gateway.retry_on_failure.initial_interval }}
+          max_interval: {{ .Values.otel.gateway.retry_on_failure.max_interval }}
+          max_elapsed_time: {{ .Values.otel.gateway.retry_on_failure.max_elapsed_time }}
         sending_queue:
           enabled: {{ .Values.otel.gateway.sending_queue.enabled }}
           num_consumers: {{ .Values.otel.gateway.sending_queue.num_consumers }}
