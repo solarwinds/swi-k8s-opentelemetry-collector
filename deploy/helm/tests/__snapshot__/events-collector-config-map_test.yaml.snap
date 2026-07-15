@@ -452,6 +452,17 @@ Cluster filter should match snapshot with combined exclude filters:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -1486,6 +1497,17 @@ Cluster filter should match snapshot with combined include filters:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -2520,6 +2542,17 @@ Cluster filter should match snapshot with exclude_namespaces:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -3558,6 +3591,17 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -4592,6 +4636,17 @@ Cluster filter should match snapshot with include_namespaces:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -5627,6 +5682,17 @@ Cluster filter should match snapshot with include_namespaces_regex:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -6651,6 +6717,17 @@ Custom events filter with new syntax:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -7676,6 +7753,17 @@ Custom events filter with old syntax:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -8694,6 +8782,17 @@ Events config should match snapshot when using default values:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:
@@ -9579,6 +9678,17 @@ Events config should not contain manifest collection pipeline when disabled:
             statements:
             - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"]
               != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+          - conditions:
+            - log.body["kind"] == "Job"
+            statements:
+            - delete_key(resource.attributes, "k8s.job.condition")
+            - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string,
+              '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"]
+              == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+            - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"]
+              != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"]
+              == nil
         transform/manifest:
           error_mode: ignore
           log_statements:

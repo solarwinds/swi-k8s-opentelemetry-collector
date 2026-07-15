@@ -432,6 +432,13 @@ processors:
           - log.body["kind"] == "Node"
         statements:
           - set(resource.attributes["cloud.provider"], "nutanix") where log.body["spec"]["providerID"] != nil and IsMatch(log.body["spec"]["providerID"], "^nutanix:.*")
+      - conditions:
+          - log.body["kind"] == "Job"
+        statements:
+          - delete_key(resource.attributes, "k8s.job.condition")
+          - set(resource.attributes["k8s.job.condition"], "Failed") where IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Failed"|"type":"Failed"[^}]*"status":"True"')
+          - set(resource.attributes["k8s.job.condition"], "Complete") where resource.attributes["k8s.job.condition"] == nil and IsMatch(log.body["status"]["conditions"].string, '"status":"True"[^}]*"type":"Complete"|"type":"Complete"[^}]*"status":"True"')
+          - set(resource.attributes["k8s.job.condition"], "Active") where log.body["status"]["active"] != nil and log.body["status"]["active"] > 0 and resource.attributes["k8s.job.condition"] == nil
 
   transform/remove_deployed_by_collector_label_if_from_different_namespace:
     error_mode: ignore
