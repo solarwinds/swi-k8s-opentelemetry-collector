@@ -1,4 +1,5 @@
-{{- if and .Values.otel.metrics.autodiscovery.discovery_collector.enabled (.Capabilities.APIVersions.Has "metrics.k8s.io/v1beta1") }}
+{{- if .Values.otel.metrics.autodiscovery.discovery_collector.enabled }}
+{{- if .Capabilities.APIVersions.Has "metrics.k8s.io/v1beta1" }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -28,4 +29,5 @@ spec:
       target:
         type: Utilization
         averageUtilization: {{ .Values.otel.metrics.autodiscovery.discovery_collector.autoscaler.targetMemoryUtilization }}
+{{- end }}
 {{- end }}
