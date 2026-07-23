@@ -62,6 +62,7 @@ rules:
       - get
       - list
       - watch
+{{- if or (.Capabilities.APIVersions.Has "networking.istio.io/v1alpha3") (.Capabilities.APIVersions.Has "networking.istio.io/v1beta1") (.Capabilities.APIVersions.Has "networking.istio.io/v1") -}}
   - apiGroups:
       - "networking.istio.io"
     resources:
@@ -70,6 +71,7 @@ rules:
       - get
       - list
       - watch
+{{- end }}
   - apiGroups:
       - extensions
     resources:

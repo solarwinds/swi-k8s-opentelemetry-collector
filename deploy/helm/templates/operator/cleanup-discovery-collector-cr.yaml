@@ -1,4 +1,5 @@
-{{- if and (.Capabilities.APIVersions.Has "opentelemetry.io/v1beta1") .Values.otel.metrics.autodiscovery.discovery_collector.enabled .Values.migrations.cleanup_discovery_collector.enabled }}
+{{- if and .Values.otel.metrics.autodiscovery.discovery_collector.enabled .Values.migrations.cleanup_discovery_collector.enabled }}
+{{- if .Capabilities.APIVersions.Has "opentelemetry.io/v1beta1" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -48,4 +49,5 @@ spec:
       restartPolicy: Never
   activeDeadlineSeconds: 120
   backoffLimit: 3
+{{- end }}
 {{- end }}

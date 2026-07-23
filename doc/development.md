@@ -174,7 +174,7 @@ You may need to update relative path to `solarwinds otel collector` sources in `
 TEST_CLUSTER_NAMESPACE=my-dev-namespace
 TEST_CLUSTER_RELEASE_NAME=swi-my-dev-release
 ```
-* Make sure that you have ECR repository where image `swi-opentelemetry-collector` will be pushed
+* Make sure that you have ECR repository where image `solarwinds-otel-collector` will be pushed
 * Login to ECR repository. E.q.: `aws ecr get-login-password --region us-east-1 --profile <your AWS profile> | docker login --username AWS --password-stdin <Your ECR repository>`
 * (optionally) setup skaffold values to better target what you intent to develop. E.q.:
 ```
