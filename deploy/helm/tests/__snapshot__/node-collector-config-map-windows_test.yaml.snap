@@ -443,6 +443,14 @@ Node collector config for windows nodes should match snapshot when using default
             - k8s.istio_tcp_sent_bytes.delta
             - k8s.istio_tcp_received_bytes.delta
           max_staleness: 180s
+        cumulativetodelta/windows-kubeletstats:
+          include:
+            match_type: strict
+            metrics:
+            - k8s.container.cpu.usage.seconds.rate
+            - k8s.pod.cpu.usage.seconds.rate
+            - k8s.node.cpu.usage.seconds.rate
+          max_staleness: 180s
         deltatorate/cadvisor:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
@@ -481,6 +489,11 @@ Node collector config for windows nodes should match snapshot when using default
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        deltatorate/windows-kubeletstats:
+          metrics:
+          - k8s.container.cpu.usage.seconds.rate
+          - k8s.pod.cpu.usage.seconds.rate
+          - k8s.node.cpu.usage.seconds.rate
         filter/deduplicate-dual-attribute-metrics:
           error_mode: ignore
           metrics:
@@ -1145,6 +1158,17 @@ Node collector config for windows nodes should match snapshot when using default
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metrics_transform/windows-kubeletstats:
+          transforms:
+          - action: update
+            include: k8s.container.cpu.time
+            new_name: k8s.container.cpu.usage.seconds.rate
+          - action: update
+            include: k8s.pod.cpu.time
+            new_name: k8s.pod.cpu.usage.seconds.rate
+          - action: update
+            include: k8s.node.cpu.time
+            new_name: k8s.node.cpu.usage.seconds.rate
         metricsgeneration/istio-metrics:
           rules:
           - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
@@ -1519,6 +1543,15 @@ Node collector config for windows nodes should match snapshot when using default
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        kubelet_stats/windows:
+          auth_type: serviceAccount
+          collection_interval: 60s
+          endpoint: https://${NODE_IP}:10250
+          insecure_skip_verify: true
+          metric_groups:
+          - container
+          - pod
+          - node
         receiver_creator/discovery:
           receivers:
             prometheus/controller-manager:
@@ -1643,29 +1676,6 @@ Node collector config for windows nodes should match snapshot when using default
               config:
                 config:
                   scrape_configs:
-                  - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                    honor_labels: true
-                    honor_timestamps: false
-                    job_name: kubernetes-nodes-cadvisor
-                    metric_relabel_configs:
-                    - action: replace
-                      regex: (.+)
-                      replacement: $1
-                      source_labels:
-                      - service_name
-                      target_label: job
-                    - action: labeldrop
-                      regex: ^service_name$
-                    metrics_path: /metrics/cadvisor
-                    scheme: https
-                    scrape_interval: 60s
-                    scrape_timeout: 10s
-                    static_configs:
-                    - targets:
-                      - '`endpoint`:`kubelet_endpoint_port`'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
                   - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
                     honor_labels: true
                     honor_timestamps: false
@@ -1802,6 +1812,17 @@ Node collector config for windows nodes should match snapshot when using default
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/node-windows:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - metrics_transform/windows-kubeletstats
+            - cumulativetodelta/windows-kubeletstats
+            - deltatorate/windows-kubeletstats
+            - resource/all
+            receivers:
+            - kubelet_stats/windows
           metrics/not-relationship-state-events-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
@@ -2314,6 +2335,14 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - k8s.istio_tcp_sent_bytes.delta
             - k8s.istio_tcp_received_bytes.delta
           max_staleness: 180s
+        cumulativetodelta/windows-kubeletstats:
+          include:
+            match_type: strict
+            metrics:
+            - k8s.container.cpu.usage.seconds.rate
+            - k8s.pod.cpu.usage.seconds.rate
+            - k8s.node.cpu.usage.seconds.rate
+          max_staleness: 180s
         deltatorate/cadvisor:
           metrics:
           - k8s.node.cpu.usage.seconds.rate
@@ -2352,6 +2381,11 @@ Node collector config for windows nodes should match snapshot when using legacy 
           - k8s.istio_requests.rate
           - k8s.istio_tcp_sent_bytes.rate
           - k8s.istio_tcp_received_bytes.rate
+        deltatorate/windows-kubeletstats:
+          metrics:
+          - k8s.container.cpu.usage.seconds.rate
+          - k8s.pod.cpu.usage.seconds.rate
+          - k8s.node.cpu.usage.seconds.rate
         filter/deduplicate-dual-attribute-metrics:
           error_mode: ignore
           metrics:
@@ -3023,6 +3057,17 @@ Node collector config for windows nodes should match snapshot when using legacy 
             include: ^k8s.(rpc\..*)$$
             match_type: regexp
             new_name: $${1}
+        metrics_transform/windows-kubeletstats:
+          transforms:
+          - action: update
+            include: k8s.container.cpu.time
+            new_name: k8s.container.cpu.usage.seconds.rate
+          - action: update
+            include: k8s.pod.cpu.time
+            new_name: k8s.pod.cpu.usage.seconds.rate
+          - action: update
+            include: k8s.node.cpu.time
+            new_name: k8s.node.cpu.usage.seconds.rate
         metricsgeneration/istio-metrics:
           rules:
           - metric1: k8s.istio_request_duration_milliseconds_sum__swo_temp
@@ -3478,6 +3523,15 @@ Node collector config for windows nodes should match snapshot when using legacy 
           poll_interval: 200ms
           start_at: end
           storage: file_storage/checkpoints
+        kubelet_stats/windows:
+          auth_type: serviceAccount
+          collection_interval: 60s
+          endpoint: https://${NODE_IP}:10250
+          insecure_skip_verify: true
+          metric_groups:
+          - container
+          - pod
+          - node
         receiver_creator/discovery:
           receivers:
             prometheus/controller-manager:
@@ -3602,29 +3656,6 @@ Node collector config for windows nodes should match snapshot when using legacy 
               config:
                 config:
                   scrape_configs:
-                  - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                    honor_labels: true
-                    honor_timestamps: false
-                    job_name: kubernetes-nodes-cadvisor
-                    metric_relabel_configs:
-                    - action: replace
-                      regex: (.+)
-                      replacement: $1
-                      source_labels:
-                      - service_name
-                      target_label: job
-                    - action: labeldrop
-                      regex: ^service_name$
-                    metrics_path: /metrics/cadvisor
-                    scheme: https
-                    scrape_interval: 60s
-                    scrape_timeout: 10s
-                    static_configs:
-                    - targets:
-                      - '`endpoint`:`kubelet_endpoint_port`'
-                    tls_config:
-                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                      insecure_skip_verify: true
                   - bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
                     honor_labels: true
                     honor_timestamps: false
@@ -3761,6 +3792,17 @@ Node collector config for windows nodes should match snapshot when using legacy 
             - resource/all
             receivers:
             - receiver_creator/node
+          metrics/node-windows:
+            exporters:
+            - forward/metric-exporter
+            processors:
+            - memory_limiter
+            - metrics_transform/windows-kubeletstats
+            - cumulativetodelta/windows-kubeletstats
+            - deltatorate/windows-kubeletstats
+            - resource/all
+            receivers:
+            - kubelet_stats/windows
           metrics/not-relationship-state-events-preparation:
             exporters:
             - forward/discovery-istio-metrics-clean
