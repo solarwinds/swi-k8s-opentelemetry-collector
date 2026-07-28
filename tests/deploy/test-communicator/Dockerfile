@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Multi-stage build for efficient image size
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -29,7 +29,7 @@ COPY main.go .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -o test-communicator .
 
 # Final stage - use distroless for security and small size
-FROM gcr.io/distroless/static-debian11:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy the binary from builder stage
 COPY --from=builder /app/test-communicator /test-communicator
