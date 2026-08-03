@@ -117,8 +117,12 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.name
 {{- if .Values.otel.swotelcol_entities.enabled }}
+            - name: POD_ORDINAL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
             - name: SWOTELCOL_COLLECTOR_NAME
-              value: "$(CLUSTER_NAME)-$(POD_NAME)"
+              value: "$(CLUSTER_NAME)-discovery-collector-$(POD_ORDINAL)"
 {{- end }}
             - name: POD_NAMESPACE
               valueFrom:
