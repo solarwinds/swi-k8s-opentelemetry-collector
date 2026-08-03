@@ -354,6 +354,16 @@ Node collector config for windows nodes should match snapshot when using default
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -1697,6 +1707,7 @@ Node collector config for windows nodes should match snapshot when using default
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -2225,6 +2236,16 @@ Node collector config for windows nodes should match snapshot when using legacy 
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -3656,6 +3677,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:

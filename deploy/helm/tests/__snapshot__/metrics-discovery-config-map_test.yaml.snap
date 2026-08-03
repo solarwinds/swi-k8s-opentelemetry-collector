@@ -348,6 +348,16 @@ Metrics discovery config should match snapshot when Fargate is enabled:
         k8s_observer:
           auth_type: serviceAccount
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch/metrics:
           send_batch_max_size: 512
@@ -760,6 +770,7 @@ Metrics discovery config should match snapshot when Fargate is enabled:
         extensions:
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:

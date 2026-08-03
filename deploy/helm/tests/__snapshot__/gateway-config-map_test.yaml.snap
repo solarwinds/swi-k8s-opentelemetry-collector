@@ -435,6 +435,16 @@ Gateway config should match snapshot when tailsampling is enabled:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/clean-attributes-otlp-metrics:
           actions:
@@ -869,6 +879,7 @@ Gateway config should match snapshot when tailsampling is enabled:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -1405,6 +1416,16 @@ Gateway config should match snapshot when using default values:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/clean-attributes-otlp-metrics:
           actions:
@@ -1793,6 +1814,7 @@ Gateway config should match snapshot when using default values:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
