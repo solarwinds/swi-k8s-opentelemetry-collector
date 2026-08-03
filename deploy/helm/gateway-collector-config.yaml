@@ -32,6 +32,18 @@ extensions:
   pprof:
     endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
 {{- end }}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+  solarwinds:
+    collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+    resource:
+      sw.k8s.cluster.uid: ${CLUSTER_UID}
+    grpc:
+      endpoint: ${OTEL_ENVOY_ADDRESS}
+      tls:
+        insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      headers:
+        Authorization: "Bearer ${SOLARWINDS_API_TOKEN}"
+{{- end }}
 
 processors:
   batch:
@@ -669,6 +681,9 @@ service:
     - health_check
 {{- if .Values.diagnostics.profiling.enabled }}
     - pprof
+{{- end }}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+    - solarwinds
 {{- end }}
   pipelines:
     metrics/common_in:

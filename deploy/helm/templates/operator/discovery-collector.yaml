@@ -116,6 +116,10 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.name
+{{- if .Values.otel.swotelcol_entities.enabled }}
+            - name: SWOTELCOL_COLLECTOR_NAME
+              value: "$(CLUSTER_NAME)-discovery-collector"
+{{- end }}
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:

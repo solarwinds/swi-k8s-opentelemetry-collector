@@ -106,6 +106,10 @@ spec:
           image: "{{ include "common.image" (tuple . .Values.otel "image" (printf "%s-k8s" .Chart.AppVersion)) }}"
           imagePullPolicy: {{ .Values.otel.image.pullPolicy }}
           env:
+{{- if .Values.otel.swotelcol_entities.enabled }}
+            - name: SWOTELCOL_COLLECTOR_NAME
+              value: "$(CLUSTER_NAME)-metrics-discovery"
+{{- end }}
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
                 secretKeyRef:
