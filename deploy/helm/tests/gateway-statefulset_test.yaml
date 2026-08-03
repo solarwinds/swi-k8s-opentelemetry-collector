@@ -56,3 +56,12 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].command
           content: --feature-gates=+processor.tailsamplingprocessor.recordpolicy
+  - it: SWOTELCOL_COLLECTOR_NAME should not be present when swotelcol_entities is disabled
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.swotelcol_entities.enabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SWOTELCOL_COLLECTOR_NAME

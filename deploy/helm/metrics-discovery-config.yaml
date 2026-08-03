@@ -34,18 +34,7 @@ extensions:
   pprof:
     endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
 {{- end }}
-{{- if .Values.otel.swotelcol_entities.enabled }}
-  solarwinds:
-    collector_name: ${SWOTELCOL_COLLECTOR_NAME}
-    resource:
-      sw.k8s.cluster.uid: ${CLUSTER_UID}
-    grpc:
-      endpoint: ${OTEL_ENVOY_ADDRESS}
-      tls:
-        insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
-      headers:
-        Authorization: "Bearer ${SOLARWINDS_API_TOKEN}"
-{{- end }}
+{{- include "common.swotelcol-entities-extension" . | nindent 2 }}
 
 processors:
   k8s_attributes:

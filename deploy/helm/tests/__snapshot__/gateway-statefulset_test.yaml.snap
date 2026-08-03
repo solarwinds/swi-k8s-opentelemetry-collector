@@ -24,8 +24,12 @@ Gateway spec should match snapshot when using default values:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.podIP
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
           - name: SWOTELCOL_COLLECTOR_NAME
-            value: $(CLUSTER_NAME)-gateway
+            value: $(CLUSTER_NAME)-$(POD_NAME)
           - name: SOLARWINDS_API_TOKEN
             valueFrom:
               secretKeyRef:
