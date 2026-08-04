@@ -511,6 +511,7 @@ resource/metrics:
     - key: k8s.cluster.name
       value: ${CLUSTER_NAME}
       action: insert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 4 }}
 
     # k8s.node.name
     - key: sw.k8s.node.version

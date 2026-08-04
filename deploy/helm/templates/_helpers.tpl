@@ -481,6 +481,17 @@ Usage:
 {{- merge $main $traces | toYaml -}}
 {{- end -}}
 
+{{- define "common.swotelcol-collector-name-attribute" -}}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+- key: sw.otelcol.collector.name
+  value: ${SWOTELCOL_COLLECTOR_NAME}
+  action: insert
+- key: sw.otelcol.collector.entity_creation
+  value: "on"
+  action: insert
+{{- end }}
+{{- end -}}
+
 {{- define "common.swotelcol-entities-extension" -}}
 {{- if .Values.otel.swotelcol_entities.enabled }}
 solarwinds:
