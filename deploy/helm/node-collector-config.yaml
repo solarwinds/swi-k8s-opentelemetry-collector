@@ -237,6 +237,12 @@ processors:
           - sw.k8s.cluster.uid
           - k8s.namespace.name
           - k8s.cronjob.name
+{{- if .Values.otel.swotelcol_entities.enabled }}
+      - type: SolarwindsOtelCollector
+        id_keys:
+          - sw.otelcol.collector.name
+          - sw.otelcol.collector.entity_creation
+{{- end }}
 
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
   resource/journal:
