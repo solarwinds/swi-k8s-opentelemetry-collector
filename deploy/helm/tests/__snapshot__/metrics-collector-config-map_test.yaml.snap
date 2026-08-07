@@ -25,6 +25,16 @@ Cluster filter should match snapshot with combined exclude filters:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -1359,6 +1369,12 @@ Cluster filter should match snapshot with combined exclude filters:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -1593,6 +1609,7 @@ Cluster filter should match snapshot with combined exclude filters:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -1716,6 +1733,16 @@ Cluster filter should match snapshot with combined include filters:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -3048,6 +3075,12 @@ Cluster filter should match snapshot with combined include filters:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -3282,6 +3315,7 @@ Cluster filter should match snapshot with combined include filters:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -3405,6 +3439,16 @@ Cluster filter should match snapshot with exclude_namespaces:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -4738,6 +4782,12 @@ Cluster filter should match snapshot with exclude_namespaces:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -4972,6 +5022,7 @@ Cluster filter should match snapshot with exclude_namespaces:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -5095,6 +5146,16 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -6428,6 +6489,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -6662,6 +6729,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -6785,6 +6853,16 @@ Cluster filter should match snapshot with include_namespaces:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -8117,6 +8195,12 @@ Cluster filter should match snapshot with include_namespaces:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -8351,6 +8435,7 @@ Cluster filter should match snapshot with include_namespaces:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -8474,6 +8559,16 @@ Cluster filter should match snapshot with include_namespaces_regex:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -9806,6 +9901,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -10040,6 +10141,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -10163,6 +10265,16 @@ Metrics config should match snapshot when fargate is enabled:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -11486,6 +11598,12 @@ Metrics config should match snapshot when fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -11801,6 +11919,7 @@ Metrics config should match snapshot when fargate is enabled:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -11930,6 +12049,16 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -13257,6 +13386,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -13364,6 +13499,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         transform:
           metric_statements:
           - statements:
@@ -13530,6 +13671,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -13671,6 +13813,16 @@ Metrics config should match snapshot when using default values:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -14998,6 +15150,12 @@ Metrics config should match snapshot when using default values:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -15232,6 +15390,7 @@ Metrics config should match snapshot when using default values:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:

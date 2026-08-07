@@ -112,6 +112,10 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
+{{- if .Values.otel.swotelcol_entities.enabled }}
+            - name: SWOTELCOL_COLLECTOR_NAME
+              value: "$(CLUSTER_NAME)-events"
+{{- end }}
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
                 secretKeyRef:

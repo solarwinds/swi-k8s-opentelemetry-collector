@@ -435,6 +435,16 @@ Gateway config should match snapshot when tailsampling is enabled:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/clean-attributes-otlp-metrics:
           actions:
@@ -559,6 +569,12 @@ Gateway config should match snapshot when tailsampling is enabled:
           - action: upsert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/clean-temporary-attributes:
           attributes:
           - action: delete
@@ -869,6 +885,7 @@ Gateway config should match snapshot when tailsampling is enabled:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -1405,6 +1422,16 @@ Gateway config should match snapshot when using default values:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/clean-attributes-otlp-metrics:
           actions:
@@ -1529,6 +1556,12 @@ Gateway config should match snapshot when using default values:
           - action: upsert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/clean-temporary-attributes:
           attributes:
           - action: delete
@@ -1793,6 +1826,7 @@ Gateway config should match snapshot when using default values:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:

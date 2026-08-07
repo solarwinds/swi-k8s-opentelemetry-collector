@@ -40,6 +40,7 @@ extensions:
   pprof:
     endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
 {{- end }}
+{{- include "common.swotelcol-entities-extension" . | nindent 2 }}
 
 processors:
   memory_limiter:
@@ -147,6 +148,7 @@ processors:
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
         action: insert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 6 }}
 
       # Node
       - key: k8s.node.name
@@ -177,6 +179,7 @@ processors:
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
         action: insert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 6 }}
 
       # Node
       - key: k8s.node.name
@@ -234,6 +237,12 @@ processors:
           - sw.k8s.cluster.uid
           - k8s.namespace.name
           - k8s.cronjob.name
+{{- if .Values.otel.swotelcol_entities.enabled }}
+      - type: SolarwindsOtelCollector
+        id_keys:
+          - sw.otelcol.collector.name
+          - sw.otelcol.collector.entity_creation
+{{- end }}
 
 {{- if and (not .isWindows) .Values.otel.logs.journal }}
   resource/journal:
@@ -260,6 +269,7 @@ processors:
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
         action: insert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 6 }}
 
       # Node
       - key: k8s.node.name
@@ -670,6 +680,9 @@ service:
 {{- end}}
 {{- if .Values.diagnostics.profiling.enabled }}
     - pprof
+{{- end }}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+    - solarwinds
 {{- end }}
   pipelines:
 {{- if and (eq (include "isLogsEnabled" .) "true") (or .Values.otel.logs.container (and (not .isWindows) .Values.otel.logs.journal))}}

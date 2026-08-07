@@ -19,6 +19,8 @@ Metrics discovery spec should match snapshot when Fargate is enabled:
           - /solarwinds-otel-collector
           - --config=/conf/relay.yaml
         env:
+          - name: SWOTELCOL_COLLECTOR_NAME
+            value: $(CLUSTER_NAME)-metrics-discovery
           - name: SOLARWINDS_API_TOKEN
             valueFrom:
               secretKeyRef:

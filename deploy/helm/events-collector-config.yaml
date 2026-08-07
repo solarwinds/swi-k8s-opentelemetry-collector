@@ -72,6 +72,7 @@ extensions:
   pprof:
     endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
 {{- end }}
+{{- include "common.swotelcol-entities-extension" . | nindent 2 }}
 
 connectors:
 {{- if and .Values.otel.manifests.enabled .Values.otel.manifests.keepalive_events.enabled }}
@@ -607,6 +608,7 @@ processors:
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
         action: insert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 6 }}
 
   resource/events:
     attributes:
@@ -812,6 +814,9 @@ service:
     - health_check
 {{- if .Values.diagnostics.profiling.enabled }}
     - pprof
+{{- end }}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+    - solarwinds
 {{- end }}
   pipelines:
 {{- if .Values.otel.events.enabled }}

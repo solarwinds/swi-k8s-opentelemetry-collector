@@ -27,3 +27,13 @@ tests:
       - equal:
           path: metadata.name
           value: swi-k8s-opentel-swo-k8s-collec-prometheus-discovery
+  - it: SWOTELCOL_COLLECTOR_NAME should not be present when swotelcol_entities is disabled
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.swotelcol_entities.enabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SWOTELCOL_COLLECTOR_NAME

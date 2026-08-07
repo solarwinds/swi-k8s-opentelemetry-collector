@@ -32,6 +32,7 @@ extensions:
   pprof:
     endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
 {{- end }}
+{{- include "common.swotelcol-entities-extension" . | nindent 2 }}
 
 processors:
   batch:
@@ -66,6 +67,7 @@ processors:
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
         action: upsert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 6 }}
 
   resource/clean-temporary-attributes:
     attributes:
@@ -669,6 +671,9 @@ service:
     - health_check
 {{- if .Values.diagnostics.profiling.enabled }}
     - pprof
+{{- end }}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+    - solarwinds
 {{- end }}
   pipelines:
     metrics/common_in:

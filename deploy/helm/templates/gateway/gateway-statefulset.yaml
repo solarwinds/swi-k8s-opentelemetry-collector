@@ -118,6 +118,14 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
+{{- if .Values.otel.swotelcol_entities.enabled }}
+            - name: POD_ORDINAL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+            - name: SWOTELCOL_COLLECTOR_NAME
+              value: "$(CLUSTER_NAME)-gateway-$(POD_ORDINAL)"
+{{- end }}
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
                 secretKeyRef:

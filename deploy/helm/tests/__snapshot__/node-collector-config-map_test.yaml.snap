@@ -354,6 +354,16 @@ Cluster filter should match snapshot with combined exclude filters:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -1180,6 +1190,12 @@ Cluster filter should match snapshot with combined exclude filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -1211,6 +1227,12 @@ Cluster filter should match snapshot with combined exclude filters:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -1230,6 +1252,12 @@ Cluster filter should match snapshot with combined exclude filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -1257,6 +1285,12 @@ Cluster filter should match snapshot with combined exclude filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -1413,6 +1447,10 @@ Cluster filter should match snapshot with combined exclude filters:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -1738,6 +1776,7 @@ Cluster filter should match snapshot with combined exclude filters:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -2267,6 +2306,16 @@ Cluster filter should match snapshot with combined include filters:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -3089,6 +3138,12 @@ Cluster filter should match snapshot with combined include filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -3120,6 +3175,12 @@ Cluster filter should match snapshot with combined include filters:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -3139,6 +3200,12 @@ Cluster filter should match snapshot with combined include filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -3166,6 +3233,12 @@ Cluster filter should match snapshot with combined include filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -3322,6 +3395,10 @@ Cluster filter should match snapshot with combined include filters:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -3647,6 +3724,7 @@ Cluster filter should match snapshot with combined include filters:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -4176,6 +4254,16 @@ Cluster filter should match snapshot with exclude_namespaces:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -5000,6 +5088,12 @@ Cluster filter should match snapshot with exclude_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -5031,6 +5125,12 @@ Cluster filter should match snapshot with exclude_namespaces:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -5050,6 +5150,12 @@ Cluster filter should match snapshot with exclude_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -5077,6 +5183,12 @@ Cluster filter should match snapshot with exclude_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -5233,6 +5345,10 @@ Cluster filter should match snapshot with exclude_namespaces:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -5558,6 +5674,7 @@ Cluster filter should match snapshot with exclude_namespaces:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -6087,6 +6204,16 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -6911,6 +7038,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -6942,6 +7075,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -6961,6 +7100,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -6988,6 +7133,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -7144,6 +7295,10 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -7469,6 +7624,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -7998,6 +8154,16 @@ Cluster filter should match snapshot with include_namespaces:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -8820,6 +8986,12 @@ Cluster filter should match snapshot with include_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -8851,6 +9023,12 @@ Cluster filter should match snapshot with include_namespaces:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -8870,6 +9048,12 @@ Cluster filter should match snapshot with include_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -8897,6 +9081,12 @@ Cluster filter should match snapshot with include_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -9053,6 +9243,10 @@ Cluster filter should match snapshot with include_namespaces:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -9378,6 +9572,7 @@ Cluster filter should match snapshot with include_namespaces:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -9907,6 +10102,16 @@ Cluster filter should match snapshot with include_namespaces_regex:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -10731,6 +10936,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -10762,6 +10973,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -10781,6 +10998,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -10808,6 +11031,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -10964,6 +11193,10 @@ Cluster filter should match snapshot with include_namespaces_regex:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -11289,6 +11522,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -11818,6 +12052,16 @@ Custom logs filter with new syntax:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -12634,6 +12878,12 @@ Custom logs filter with new syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -12665,6 +12915,12 @@ Custom logs filter with new syntax:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -12684,6 +12940,12 @@ Custom logs filter with new syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -12711,6 +12973,12 @@ Custom logs filter with new syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -12867,6 +13135,10 @@ Custom logs filter with new syntax:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -13192,6 +13464,7 @@ Custom logs filter with new syntax:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -13720,6 +13993,16 @@ Custom logs filter with old syntax:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -14539,6 +14822,12 @@ Custom logs filter with old syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -14570,6 +14859,12 @@ Custom logs filter with old syntax:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -14589,6 +14884,12 @@ Custom logs filter with old syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -14616,6 +14917,12 @@ Custom logs filter with old syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -14772,6 +15079,10 @@ Custom logs filter with old syntax:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -15178,6 +15489,7 @@ Custom logs filter with old syntax:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -15706,6 +16018,16 @@ Node collector config should match snapshot when autodiscovery is disabled:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -16518,6 +16840,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -16549,6 +16877,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -16568,6 +16902,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -16595,6 +16935,12 @@ Node collector config should match snapshot when autodiscovery is disabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -16751,6 +17097,10 @@ Node collector config should match snapshot when autodiscovery is disabled:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -17016,6 +17366,7 @@ Node collector config should match snapshot when autodiscovery is disabled:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -17544,6 +17895,16 @@ Node collector config should match snapshot when fargate is enabled:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -18353,6 +18714,12 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -18384,6 +18751,12 @@ Node collector config should match snapshot when fargate is enabled:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -18403,6 +18776,12 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -18430,6 +18809,12 @@ Node collector config should match snapshot when fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -18586,6 +18971,10 @@ Node collector config should match snapshot when fargate is enabled:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -18856,6 +19245,7 @@ Node collector config should match snapshot when fargate is enabled:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -19355,6 +19745,16 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           timeout: 5s
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -20164,6 +20564,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -20195,6 +20601,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -20214,6 +20626,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -20241,6 +20659,12 @@ Node collector config should match snapshot when fargate is enabled and autodisc
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -20397,6 +20821,10 @@ Node collector config should match snapshot when fargate is enabled and autodisc
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -20606,6 +21034,7 @@ Node collector config should match snapshot when fargate is enabled and autodisc
         extensions:
         - file_storage/checkpoints
         - health_check
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:
@@ -21099,6 +21528,16 @@ Node collector config should match snapshot when using default values:
           node: ${NODE_NAME}
           observe_nodes: true
           observe_pods: true
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/remove_prometheus_attributes:
           actions:
@@ -21911,6 +22350,12 @@ Node collector config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: upsert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -21942,6 +22387,12 @@ Node collector config should match snapshot when using default values:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
         resource/journal:
@@ -21961,6 +22412,12 @@ Node collector config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             key: k8s.node.name
             value: ${NODE_NAME}
@@ -21988,6 +22445,12 @@ Node collector config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -22144,6 +22607,10 @@ Node collector config should match snapshot when using default values:
             - k8s.namespace.name
             - k8s.cronjob.name
             type: KubernetesCronJob
+          - id_keys:
+            - sw.otelcol.collector.name
+            - sw.otelcol.collector.entity_creation
+            type: SolarwindsOtelCollector
         transform/istio-metric-datapoints:
           metric_statements:
           - statements:
@@ -22469,6 +22936,7 @@ Node collector config should match snapshot when using default values:
         - file_storage/checkpoints
         - health_check
         - k8s_observer
+        - solarwinds
         pipelines:
           logs/stateevents-entities:
             exporters:

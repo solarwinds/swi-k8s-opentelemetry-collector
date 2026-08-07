@@ -87,3 +87,12 @@ tests:
     - equal:
           path: spec.template.spec.initContainers[0].image
           value: solarwinds/solarwinds-otel-collector:beta1
+  - it: SWOTELCOL_COLLECTOR_NAME should not be present when swotelcol_entities is disabled
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.swotelcol_entities.enabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SWOTELCOL_COLLECTOR_NAME

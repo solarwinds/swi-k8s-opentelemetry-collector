@@ -31,6 +31,7 @@ extensions:
   pprof:
     endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
 {{- end }}
+{{- include "common.swotelcol-entities-extension" . | nindent 2 }}
 
 processors:
   k8s_attributes:
@@ -897,6 +898,7 @@ processors:
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
         action: insert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 6 }}
 {{- end }}
 
 connectors:
@@ -1125,6 +1127,9 @@ service:
     - health_check
 {{- if .Values.diagnostics.profiling.enabled }}
     - pprof
+{{- end }}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+    - solarwinds
 {{- end }}
   pipelines:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}

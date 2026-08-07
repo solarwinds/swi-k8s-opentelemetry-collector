@@ -480,3 +480,29 @@ Usage:
 {{- $traces := tpl (.Files.Get "gateway-collector-config-traces.yaml") . | fromYaml -}}
 {{- merge $main $traces | toYaml -}}
 {{- end -}}
+
+{{- define "common.swotelcol-collector-name-attribute" -}}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+- key: sw.otelcol.collector.name
+  value: ${SWOTELCOL_COLLECTOR_NAME}
+  action: insert
+- key: sw.otelcol.collector.entity_creation
+  value: "on"
+  action: insert
+{{- end }}
+{{- end -}}
+
+{{- define "common.swotelcol-entities-extension" -}}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+solarwinds:
+  collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+  resource:
+    sw.k8s.cluster.uid: ${CLUSTER_UID}
+  grpc:
+    endpoint: ${OTEL_ENVOY_ADDRESS}
+    tls:
+      insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+    headers:
+      Authorization: "Bearer ${SOLARWINDS_API_TOKEN}"
+{{- end }}
+{{- end -}}

@@ -224,6 +224,16 @@ Cluster filter should match snapshot with combined exclude filters:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -336,6 +346,12 @@ Cluster filter should match snapshot with combined exclude filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -932,6 +948,7 @@ Cluster filter should match snapshot with combined exclude filters:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -1262,6 +1279,16 @@ Cluster filter should match snapshot with combined include filters:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -1370,6 +1397,12 @@ Cluster filter should match snapshot with combined include filters:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -1966,6 +1999,7 @@ Cluster filter should match snapshot with combined include filters:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -2296,6 +2330,16 @@ Cluster filter should match snapshot with exclude_namespaces:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -2404,6 +2448,12 @@ Cluster filter should match snapshot with exclude_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -3000,6 +3050,7 @@ Cluster filter should match snapshot with exclude_namespaces:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -3330,6 +3381,16 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -3442,6 +3503,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -4038,6 +4105,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -4368,6 +4436,16 @@ Cluster filter should match snapshot with include_namespaces:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -4476,6 +4554,12 @@ Cluster filter should match snapshot with include_namespaces:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -5072,6 +5156,7 @@ Cluster filter should match snapshot with include_namespaces:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -5402,6 +5487,16 @@ Cluster filter should match snapshot with include_namespaces_regex:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -5511,6 +5606,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -6107,6 +6208,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -6437,6 +6539,16 @@ Custom events filter with new syntax:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -6535,6 +6647,12 @@ Custom events filter with new syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -7131,6 +7249,7 @@ Custom events filter with new syntax:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -7459,6 +7578,16 @@ Custom events filter with old syntax:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -7560,6 +7689,12 @@ Custom events filter with old syntax:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -8156,6 +8291,7 @@ Custom events filter with old syntax:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -8484,6 +8620,16 @@ Events config should match snapshot when using default values:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -8578,6 +8724,12 @@ Events config should match snapshot when using default values:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -9174,6 +9326,7 @@ Events config should match snapshot when using default values:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
@@ -9369,6 +9522,16 @@ Events config should not contain manifest collection pipeline when disabled:
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         batch:
           send_batch_max_size: 64
@@ -9463,6 +9626,12 @@ Events config should not contain manifest collection pipeline when disabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         resource/manifest:
           attributes:
           - action: insert
@@ -9893,6 +10062,7 @@ Events config should not contain manifest collection pipeline when disabled:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           logs:
             exporters:
