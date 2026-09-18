@@ -16,12 +16,12 @@ data:
       <background_pool_size>16</background_pool_size>
       <background_merges_mutations_concurrency_ratio>2.0</background_merges_mutations_concurrency_ratio>
       
-      <!-- Merge settings to reduce memory pressure -->
-      <merge_max_block_size>8192</merge_max_block_size>
-      <max_bytes_to_merge_at_max_space_in_pool>536870912</max_bytes_to_merge_at_max_space_in_pool>  <!-- 512Mi -->
-      
-      <!-- Parts lifecycle for automatic cleanup (5 minute retention) -->
+      <!-- Merge settings to reduce memory pressure, and parts lifecycle for automatic
+           cleanup (5 minute retention). These must stay nested under <merge_tree>:
+           ClickHouse >= 26.8 rejects MergeTree settings placed at the top level. -->
       <merge_tree>
+        <merge_max_block_size>8192</merge_max_block_size>
+        <max_bytes_to_merge_at_max_space_in_pool>536870912</max_bytes_to_merge_at_max_space_in_pool>  <!-- 512Mi -->
         <ttl_only_drop_parts>1</ttl_only_drop_parts>
         <parts_to_throw_insert>150</parts_to_throw_insert>
         <parts_to_delay_insert>100</parts_to_delay_insert>
@@ -87,7 +87,6 @@ data:
       <max_server_memory_usage_to_ram_ratio>0.8</max_server_memory_usage_to_ram_ratio>
       
       <!-- Background operations memory control -->
-      <background_memory_tracker_threshold>0.75</background_memory_tracker_threshold>
       <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
     </clickhouse>
 {{- end }}
