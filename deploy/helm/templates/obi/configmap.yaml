@@ -50,9 +50,6 @@ data:
     {{- if not .Values.network_topology.config.log_level }}
     log_level: info
     {{- end }}
-    {{- if not .Values.network_topology.config.open_port }}
-    open_port: 80,443,8000-8999
-    {{- end }}
     {{- if not .Values.network_topology.config.attributes }}
     attributes:
       kubernetes:
@@ -78,7 +75,7 @@ data:
             - client.address
             - rpc.grpc.status_code
             - rpc.method
-            - rpc.system
+            - rpc.system.name
         obi_*:
           include:
             - direction

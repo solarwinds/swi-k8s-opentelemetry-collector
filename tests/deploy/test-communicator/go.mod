@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/prometheus/client_golang v1.23.2
+	// Version capped by OBI's offsets.json `newest` for google.golang.org/grpc; bumping past it breaks rpc.*.call.duration metrics.
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.11
 )
