@@ -502,6 +502,7 @@ solarwinds:
     endpoint: ${OTEL_ENVOY_ADDRESS}
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
     headers:
       Authorization: "Bearer ${SOLARWINDS_API_TOKEN}"
 {{- end }}
