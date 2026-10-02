@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for common-env-config-map
+templates:
+  - common-env-config-map.yaml
+chart:
+  version: 1.0.0
+tests:
+  - it: TLS settings should default to secure values
+    template: common-env-config-map.yaml
+    asserts:
+      - equal:
+          path: data.OTEL_ENVOY_ADDRESS_TLS_INSECURE
+          value: "false"
+      - equal:
+          path: data.OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY
+          value: "false"
+  - it: tls_insecure_skip_verify should be propagated when enabled
+    template: common-env-config-map.yaml
+    set:
+      otel.tls_insecure_skip_verify: true
+    asserts:
+      - equal:
+          path: data.OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY
+          value: "true"
+      - equal:
+          path: data.OTEL_ENVOY_ADDRESS_TLS_INSECURE
+          value: "false"
+  - it: tls_insecure and tls_insecure_skip_verify should be independent
+    template: common-env-config-map.yaml
+    set:
+      otel.tls_insecure: true
+    asserts:
+      - equal:
+          path: data.OTEL_ENVOY_ADDRESS_TLS_INSECURE
+          value: "true"
+      - equal:
+          path: data.OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY
+          value: "false"
