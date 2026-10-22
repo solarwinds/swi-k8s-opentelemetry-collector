@@ -3,6 +3,7 @@ exporters:
     endpoint: ${OTEL_ENVOY_ADDRESS}
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
       "swi-reporter": "k8s-monitoring swo-k8s-collector/{{ .Chart.Version }}"
@@ -397,8 +398,8 @@ connectors:
           name == "http.server.request.duration" or 
           name == "http.server.request.body.size" or
           name == "http.server.response.body.size" or
-          name == "rpc.client.duration" or 
-          name == "rpc.server.duration" or 
+          name == "rpc.client.call.duration" or 
+          name == "rpc.server.call.duration" or 
           name == "obi.network.flow.bytes"
 
   solarwindsentity/obi-relationships:
@@ -794,8 +795,3 @@ service:
                 host: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._0 | quote }}
                 port: {{ (split ":" .Values.otel.gateway.telemetry.metrics.address)._1 }}
 {{- end }}
-    resource:
-      # Resource attributes on the collector's own internal telemetry.
-      # These correlate internal metrics to the k8s collector in case they are collected by something else.
-      k8s.cluster.name: ${CLUSTER_NAME}
-      sw.k8s.cluster.uid: ${CLUSTER_UID}

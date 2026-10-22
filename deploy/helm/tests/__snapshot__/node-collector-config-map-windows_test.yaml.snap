@@ -342,6 +342,7 @@ Node collector config for windows nodes should match snapshot when using default
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         file_storage/checkpoints:
           directory: /var/lib/swo/checkpoints
@@ -362,6 +363,7 @@ Node collector config for windows nodes should match snapshot when using default
               Authorization: Bearer ${SOLARWINDS_API_TOKEN}
             tls:
               insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
           resource:
             sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
@@ -1897,9 +1899,6 @@ Node collector config for windows nodes should match snapshot when using default
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Node collector config for windows nodes should match snapshot when using legacy filter:
@@ -2246,6 +2245,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         file_storage/checkpoints:
           directory: /var/lib/swo/checkpoints
@@ -2266,6 +2266,7 @@ Node collector config for windows nodes should match snapshot when using legacy 
               Authorization: Bearer ${SOLARWINDS_API_TOKEN}
             tls:
               insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
           resource:
             sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
@@ -3889,8 +3890,5 @@ Node collector config for windows nodes should match snapshot when using legacy 
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none

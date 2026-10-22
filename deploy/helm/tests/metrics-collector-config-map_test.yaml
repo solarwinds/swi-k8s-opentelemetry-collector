@@ -26,6 +26,23 @@ tests:
     asserts:
       - matchSnapshot:
           path: data
+  - it: Exporter TLS should reference both insecure env variables
+    template: metrics-collector-config-map.yaml
+    asserts:
+      - matchRegex:
+          path: data["metrics.config"]
+          pattern: 'insecure: \$\{OTEL_ENVOY_ADDRESS_TLS_INSECURE\}'
+      - matchRegex:
+          path: data["metrics.config"]
+          pattern: 'insecure_skip_verify: \$\{OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY\}'
+  - it: Solarwinds entities extension TLS should reference the skip verify env variable
+    template: metrics-collector-config-map.yaml
+    set:
+      otel.swotelcol_entities.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["metrics.config"]
+          pattern: 'solarwinds:[\s\S]*insecure_skip_verify: \$\{OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY\}'
   - it: Pprof should not be in the configuration by default
     template: metrics-collector-config-map.yaml
     asserts:

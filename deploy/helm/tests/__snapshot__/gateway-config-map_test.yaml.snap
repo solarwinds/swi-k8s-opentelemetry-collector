@@ -11,8 +11,8 @@ Gateway config should match snapshot when tailsampling is enabled:
           - condition: "name == \"http.client.request.duration\" or\nname == \"http.client.request.body.size\"
               or\nname == \"http.client.response.body.size\" or\nname == \"http.server.request.duration\"
               or \nname == \"http.server.request.body.size\" or\nname == \"http.server.response.body.size\"
-              or\nname == \"rpc.client.duration\" or \nname == \"rpc.server.duration\" or
-              \nname == \"obi.network.flow.bytes\"\n"
+              or\nname == \"rpc.client.call.duration\" or \nname == \"rpc.server.call.duration\"
+              or \nname == \"obi.network.flow.bytes\"\n"
             context: metric
             pipelines:
             - metrics/obi-network-entities-and-relationships
@@ -432,6 +432,7 @@ Gateway config should match snapshot when tailsampling is enabled:
           timeout: 30s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
@@ -443,6 +444,7 @@ Gateway config should match snapshot when tailsampling is enabled:
               Authorization: Bearer ${SOLARWINDS_API_TOKEN}
             tls:
               insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
           resource:
             sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
@@ -1010,9 +1012,6 @@ Gateway config should match snapshot when tailsampling is enabled:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Gateway config should match snapshot when using default values:
@@ -1028,8 +1027,8 @@ Gateway config should match snapshot when using default values:
           - condition: "name == \"http.client.request.duration\" or\nname == \"http.client.request.body.size\"
               or\nname == \"http.client.response.body.size\" or\nname == \"http.server.request.duration\"
               or \nname == \"http.server.request.body.size\" or\nname == \"http.server.response.body.size\"
-              or\nname == \"rpc.client.duration\" or \nname == \"rpc.server.duration\" or
-              \nname == \"obi.network.flow.bytes\"\n"
+              or\nname == \"rpc.client.call.duration\" or \nname == \"rpc.server.call.duration\"
+              or \nname == \"obi.network.flow.bytes\"\n"
             context: metric
             pipelines:
             - metrics/obi-network-entities-and-relationships
@@ -1419,6 +1418,7 @@ Gateway config should match snapshot when using default values:
           timeout: 30s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
@@ -1430,6 +1430,7 @@ Gateway config should match snapshot when using default values:
               Authorization: Bearer ${SOLARWINDS_API_TOKEN}
             tls:
               insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
           resource:
             sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
@@ -1935,8 +1936,5 @@ Gateway config should match snapshot when using default values:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
