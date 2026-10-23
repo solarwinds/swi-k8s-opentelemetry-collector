@@ -29,6 +29,8 @@ spec:
         - name: wait-for-operator
           image: "{{ include "common.image" (tuple . .Values.waitJobs.operator "image") }}"
           imagePullPolicy: {{ .Values.waitJobs.operator.image.pullPolicy }}
+          args:
+            - --enable-php-instrumentation=true
           command:
             - /bin/sh
             - -c
