@@ -88,6 +88,9 @@ spec:
             - --apitoken=$(SOLARWINDS_API_TOKEN)
             - --clusteruid=$(CLUSTER_UID)
             - --insecure=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE)
+            {{- if .Values.otel.tls_insecure_skip_verify }}
+            - --insecure-skip-verify=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY)
+            {{- end }}
           env:
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
