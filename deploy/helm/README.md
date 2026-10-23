@@ -506,6 +506,18 @@ Configuration:
     - Go: `instrumentation.opentelemetry.io/inject-go: "true"`
     - Java: `instrumentation.opentelemetry.io/inject-java: "true"`
     - Node.js: `instrumentation.opentelemetry.io/inject-nodejs: "true"`
+    - PHP:
+      - `instrumentation.opentelemetry.io/inject-php: "true"`
+      - Pick one for the following annotations based on your PHP version and platform:
+      - `instrumentation.opentelemetry.io/otel-php-api-version: "20250925"` # API version for PHP 8.5.x
+      - `instrumentation.opentelemetry.io/otel-php-api-version: "20240924"` # API version for PHP 8.4.x
+      - `instrumentation.opentelemetry.io/otel-php-api-version: "20230831"` # API version for PHP 8.3.x
+      - `instrumentation.opentelemetry.io/otel-php-api-version: "20220829"` # API version for PHP 8.2.x
+      - `instrumentation.opentelemetry.io/otel-php-api-version: "20210902"` # API version for PHP 8.1.x
+      - `instrumentation.opentelemetry.io/otel-php-platform: "glibc"` # Optional. For Linux glibc based PHP, this is the default value and can be omitted
+      - `instrumentation.opentelemetry.io/otel-php-platform: "musl"` # Optional. For Linux musl based PHP
+      - `instrumentation.opentelemetry.io/otel-php-thread-safety: "zts"` # Optional. For ZTS (Zend Thread Safety) PHP
+      - `instrumentation.opentelemetry.io/otel-php-thread-safety: "non-zts"` # Optional. For non-ZTS (non Zend Thread Safety) PHP, this is the default value and can be omitted
     - Python: `instrumentation.opentelemetry.io/inject-python: "true"`
 
     The possible values for the annotation can be:
@@ -515,7 +527,7 @@ Configuration:
     - `"my-other-namespace/my-instrumentation"` - to inject the Instrumentation CR instance with the name "my-instrumentation" from another namespace "my-other-namespace".
     - `"false"` - do not inject.
 
-    Alternatively, the annotation can be added to a namespace, which will result in all services in that namespace opting into automatic instrumentation. See the [Operator's auto-instrumentation documentation](https://github.com/open-telemetry/opentelemetry-operator/blob/main/README.md#opentelemetry-auto-instrumentation-injection) for more details.
+  Alternatively, the annotation can be added to a namespace, which will result in all services in that namespace opting into automatic instrumentation. See the [Operator's auto-instrumentation documentation](https://github.com/open-telemetry/opentelemetry-operator/blob/main/README.md#opentelemetry-auto-instrumentation-injection) for more details.
 
 ### AWS Fargate (disabled by default)
 

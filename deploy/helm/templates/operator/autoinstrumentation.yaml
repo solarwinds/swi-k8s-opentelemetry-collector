@@ -30,6 +30,21 @@ spec:
         value: http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.port }}
       - name: OTEL_EXPORTER_OTLP_PROTOCOL
         value: grpc
+  php:
+    env:
+      - name: SW_APM_SERVICE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: solarwinds-apm
+            key: SW_APM_SERVICE_KEY
+      - name: SW_APM_COLLECTOR
+        value: {{ .Values.otel.endpoint | regexReplaceAll "(:\\d+)?$" "" | replace "otel" "apm" }}
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.port }}
+      - name: OTEL_TRACES_EXPORTER
+        value: solarwinds_exporter
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: grpc
   python:
     env:
       - name: SW_APM_SERVICE_KEY
