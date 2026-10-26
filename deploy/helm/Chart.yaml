@@ -1,7 +1,7 @@
 apiVersion: v2
 name: swo-k8s-collector
-version: 5.4.0-alpha.7
-appVersion: 0.152.6 # TODO: Bump once the collector image with connection-check's --insecure-skip-verify flag is released
+version: 5.4.0-alpha.8
+appVersion: 0.161.3 # TODO: Bump once the collector image with connection-check's --insecure-skip-verify flag is released
 description: SolarWinds Kubernetes Integration
 keywords:
   - monitoring
@@ -20,11 +20,11 @@ maintainers:
 dependencies:
   - name: kube-state-metrics
     repository: https://prometheus-community.github.io/helm-charts
-    version: 8.0.0
+    version: 8.7.1
     condition: kube-state-metrics.enabled
   - name: opentelemetry-operator
     repository: https://open-telemetry.github.io/opentelemetry-helm-charts
-    version: 0.114.1 # 0.114.1 chart version includes otel-operator version 0.152.0
+    version: 0.126.2 # 0.126.2 chart version includes otel-operator version 0.161.0
     alias: operator
     condition: operator.enabled
   - name: cert-manager
@@ -33,7 +33,7 @@ dependencies:
     repository: https://charts.jetstack.io
     condition: certmanager.enabled
   - name: trivy-operator
-    version: 0.33.1
+    version: 0.37.0
     repository: https://aquasecurity.github.io/helm-charts
     condition: trivy-operator.enabled
 annotations:

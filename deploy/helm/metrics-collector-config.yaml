@@ -285,6 +285,7 @@ processors:
       - include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.cpu.requests
 
       - include: k8s.kube_pod_container_resource_requests
@@ -298,6 +299,7 @@ processors:
       - include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.memory.requests
 
       - include: k8s.kube_pod_container_resource_limits
@@ -322,6 +324,7 @@ processors:
       - include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.cpu.limit
       - include: k8s.container.spec.memory.limit__swo_temp
         action: insert
@@ -333,6 +336,7 @@ processors:
       - include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.memory.limit
 
       - include: k8s.kube_pod_container_status_running
