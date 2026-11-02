@@ -581,7 +581,7 @@ helm upgrade --install swo-k8s-collector solarwinds/swo-k8s-collector \
   --wait
 ```
 
-The gateway pods are restarted automatically after any policy change. When enabling tail sampling for the first time, the gateway changes from a Deployment to a StatefulSet; the `swo-gateway` Service name stays the same, so applications need no change.
+The gateway pods are restarted automatically after any policy change. Enabling tail sampling does not change the `swo-gateway` Service, so applications need no change.
 
 Preview the rendered configuration without touching the cluster:
 
