@@ -535,7 +535,7 @@ If Istio is already deployed in the cluster, this setting does not need to be en
 
 ### Tail-based sampling (disabled by default)
 
-Tail-based sampling decides whether to keep a trace **after** it has finished, so traces can be kept based on errors, latency or attributes. Head-based sampling (done by the APM agent) decides at the start of the trace.
+Tail-based sampling decides whether to keep a trace after buffering its spans for a configured interval (`decision_wait`), using the errors, latency or attributes observed during that interval. It does not guarantee that the trace has finished before deciding. Head-based sampling (done by the APM agent) decides at the start of the trace.
 
 To enable, set `otel.gateway.tailSampling.enabled: true`. Only traces are affected; metrics and logs are passed through unchanged.
 
