@@ -608,7 +608,7 @@ kubectl get statefulsets -n <namespace>
 kubectl delete statefulset <gateway-statefulset-name> -n <namespace> --cascade=orphan
 ```
 
-The gateway pods keep running while the StatefulSet is recreated and can be adopted by the new StatefulSet. The configuration change then rolls the pods; gateway traffic may be interrupted during restarts, especially with a single replica. Any traces buffered in a pod's tail sampler are in memory and are lost if that pod restarts.
+The gateway pods keep running while the StatefulSet is recreated and can be adopted by the new StatefulSet. The configuration change then rolls the pods; gateway traffic may be interrupted during restarts, especially with a single replica. During the rollout, traces that are still being buffered may be split across pods or decided on partial data, and a pod that is killed before it makes its decisions loses its buffered traces.
 
 #### Apply
 
