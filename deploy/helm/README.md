@@ -14,6 +14,7 @@
   - [APM auto Instrumentation (disabled by default)](#apm-auto-instrumentation-disabled-by-default)
   - [AWS Fargate (disabled by default)](#aws-fargate-disabled-by-default)
   - [OBI (OpenTelemetry eBPF Instrumentation)](#obi-opentelemetry-ebpf-instrumentation)
+  - [Tail-based sampling (disabled by default)](#tail-based-sampling-disabled-by-default)
   - [OpenShift Support (disabled by default)](#openshift-support-disabled-by-default)
   - [Auto Update (disabled by default)](#auto-update-disabled-by-default)
   - [Image vulnerability scanning (disabled by default)](#image-vulnerability-scanning-disabled-by-default)
@@ -531,6 +532,77 @@ Enabled by default. To disable, set `network_topology.enabled: false`.
 The SWO K8s Collector collects metrics about network communication between workloads. This enables network topology mapping based on OBI metrics.
 If enabled, OBI - [OpenTelemetry eBPF Instrumentation](https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation) (Apache-2.0 license) is deployed to the cluster.
 If Istio is already deployed in the cluster, this setting does not need to be enabled. The SWO K8s Collector will detect and use Istio metrics.
+
+### Tail-based sampling (disabled by default)
+
+Tail-based sampling decides whether to keep a trace **after** it has finished, so traces can be kept based on errors, latency or attributes. Head-based sampling (done by the APM agent) decides at the start of the trace.
+
+To enable, set `otel.gateway.tailSampling.enabled: true`. Only traces are affected; metrics and logs are passed through unchanged.
+
+#### Requirements
+
+- A chart version that contains `otel.gateway.tailSampling` settings.
+- Applications send traces through the collector gateway (`swo-gateway`, ports `4317` gRPC / `4318` HTTP), not directly to SolarWinds Observability. For example, for a Rails app using `solarwinds_apm`:
+
+  ```yaml
+  env:
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: http://swo-gateway.<namespace>.svc.cluster.local:4318
+  ```
+
+- The APM agent only exports traces it sampled itself (`trace_flags=01`). Tail sampling can drop more of those traces, but it cannot bring back traces that the agent did not send.
+
+#### Configuration
+
+Create a values file, for example `values-tail-sampling.yaml`:
+
+> **Helm replaces lists, it does not merge them.** Setting `policies` replaces the **whole** default list. Copy every policy you want to keep, including the fallback.
+
+```yaml
+otel:
+  gateway:
+    tailSampling:
+      enabled: true
+      decision_wait: 10s          # time to wait for all spans of a trace before deciding
+      recordPolicy: true          # tag kept spans with the policy that kept them
+      policies:
+        # ... see more policy in https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
+```
+
+#### Apply
+
+Add the values file to your usual install command (later files win):
+
+```bash
+helm upgrade --install swo-k8s-collector solarwinds/swo-k8s-collector \
+  --namespace <namespace> \
+  --reuse-values \
+  -f values-tail-sampling.yaml \
+  --wait
+```
+
+The gateway pods are restarted automatically after any policy change. When enabling tail sampling for the first time, the gateway changes from a Deployment to a StatefulSet; the `swo-gateway` Service name stays the same, so applications need no change.
+
+Preview the rendered configuration without touching the cluster:
+
+```bash
+helm template swo-k8s-collector solarwinds/swo-k8s-collector -n <namespace> \
+  -f values-tail-sampling.yaml \
+  --set-string otel.endpoint=<solarwinds-observability-otel-endpoint> \
+  --set-string cluster.name=<cluster-display-name> \
+  | grep -A80 '  tail_sampling:'
+```
+
+#### Disable / roll back
+
+```bash
+helm upgrade swo-k8s-collector solarwinds/swo-k8s-collector -n <namespace> \
+  --reuse-values --set otel.gateway.tailSampling.enabled=false --wait
+
+# or return to a previous release revision
+helm -n <namespace> history swo-k8s-collector
+helm -n <namespace> rollback swo-k8s-collector <REVISION> --wait
+```
 
 ### OpenShift Support (disabled by default)
 
