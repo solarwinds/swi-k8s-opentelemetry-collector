@@ -541,7 +541,7 @@ To enable, set `otel.gateway.tailSampling.enabled: true`. Only traces are affect
 
 #### Requirements
 
-- A chart version that contains `otel.gateway.tailSampling` settings.
+- Chart version `5.4.0-alpha.4` or newer (older versions have no `otel.gateway.tailSampling` settings).
 - Applications send traces through the collector gateway (`swo-gateway`, ports `4317` gRPC / `4318` HTTP), not directly to SolarWinds Observability. For example, for a Rails app using `solarwinds_apm`:
 
   ```yaml
@@ -566,8 +566,36 @@ otel:
       decision_wait: 10s          # time to wait for all spans of a trace before deciding
       recordPolicy: true          # tag kept spans with the policy that kept them
       policies:
-        # ... see more policy in https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md
+        - name: healthcheck-policy
+          type: drop
+          drop:
+            drop_sub_policy:
+              - name: drop-healthcheck-url-path
+                type: string_attribute
+                string_attribute:
+                  key: url.path
+                  values: [/health.*]
+                  enabled_regex_matching: true
+        - name: error-policy
+          type: status_code
+          status_code:
+            status_codes: [ERROR]
+        - name: high-latency-policy
+          type: latency
+          latency:
+            threshold_ms: 5000
+        - name: trigger-trace-policy
+          type: boolean_attribute
+          boolean_attribute:
+            key: TriggeredTrace
+            value: true
+        - name: fallback-policy
+          type: probabilistic
+          probabilistic:
+            sampling_percentage: 10
 ```
+
+Traces that match no policy are dropped, so keep a fallback policy (e.g. a low-percentage `probabilistic` policy). Policy order does not affect the decision: a trace is kept if any policy samples it, unless a `drop` policy matches. See the [tail_sampling processor README](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md) for all policy types. To keep the chart's default policies, omit the `policies` key entirely; an empty `policies:` key removes them.
 
 #### Apply
 
@@ -576,10 +604,12 @@ Add the values file to your usual install command (later files win):
 ```bash
 helm upgrade --install swo-k8s-collector solarwinds/swo-k8s-collector \
   --namespace <namespace> \
-  --reuse-values \
+  -f values.yaml \
   -f values-tail-sampling.yaml \
   --wait
 ```
+
+`values.yaml` is the values file you installed the chart with. Without it, `helm upgrade` resets all other settings (e.g. `otel.endpoint`, `cluster.name`) to chart defaults. Avoid `--reuse-values` when also upgrading the chart version: it keeps the old chart's defaults, so new settings such as `tailSampling` may be missing. On Helm 3.14+ you can use `--reset-then-reuse-values` instead of the original values file.
 
 The gateway pods are restarted automatically after any policy change. Enabling tail sampling does not change the `swo-gateway` Service, so applications need no change.
 
@@ -588,16 +618,15 @@ Preview the rendered configuration without touching the cluster:
 ```bash
 helm template swo-k8s-collector solarwinds/swo-k8s-collector -n <namespace> \
   -f values-tail-sampling.yaml \
-  --set-string otel.endpoint=<solarwinds-observability-otel-endpoint> \
-  --set-string cluster.name=<cluster-display-name> \
   | grep -A80 '  tail_sampling:'
 ```
 
 #### Disable / roll back
 
 ```bash
+# re-apply only your original values; tailSampling.enabled defaults to false
 helm upgrade swo-k8s-collector solarwinds/swo-k8s-collector -n <namespace> \
-  --reuse-values --set otel.gateway.tailSampling.enabled=false --wait
+  -f values.yaml --wait
 
 # or return to a previous release revision
 helm -n <namespace> history swo-k8s-collector
