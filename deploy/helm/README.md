@@ -597,6 +597,19 @@ otel:
 
 Traces that match no policy are dropped, so keep a fallback policy (e.g. a low-percentage `probabilistic` policy). Policy order does not affect the decision: a trace is kept if any policy samples it, unless a `drop` policy matches. See the [tail_sampling processor README](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md) for all policy types. To keep the chart's default policies, omit the `policies` key entirely; an empty `policies:` key removes them.
 
+#### Replacing the gateway StatefulSet
+
+The chart sets the gateway StatefulSet's `serviceName` only when tail sampling is enabled. Kubernetes does not allow this field to be changed on an existing StatefulSet, so an ordinary Helm upgrade or rollback that toggles tail sampling will fail.
+
+Before either enabling or disabling tail sampling, delete the existing gateway StatefulSet while orphaning its pods, then immediately run the corresponding Helm upgrade or rollback:
+
+```bash
+kubectl get statefulsets -n <namespace>
+kubectl delete statefulset <gateway-statefulset-name> -n <namespace> --cascade=orphan
+```
+
+The gateway pods keep running while the StatefulSet is recreated and can be adopted by the new StatefulSet. The configuration change then rolls the pods; gateway traffic may be interrupted during restarts, especially with a single replica. Any traces buffered in a pod's tail sampler are in memory and are lost if that pod restarts.
+
 #### Apply
 
 Add the values file to your usual install command (later files win):
@@ -624,11 +637,12 @@ helm template swo-k8s-collector solarwinds/swo-k8s-collector -n <namespace> \
 #### Disable / roll back
 
 ```bash
+# First follow "Replacing the gateway StatefulSet" above, then:
 # re-apply only your original values; tailSampling.enabled defaults to false
 helm upgrade swo-k8s-collector solarwinds/swo-k8s-collector -n <namespace> \
   -f values.yaml --wait
 
-# or return to a previous release revision
+# or follow the same replacement procedure before returning to a previous revision
 helm -n <namespace> history swo-k8s-collector
 helm -n <namespace> rollback swo-k8s-collector <REVISION> --wait
 ```
