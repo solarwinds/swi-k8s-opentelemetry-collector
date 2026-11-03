@@ -65,6 +65,7 @@ transform/unify_node_attribute:
 - include: (k8s.container_fs_reads_total__swo_temp|k8s.container_fs_writes_total__swo_temp)
   match_type: regexp
   action: combine
+  aggregation_type: sum
   submatch_case: lower
   experimental_match_labels: { "container": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
   new_name: k8s.container.fs.iops
@@ -82,6 +83,7 @@ transform/unify_node_attribute:
 - include: (k8s.container_fs_reads_bytes_total__swo_temp|k8s.container_fs_writes_bytes_total__swo_temp)
   match_type: regexp
   action: combine
+  aggregation_type: sum
   submatch_case: lower
   experimental_match_labels: { "container": "\\S+", "pod": "\\S+", "namespace": "\\S+" }
   new_name: k8s.container.fs.throughput
@@ -216,6 +218,7 @@ transform/unify_node_attribute:
 - include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
   match_type: regexp
   action: combine
+  aggregation_type: sum
   submatch_case: lower
   operations:
     - action: aggregate_labels
@@ -231,6 +234,7 @@ transform/unify_node_attribute:
 - include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
   match_type: regexp
   action: combine
+  aggregation_type: sum
   submatch_case: lower
   operations:
     - action: aggregate_labels
@@ -340,6 +344,7 @@ transform/unify_node_attribute:
 - include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
   match_type: regexp
   action: combine
+  aggregation_type: sum
   submatch_case: lower
   operations:
     - action: aggregate_labels
@@ -349,6 +354,7 @@ transform/unify_node_attribute:
 - include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
   match_type: regexp
   action: combine
+  aggregation_type: sum
   submatch_case: lower
   operations:
     - action: aggregate_labels
