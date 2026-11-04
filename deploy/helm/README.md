@@ -507,6 +507,7 @@ Configuration:
     - Java: `instrumentation.opentelemetry.io/inject-java: "true"`
     - Node.js: `instrumentation.opentelemetry.io/inject-nodejs: "true"`
     - Python: `instrumentation.opentelemetry.io/inject-python: "true"`
+    - Ruby: `instrumentation.opentelemetry.io/inject-ruby: "true"` (requires Ruby 3.3 or later in the application container)
 
     The possible values for the annotation can be:
 
