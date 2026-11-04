@@ -5,8 +5,6 @@ go 1.27
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/prometheus/client_golang v1.25.0
-	// OBI's offsets.json lists google.golang.org/grpc up to 1.84.0; the struct offsets it reads were verified identical in 1.85.0.
-	// Re-check them before bumping further, a mismatch breaks rpc.*.call.duration metrics.
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
 )
