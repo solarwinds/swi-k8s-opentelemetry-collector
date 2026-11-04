@@ -45,5 +45,19 @@ spec:
         value: solarwinds_exporter
       - name: OTEL_EXPORTER_OTLP_PROTOCOL
         value: grpc
+  ruby:
+    env:
+      - name: SW_APM_SERVICE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: solarwinds-apm
+            key: SW_APM_SERVICE_KEY
+      - name: SW_APM_COLLECTOR
+        value: {{ .Values.otel.endpoint | regexReplaceAll "(:\\d+)?$" "" | replace "otel" "apm" }}
+      # The Ruby OTLP exporter only supports http/protobuf, so use the gateway's OTLP HTTP port
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.http_port }}
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
 {{- end }}
   
