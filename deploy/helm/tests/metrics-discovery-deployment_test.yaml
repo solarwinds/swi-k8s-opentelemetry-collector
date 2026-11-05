@@ -64,6 +64,20 @@ tests:
     asserts:
     - notExists:
         path: spec.template.spec.initContainers
+  - it: Endpoint check should not skip TLS verification by default
+    template: metrics-discovery-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --insecure-skip-verify=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY)
+  - it: Endpoint check should skip TLS verification when tls_insecure_skip_verify is enabled
+    template: metrics-discovery-deployment.yaml
+    set:
+      otel.tls_insecure_skip_verify: true
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --insecure-skip-verify=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY)
   - it: Image otel-endpoint-check should be correct in default state
     template: metrics-discovery-deployment.yaml
     set:

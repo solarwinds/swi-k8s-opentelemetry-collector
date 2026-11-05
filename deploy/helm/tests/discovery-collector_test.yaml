@@ -18,6 +18,23 @@ tests:
     asserts:
       - matchSnapshot:
           path: spec.template.spec
+  - it: Endpoint check should not skip TLS verification by default
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --insecure-skip-verify=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY)
+  - it: Endpoint check should skip TLS verification when tls_insecure_skip_verify is enabled
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.tls_insecure_skip_verify: true
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --insecure-skip-verify=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY)
   - it: Discovery collector name should match
     template: operator/discovery-collector.yaml
     set:
