@@ -42,7 +42,14 @@ components:
   product-catalog:
     enabled: false
   quote:
-    enabled: false
+    enabled: true
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-php: "test-namespace/swo-instrumentation"
+      instrumentation.opentelemetry.io/otel-php-api-version: "20250925"
+      instrumentation.opentelemetry.io/otel-php-platform: "musl"
+    env:
+      - name: OTEL_SERVICE_NAME
+        value: "quote"
   recommendation:
     enabled: false
   shipping:
