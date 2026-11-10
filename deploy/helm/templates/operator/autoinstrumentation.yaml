@@ -40,7 +40,9 @@ spec:
       - name: SW_APM_COLLECTOR
         value: {{ .Values.otel.endpoint | regexReplaceAll "(:\\d+)?$" "" | replace "otel" "apm" }}
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: "http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.port }}"
+        value: "http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.http_port }}"
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: "http/protobuf"
       - name: OTEL_PHP_AUTOLOAD_ENABLED
         value: "true"
       - name: OTEL_TRACES_SAMPLER
