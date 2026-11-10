@@ -84,6 +84,9 @@ spec:
             {{- if .Values.otel.tls_insecure_skip_verify }}
             - --insecure-skip-verify=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY)
             {{- end }}
+          {{- if eq (include "common.otel-ca-enabled" .) "true" }}
+            - --ca-file={{ include "common.otel-ca-file" . }}
+          {{- end }}
           env:
             - name: SOLARWINDS_API_TOKEN
               valueFrom:
@@ -94,6 +97,12 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "common.fullname" (tuple . "-common-env") }}
+        {{- if eq (include "common.otel-ca-enabled" .) "true" }}
+          volumeMounts:
+            - mountPath: /otel-ca
+              name: otel-ca
+              readOnly: true
+        {{- end }}
       {{- end }}
       containers:
         - name: swi-opentelemetry-collector
@@ -174,11 +183,19 @@ spec:
             - mountPath: /conf
               name: opentelemetry-collector-configmap
               readOnly: true
+{{- if eq (include "common.otel-ca-enabled" .) "true" }}
+            - mountPath: /otel-ca
+              name: otel-ca
+              readOnly: true
+{{- end }}
 {{- if .Values.otel.gateway.sending_queue.offload_to_disk }}
             - name: sending-queue
               mountPath: /var/lib/swo/sending_queue
 {{- end }}
       volumes:
+{{- if eq (include "common.otel-ca-enabled" .) "true" }}
+{{ include "common.otel-ca-volume" . | indent 8 }}
+{{- end }}
         - name: opentelemetry-collector-configmap
           configMap:
             name: {{ include "common.fullname" (tuple . "-gateway-config") }}
