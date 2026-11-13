@@ -16,6 +16,22 @@ otel:
   tls_insecure: false
   tls_insecure_skip_verify: false
 
+  # Trust a custom CA when verifying the OTEL endpoint's certificate (e.g. an on-premises endpoint with a certificate
+  # from an internal CA). The bundle is a PEM file with one or more certificates. Only this bundle is trusted, public
+  # CAs are not added unless they are in the bundle. Ignored when tls_insecure is true. With tls_insecure_skip_verify
+  # true, the certificate is not verified at all, even with a CA set.
+  # Set either configmap or pem, not both. After changing the CA, restart the pods (with pem, helm upgrade does it).
+  tls_ca:
+    # Name of an existing ConfigMap in the release namespace that holds the bundle, e.g. created with:
+    #   kubectl create configmap otel-ca --namespace <ns> --from-file=ca.crt=./ca-bundle.pem
+    # The pods wait in ContainerCreating until the ConfigMap exists.
+    configmap: ""
+    # Key in the ConfigMap that holds the bundle
+    configmap_key: ca.crt
+    # The bundle itself. The chart creates a ConfigMap from it. Can be set from a file with
+    # --set-file otel.tls_ca.pem=./ca-bundle.pem
+    pem: ""
+
   # SWO API token used for authentication. If filled it will create secret that will be used by the collector
   api_token: ""
 
