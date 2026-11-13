@@ -2,7 +2,21 @@ components:
   accounting:   
     enabled: false
   ad:
-    enabled: false
+    enabled: true
+    podAnnotations:
+      instrumentation.opentelemetry.io/inject-java: "test-namespace/swo-instrumentation"
+      resource.opentelemetry.io/service.name: "ad"
+    env:
+      - name: AD_PORT
+        value: "8080"
+      - name: FLAGD_HOST
+        value: flagd
+      - name: FLAGD_PORT
+        value: "8013"
+      # - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      #   value: http://$(OTEL_COLLECTOR_NAME):4317
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
   cart:
     enabled: false
   checkout:
@@ -30,7 +44,7 @@ components:
   quote:
     enabled: true
     podAnnotations:
-      instrumentation.opentelemetry.io/inject-php: "true"
+      instrumentation.opentelemetry.io/inject-php: "test-namespace/swo-instrumentation"
       instrumentation.opentelemetry.io/otel-php-api-version: "20240924"
       instrumentation.opentelemetry.io/otel-php-platform: "musl"
       resource.opentelemetry.io/service.name: "quote"
