@@ -79,7 +79,7 @@ spec:
             - --insecure-skip-verify=$(OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY)
             {{- end }}
           {{- if eq (include "common.otel-ca-enabled" .) "true" }}
-            - --ca-file={{ include "common.otel-ca-file" (dict "windows" true) }}
+            - --ca-file={{ include "common.otel-ca-file" (dict "isWindows" true) }}
           {{- end }}
           env:
             - name: SOLARWINDS_API_TOKEN

@@ -524,9 +524,9 @@ ca.crt
 {{- end -}}
 {{- end -}}
 
-{{/* Path of the CA file in the container. The Windows path is used only when the context has windows set; only the node collector config sets it. */}}
+{{/* Path of the CA file in the container. The Windows path is used when the context has isWindows set. */}}
 {{- define "common.otel-ca-file" -}}
-{{- if .windows -}}
+{{- if .isWindows -}}
 c:\otel-ca\ca.crt
 {{- else -}}
 /otel-ca/ca.crt
