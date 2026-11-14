@@ -30,6 +30,31 @@ spec:
         value: http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.port }}
       - name: OTEL_EXPORTER_OTLP_PROTOCOL
         value: grpc
+  php:
+    env:
+      - name: SW_APM_SERVICE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: solarwinds-apm
+            key: SW_APM_SERVICE_KEY
+      - name: SW_APM_COLLECTOR
+        value: {{ .Values.otel.endpoint | regexReplaceAll "(:\\d+)?$" "" | replace "otel" "apm" }}
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: "http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.http_port }}"
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: "http/protobuf"
+      - name: OTEL_PHP_AUTOLOAD_ENABLED
+        value: "true"
+      - name: OTEL_TRACES_SAMPLER
+        value: "swo_http"
+      - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+        value: "delta"
+      - name: OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION
+        value: "base2_exponential_bucket_histogram"
+      - name: OTEL_EXPERIMENTAL_RESPONSE_PROPAGATORS
+        value: "swo_xtrace,swo_xtraceoptionsresponse"
+      - name: OTEL_PROPAGATORS
+        value: "baggage,tracecontext,swo_tracestate,swo_xtraceoptions"
   python:
     env:
       - name: SW_APM_SERVICE_KEY
