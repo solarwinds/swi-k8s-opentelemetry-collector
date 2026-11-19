@@ -542,13 +542,13 @@ To enable, set `otel.gateway.tailSampling.enabled: true`. Only traces are affect
 #### Requirements
 
 - Chart version `5.4.0-alpha.4` or newer.
-- Applications send traces through the collector gateway (`swo-gateway`, ports `4317` gRPC / `4318` HTTP), not directly to SolarWinds Observability. For example, for a Rails app using `solarwinds_apm`:
+- Applications must send traces through the collector gateway (`swo-gateway`, ports `4317` gRPC / `4318` HTTP), not directly to SolarWinds Observability. Point the application's OTLP exporter at the gateway, for example by setting this environment variable on the workload:
 
-  ```yaml
-  env:
-    - name: OTEL_EXPORTER_OTLP_ENDPOINT
-      value: http://swo-gateway.<namespace>.svc.cluster.local:4318
+  ```text
+  OTEL_EXPORTER_OTLP_ENDPOINT=http://swo-gateway.<namespace>.svc.cluster.local:4318
   ```
+
+  This endpoint uses the OTLP HTTP port (`4318`). For gRPC, use port `4317` and set `OTEL_EXPORTER_OTLP_PROTOCOL=grpc`.
 
 - The SolarWinds Observability service(s) for each application in the traced workflow must be enabled for this feature by contacting customer support.
 
