@@ -21,6 +21,16 @@ templates:
 chart:
   appVersion: 1.0.0
 tests:
+  - it: renders without CA when otel.tls_ca is missing from the values
+    set:
+      otel.tls_ca: null
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: otel-ca-config-map.yaml
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+        template: node-collector-daemon-set.yaml
   - it: node-collector-daemon-set has no CA volume or mount by default
     template: node-collector-daemon-set.yaml
     asserts:
