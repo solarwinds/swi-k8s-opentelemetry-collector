@@ -1401,6 +1401,25 @@
                     "type": "boolean",
                     "description": "Keep TLS enabled but skip verification of the OTEL endpoint's certificate. Ignored when tls_insecure is true."
                 },
+                "tls_ca": {
+                    "type": "object",
+                    "description": "Custom CA bundle to trust when verifying the OTEL endpoint's certificate. Set either configmap or pem, not both. Ignored when tls_insecure is true. With tls_insecure_skip_verify true, the certificate is not verified at all, even with a CA set.",
+                    "properties": {
+                        "configmap": {
+                            "type": "string",
+                            "description": "Name of an existing ConfigMap in the release namespace that holds the PEM bundle."
+                        },
+                        "configmap_key": {
+                            "type": "string",
+                            "description": "Key in the ConfigMap that holds the PEM bundle."
+                        },
+                        "pem": {
+                            "type": "string",
+                            "description": "PEM bundle (one or more certificates). The chart creates a ConfigMap from it."
+                        }
+                    },
+                    "additionalProperties": false
+                },
                 "windows": {
                     "type": "object",
                     "properties": {
