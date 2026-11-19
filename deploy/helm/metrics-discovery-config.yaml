@@ -4,6 +4,9 @@ exporters:
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
       insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+{{- if eq (include "common.otel-ca-enabled" .) "true" }}
+      ca_file: {{ include "common.otel-ca-file" . }}
+{{- end }}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
       "swi-reporter": "k8s-monitoring swo-k8s-collector/{{ .Chart.Version }}"

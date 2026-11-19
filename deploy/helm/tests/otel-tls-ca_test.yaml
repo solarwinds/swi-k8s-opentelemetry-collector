@@ -1,0 +1,875 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test for otel.tls_ca (custom CA for the OTLP endpoint)
+templates:
+  - events-collector-config-map.yaml
+  - events-collector-statefulset.yaml
+  - gateway/gateway-config-map.yaml
+  - gateway/gateway-statefulset.yaml
+  - metrics-collector-config-map.yaml
+  - metrics-deployment.yaml
+  - metrics-discovery-config-map.yaml
+  - metrics-discovery-deployment.yaml
+  - node-collector-config-map-windows.yaml
+  - node-collector-config-map.yaml
+  - node-collector-daemon-set-windows.yaml
+  - node-collector-daemon-set.yaml
+  - operator/discovery-collector-config-map.yaml
+  - operator/discovery-collector.yaml
+  - otel-ca-config-map.yaml
+  - common-env-config-map.yaml
+  - metrics-collector-env-config-map.yaml
+chart:
+  appVersion: 1.0.0
+tests:
+  - it: node-collector-daemon-set has no CA volume or mount by default
+    template: node-collector-daemon-set.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: node-collector-daemon-set mounts the existing ConfigMap with configmap_key
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: bundle.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: bundle.pem
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: node-collector-daemon-set mounts the chart-made ConfigMap with pem
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: RELEASE-NAME-swo-k8s-collector-otel-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: node-collector-config-map.yaml has ca_file only with the right path
+    template: node-collector-config-map.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: '(?m)^      ca_file: /otel-ca/ca\.crt$'
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: 'solarwinds:[\s\S]*ca_file: /otel-ca/ca\.crt'
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: 'ca_file: c:\\otel-ca\\ca.crt'
+  - it: node-collector-config-map.yaml has no ca_file by default
+    template: node-collector-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: 'otel-ca'
+  - it: node-collector-daemon-set renders no CA when tls_insecure is set
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: node-collector-daemon-set-windows has no CA volume or mount by default
+    template: node-collector-daemon-set-windows.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: node-collector-daemon-set-windows mounts the existing ConfigMap with configmap_key
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: bundle.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: bundle.pem
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: c:\otel-ca
+            readOnly: true
+  - it: node-collector-daemon-set-windows mounts the chart-made ConfigMap with pem
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: RELEASE-NAME-swo-k8s-collector-otel-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: node-collector-config-map-windows.yaml has ca_file only with the right path
+    template: node-collector-config-map-windows.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: '(?m)^      ca_file: c:\\otel-ca\\ca\.crt$'
+      - matchRegex:
+          path: data["logs.config"]
+          pattern: 'solarwinds:[\s\S]*ca_file: c:\\otel-ca\\ca\.crt'
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: 'ca_file: /otel-ca/ca.crt'
+  - it: node-collector-config-map-windows.yaml has no ca_file by default
+    template: node-collector-config-map-windows.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["logs.config"]
+          pattern: 'otel-ca'
+  - it: node-collector-daemon-set-windows renders no CA when tls_insecure is set
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: metrics-deployment has no CA volume or mount by default
+    template: metrics-deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: metrics-deployment mounts the existing ConfigMap with configmap_key
+    template: metrics-deployment.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: bundle.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: bundle.pem
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: metrics-deployment mounts the chart-made ConfigMap with pem
+    template: metrics-deployment.yaml
+    set:
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: RELEASE-NAME-swo-k8s-collector-otel-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: metrics-collector-config-map.yaml has ca_file only with the right path
+    template: metrics-collector-config-map.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - matchRegex:
+          path: data["metrics.config"]
+          pattern: '(?m)^      ca_file: /otel-ca/ca\.crt$'
+      - matchRegex:
+          path: data["metrics.config"]
+          pattern: 'solarwinds:[\s\S]*ca_file: /otel-ca/ca\.crt'
+      - notMatchRegex:
+          path: data["metrics.config"]
+          pattern: 'ca_file: c:\\otel-ca\\ca.crt'
+  - it: metrics-collector-config-map.yaml has no ca_file by default
+    template: metrics-collector-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["metrics.config"]
+          pattern: 'otel-ca'
+  - it: metrics-deployment renders no CA when tls_insecure is set
+    template: metrics-deployment.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: metrics-discovery-deployment has no CA volume or mount by default
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: metrics-discovery-deployment mounts the existing ConfigMap with configmap_key
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: true
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: bundle.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: bundle.pem
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: metrics-discovery-deployment mounts the chart-made ConfigMap with pem
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: true
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: RELEASE-NAME-swo-k8s-collector-otel-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: metrics-discovery-config-map.yaml has ca_file only with the right path
+    template: metrics-discovery-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - matchRegex:
+          path: data["metrics-discovery.config"]
+          pattern: '(?m)^      ca_file: /otel-ca/ca\.crt$'
+      - matchRegex:
+          path: data["metrics-discovery.config"]
+          pattern: 'solarwinds:[\s\S]*ca_file: /otel-ca/ca\.crt'
+      - notMatchRegex:
+          path: data["metrics-discovery.config"]
+          pattern: 'ca_file: c:\\otel-ca\\ca.crt'
+  - it: metrics-discovery-config-map.yaml has no ca_file by default
+    template: metrics-discovery-config-map.yaml
+    set:
+      aws_fargate.enabled: true
+    asserts:
+      - notMatchRegex:
+          path: data["metrics-discovery.config"]
+          pattern: 'otel-ca'
+  - it: metrics-discovery-deployment renders no CA when tls_insecure is set
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: true
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: events-collector-statefulset has no CA volume or mount by default
+    template: events-collector-statefulset.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: events-collector-statefulset mounts the existing ConfigMap with configmap_key
+    template: events-collector-statefulset.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: bundle.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: bundle.pem
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: events-collector-statefulset mounts the chart-made ConfigMap with pem
+    template: events-collector-statefulset.yaml
+    set:
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: RELEASE-NAME-swo-k8s-collector-otel-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: events-collector-config-map.yaml has ca_file only with the right path
+    template: events-collector-config-map.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - matchRegex:
+          path: data["events.config"]
+          pattern: '(?m)^      ca_file: /otel-ca/ca\.crt$'
+      - matchRegex:
+          path: data["events.config"]
+          pattern: 'solarwinds:[\s\S]*ca_file: /otel-ca/ca\.crt'
+      - notMatchRegex:
+          path: data["events.config"]
+          pattern: 'ca_file: c:\\otel-ca\\ca.crt'
+  - it: events-collector-config-map.yaml has no ca_file by default
+    template: events-collector-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["events.config"]
+          pattern: 'otel-ca'
+  - it: events-collector-statefulset renders no CA when tls_insecure is set
+    template: events-collector-statefulset.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: gateway-statefulset has no CA volume or mount by default
+    template: gateway/gateway-statefulset.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: gateway-statefulset mounts the existing ConfigMap with configmap_key
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: bundle.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: bundle.pem
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: gateway-statefulset mounts the chart-made ConfigMap with pem
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: RELEASE-NAME-swo-k8s-collector-otel-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: gateway/gateway-config-map.yaml has ca_file only with the right path
+    template: gateway/gateway-config-map.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - matchRegex:
+          path: data["gateway.config"]
+          pattern: '(?m)^      ca_file: /otel-ca/ca\.crt$'
+      - matchRegex:
+          path: data["gateway.config"]
+          pattern: 'solarwinds:[\s\S]*ca_file: /otel-ca/ca\.crt'
+      - notMatchRegex:
+          path: data["gateway.config"]
+          pattern: 'ca_file: c:\\otel-ca\\ca.crt'
+  - it: gateway/gateway-config-map.yaml has no ca_file by default
+    template: gateway/gateway-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["gateway.config"]
+          pattern: 'otel-ca'
+  - it: gateway-statefulset renders no CA when tls_insecure is set
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: discovery-collector has no CA volume or mount by default
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: discovery-collector mounts the existing ConfigMap with configmap_key
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: bundle.pem
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: bundle.pem
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: discovery-collector mounts the chart-made ConfigMap with pem
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: RELEASE-NAME-swo-k8s-collector-otel-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
+  - it: operator/discovery-collector-config-map.yaml has ca_file only with the right path
+    template: operator/discovery-collector-config-map.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - matchRegex:
+          path: data["discovery-collector.config"]
+          pattern: '(?m)^      ca_file: /otel-ca/ca\.crt$'
+      - matchRegex:
+          path: data["discovery-collector.config"]
+          pattern: 'solarwinds:[\s\S]*ca_file: /otel-ca/ca\.crt'
+      - notMatchRegex:
+          path: data["discovery-collector.config"]
+          pattern: 'ca_file: c:\\otel-ca\\ca.crt'
+  - it: operator/discovery-collector-config-map.yaml has no ca_file by default
+    template: operator/discovery-collector-config-map.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+    asserts:
+      - notMatchRegex:
+          path: data["discovery-collector.config"]
+          pattern: 'otel-ca'
+  - it: discovery-collector renders no CA when tls_insecure is set
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name=='otel-ca')]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name=='otel-ca')]
+  - it: node-collector-daemon-set endpoint check has no CA flag or mount by default
+    template: node-collector-daemon-set.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: node-collector-daemon-set endpoint check gets the CA flag and mount when a CA is set
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: node-collector-daemon-set endpoint check gets no CA flag when tls_insecure is set
+    template: node-collector-daemon-set.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: node-collector-daemon-set-windows endpoint check has no CA flag or mount by default
+    template: node-collector-daemon-set-windows.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=c:\otel-ca\ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: node-collector-daemon-set-windows endpoint check gets the CA flag and mount when a CA is set
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=c:\otel-ca\ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: c:\otel-ca
+            readOnly: true
+  - it: node-collector-daemon-set-windows endpoint check gets no CA flag when tls_insecure is set
+    template: node-collector-daemon-set-windows.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=c:\otel-ca\ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: metrics-deployment endpoint check has no CA flag or mount by default
+    template: metrics-deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: metrics-deployment endpoint check gets the CA flag and mount when a CA is set
+    template: metrics-deployment.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: metrics-deployment endpoint check gets no CA flag when tls_insecure is set
+    template: metrics-deployment.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: metrics-discovery-deployment endpoint check has no CA flag or mount by default
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: metrics-discovery-deployment endpoint check gets the CA flag and mount when a CA is set
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: metrics-discovery-deployment endpoint check gets no CA flag when tls_insecure is set
+    template: metrics-discovery-deployment.yaml
+    set:
+      aws_fargate.enabled: true
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: events-collector-statefulset endpoint check has no CA flag or mount by default
+    template: events-collector-statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: events-collector-statefulset endpoint check gets the CA flag and mount when a CA is set
+    template: events-collector-statefulset.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: events-collector-statefulset endpoint check gets no CA flag when tls_insecure is set
+    template: events-collector-statefulset.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: gateway-statefulset endpoint check has no CA flag or mount by default
+    template: gateway/gateway-statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: gateway-statefulset endpoint check gets the CA flag and mount when a CA is set
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: gateway-statefulset endpoint check gets no CA flag when tls_insecure is set
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: discovery-collector endpoint check has no CA flag or mount by default
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: discovery-collector endpoint check gets the CA flag and mount when a CA is set
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: otel-ca
+            mountPath: /otel-ca
+            readOnly: true
+  - it: discovery-collector endpoint check gets no CA flag when tls_insecure is set
+    template: operator/discovery-collector.yaml
+    set:
+      otel.metrics.autodiscovery.discovery_collector.enabled: true
+      otel.tls_insecure: true
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].command
+          content: --ca-file=/otel-ca/ca.crt
+      - notExists:
+          path: spec.template.spec.initContainers[0].volumeMounts
+  - it: chart-made ConfigMap is rendered from pem
+    template: otel-ca-config-map.yaml
+    set:
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data["ca.crt"]
+          value: |
+            -----BEGIN CERTIFICATE-----
+            abc
+            -----END CERTIFICATE-----
+  - it: no ConfigMap is rendered by default
+    template: otel-ca-config-map.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: no ConfigMap is rendered when an existing ConfigMap is used
+    template: otel-ca-config-map.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: no ConfigMap is rendered when tls_insecure is set
+    template: otel-ca-config-map.yaml
+    set:
+      otel.tls_insecure: true
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: rendering fails when both configmap and pem are set
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.pem: |
+        -----BEGIN CERTIFICATE-----
+        abc
+        -----END CERTIFICATE-----
+    asserts:
+      - failedTemplate:
+          errorMessage: otel.tls_ca.configmap and otel.tls_ca.pem are both set, set only one of them
+  - it: rendering fails when pem is not a certificate
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_ca.pem: not-a-certificate
+    asserts:
+      - failedTemplate:
+          errorMessage: otel.tls_ca.pem does not contain a PEM certificate (-----BEGIN CERTIFICATE-----)
+  - it: an empty configmap_key falls back to ca.crt
+    template: gateway/gateway-statefulset.yaml
+    set:
+      otel.tls_ca.configmap: my-ca
+      otel.tls_ca.configmap_key: ""
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: otel-ca
+            configMap:
+              name: my-ca
+              items:
+                - key: ca.crt
+                  path: ca.crt
