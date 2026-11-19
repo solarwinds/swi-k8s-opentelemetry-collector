@@ -1,4 +1,5 @@
-{{- if and .Values.otel.tls_ca.pem (eq (include "common.otel-ca-enabled" .) "true") }}
+{{- $ca := .Values.otel.tls_ca | default dict }}
+{{- if and $ca.pem (eq (include "common.otel-ca-enabled" .) "true") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,5 +11,5 @@ metadata:
 {{ include "common.annotations" . | indent 4 }}
 data:
   ca.crt: |
-{{ .Values.otel.tls_ca.pem | trim | indent 4 }}
+{{ $ca.pem | trim | indent 4 }}
 {{- end }}

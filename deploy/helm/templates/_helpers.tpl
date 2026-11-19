@@ -496,7 +496,7 @@ Usage:
 Custom CA for the OTEL endpoint (otel.tls_ca). Returns "true" when a CA is configured and TLS is not disabled.
 */}}
 {{- define "common.otel-ca-enabled" -}}
-{{- $ca := .Values.otel.tls_ca -}}
+{{- $ca := .Values.otel.tls_ca | default dict -}}
 {{- if and $ca.configmap $ca.pem -}}
 {{- fail "otel.tls_ca.configmap and otel.tls_ca.pem are both set, set only one of them" -}}
 {{- end -}}
@@ -509,18 +509,20 @@ true
 {{- end -}}
 
 {{- define "common.otel-ca-configmap-name" -}}
-{{- if .Values.otel.tls_ca.pem -}}
+{{- $ca := .Values.otel.tls_ca | default dict -}}
+{{- if $ca.pem -}}
 {{- include "common.fullname" (tuple . "-otel-ca") -}}
 {{- else -}}
-{{- .Values.otel.tls_ca.configmap -}}
+{{- $ca.configmap -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "common.otel-ca-configmap-key" -}}
-{{- if .Values.otel.tls_ca.pem -}}
+{{- $ca := .Values.otel.tls_ca | default dict -}}
+{{- if $ca.pem -}}
 ca.crt
 {{- else -}}
-{{- .Values.otel.tls_ca.configmap_key | default "ca.crt" -}}
+{{- $ca.configmap_key | default "ca.crt" -}}
 {{- end -}}
 {{- end -}}
 
