@@ -535,13 +535,13 @@ If Istio is already deployed in the cluster, this setting does not need to be en
 
 ### Tail-based sampling (disabled by default)
 
-Tail-based sampling decides whether to keep a trace after buffering its spans for a configured interval (`decision_wait`), using the errors, latency or attributes observed during that interval. It does not guarantee that the trace has finished before deciding. Head-based sampling (done by the APM agent) decides at the start of the trace.
+Tail-based sampling decides whether to keep a trace after buffering its spans for a configured interval (`decision_wait`), using the errors, latency or attributes observed during that interval. It does not guarantee that the trace has finished before deciding. See the [SolarWinds Observability documentation](https://documentation.solarwinds.com/en/success_center/observability/content/intro/services/tail-sampling.htm) for an overview, prerequisites and feature details. 
 
 To enable, set `otel.gateway.tailSampling.enabled: true`. Only traces are affected; metrics and logs are passed through unchanged.
 
 #### Requirements
 
-- Chart version `5.4.0-alpha.4` or newer (older versions have no `otel.gateway.tailSampling` settings).
+- Chart version `5.4.0-alpha.4` or newer.
 - Applications send traces through the collector gateway (`swo-gateway`, ports `4317` gRPC / `4318` HTTP), not directly to SolarWinds Observability. For example, for a Rails app using `solarwinds_apm`:
 
   ```yaml
@@ -550,11 +550,11 @@ To enable, set `otel.gateway.tailSampling.enabled: true`. Only traces are affect
       value: http://swo-gateway.<namespace>.svc.cluster.local:4318
   ```
 
-- The APM agent only exports traces it sampled itself (`trace_flags=01`). Tail sampling can drop more of those traces, but it cannot bring back traces that the agent did not send.
+- The SolarWinds Observability service(s) for each application in the traced workflow must be enabled for this feature by contacting customer support.
 
 #### Configuration
 
-Create a values file, for example `values-tail-sampling.yaml`:
+At minimum this needs to be set `otel.gateway.tailSampling.enabled: true`. We recommend using the [default settings](../values.yaml) as a starting point and create a values file tailored to your deployment, for example `values-tail-sampling.yaml`:
 
 > **Helm replaces lists, it does not merge them.** Setting `policies` replaces the **whole** default list. Copy every policy you want to keep, including the fallback.
 
