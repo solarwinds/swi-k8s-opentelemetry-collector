@@ -228,7 +228,7 @@ profiles:
                 - name: OTEL_COLLECTOR_NAME
                   value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
                 - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
-                  value: cumulative
+                  value: delta
   - name: php-instrumentation
     patches:
       - op: add
@@ -256,7 +256,7 @@ profiles:
                 - name: OTEL_COLLECTOR_NAME
                   value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
                 - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
-                  value: cumulative
+                  value: delta
   - name: no-topology
     patches:
       - op: add
