@@ -1010,6 +1010,16 @@ autoupdate:
 kube-state-metrics:
   enabled: true
 
+  image:
+    # Use Microsoft's KSM rebuilds for security fixes.
+    # Image build and tag format:
+    # https://github.com/Azure/prometheus-collector/blob/main/internal/docs/kube-state-metrics-upgrade.md
+    # Published tags: https://mcr.microsoft.com/v2/oss/v2/kubernetes/kube-state-metrics/tags/list
+    # MCR legal notice: https://github.com/microsoft/containerregistry/blob/main/legal/Container-Images-Legal-Notice.md
+    # MCR terms of use: https://github.com/microsoft/containerregistry/blob/main/legal/Terms-Of-Use.md
+    registry: "mcr.microsoft.com"
+    repository: "oss/v2/kubernetes/kube-state-metrics"
+
   prometheusScrape: false
 
   nodeSelector:
