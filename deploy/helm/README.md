@@ -508,7 +508,7 @@ Configuration:
     - Node.js: `instrumentation.opentelemetry.io/inject-nodejs: "true"`
     - PHP:
       - `instrumentation.opentelemetry.io/inject-php: "true"`
-      > Pick one for the following annotations based on your PHP version and platform:
+      > Pick one of the following annotations based on your PHP version:
       - `instrumentation.opentelemetry.io/otel-php-api-version: "20250925"` # API version for PHP 8.5.x
       - `instrumentation.opentelemetry.io/otel-php-api-version: "20240924"` # API version for PHP 8.4.x
       - `instrumentation.opentelemetry.io/otel-php-api-version: "20230831"` # API version for PHP 8.3.x
