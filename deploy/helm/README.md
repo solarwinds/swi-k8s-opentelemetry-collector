@@ -554,7 +554,7 @@ To enable, set `otel.gateway.tailSampling.enabled: true`. Only traces are affect
 
 #### Configuration
 
-At minimum this needs to be set `otel.gateway.tailSampling.enabled: true`. We recommend using the [default settings](../values.yaml) as a starting point and create a values file tailored to your deployment, for example `values-tail-sampling.yaml`:
+At minimum this needs to be set `otel.gateway.tailSampling.enabled: true`. We recommend using the [default settings](values.yaml) as a starting point and create a values file tailored to your deployment, for example `values-tail-sampling.yaml`:
 
 > **Helm replaces lists, it does not merge them.** Setting `policies` replaces the **whole** default list. Copy every policy you want to keep, including the fallback.
 
