@@ -41,9 +41,6 @@ spec:
         value: {{ .Values.otel.endpoint | regexReplaceAll "(:\\d+)?$" "" | replace "otel" "apm" }}
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
         value: "http://swo-gateway.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.otel.gateway.otlp_endpoint.http_port }}"
-        # value: https://otel.collector.na-01.cloud.solarwinds.com:443
-      # - name: OTEL_EXPORTER_OTLP_HEADERS
-      #   value: "Authorization=Bearer <token>"
       - name: OTEL_PHP_AUTOLOAD_ENABLED
         value: "false"
       - name: OTEL_TRACES_SAMPLER
