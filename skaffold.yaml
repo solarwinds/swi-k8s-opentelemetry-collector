@@ -247,17 +247,6 @@ profiles:
             - tests/deploy/rolldice/values.yaml
           setValueTemplates:
             'podAnnotations.instrumentation\.opentelemetry\.io/inject-php': '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}/swo-instrumentation'
-            default:
-              env:
-                - name: OTEL_SERVICE_NAME
-                  valueFrom:
-                    fieldRef:
-                      apiVersion: v1
-                      fieldPath: "metadata.annotations['resource.opentelemetry.io/service.name']"
-                - name: OTEL_COLLECTOR_NAME
-                  value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
-                - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
-                  value: delta
   - name: no-topology
     patches:
       - op: add
