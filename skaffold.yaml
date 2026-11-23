@@ -246,6 +246,7 @@ profiles:
           valuesFiles:
             - tests/deploy/rolldice/values.yaml
           setValueTemplates:
+            'podAnnotations.instrumentation\.opentelemetry\.io/inject-php': '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}/swo-instrumentation'
             default:
               env:
                 - name: OTEL_SERVICE_NAME
