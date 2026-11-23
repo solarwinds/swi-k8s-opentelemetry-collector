@@ -228,7 +228,25 @@ profiles:
                 - name: OTEL_COLLECTOR_NAME
                   value: swo-gateway.{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}.svc.cluster.local
                 - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
-                  value: cumulative
+                  value: delta
+  - name: php-instrumentation
+    patches:
+      - op: add
+        path: /deploy/helm/releases/1/setValueTemplates/autoinstrumentation.installDefaultCR
+        value: true
+      - op: add
+        path: /deploy/helm/releases/-
+        value:
+          name: rolldice
+          remoteChart: rolldice-helm
+          namespace: otel-demo
+          createNamespace: true
+          repo: https://jerrytfleung.github.io/rolldice-helm/
+          version: 0.1.3
+          valuesFiles:
+            - tests/deploy/rolldice/values.yaml
+          setValueTemplates:
+            'podAnnotations.instrumentation\.opentelemetry\.io/inject-php': '{{ env "TEST_CLUSTER_NAMESPACE" | default "test-namespace" }}/swo-instrumentation'
   - name: no-topology
     patches:
       - op: add
