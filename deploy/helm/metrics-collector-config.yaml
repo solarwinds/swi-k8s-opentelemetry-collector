@@ -3,6 +3,10 @@ exporters:
     endpoint: ${OTEL_ENVOY_ADDRESS}
     tls:
       insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+{{- if eq (include "common.otel-ca-enabled" .) "true" }}
+      ca_file: {{ include "common.otel-ca-file" . }}
+{{- end }}
     headers:
       "Authorization": "Bearer ${SOLARWINDS_API_TOKEN}"
       "swi-reporter": "k8s-monitoring swo-k8s-collector/{{ .Chart.Version }}"
@@ -31,6 +35,7 @@ extensions:
   pprof:
     endpoint: localhost:{{ .Values.diagnostics.profiling.port }}
 {{- end }}
+{{- include "common.swotelcol-entities-extension" . | nindent 2 }}
 
 processors:
   k8s_attributes:
@@ -283,6 +288,7 @@ processors:
       - include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.cpu.requests
 
       - include: k8s.kube_pod_container_resource_requests
@@ -296,6 +302,7 @@ processors:
       - include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.memory.requests
 
       - include: k8s.kube_pod_container_resource_limits
@@ -320,6 +327,7 @@ processors:
       - include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.cpu.limit
       - include: k8s.container.spec.memory.limit__swo_temp
         action: insert
@@ -331,6 +339,7 @@ processors:
       - include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
         match_type: regexp
         action: combine
+        aggregation_type: sum
         new_name: k8s.container.spec.memory.limit
 
       - include: k8s.kube_pod_container_status_running
@@ -897,6 +906,7 @@ processors:
       - key: k8s.cluster.name
         value: ${CLUSTER_NAME}
         action: insert
+{{- include "common.swotelcol-collector-name-attribute" . | nindent 6 }}
 {{- end }}
 
 connectors:
@@ -1126,6 +1136,9 @@ service:
 {{- if .Values.diagnostics.profiling.enabled }}
     - pprof
 {{- end }}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+    - solarwinds
+{{- end }}
   pipelines:
 {{- if and (and .Values.otel.metrics.extra_scrape_metrics (or (not .Values.otel.metrics.autodiscovery.prometheusEndpoints.enabled) .Values.otel.metrics.force_extra_scrape_metrics)) .Values.otel.metrics.prometheus.url }}
     metrics/prometheus-server:
@@ -1275,8 +1288,3 @@ service:
                 host: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._0 | quote }}
                 port: {{ (split ":" .Values.otel.metrics.telemetry.metrics.address)._1 }}
 {{- end }}
-    resource:
-      # Resource attributes on the collector's own internal telemetry.
-      # These correlate internal metrics to the k8s collector in case they are collected by something else.
-      k8s.cluster.name: ${CLUSTER_NAME}
-      sw.k8s.cluster.uid: ${CLUSTER_UID}

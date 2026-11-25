@@ -14,6 +14,23 @@ otel:
   # A list of all available OTEL endpoints: https://documentation.solarwinds.com/en/success_center/observability/content/system_requirements/endpoints.htm
   endpoint: <OTEL_ENVOY_ADDRESS>
   tls_insecure: false
+  tls_insecure_skip_verify: false
+
+  # Trust a custom CA when verifying the OTEL endpoint's certificate (e.g. an on-premises endpoint with a certificate
+  # from an internal CA). The bundle is a PEM file with one or more certificates. Only this bundle is trusted, public
+  # CAs are not added unless they are in the bundle. Ignored when tls_insecure is true. With tls_insecure_skip_verify
+  # true, the certificate is not verified at all, even with a CA set.
+  # Set either configmap or pem, not both. After changing the CA, restart the pods (with pem, helm upgrade does it).
+  tls_ca:
+    # Name of an existing ConfigMap in the release namespace that holds the bundle, e.g. created with:
+    #   kubectl create configmap otel-ca --namespace <ns> --from-file=ca.crt=./ca-bundle.pem
+    # The pods wait in ContainerCreating until the ConfigMap exists.
+    configmap: ""
+    # Key in the ConfigMap that holds the bundle
+    configmap_key: ca.crt
+    # The bundle itself. The chart creates a ConfigMap from it. Can be set from a file with
+    # --set-file otel.tls_ca.pem=./ca-bundle.pem
+    pem: ""
 
   # SWO API token used for authentication. If filled it will create secret that will be used by the collector
   api_token: ""
@@ -45,7 +62,7 @@ otel:
 
     busy_box:
       repository: "busybox"
-      tag: "1.36.1"
+      tag: "1.38.0"
       pullPolicy: IfNotPresent
 
   node_collector:
@@ -108,7 +125,7 @@ otel:
         targetAllocator:
           image:
             repository: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator
-            tag: "0.152.0"
+            tag: "0.161.0"
             pullPolicy: IfNotPresent
 
           nodeSelector: {}
@@ -772,6 +789,11 @@ otel:
   swi_endpoint_check:
     enabled: true
 
+  # Configuration for SwoTelcol entity creation via solarwindsextension.
+  # Each collector instance registers itself as a SwoTelcol entity in SolarWinds Observability.
+  swotelcol_entities:
+    enabled: true
+
   # Configuration for the Gateway collector
   gateway:
 
@@ -978,7 +1000,7 @@ autoupdate:
 
   image:
     repository: "alpine/k8s"
-    tag: "1.33.12"
+    tag: "1.34.12"
     pullPolicy: IfNotPresent
 
 # Set labels to every deployed resource
@@ -1112,7 +1134,7 @@ swoagent:
   enabled: false
   image:
     repository: solarwinds/swo-agent
-    tag: "v3.0.38"
+    tag: "v3.0.132"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -1306,7 +1328,7 @@ installCRDs:
   enabled: true
   image:
       repository: "alpine/k8s"
-      tag: "1.33.12"
+      tag: "1.34.12"
       pullPolicy: IfNotPresent
 
 autoinstrumentation:
@@ -1323,7 +1345,7 @@ operator:
   manager:
     image:
       repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
-      tag: "0.152.0"
+      tag: "0.162.0"
     targetAllocatorImage:
       repository: ""
       tag: ""
@@ -1332,22 +1354,28 @@ operator:
       # filling this to satisfy subchart requirement
       repository: "solarwinds/solarwinds-otel-collector"
     autoInstrumentationImage:
-      # Currently only Java and Python supported, other languages are TBD
+      # Currently only Java, PHP and Python supported, other languages are TBD
       java:
         repository: "solarwinds/autoinstrumentation-java"
-        tag: "3.2.1"
+        tag: "3.3.1"
       nodejs:
         repository: ""
         tag: ""
+      php:
+        repository: "ghcr.io/solarwinds/autoinstrumentation-php"
+        tag: "2.0.1"
       python:
         repository: "solarwinds/autoinstrumentation-python"
-        tag: "7.1.0"
+        tag: "8.0.0"
       dotnet:
         repository: ""
         tag: ""
       go:
         repository: ""
         tag: ""
+    autoInstrumentation:
+      php:
+        enabled: true
     podLabels:
       swo.cloud.solarwinds.com/deployed-with-k8s-collector: "true"
   admissionWebhooks:
@@ -1383,7 +1411,7 @@ waitJobs:
 
     image:
       repository: "alpine/k8s"
-      tag: "1.33.12"
+      tag: "1.34.12"
       pullPolicy: IfNotPresent
 
   # is valid only if `certmanager.enable=true`, otherwise is ignored
@@ -1392,7 +1420,7 @@ waitJobs:
 
     image:
       repository: "alpine/k8s"
-      tag: "1.33.12"
+      tag: "1.34.12"
       pullPolicy: IfNotPresent
   
 # If enabled, deploys OBI - OpenTelemetry eBPF Instrumentation (https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation; Apache-2.0 license) to the cluster.
@@ -1401,7 +1429,7 @@ network_topology:
 
   image:
     repository: "ghcr.io/open-telemetry/opentelemetry-ebpf-instrumentation/ebpf-instrument"
-    tag: "v0.9.0"
+    tag: "v1.0.0"
     pullPolicy: IfNotPresent
 
   resources:

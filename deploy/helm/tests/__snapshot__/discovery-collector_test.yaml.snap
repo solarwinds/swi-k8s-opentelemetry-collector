@@ -24,6 +24,12 @@ Discovery collector spec should match snapshot when using default values:
               fieldRef:
                 apiVersion: v1
                 fieldPath: metadata.name
+          - name: POD_ORDINAL
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+          - name: SWOTELCOL_COLLECTOR_NAME
+            value: $(CLUSTER_NAME)-discovery-collector-$(POD_ORDINAL)
           - name: POD_NAMESPACE
             valueFrom:
               fieldRef:

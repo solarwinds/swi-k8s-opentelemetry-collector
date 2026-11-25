@@ -66,6 +66,7 @@ By default it will deploy `SWO K8s Collector` with features that are enabled by 
 
 - `operator` - include certmanager, operator and all the features that are related to it (discovery_collector, CRDs)
 - `auto-instrumentation` - include OTEL Demo services and enable auto-instrumentation. It requires `operator` to be enabled
+- `php-instrumentation` - deploy the `rolldice` PHP app into the `otel-demo` namespace and enable PHP auto-instrumentation. It requires `operator` to be enabled.
 - `no-logs` - exclude log collection
 - `no-topology` - exclude network topology
 - `no-metrics` - exclude metrics collection

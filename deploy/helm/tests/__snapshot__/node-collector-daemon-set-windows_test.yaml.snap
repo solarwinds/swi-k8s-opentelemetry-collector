@@ -28,6 +28,8 @@ DaemonSet spec for windows nodes should match snapshot when overriding cluster I
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
+          - name: SWOTELCOL_COLLECTOR_NAME
+            value: $(CLUSTER_NAME)-node-collector-windows/$(NODE_NAME)
           - name: SOLARWINDS_API_TOKEN
             valueFrom:
               secretKeyRef:
@@ -157,6 +159,8 @@ DaemonSet spec for windows nodes should match snapshot when using default values
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
+          - name: SWOTELCOL_COLLECTOR_NAME
+            value: $(CLUSTER_NAME)-node-collector-windows/$(NODE_NAME)
           - name: SOLARWINDS_API_TOKEN
             valueFrom:
               secretKeyRef:

@@ -480,3 +480,86 @@ Usage:
 {{- $traces := tpl (.Files.Get "gateway-collector-config-traces.yaml") . | fromYaml -}}
 {{- merge $main $traces | toYaml -}}
 {{- end -}}
+
+{{- define "common.swotelcol-collector-name-attribute" -}}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+- key: sw.otelcol.collector.name
+  value: ${SWOTELCOL_COLLECTOR_NAME}
+  action: insert
+- key: sw.otelcol.collector.entity_creation
+  value: "on"
+  action: insert
+{{- end }}
+{{- end -}}
+
+{{/*
+Custom CA for the OTEL endpoint (otel.tls_ca). Returns "true" when a CA is configured and TLS is not disabled.
+*/}}
+{{- define "common.otel-ca-enabled" -}}
+{{- $ca := .Values.otel.tls_ca | default dict -}}
+{{- if and $ca.configmap $ca.pem -}}
+{{- fail "otel.tls_ca.configmap and otel.tls_ca.pem are both set, set only one of them" -}}
+{{- end -}}
+{{- if and $ca.pem (not (contains "-----BEGIN CERTIFICATE-----" $ca.pem)) -}}
+{{- fail "otel.tls_ca.pem does not contain a PEM certificate (-----BEGIN CERTIFICATE-----)" -}}
+{{- end -}}
+{{- if and (or $ca.configmap $ca.pem) (not .Values.otel.tls_insecure) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{- define "common.otel-ca-configmap-name" -}}
+{{- $ca := .Values.otel.tls_ca | default dict -}}
+{{- if $ca.pem -}}
+{{- include "common.fullname" (tuple . "-otel-ca") -}}
+{{- else -}}
+{{- $ca.configmap -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "common.otel-ca-configmap-key" -}}
+{{- $ca := .Values.otel.tls_ca | default dict -}}
+{{- if $ca.pem -}}
+ca.crt
+{{- else -}}
+{{- $ca.configmap_key | default "ca.crt" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Path of the CA file in the container. The Windows path is used when the context has isWindows set. */}}
+{{- define "common.otel-ca-file" -}}
+{{- if .isWindows -}}
+c:\otel-ca\ca.crt
+{{- else -}}
+/otel-ca/ca.crt
+{{- end -}}
+{{- end -}}
+
+{{/* Volume with the CA bundle, always mapped to the file name ca.crt. */}}
+{{- define "common.otel-ca-volume" -}}
+- name: otel-ca
+  configMap:
+    name: {{ include "common.otel-ca-configmap-name" . }}
+    items:
+      - key: {{ include "common.otel-ca-configmap-key" . }}
+        path: ca.crt
+{{- end -}}
+
+{{- define "common.swotelcol-entities-extension" -}}
+{{- if .Values.otel.swotelcol_entities.enabled }}
+solarwinds:
+  collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+  resource:
+    sw.k8s.cluster.uid: ${CLUSTER_UID}
+  grpc:
+    endpoint: ${OTEL_ENVOY_ADDRESS}
+    tls:
+      insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+      insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+{{- if eq (include "common.otel-ca-enabled" .) "true" }}
+      ca_file: {{ include "common.otel-ca-file" . }}
+{{- end }}
+    headers:
+      Authorization: "Bearer ${SOLARWINDS_API_TOKEN}"
+{{- end }}
+{{- end -}}

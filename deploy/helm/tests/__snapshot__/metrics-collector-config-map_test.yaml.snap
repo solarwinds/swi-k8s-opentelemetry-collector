@@ -22,9 +22,21 @@ Cluster filter should match snapshot with combined exclude filters:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -526,6 +538,7 @@ Cluster filter should match snapshot with combined exclude filters:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -548,6 +561,7 @@ Cluster filter should match snapshot with combined exclude filters:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -759,6 +773,7 @@ Cluster filter should match snapshot with combined exclude filters:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -777,6 +792,7 @@ Cluster filter should match snapshot with combined exclude filters:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -918,6 +934,7 @@ Cluster filter should match snapshot with combined exclude filters:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -928,6 +945,7 @@ Cluster filter should match snapshot with combined exclude filters:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -972,6 +990,7 @@ Cluster filter should match snapshot with combined exclude filters:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -986,6 +1005,7 @@ Cluster filter should match snapshot with combined exclude filters:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -1012,6 +1032,7 @@ Cluster filter should match snapshot with combined exclude filters:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -1026,6 +1047,7 @@ Cluster filter should match snapshot with combined exclude filters:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -1359,6 +1381,12 @@ Cluster filter should match snapshot with combined exclude filters:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -1593,6 +1621,7 @@ Cluster filter should match snapshot with combined exclude filters:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -1684,9 +1713,6 @@ Cluster filter should match snapshot with combined exclude filters:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Cluster filter should match snapshot with combined include filters:
@@ -1713,9 +1739,21 @@ Cluster filter should match snapshot with combined include filters:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -2215,6 +2253,7 @@ Cluster filter should match snapshot with combined include filters:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -2237,6 +2276,7 @@ Cluster filter should match snapshot with combined include filters:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -2448,6 +2488,7 @@ Cluster filter should match snapshot with combined include filters:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -2466,6 +2507,7 @@ Cluster filter should match snapshot with combined include filters:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -2607,6 +2649,7 @@ Cluster filter should match snapshot with combined include filters:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -2617,6 +2660,7 @@ Cluster filter should match snapshot with combined include filters:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -2661,6 +2705,7 @@ Cluster filter should match snapshot with combined include filters:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -2675,6 +2720,7 @@ Cluster filter should match snapshot with combined include filters:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -2701,6 +2747,7 @@ Cluster filter should match snapshot with combined include filters:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -2715,6 +2762,7 @@ Cluster filter should match snapshot with combined include filters:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -3048,6 +3096,12 @@ Cluster filter should match snapshot with combined include filters:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -3282,6 +3336,7 @@ Cluster filter should match snapshot with combined include filters:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -3373,9 +3428,6 @@ Cluster filter should match snapshot with combined include filters:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Cluster filter should match snapshot with exclude_namespaces:
@@ -3402,9 +3454,21 @@ Cluster filter should match snapshot with exclude_namespaces:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -3905,6 +3969,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -3927,6 +3992,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -4138,6 +4204,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -4156,6 +4223,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -4297,6 +4365,7 @@ Cluster filter should match snapshot with exclude_namespaces:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -4307,6 +4376,7 @@ Cluster filter should match snapshot with exclude_namespaces:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -4351,6 +4421,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -4365,6 +4436,7 @@ Cluster filter should match snapshot with exclude_namespaces:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -4391,6 +4463,7 @@ Cluster filter should match snapshot with exclude_namespaces:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -4405,6 +4478,7 @@ Cluster filter should match snapshot with exclude_namespaces:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -4738,6 +4812,12 @@ Cluster filter should match snapshot with exclude_namespaces:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -4972,6 +5052,7 @@ Cluster filter should match snapshot with exclude_namespaces:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -5063,9 +5144,6 @@ Cluster filter should match snapshot with exclude_namespaces:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Cluster filter should match snapshot with exclude_namespaces_regex:
@@ -5092,9 +5170,21 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -5595,6 +5685,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -5617,6 +5708,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -5828,6 +5920,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -5846,6 +5939,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -5987,6 +6081,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -5997,6 +6092,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -6041,6 +6137,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -6055,6 +6152,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -6081,6 +6179,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -6095,6 +6194,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -6428,6 +6528,12 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -6662,6 +6768,7 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -6753,9 +6860,6 @@ Cluster filter should match snapshot with exclude_namespaces_regex:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Cluster filter should match snapshot with include_namespaces:
@@ -6782,9 +6886,21 @@ Cluster filter should match snapshot with include_namespaces:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -7284,6 +7400,7 @@ Cluster filter should match snapshot with include_namespaces:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -7306,6 +7423,7 @@ Cluster filter should match snapshot with include_namespaces:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -7517,6 +7635,7 @@ Cluster filter should match snapshot with include_namespaces:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -7535,6 +7654,7 @@ Cluster filter should match snapshot with include_namespaces:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -7676,6 +7796,7 @@ Cluster filter should match snapshot with include_namespaces:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -7686,6 +7807,7 @@ Cluster filter should match snapshot with include_namespaces:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -7730,6 +7852,7 @@ Cluster filter should match snapshot with include_namespaces:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -7744,6 +7867,7 @@ Cluster filter should match snapshot with include_namespaces:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -7770,6 +7894,7 @@ Cluster filter should match snapshot with include_namespaces:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -7784,6 +7909,7 @@ Cluster filter should match snapshot with include_namespaces:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -8117,6 +8243,12 @@ Cluster filter should match snapshot with include_namespaces:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -8351,6 +8483,7 @@ Cluster filter should match snapshot with include_namespaces:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -8442,9 +8575,6 @@ Cluster filter should match snapshot with include_namespaces:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Cluster filter should match snapshot with include_namespaces_regex:
@@ -8471,9 +8601,21 @@ Cluster filter should match snapshot with include_namespaces_regex:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -8973,6 +9115,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -8995,6 +9138,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -9206,6 +9350,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -9224,6 +9369,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -9365,6 +9511,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -9375,6 +9522,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -9419,6 +9567,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -9433,6 +9582,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -9459,6 +9609,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -9473,6 +9624,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -9806,6 +9958,12 @@ Cluster filter should match snapshot with include_namespaces_regex:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -10040,6 +10198,7 @@ Cluster filter should match snapshot with include_namespaces_regex:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -10131,9 +10290,6 @@ Cluster filter should match snapshot with include_namespaces_regex:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Metrics config should match snapshot when fargate is enabled:
@@ -10160,9 +10316,21 @@ Metrics config should match snapshot when fargate is enabled:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -10654,6 +10822,7 @@ Metrics config should match snapshot when fargate is enabled:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -10676,6 +10845,7 @@ Metrics config should match snapshot when fargate is enabled:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -10887,6 +11057,7 @@ Metrics config should match snapshot when fargate is enabled:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -10905,6 +11076,7 @@ Metrics config should match snapshot when fargate is enabled:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -11046,6 +11218,7 @@ Metrics config should match snapshot when fargate is enabled:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -11056,6 +11229,7 @@ Metrics config should match snapshot when fargate is enabled:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -11100,6 +11274,7 @@ Metrics config should match snapshot when fargate is enabled:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -11114,6 +11289,7 @@ Metrics config should match snapshot when fargate is enabled:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -11140,6 +11316,7 @@ Metrics config should match snapshot when fargate is enabled:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -11154,6 +11331,7 @@ Metrics config should match snapshot when fargate is enabled:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -11486,6 +11664,12 @@ Metrics config should match snapshot when fargate is enabled:
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
           - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
@@ -11801,6 +11985,7 @@ Metrics config should match snapshot when fargate is enabled:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -11890,9 +12075,6 @@ Metrics config should match snapshot when fargate is enabled:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Metrics config should match snapshot when using Prometheus url with extra_scrape_metrics:
@@ -11927,9 +12109,21 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -12424,6 +12618,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -12446,6 +12641,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -12657,6 +12853,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -12675,6 +12872,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -12816,6 +13014,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -12826,6 +13025,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -12870,6 +13070,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -12884,6 +13085,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -12910,6 +13112,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -12924,6 +13127,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -13257,6 +13461,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -13364,6 +13574,12 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
           - action: insert
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
+          - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
         transform:
           metric_statements:
           - statements:
@@ -13530,6 +13746,7 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -13639,9 +13856,6 @@ Metrics config should match snapshot when using Prometheus url with extra_scrape
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
 Metrics config should match snapshot when using default values:
@@ -13668,9 +13882,21 @@ Metrics config should match snapshot when using default values:
           timeout: 15s
           tls:
             insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+            insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
       extensions:
         health_check:
           endpoint: 0.0.0.0:13133
+        solarwinds:
+          collector_name: ${SWOTELCOL_COLLECTOR_NAME}
+          grpc:
+            endpoint: ${OTEL_ENVOY_ADDRESS}
+            headers:
+              Authorization: Bearer ${SOLARWINDS_API_TOKEN}
+            tls:
+              insecure: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE}
+              insecure_skip_verify: ${OTEL_ENVOY_ADDRESS_TLS_INSECURE_SKIP_VERIFY}
+          resource:
+            sw.k8s.cluster.uid: ${CLUSTER_UID}
       processors:
         attributes/attributes_namespace_status:
           actions:
@@ -14165,6 +14391,7 @@ Metrics config should match snapshot when using default values:
             include: k8s.container_fs_writes_total
             new_name: k8s.container_fs_writes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -14187,6 +14414,7 @@ Metrics config should match snapshot when using default values:
             include: k8s.container_fs_writes_bytes_total
             new_name: k8s.container_fs_writes_bytes_total__swo_temp
           - action: combine
+            aggregation_type: sum
             experimental_match_labels:
               container: \S+
               namespace: \S+
@@ -14398,6 +14626,7 @@ Metrics config should match snapshot when using default values:
             include: k8s.pod.fs.writes.rate
             new_name: k8s.pod.fs.writes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.rate__swo_temp|k8s.pod.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.iops
@@ -14416,6 +14645,7 @@ Metrics config should match snapshot when using default values:
             include: k8s.pod.fs.writes.bytes.rate
             new_name: k8s.pod.fs.writes.bytes.rate__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.pod.fs.reads.bytes.rate__swo_temp|k8s.pod.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.pod.fs.throughput
@@ -14557,6 +14787,7 @@ Metrics config should match snapshot when using default values:
               label_set:
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.rate__swo_temp|k8s.node.fs.writes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.iops
@@ -14567,6 +14798,7 @@ Metrics config should match snapshot when using default values:
               - k8s.node.name
             submatch_case: lower
           - action: combine
+            aggregation_type: sum
             include: (k8s.node.fs.reads.bytes.rate__swo_temp|k8s.node.fs.writes.bytes.rate__swo_temp)
             match_type: regexp
             new_name: k8s.node.fs.throughput
@@ -14611,6 +14843,7 @@ Metrics config should match snapshot when using default values:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.cpu.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.requests__swo_temp|k8s.initcontainer.spec.cpu.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.requests
@@ -14625,6 +14858,7 @@ Metrics config should match snapshot when using default values:
             include: k8s.kube_pod_init_container_resource_requests
             new_name: k8s.initcontainer.spec.memory.requests__swo_temp
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.requests__swo_temp|k8s.initcontainer.spec.memory.requests__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.requests
@@ -14651,6 +14885,7 @@ Metrics config should match snapshot when using default values:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.cpu.limit__swo_temp|k8s.initcontainer.spec.cpu.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.cpu.limit
@@ -14665,6 +14900,7 @@ Metrics config should match snapshot when using default values:
               - namespace
               - k8s.node.name
           - action: combine
+            aggregation_type: sum
             include: (k8s.container.spec.memory.limit__swo_temp|k8s.initcontainer.spec.memory.limit__swo_temp)
             match_type: regexp
             new_name: k8s.container.spec.memory.limit
@@ -14998,6 +15234,12 @@ Metrics config should match snapshot when using default values:
             key: k8s.cluster.name
             value: ${CLUSTER_NAME}
           - action: insert
+            key: sw.otelcol.collector.name
+            value: ${SWOTELCOL_COLLECTOR_NAME}
+          - action: insert
+            key: sw.otelcol.collector.entity_creation
+            value: "on"
+          - action: insert
             from_attribute: kubelet_version
             key: sw.k8s.node.version
           - action: insert
@@ -15232,6 +15474,7 @@ Metrics config should match snapshot when using default values:
       service:
         extensions:
         - health_check
+        - solarwinds
         pipelines:
           metrics:
             exporters:
@@ -15321,8 +15564,5 @@ Metrics config should match snapshot when using default values:
                   prometheus:
                     host: 0.0.0.0
                     port: 8888
-          resource:
-            k8s.cluster.name: ${CLUSTER_NAME}
-            sw.k8s.cluster.uid: ${CLUSTER_UID}
           traces:
             level: none
