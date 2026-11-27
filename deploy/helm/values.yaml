@@ -1019,6 +1019,11 @@ kube-state-metrics:
     # MCR terms of use: https://github.com/microsoft/containerregistry/blob/main/legal/Terms-Of-Use.md
     registry: "mcr.microsoft.com"
     repository: "oss/v2/kubernetes/kube-state-metrics"
+    # MCR version tags (such as v2.20.0) float to the latest Microsoft rebuild, so the build is pinned by its digest (multi-arch index).
+    # Keep the tag in line with the kube-state-metrics subchart appVersion and update the digest when taking a newer rebuild:
+    # curl -sI -H 'Accept: application/vnd.oci.image.index.v1+json' https://mcr.microsoft.com/v2/oss/v2/kubernetes/kube-state-metrics/manifests/<tag>
+    tag: "v2.20.0-13"
+    sha: "sha256:dca83c497a31458f720f633ef16adcbe2c0c8355b0f4254b74c556f8d38d9a31"
 
   prometheusScrape: false
 
